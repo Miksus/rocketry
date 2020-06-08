@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*pyx
+
+# Jupyter Notebook
+.ipynb_checkpoints
+prototype*
+
+# Scrapy stuff:
+.scrapy
+
+draft/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code
+.vscode/
+
+# Testing
+.pytest_cache/
+
+# Packaging
+Jubox.egg-info/
+build/
+dist/
+
+# Prototyping files & manual testing
+proto/
+
+# Data & logs
+*.csv

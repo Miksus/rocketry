@@ -1,0 +1,24 @@
+            # not in period, later than start
+            #      dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start       {end}   |      start
+
+            # not in period, earlier than start
+            #          dt                              
+            # --<---------->-----------<-------------->--
+            #  end   |   start       {end}   |      start
+
+            # Over night, not in period
+            #                     dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |    {end}
+
+            # Over night, in period, later than start
+            #       dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |    {end}
+
+            # Over night, in period, earlier than start
+            #            dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |    {end}

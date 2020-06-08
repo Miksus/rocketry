@@ -1,6 +1,0 @@
-
-
-class ETLBase:
-
-    
-    def 
