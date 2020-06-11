@@ -193,8 +193,9 @@ class Task:
         if value is None:
             return
         period = get_cycle(value)
-        has_task_not_run = HasNotOccurred(event=task_ran(task=self), period=period)
-        self.start_cond &= has_task_not_run
+        cond = task_not_run(task=self)
+        cond.period = period
+        self.start_cond &= cond
 
     @property
     def is_running(self):

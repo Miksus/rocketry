@@ -62,10 +62,42 @@ class TimePeriod:
         dt_next_start = self.rollforward(dt)
         return dt_next_start - dt
 
-    def next_span(self, dt):
+    def next(self, dt):
+        "Get next time interval of the period"
         start = self.rollforward(dt)
-        end = self.next_end(start)
-        return pd.Interval(start, end, closed="neither")
+        end = self.next_end(dt)
+
+        start = pd.Timestamp(start)
+        end = pd.Timestamp(end)
+        
+        return pd.Interval(start, end, closed="both")
+    
+    def prev(self, dt):
+        "Get previous time interval of the period"
+        end = self.rollback(dt)
+        start = self.prev_start(dt)
+
+        start = pd.Timestamp(start)
+        end = pd.Timestamp(end)
+        
+        return pd.Interval(start, end, closed="both")
+
+    def __contains__(self, other):
+        interval = self.next(other)
+        return other in interval
+
+    def __and__(self, other):
+        # self & other
+        # bitwise and
+        # using & operator
+
+        return All(self, other)
+
+    def __or__(self, other):
+        # self | other
+        # bitwise or
+
+        return Any(self, other)
 
 
 class TimeInterval(TimePeriod):
@@ -83,6 +115,7 @@ class TimeInterval(TimePeriod):
         Time of day (ie. from 11 am to 5 pm)
         Month (ie. January)
 
+    Answers to "between 11:00 and 12:00" and "from monday to tuesday"
     """
     _type_name = "interval"
     @abstractmethod
@@ -120,25 +153,6 @@ class TimeInterval(TimePeriod):
         "Get pervious end point of the period"
         raise NotImplementedError("Contains not implemented.")
 
-    def next(self, dt):
-        "Get next time interval of the period"
-        start = self.rollforward(dt)
-        end = self.next_end(dt)
-
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
-        
-        return pd.Interval(start, end, closed="neither")
-    
-    def prev(self, dt):
-        "Get next time interval of the period"
-        end = self.rollback(dt)
-        start = self.prev_start(dt)
-
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
-        
-        return pd.Interval(start, end, closed="neither")
 
 class TimeDelta(TimePeriod):
     """Base for all time deltas
@@ -153,6 +167,8 @@ class TimeDelta(TimePeriod):
     ---------
         hour (ie. one hour in the past)
         day (ie. one day from an event)
+
+    Answers to "past 1 hour"
     """
     _type_name = "delta"
     def __init__(self, *args, access_name=None, **kwargs):
@@ -164,6 +180,16 @@ class TimeDelta(TimePeriod):
         start = self.reference - self.duration
         end = self.reference
         return start <= dt <= end
+
+    def prev(self, dt):
+        start = dt - self.duration
+        end = pd.Timestamp(dt)
+        return pd.Interval(start, end) 
+
+    def next(self, dt):
+        end = dt + self.duration
+        start = pd.Timestamp(dt)
+        return pd.Interval(start, end)
 
 class TimeCycle(TimePeriod):
     """Base for all time cycles
@@ -269,3 +295,78 @@ class TimeCycle(TimePeriod):
         #    <----dt  
         #  -->--------------------->-----------
         #  time      |           time     |    
+
+
+
+class All(TimePeriod):
+
+    def __init__(self, *args):
+        if any(not isinstance(arg, TimePeriod) for arg in args):
+            raise TypeError("All is only supported with TimePeriods")
+        self.periods = args
+
+    def prev(self, dt):
+        intervals = [
+            period.prev(dt)
+            for period in self.periods
+        ]
+        if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
+            # All overlaps, can be defined conveniently using max, min
+            starts = [interval.left for interval in intervals]
+            ends = [interval.right for interval in intervals]
+
+            start = max(starts)
+            end = min(ends)
+            return pd.Interval(start, end)
+        else:
+            starts = [interval.left for interval in intervals]
+            return self.prev(min(starts))
+
+    def next(self, dt):
+        intervals = [
+            period.next(dt)
+            for period in self.periods
+        ]
+        if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
+            # All overlaps, can be defined conveniently using max, min
+            starts = [interval.left for interval in intervals]
+            ends = [interval.right for interval in intervals]
+
+            start = max(starts)
+            end = min(ends)
+            return pd.Interval(start, end)
+        else:
+            ends = [interval.right for interval in intervals]
+            # Tries next interval
+            return self.next(max(ends))
+
+class Any(TimePeriod):
+
+    def __init__(self, *args):
+        if any(not isinstance(arg, TimePeriod) for arg in args):
+            raise TypeError("Any is only supported with TimePeriods")
+        self.periods = args
+
+    def prev(self, dt):
+        intervals = [
+            period.prev(dt)
+            for period in self.periods
+        ]
+        starts = [interval.left for interval in intervals]
+        ends = [interval.right for interval in intervals]
+
+        start = min()(starts)
+        end = max(ends)
+        return pd.Interval(start, end)
+
+    def next(self, dt):
+        intervals = [
+            period.next(dt)
+            for period in self.periods
+        ]
+        starts = [interval.left for interval in intervals]
+        ends = [interval.right for interval in intervals]
+
+        start = min(starts)
+        end = max(ends)
+        return pd.Interval(start, end)

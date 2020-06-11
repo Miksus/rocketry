@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 @Observation(historical=True)
-def task_ran(task, start, end):
+def task_ran(task, start=None, end=None):
     records = task.logger.get_records(start=start, end=end, action="run")
     return not records.empty
 
