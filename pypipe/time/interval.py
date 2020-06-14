@@ -2,7 +2,7 @@
 import datetime
 import calendar
 
-from .base import TimeInterval
+from .base import TimeInterval, register_class
 
 from .utils import floor_time, ceil_time
 
@@ -213,6 +213,10 @@ class TimeOfDay(OffsetInterval):
     def __repr__(self):
         return f'TimeOfDay({self.start}, {self.end})'
 
+    @classmethod
+    def from_between(cls, start, end):
+        return cls(start, end)
+
 class DaysOfWeek(OffsetInterval):
     """Day of Week, ie. Monday, Tuesday and Saturday
     """
@@ -285,8 +289,69 @@ class DaysOfWeek(OffsetInterval):
             dt = dt - pd.offsets.Day()
         return floor_time(dt)
 
-weekend = DaysOfWeek("Sat", "Sun", access_name="weekend")
-weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri", access_name="weekday")
+    @classmethod
+    def from_between(cls, start, end):
+        weekday_abbrs = list(calendar.day_abbr)
+        weekday_names = list(calendar.day_name)
+        weekday_list = (
+            weekday_abbrs if start in weekday_abbrs and end in weekday_abbrs
+            else weekday_names if start in weekday_names and end in weekday_names
+            else None
+        )
+        if weekday_list is None:
+            raise ValueError(f"Invalid week days: {start} & {end}")
+        start_index = weekday_list.index(start)
+        end_index = weekday_list.index(end)
+        return cls(*weekday_list[start_index:end_index])
+
+class RelativeDay(TimeInterval):
+    """Specific day
+
+    Examples:
+    ---------
+        Day("today")
+        Day("yesterday")
+        Day("yesterday")
+    """
+
+    offsets = {
+        "today": pd.Timedelta("0 day"),
+        "yesterday": pd.Timedelta("1 day"),
+        "the_day_before": pd.Timedelta("2 day"),
+        #"first_day_of_year": get_first_day_of_year,
+    }
+
+    def __init__(self, day, *, start_time=None, end_time=None):
+        self.day = day
+        self.start_time = datetime.date.min if start_time is None else start_time
+        self.end_time = datetime.date.max if end_time is None else end_time
+
+    def prev(self, dt):
+        offset = self.offsets[self.day]
+        dt = dt - offset
+        return pd.Interval(
+            pd.Timestamp.combine(dt, self.start_time),
+            pd.Timestamp.combine(dt, self.end_time)
+        )
+
+    def next(self, dt):
+        raise AttributeError("RelativeDay has no next day")
+
+
+weekend = DaysOfWeek("Sat", "Sun")
+weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
 
 month_end = OffsetInterval(pd.offsets.MonthEnd())
 month_begin = OffsetInterval(pd.offsets.MonthBegin())
+
+# Register instances
+
+weekend.register("weekend", group="in_")
+weekday.register("weekday", group="in_")
+# Register all week days
+for weekday in (*calendar.day_name, *calendar.day_abbr):
+    DaysOfWeek(weekday).register(weekday, group="in_")
+
+# Register classes
+register_class(TimeOfDay)
+register_class(DaysOfWeek)

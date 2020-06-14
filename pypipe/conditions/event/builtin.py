@@ -1,36 +1,37 @@
-from .base import Observation
+from .base import Statement
 
 import psutil
 import os
 import numpy as np
 
-@Observation(historical=True)
+@Statement(historical=True)
 def task_ran(task, start=None, end=None):
     records = task.logger.get_records(start=start, end=end, action="run")
-    return not records.empty
+    run_times = records["asctime"].tolist()
+    return run_times
 
-@Observation(historical=True)
+@Statement(historical=True)
 def task_failed(task, start, end):
     records = task.logger.get_records(start=start, end=end, action="fail")
     return not records.empty
 
-@Observation(historical=True)
+@Statement(historical=True)
 def task_succeeded(task, start, end):
     records = task.logger.get_records(start=start, end=end, action="success")
     return not records.empty
 
-@Observation(historical=True)
+@Statement(historical=True)
 def task_finished(task, start, end):
     records = task.logger.get_records(start=start, end=end, action=["success", "fail"])
     return not records.empty
 
-@Observation()
+@Statement()
 def task_running(task):
     "Check whether "
     record = task.logger.get_latest()
     return record["action"] == "run"
 
-@Observation(quantitative=True)
+@Statement(quantitative=True)
 def ram_free(absolute=False):
     "Check whether "
     memory = psutil.virtual_memory()
@@ -39,7 +40,7 @@ def ram_free(absolute=False):
     else:
         return memory.available
 
-@Observation(quantitative=True)
+@Statement(quantitative=True)
 def ram_used(absolute=False):
     "Check whether "
     memory = psutil.virtual_memory()
@@ -48,7 +49,7 @@ def ram_used(absolute=False):
     else:
         return memory.used
 
-@Observation()
+@Statement()
 def file_exists(filename):
     return os.path.exists(filename)
 

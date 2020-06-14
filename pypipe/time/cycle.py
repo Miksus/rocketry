@@ -22,11 +22,154 @@ class PandasPeriod(TimeCycle):
         dt_end = pd.Period(dt, freq=self.freq).to_timestamp(how="end")
         return pd.Interval(dt, dt_end)
 
+class Minutely(TimeCycle):
+    # TODO: Test
+    """A cycle that starts once in a minute
+
+    Example:
+    --------
+        Minutely() # Minutely starting from 0 seconds
+        Minutely(second=30) # Minutely starting from 30 seconds
+    """
+
+    offset = pd.Timedelta("1 minutes")
+    start_time = 0
+    def transform_start(self, *args, **kwargs):
+        ns = self.to_nanoseconds(*args, **kwargs)
+        return ns
+
+    def get_time_element(self, dt):
+        ns = self.to_nanoseconds(dt.second, dt.microsecond, dt.nanosecond if hasattr(dt, "nanosecond") else 0)
+        return ns
+
+    @staticmethod
+    def to_nanoseconds(second=0, microsecond=0, nanosecond=0):
+        return nanosecond + microsecond * 1_000 + second * 1_000_000_000
+
+    def replace(self, dt):
+        repl_dict = dict(
+            second=self.second,
+            microsecond=self.microsecond,
+            nanosecond=self.nanosecond,
+        )
+
+        if not hasattr(dt, "nanosecond"):
+            repl_dict.pop("nanosecond")
+
+        return dt.replace(**repl_dict)
+
+
+    @property
+    def second(self):
+        return int(self.start / 1_000_000_000)
+
+    @property
+    def microsecond(self):
+        ns_by_seconds = 1_000_000_000 * self.second
+        return int((self.start - ns_by_seconds) / 1_000)
+
+    @property
+    def nanosecond(self):
+        ns_by_seconds = 1_000_000_000 * self.second
+        ns_by_microsecond = 1_000 * self.microsecond
+        return int((self.start - ns_by_seconds - ns_by_microsecond))
+
+class Quarterly(TimeCycle):
+    # TODO
+    """A cycle that starts once in a quarter of an hour
+
+    Example:
+    --------
+        Quarterly() # Quarterly starting from quarter past
+        Quarterly(minute=30) # Hourly starting from half past
+    """
+
+    offset = pd.Timedelta("15 minutes")
+    start_time = 0
+    def transform_start(self, *args, **kwargs):
+        return 0 # Offsetting is never needed thus zero provided
+
+    def get_time_element(self, dt):
+        return dt.minute % 15
+
+    def replace(self, dt):
+        minutes_over = dt.minute % 15
+        repl_dict = dict(
+            minute=dt.minute - minutes_over,
+            second=0,
+            microsecond=0,
+            nanosecond=0,
+        )
+
+        if not hasattr(dt, "nanosecond"):
+            repl_dict.pop("nanosecond")
+
+        return dt.replace(**repl_dict)
+
+
+class Hourly(TimeCycle):
+    # TODO: Test
+    """A cycle that starts once in an hour
+
+    Example:
+    --------
+        Hourly(minute=15) # Hourly starting from quarter past
+        Hourly(minute=30) # Hourly starting from half past
+    """
+
+    offset = pd.Timedelta("1 hour")
+    start_time = 0
+    def transform_start(self, *args, **kwargs):
+        ns = self.to_nanoseconds(*args, **kwargs)
+        return ns
+
+    def get_time_element(self, dt):
+        ns = self.to_nanoseconds(dt.minute, dt.second, dt.microsecond, dt.nanosecond if hasattr(dt, "nanosecond") else 0)
+        return ns
+
+    @staticmethod
+    def to_nanoseconds(minute=0, second=0, microsecond=0, nanosecond=0):
+        return nanosecond + microsecond * 1_000 + second * 1_000_000_000 + minute * 60_000_000_000
+
+    def replace(self, dt):
+        repl_dict = dict(
+            minute=self.minute,
+            second=self.second,
+            microsecond=self.microsecond,
+            nanosecond=self.nanosecond,
+        )
+
+        if not hasattr(dt, "nanosecond"):
+            repl_dict.pop("nanosecond")
+
+        return dt.replace(**repl_dict)
+
+    @property
+    def minute(self):
+        return int(self.start / 60_000_000_000)
+
+    @property
+    def second(self):
+        ns_by_minutes = 60_000_000_000 * self.minute
+        return int((self.start - ns_by_minutes) / 1_000_000_000)
+
+    @property
+    def microsecond(self):
+        ns_by_minutes = 60_000_000_000 * self.minute
+        ns_by_seconds = 1_000_000_000 * self.second
+        return int((self.start - ns_by_minutes - ns_by_seconds) / 1_000)
+
+    @property
+    def nanosecond(self):
+        ns_by_minutes = 60_000_000_000 * self.minute
+        ns_by_seconds = 1_000_000_000 * self.second
+        ns_by_microsecond = 1_000 * self.microsecond
+        return int((self.start - ns_by_minutes - ns_by_seconds - ns_by_microsecond))
 
 class Daily(TimeCycle):
     offset = pd.Timedelta("1 day")
 
-    def transform_start(self, arg):
+    def transform_start(self, arg=None):
         if arg is None:
             return datetime.time.min
         return pd.offsets.Timestamp(arg).time()
@@ -37,6 +180,7 @@ class Daily(TimeCycle):
     def replace(self, dt):
         return pd.Timestamp.combine(dt, self.start)
 
+
 class Weekly(TimeCycle):
     offset = pd.Timedelta("7 days")
 
@@ -45,8 +189,9 @@ class Weekly(TimeCycle):
         **dict(zip(calendar.day_abbr, range(7))), 
         **dict(zip(range(7), range(7)))
     }
+    start_time = datetime.time.min
 
-    def transform_start(self, arg):
+    def transform_start(self, arg=None):
         if arg is None:
             return self.mapping[0]
         if hasattr(arg, "weekday"):
@@ -58,9 +203,22 @@ class Weekly(TimeCycle):
 
     def replace(self, dt):
         diff = self.start - dt.weekday()
-        dt + pd.offsets.Day() * diff
-        return pd.Timestamp.combine(dt, self.start)
+        dt = dt + pd.offsets.Day() * diff
+        return pd.Timestamp.combine(dt, self.start_time)
 
-daily = Daily(access_name="daily")
-weekly = Weekly(access_name="weekly")
+daily = Daily()
+today = Daily()
+yesterday = Daily(n=2)
+weekly = Weekly()
 #monthly = Monthly(access_name="monthly")
+
+
+today.register("today", group="from_")
+yesterday.register("yesterday", group="from_")
+
+daily.register("daily", group="in_cycle")
+weekly.register("weekly", group="in_cycle")
+
+# Register all week days
+for weekday in (*calendar.day_name, *calendar.day_abbr):
+    Weekly(weekday).register(weekday, group="from_")

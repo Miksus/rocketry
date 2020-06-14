@@ -3,23 +3,32 @@ import pandas as pd
 # TODO: Way to calculate how much time (ie. seconds) to next event
 
 from abc import abstractmethod
+import inspect
+import itertools
 
-
-PERIODS = {
-    "cycle": {},
-    "delta": {},
-    "interval": {},
+SYNTAX_MAPPING = {
+    "from_": {},
+    "in_cycle": {},
+    "in_": {}
 }
 
-def get_cycle(name):
-    return PERIODS["cycle"][name]
+def get_period(name, group):
+    return SYNTAX_MAPPING[group][name]
 
-def get_delta(name):
-    return PERIODS["delta"][name]
+def register_class(cls):
+    parents = inspect.getmro(cls)
+    is_cycle = TimeCycle in parents
+    is_interval = TimeInterval in parents
+    is_delta = TimeDelta in parents
 
-def get_interval(name):
-    return PERIODS["interval"][name]
+    n_parents = sum([is_cycle, is_interval, is_delta])
+    if n_parents > 1:
+        raise TypeError(f"Class {cls} cannot be registered as it inherits from more than one TimePeriod abstract classes")
+    elif n_parents < 1:
+        raise TypeError(f"Class {cls} cannot be registered as it does not inherit from TimePeriod abstract classes")
 
+    parent = TimeCycle if is_cycle else TimeInterval if is_interval else TimeDelta
+    PERIOD_CLASSES[parent].append(cls)
 
 class TimePeriod:
     """Base for all classes that represent a time period
@@ -36,19 +45,9 @@ class TimePeriod:
     def __init__(self, *args, **kwargs):
         pass
 
-    def __new__(cls, *args, **kwargs):
-        "Store created cycle for easy acquisition"
-        instance = super().__new__(cls)
-        period_name = kwargs.get("access_name", None)
-        if period_name is None:
-            return instance
-        else:
-            cls_name = cls._type_name
-            if period_name in PERIODS[cls_name]:
-                raise KeyError(f"All periods must have unique names. Given: {period_name}")
-
-            PERIODS[cls_name][period_name] = instance
-            return instance
+    def register(self, syntax, group):
+        "Save the instance to the register for easier access"
+        SYNTAX_MAPPING[group][syntax] = self
 
     def next_time_span(self, dt, *, include_current=False) -> tuple:
         "Return (start, end) for next "
@@ -61,26 +60,6 @@ class TimePeriod:
         "Time for beginning of the next start time of the condition"
         dt_next_start = self.rollforward(dt)
         return dt_next_start - dt
-
-    def next(self, dt):
-        "Get next time interval of the period"
-        start = self.rollforward(dt)
-        end = self.next_end(dt)
-
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
-        
-        return pd.Interval(start, end, closed="both")
-    
-    def prev(self, dt):
-        "Get previous time interval of the period"
-        end = self.rollback(dt)
-        start = self.prev_start(dt)
-
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
-        
-        return pd.Interval(start, end, closed="both")
 
     def __contains__(self, other):
         interval = self.next(other)
@@ -153,6 +132,33 @@ class TimeInterval(TimePeriod):
         "Get pervious end point of the period"
         raise NotImplementedError("Contains not implemented.")
 
+    @abstractmethod
+    def from_between(start, end):
+        raise NotImplementedError("__between__ not implemented.")
+
+    def next(self, dt):
+        "Get next time interval of the period"
+
+        start = self.rollforward(dt)
+        end = self.next_end(dt)
+
+        start = pd.Timestamp(start)
+        end = pd.Timestamp(end)
+        
+        return pd.Interval(start, end, closed="both")
+    
+    def prev(self, dt):
+        "Get previous time interval of the period"
+
+        end = self.rollback(dt)
+        start = self.prev_start(dt)
+
+        start = pd.Timestamp(start)
+        end = pd.Timestamp(end)
+        
+        return pd.Interval(start, end, closed="both")
+
+
 
 class TimeDelta(TimePeriod):
     """Base for all time deltas
@@ -171,7 +177,7 @@ class TimeDelta(TimePeriod):
     Answers to "past 1 hour"
     """
     _type_name = "delta"
-    def __init__(self, *args, access_name=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.duration = abs(pd.Timedelta(*args, **kwargs))
 
     @abstractmethod
@@ -183,12 +189,14 @@ class TimeDelta(TimePeriod):
 
     def prev(self, dt):
         start = dt - self.duration
+        start = pd.Timestamp(start)
         end = pd.Timestamp(dt)
         return pd.Interval(start, end) 
 
     def next(self, dt):
         end = dt + self.duration
         start = pd.Timestamp(dt)
+        end = pd.Timestamp(end)
         return pd.Interval(start, end)
 
 class TimeCycle(TimePeriod):
@@ -212,12 +220,12 @@ class TimeCycle(TimePeriod):
     _type_name = "cycle"
 
     offset = None
-    def __init__(self, start=None, n=1, **kwags):
-        self.start = self.transform_start(start)
+    def __init__(self, *args, n=1, **kwargs):
+        self.start = self.transform_start(*args, **kwargs)
         self.n = n
 
     def __mul__(self, value):
-        return type(self)(self.time, n=value)
+        return type(self)(self.start, n=value)
 
     def prev(self, dt):
         dt_start = dt - (self.n - 1) * self.offset
@@ -320,7 +328,7 @@ class All(TimePeriod):
             return pd.Interval(start, end)
         else:
             starts = [interval.left for interval in intervals]
-            return self.prev(min(starts))
+            return self.prev(max(starts) - datetime.datetime.resolution)
 
     def next(self, dt):
         intervals = [
@@ -338,7 +346,7 @@ class All(TimePeriod):
         else:
             ends = [interval.right for interval in intervals]
             # Tries next interval
-            return self.next(max(ends))
+            return self.nex(min(ends) + datetime.datetime.resolution)
 
 class Any(TimePeriod):
 
@@ -355,7 +363,7 @@ class Any(TimePeriod):
         starts = [interval.left for interval in intervals]
         ends = [interval.right for interval in intervals]
 
-        start = min()(starts)
+        start = min(starts)
         end = max(ends)
         return pd.Interval(start, end)
 
@@ -370,3 +378,59 @@ class Any(TimePeriod):
         start = min(starts)
         end = max(ends)
         return pd.Interval(start, end)
+
+class Offsetted(TimePeriod):
+
+    def __init__(self, period, n):
+        if isinstance(period, TimeCycle):
+            # adjust prev & next
+            raise NotImplementedError
+        self.period = period
+        self.n = n
+
+    def prev(self, dt):
+        interval = self.period.prev(dt)
+        new_dt = interval.left - pd.Timestamp.resolution
+        interval = self.period.prev(new_dt)
+        return interval
+
+    def next(self, dt):
+        interval = self.period.next(dt)
+        new_dt = interval.right + pd.Timestamp.resolution
+        interval = self.period.next(new_dt)
+        return interval
+
+class StaticInterval(TimePeriod):
+    """Inverval that is fixed in specific datetimes
+    """
+    min = pd.Timestamp.min
+    max = pd.Timestamp.max
+    def __init__(self, start=None, end=None):
+        self.start = start if start is not None else self.min
+        self.end = end if end is not None else self.max
+
+    def prev(self, dt):
+        dt = pd.Timestamp(dt)
+        start = pd.Timestamp(self.start)
+        if start > dt:
+            # The actual interval is in the future
+            return pd.Interval(self.min, self.min)
+        return pd.Interval(start, dt)
+
+    def next(self, dt):
+        dt = pd.Timestamp(dt)
+        end = pd.Timestamp(self.end)
+        if end < dt:
+            # The actual interval is already gone
+            return pd.Interval(self.max, self.max)
+        return pd.Interval(dt, end)
+
+    @property
+    def is_max_interval(self):
+        return (self.start == self.min) and (self.end == self.max)
+
+PERIOD_CLASSES = {
+    TimeCycle: [],
+    TimeDelta: [],
+    TimeInterval: [],
+}

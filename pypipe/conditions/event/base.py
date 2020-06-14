@@ -8,6 +8,7 @@ import numpy as np
 
 # TODO: convert Observation to a "statement" when comparison?
 from ..base import BaseCondition
+from pypipe.time import period_factory, StaticInterval
 
 
 class Statement(BaseCondition):
@@ -72,25 +73,25 @@ class Statement(BaseCondition):
             tasks_alive == 0
     """
 
-    def __init__(self, experiment=None, *, quantitative=False, historical=False):
+    def __init__(self, func=None, *, quantitative=False, historical=False):
         """Base for events
 
         Keyword Arguments:
-            experiment {[type]} -- [description] (default: {None})
+            func {[type]} -- [description] (default: {None})
             quantitative {bool} -- Whether the statement function returns number
             historical {bool} -- Whether the statement has start and end times
         """
-        self._func = experiment
+        self._func = func
         self.quantitative = quantitative
         self.historical = historical
 
         if self.historical:
-            self.period = None
+            self.period = StaticInterval()
         if self.quantitative:
             self.comparisons = {}
 
         self.args = ()
-        self.kwargs = {}
+        self._kwargs = {}
 
     @property
     def function(self):
@@ -101,57 +102,43 @@ class Statement(BaseCondition):
         )
 
     def __bool__(self):
-        return self.observe()
+        outcome = self._func(*self.args, **self.kwargs)
+        return self.to_boolean(outcome)
 
-    def observe(self, start=None, end=None):
-        "Observe statement"
-        kwargs = self.kwargs
-
+    @property
+    def kwargs(self):
+        kwargs = self._kwargs
         if self.historical:
-            dt = self.current_datetime()
-            interval = self.period.prev(dt)
+            ref_dt = self.current_datetime
+            interval = self.period.prev(ref_dt)
             start = interval.left
             end = interval.right
             kwargs.update({"start": start, "end": end})
+        return kwargs
 
-        outcome = self._func(*self.args, **kwargs)
-
+    def to_boolean(self, result):
         if self.quantitative:
+            result = self.to_count(result)
+            comparisons = self.comparisons or {"__gt__": 0}
             return all(
-                getattr(outcome, comp)(val) 
-                for comp, val in self.comparisons.items()
+                getattr(result, comp)(val) 
+                for comp, val in comparisons.items()
             )
-        return outcome
-
-    def past(self, *args, **kwargs):
-        """
-        Examples:
-        ---------
-            mystatement.past("1 days 5 hours")
-        """
-        period = TimeDelta(*args, **kwargs)
-        if self.period is not None:
-            self.period &= period
         else:
-            self.period = period
-    
-    def between(self, start, end):
-        # TODO: make from_slice to TimeInterval
-        period = TimeInterval.from_slice(start, end)
-        if self.period is not None:
-            self.period &= period
-        else:
-            self.period = period
+            return bool(result)
 
-    def in_cycle(self):
-        if not self.require_task:
-            raise AttributeError("Statement does not require task")
-        period = self.kwargs["task"].cycle
-
-        if self.period is not None:
-            self.period &= period
+    def to_count(self, result):
+        "Turn event result to quantitative number"
+        if isinstance(result, (int, float)):
+            return result
         else:
-            self.period = period
+            return len(result)
+
+    @property
+    def cycle(self):
+        if self.historical:
+            return self.period
+            
 
     @property
     def require_task(self):
@@ -159,7 +146,7 @@ class Statement(BaseCondition):
 
     def __call__(self, *args, **kwargs):
         if not args and not kwargs:
-            return self.experiment()
+            return self.function()
 
         if self._func is None:
             self._func = args[0]
@@ -167,20 +154,17 @@ class Statement(BaseCondition):
 
         new = copy(self)
 
-        if kwargs:
-            new.kwargs = kwargs
-        if args:
-            new.args = args
+        new.set_params(*args, **kwargs)
         return new
         
     def set_params(self, *args, **kwargs):
         "Add arguments to the experiment"
         self.args = (*self.args, *args)
-        self.kwargs.update(kwargs)
+        self._kwargs.update(kwargs)
 
 
     def has_param(self, *params):
-        sig = signature(self.experiment)
+        sig = signature(self._func)
         return all(param in sig.parameters for param in params)
 
     def has_param_set(self, *params):
@@ -189,38 +173,100 @@ class Statement(BaseCondition):
 # Comparisons
     def __eq__(self, other):
         # self == other
-        obs = copy(self)
-        obs.comparisons["__ne__"] = other
+        obs = self.copy()
+        obs._set_comparison("__eq__", other)
         return obs
 
     def __ne__(self, other):
         # self != other
-        obs = copy(self)
-        obs.comparisons["__ne__"] = other
+        obs = self.copy()
+        obs._set_comparison("__ne__", other)
         return obs
 
     def __lt__(self, other):
         # self < other
-        obs = copy(self)
-        stmt.comparisons["__lt__"] = other
-        return stmt
+        obs = self.copy()
+        obs._set_comparison("__lt__", other)
+        return obs
 
     def __gt__(self, other):
         # self > other
-        obs = copy(self)
-        obs.comparisons["__gt__"] = other
+        obs = self.copy()
+        obs._set_comparison("__gt__", other)
         return obs
 
     def __le__(self, other):
         # self <= other
         obs = copy(self)
-        obs.comparisons["__le__"] = other
+        obs._set_comparison("__le__", other)
         return obs
         
     def __ge__(self, other):
         # self >= other
-        obs = copy(self)
-        obs.comparisons["__ge__"] = other
+        obs = self.copy()
+        obs._set_comparison("__ge__", other)
         return obs
 
+    def more_than(self, num):
+        return self > numb
 
+    def less_than(self, num):
+        return self < numb
+
+    def _set_comparison(self, key, val):
+        if not self.quantitative:
+            raise TypeError(f"Statement '{self.name}' is not quantitative and cannot be compared.")
+        self.comparisons[key] = val
+
+# Time related
+    def between(self, *args, **kwargs):
+        return self._set_period(
+            period_factory.between(*args, **kwargs)
+        )
+
+    def past(self, *args, **kwargs):
+        return self._set_period(
+            period_factory.past(*args, **kwargs)
+        )
+
+    def in_(self, *args, **kwargs):
+        return self._set_period(
+            period_factory.in_(*args, **kwargs)
+        )
+
+    def from_(self, *args, **kwargs):
+        return self._set_period(
+            period_factory.from_(*args, **kwargs)
+        )
+
+    def in_cycle(self, *args, **kwargs):
+        return self._set_period(
+            period_factory.in_cycle(*args, **kwargs)
+        )
+
+    def in_period(self, period):
+        return self._set_period(
+            period
+        )
+
+    @property
+    def name(self):
+        return self._func.__name__
+
+    def _set_period(self, period):
+        stmt = self.copy()
+        if not stmt.historical:
+            raise TypeError(f"Statement '{stmt.name}' is not historical and does not have past.")
+        if isinstance(period, StaticInterval) and period.is_max_interval:
+            stmt.period = period
+        else:
+            stmt.period &= period
+        return stmt
+
+
+    def copy(self):
+        # Cannot deep copy self as if task is in kwargs, failure occurs
+        new = copy(self)
+        new.comparisons = copy(self.comparisons)
+        new.period = copy(self.period)
+        return new

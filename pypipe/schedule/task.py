@@ -1,14 +1,15 @@
 
 
 from pathlib import Path
+import subprocess
 
 from pypipe.conditions.base import BaseCondition
-from pypipe.time.base import get_cycle
-from pypipe.event import task_ran
+from pypipe.conditions.event import task_ran
 from pypipe.log import TaskAdapter, CsvHandler
 
-from pypipe.conditions import HasNotOccurred, AlwaysTrue, AlwaysFalse
-
+from pypipe.conditions import AlwaysTrue, AlwaysFalse
+from pypipe.time import period_factory
+from pypipe import conditions
 import logging
 
 
@@ -65,7 +66,6 @@ class Task:
 
     def __new__(cls, *args, **kwargs):
         "Store created tasks for easy acquisition"
-        print("Setting up the task")
         if not cls.logger.handlers:
             # Setting default handler 
             # as handler missing
@@ -83,7 +83,7 @@ class Task:
 
     def __init__(self, action, 
                 start_cond=None, run_cond=None, end_cond=None, 
-                execution=None, timeout=None, priority=1, 
+                execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
                 name=None):
         """[summary]
@@ -112,7 +112,9 @@ class Task:
         self.on_success = on_success
         self.on_finish = on_finish
 
+        # Additional conditions
         self.execution = execution
+        self.dependent = dependent
 
         self.name = id(self) if name is None else name
         self.set_logger(self.logger)
@@ -129,7 +131,7 @@ class Task:
     
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
-        for cond_set in (self.start_cond, self.run_cond, self.end_cond):
+        for cond_set in (self._start_cond, self.run_cond, self.end_cond):
             if isinstance(cond_set, BaseCondition) and hasattr(cond_set, "apply"):
                 cond_set.apply(_set_default_param, task=self)
 
@@ -159,13 +161,13 @@ class Task:
             self.process_finish(status=status)
 
     def log_running(self):
-        self.logger.info(f'Running {self.name}', extra={"action": "run"})
+        self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
 
     def log_failure(self):
-        self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
+        self.logger.error(f"Task '{self.name}' failed", exc_info=True, extra={"action": "fail"})
 
     def log_success(self):
-        self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
+        self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
 
     def execute_action(self, **kwargs):
         "Run the actual, given, task"
@@ -184,18 +186,19 @@ class Task:
             self.on_finish(status)
 
     @property
-    def execution(self):
-        return self._execution
+    def start_cond(self):
+        start_cond = self._start_cond
+        if self.dependent is not None:
+            start_cond &= self.dependency_condition
 
-    @execution.setter
-    def execution(self, value):
-        self._execution = value
-        if value is None:
-            return
-        period = get_cycle(value)
-        cond = task_not_run(task=self)
-        cond.period = period
-        self.start_cond &= cond
+        if self.execution is not None:
+            start_cond &= self.execution_condition
+
+        return start_cond
+
+    @start_cond.setter
+    def start_cond(self, value):
+        self._start_cond = value
 
     @property
     def is_running(self):
@@ -208,6 +211,75 @@ class Task:
             # No previous status
             return None
         return record["action"]
+
+    @property
+    def cycle(self):
+        "Determine Time object for the interval (maximum possible if time independent as 'or')"
+        execution = self.execution_condition
+        if execution is not None:
+            return execution.condition.period 
+
+    @property
+    def execution_condition(self):
+        execution = self.execution
+        if execution is not None:
+            if isinstance(execution, str):
+                return ~task_ran(task=self).in_cycle(self.execution)
+            else:
+                # period is the execution variable
+                cond = task_ran(task=self)
+                cond.period = execution
+                return ~cond
+
+    @property
+    def dependency_condition(self):
+        if self.dependent is not None:
+            return conditions.All([
+                task_ran(get_task(task)).in_period(get_task(task).cycle)
+                for task in self.dependent
+            ])
+
+# Additional way to define execution
+    def between(self, *args, **kwargs):
+        execution = period_factory.between(*args, **kwargs)
+        if self.execution is None:
+            self.execution = execution
+        else:
+            self.execution &= execution
+        return self
+
+    def past(self, *args, **kwargs):
+        execution = period_factory.past(*args, **kwargs)
+        if self.execution is None:
+            self.execution = execution
+        else:
+            self.execution &= execution
+        return self
+
+    def in_(self, *args, **kwargs):
+        execution = period_factory.in_(*args, **kwargs)
+        if self.execution is None:
+            self.execution = execution
+        else:
+            self.execution &= execution
+        return self
+
+    def from_(self, *args, **kwargs):
+        execution = period_factory.from_(*args, **kwargs)
+        if self.execution is None:
+            self.execution = execution
+        else:
+            self.execution &= execution
+        return self
+
+    def in_cycle(self, *args, **kwargs):
+        execution = period_factory.in_cycle(*args, **kwargs)
+        if self.execution is None:
+            self.execution = execution
+        else:
+            self.execution &= execution
+        return self
+
 
 class ScriptTask(Task):
 
@@ -222,6 +294,25 @@ class ScriptTask(Task):
 
         task_func = getattr(task_module, self.main_func)
         return task_func()
+
+
+class CommandlineTask(Task):
+
+    def execute_action(self):
+        command = self.action
+        pipe = subprocess.Popen('dir',
+                                shell=True,
+                                #stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                )
+        stout, stderr = pipe.communicate()
+        
+        if pipe.returncode != 0:
+            stderr = stderr.decode("utf-8", errors="ignore")
+            raise OSError("Failed running command: \n{stderr}")
+        return stout
+
 
 class JupyterTask(Task):
 

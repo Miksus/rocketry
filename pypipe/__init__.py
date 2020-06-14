@@ -6,7 +6,7 @@ from .conditions import (
 )
 
 from . import time
-from . import event
+#from . import event
 from . import schedule
 from .schedule import Task
 

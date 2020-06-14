@@ -2,6 +2,8 @@
 import datetime
 from abc import abstractmethod
 
+from pypipe import time
+
 class BaseCondition:
     """Condition is a thing/occurence that should happen in order to something happen
 
@@ -52,6 +54,12 @@ class BaseCondition:
     def set_current_datetime(self, value):
         """For testing purposes only"""
         self._current_datetime = value
+
+    @property
+    def cycle(self):
+        "By default, the cycle is all the times"
+        # By default the time cycle cannot be determined thus full range is given
+        return time.StaticInterval()
 
 class ConditionContainer:
     "Wraps another condition"
@@ -104,6 +112,17 @@ class Any(BaseCondition, ConditionContainer):
             for cond in self.subconditions
         )
 
+    @property
+    def cycle(self):
+        "Aggregate the TimePeriods the condition has"
+        all_timeperiods = all(isinstance(cond, TimeCondition) for cond in self.subconditions)
+        if all_timeperiods:
+            # Can be determined
+            return time.Any(*[cond.cycle for cond in self.subconditions])
+        else:
+            # Cannot be determined --> all times may be valid
+            return time.StaticInterval()
+
 class All(BaseCondition, ConditionContainer):
 
     def __init__(self, *conditions):
@@ -136,6 +155,11 @@ class All(BaseCondition, ConditionContainer):
     def __getitem__(self, val):
         return self.subconditions[val]
 
+    @property
+    def cycle(self):
+        "Aggregate the TimePeriods the condition has"
+        return time.All(*[cond.cycle for cond in self.subconditions])
+
 class Not(BaseCondition, ConditionContainer):
 
     def __init__(self, condition):
@@ -152,6 +176,27 @@ class Not(BaseCondition, ConditionContainer):
     def subconditions(self):
         return (self.condition,)
 
+    @property
+    def cycle(self):
+        "Aggregate the TimePeriods the condition has"
+        if isinstance(self.condition, TimeCondition):
+            # Can be determined
+            return ~self.condition.cycle
+        else:
+            # Cannot be determined --> all times may be valid
+            return time.StaticInterval()
+
+    def __getattr__(self, name):
+        """Called as last resort so the actual 
+        condition's attribute returned to be more
+        flexible"""
+        return getattr(self.condition, name)
+
+    def __invert__(self):
+        "inverse of inverse is the actual condition"
+        return self.condition
+
+
 class AlwaysTrue(BaseCondition):
     "Condition that is always true"
     def __bool__(self):
@@ -161,3 +206,36 @@ class AlwaysFalse(BaseCondition):
     "Condition that is always false"
     def __bool__(self):
         return False
+
+
+class TimeCondition(BaseCondition):
+    """Base class for Time conditions (whether currently is specified time of day)
+    """
+
+    def __init__(self, *args, **kwargs):
+        if hasattr(self, "period_class"):
+            self.period = self.period_class(*args, **kwargs)
+
+    def __bool__(self):
+        return self.current_datetime in self.period
+
+    def estimate_next(self, dt):
+        interval = self.period.next(dt)
+        return dt - interval.left
+
+    @classmethod
+    def from_period(cls, period):
+        new = TimeCondition()
+        new.period = period
+        return new
+
+    def __repr__(self):
+        if hasattr(self, "period"):
+            return f'<is {repr(self.period)}>'
+        else:
+            return type(self).__name__
+
+    @property
+    def cycle(self):
+        "Aggregate the TimePeriods the condition has"
+        return self.period

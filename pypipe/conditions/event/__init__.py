@@ -1,4 +1,6 @@
-from . import base
+
+
+from .base import Statement
 from .builtin import (
     task_ran,
     task_failed,

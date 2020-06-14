@@ -27,8 +27,8 @@ class Scheduler:
 
     logger = logging.getLogger(__name__)
 
-    shortest_sleep = 5
-    longest_sleep = 10 * 60
+    min_sleep = 0.1
+    max_sleep = 10 * 60
 
     def __init__(self, tasks, maintain_condition=None, shut_condition=None):
         """[summary]
@@ -113,7 +113,7 @@ class Scheduler:
     def run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.task_list
-        self.logger.info(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
+        self.logger.info(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
             if bool(task.start_cond):
                 self.run_task(task)
@@ -166,13 +166,13 @@ class Scheduler:
         now = datetime.datetime.now()
         try:
             delay = min(
-                task.start_cond.estimate_timedelta(now).total_seconds()
+                task.start_cond.cycle.next(now).left
                 for task in self.tasks
             )
         except AttributeError:
             delay = 0
         self.logger.debug(f"Next run cycle at {delay} seconds.")
-        return min(max(delay, self.shortest_sleep), self.longest_sleep)
+        return min(max(delay, self.min_sleep), self.max_sleep)
 
     @property
     def task_list(self):
@@ -204,12 +204,13 @@ class Scheduler:
 def _run_task_as_process(task, queue):
     "Run a task in a separate process (has own memory)"
     # TODO: set the queue here, make again the logger to the task and add QueueHandler to the logger
-
-    task.set_logger(logging.getLogger("pypipe.schedule.process"))
-
-    task.logger.addHandler(
-        logging.StreamHandler(sys.stdout)
-    )
+    
+    logger = logging.getLogger("pypipe.schedule.process")
+    logger.setLevel(logging.INFO)
+    task.set_logger(logger)
+    #task.logger.addHandler(
+    #    logging.StreamHandler(sys.stdout)
+    #)
     task.logger.addHandler(
         QueueHandler(queue)
     )
@@ -287,7 +288,7 @@ class MultiScheduler(Scheduler):
         self.handle_logs()
 
     def terminate_task(self, task):
-        self.logger.debug(f"Terminating task {task.name}")
+        self.logger.debug(f"Terminating task '{task.name}'")
         task._process.terminate()
 
     def is_timeouted(self, task):
@@ -332,7 +333,7 @@ class MultiScheduler(Scheduler):
                 self.logger.debug(f"Task log queue empty.")
                 break
             else:
-                self.logger.debug(f"Inserting record for {record.task_name} ({record.action})")
+                self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = get_task(record.task_name)
                 task.logger.handle(record)
 
@@ -341,7 +342,7 @@ class MultiScheduler(Scheduler):
         queue = self._log_queue
         record = queue.get()
 
-        self.logger.debug(f"Inserting record for {record.task_name} ({record.action})")
+        self.logger.debug(f"Inserting record for' {record.task_name}' ({record.action})")
         task = get_task(record.task_name)
         task.logger.handle(record)
 
