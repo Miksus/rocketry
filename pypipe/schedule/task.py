@@ -135,11 +135,11 @@ class Task:
             if isinstance(cond_set, BaseCondition) and hasattr(cond_set, "apply"):
                 cond_set.apply(_set_default_param, task=self)
 
-    def __call__(self, **params):
+    def __call__(self, *args, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
         try:
-            output = self.execute_action(**params)
+            output = self.execute_action(*args, **params)
 
         except Exception as exception:
             status = "failed"
@@ -169,9 +169,9 @@ class Task:
     def log_success(self):
         self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
 
-    def execute_action(self, **kwargs):
+    def execute_action(self, *args, **kwargs):
         "Run the actual, given, task"
-        return self.action(**kwargs)
+        return self.action(*args, **kwargs)
 
     def process_failure(self, exception):
         if self.on_failure:
@@ -296,11 +296,11 @@ class ScriptTask(Task):
         return task_func()
 
 
-class CommandlineTask(Task):
+class CommandTask(Task):
 
     def execute_action(self):
         command = self.action
-        pipe = subprocess.Popen('dir',
+        pipe = subprocess.Popen(command,
                                 shell=True,
                                 #stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
@@ -310,7 +310,7 @@ class CommandlineTask(Task):
         
         if pipe.returncode != 0:
             stderr = stderr.decode("utf-8", errors="ignore")
-            raise OSError("Failed running command: \n{stderr}")
+            raise OSError(f"Failed running command: \n{stderr}")
         return stout
 
 
