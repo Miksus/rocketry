@@ -11,7 +11,7 @@ from pypipe.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.time import period_factory
 from pypipe import conditions
 import logging
-
+import inspect
 
 TASKS = {}
 
@@ -61,6 +61,49 @@ class Task:
     This class is meant to be container
     for all the information needed to run
     the task
+
+    Public attributes:
+    ------------------
+        action {function} : Function to execute as task. Parameters are passed by scheduler
+
+        start_cond {Condition} : Condition to start the task (bool returns True)
+        run_cond {Condition} : If condition returns False when task is running, termination occurs (only applicable with multiprocessing/threading)
+        end_cond {Condition} : If condition returns True when task is running, termination occurs (only applicable with multiprocessing/threading)
+        timeout {int, float} : Seconds allowed to run or terminated (only applicable with multiprocessing/threading)
+
+        priority {int} : Priority of the task. Higher priority tasks are run first
+
+        on_failure {function} : Function to execute if the action raises exception
+        on_success {function} : Function to execute if the action succeessed
+        on_finish {function} : Function to execute when the function finished (failed or success)
+
+        execution {str, TimePeriod} : Time period when the task is allowed to run once and only once
+            examples: "daily", "past 2 hours", "between 11:00 and 12:00"
+        dependent {List[str]} : List of task names to must run before this task (in their execution cycle)
+        name {str} : Name of the task. Must be unique
+
+        force_run {bool} : Run the task manually once
+
+    Readonly Properties:
+    -----------
+        is_running -> bool : Check whether the task is currently running or not
+        status -> str : Latest status of the task
+
+    Methods:
+    --------
+        __call__(*args, **kwargs) : Execute the task
+        filter_params(params:Dict) : Filter the passed parameters needed by the action
+
+        between(*args, **kwargs) : Add execution condition of running the task between specified times
+        past(*args, **kwargs) : Add execution condition of running the task in specified interval
+        in_(*args, **kwargs) :
+
+        log_running() : Log that the task is running
+        log_failure() : Log that the task has failed
+        log_success() : Log that the task has succeeded
+
+        
+
     """
     logger = logging.getLogger(__name__)
 
@@ -107,6 +150,7 @@ class Task:
 
         self.timeout = timeout
         self.priority = priority
+        self.force_run = False
 
         self.on_failure = on_failure
         self.on_success = on_success
@@ -138,6 +182,7 @@ class Task:
     def __call__(self, *args, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
+        params = self.filter_params(params)
         try:
             output = self.execute_action(*args, **params)
 
@@ -159,6 +204,21 @@ class Task:
 
         finally:
             self.process_finish(status=status)
+
+    def filter_params(self, params):
+        required_params = [
+            val
+            for name, val in sig.parameters
+            if val.kind in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD, # Normal argument
+                inspect.Parameter.KEYWORD_ONLY # Keyword argument
+            )
+        ]
+        kwargs = {}
+        for param in required_params:
+            if param in params:
+                kwargs[param] = params[param]
+        return kwargs
 
     def log_running(self):
         self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
@@ -187,12 +247,16 @@ class Task:
 
     @property
     def start_cond(self):
+
         start_cond = self._start_cond
         if self.dependent is not None:
             start_cond &= self.dependency_condition
 
         if self.execution is not None:
             start_cond &= self.execution_condition
+
+        if self.force_run:
+            start_cond |= AlwaysTrue()
 
         return start_cond
 
@@ -285,7 +349,7 @@ class ScriptTask(Task):
 
     main_func = "main"
 
-    def execute_action(self):
+    def execute_action(self, *args, **kwargs):
 
         script_path = self.action
         spec = importlib.util.spec_from_file_location("task", script_path)
@@ -298,19 +362,30 @@ class ScriptTask(Task):
 
 class CommandTask(Task):
 
-    def execute_action(self):
+    timeout = None
+
+    def execute_action(self, *args, **kwargs):
         command = self.action
+        if args:
+            command = [command] + list(args) if isinstance(command, str) else command + list(args)
+
         pipe = subprocess.Popen(command,
                                 shell=True,
                                 #stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 )
-        stout, stderr = pipe.communicate()
+        try:
+            outs, errs = pipe.communicate(timeout=self.timeout)
+        except TimeoutExpired:
+            # https://docs.python.org/3.3/library/subprocess.html#subprocess.Popen.communicate
+            pipe.kill()
+            outs, errs = pipe.communicate()
+            raise
         
         if pipe.returncode != 0:
-            stderr = stderr.decode("utf-8", errors="ignore")
-            raise OSError(f"Failed running command: \n{stderr}")
+            errs = errs.decode("utf-8", errors="ignore")
+            raise OSError(f"Failed running command: \n{errs}")
         return stout
 
 
