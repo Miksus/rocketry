@@ -12,6 +12,9 @@ from pypipe.time import period_factory
 from pypipe import conditions
 import logging
 import inspect
+import datetime
+
+import pandas as pd
 
 TASKS = {}
 
@@ -92,6 +95,7 @@ class Task:
     Methods:
     --------
         __call__(*args, **kwargs) : Execute the task
+        __bool__() : Whether the task can be run now or not
         filter_params(params:Dict) : Filter the passed parameters needed by the action
 
         between(*args, **kwargs) : Add execution condition of running the task between specified times
@@ -102,9 +106,14 @@ class Task:
         log_failure() : Log that the task has failed
         log_success() : Log that the task has succeeded
 
-        
 
     """
+
+    # TODO:
+    #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
+    #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
+
+
     logger = logging.getLogger(__name__)
 
     def __new__(cls, *args, **kwargs):
@@ -112,7 +121,6 @@ class Task:
         if not cls.logger.handlers:
             # Setting default handler 
             # as handler missing
-            print("Setting handlers")
             set_default_logger()
 
         instance = super().__new__(cls)
@@ -175,15 +183,16 @@ class Task:
     
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
-        for cond_set in (self._start_cond, self.run_cond, self.end_cond):
+        for cond_set in (self.start_cond, self.run_cond, self.end_cond):
             if isinstance(cond_set, BaseCondition) and hasattr(cond_set, "apply"):
                 cond_set.apply(_set_default_param, task=self)
 
     def __call__(self, *args, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
-        params = self.filter_params(params)
+        
         try:
+            params = self.filter_params(params)
             output = self.execute_action(*args, **params)
 
         except Exception as exception:
@@ -205,7 +214,16 @@ class Task:
         finally:
             self.process_finish(status=status)
 
+    def __bool__(self):
+        "Check whether the task can be run or not"
+        if self.force_run:
+            return True
+        
+        return bool(self.start_cond & self._dependency_condition & self._execution_condition)
+        
+
     def filter_params(self, params):
+        sig = inspect.signature(self.action)
         required_params = [
             val
             for name, val in sig.parameters
@@ -229,6 +247,10 @@ class Task:
     def log_success(self):
         self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
 
+    def log_record(self, record):
+        "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
+        self.logger.handle(record)
+
     def execute_action(self, *args, **kwargs):
         "Run the actual, given, task"
         return self.action(*args, **kwargs)
@@ -246,23 +268,21 @@ class Task:
             self.on_finish(status)
 
     @property
-    def start_cond(self):
-
-        start_cond = self._start_cond
-        if self.dependent is not None:
-            start_cond &= self.dependency_condition
-
-        if self.execution is not None:
-            start_cond &= self.execution_condition
-
-        if self.force_run:
-            start_cond |= AlwaysTrue()
-
-        return start_cond
-
-    @start_cond.setter
-    def start_cond(self, value):
-        self._start_cond = value
+    def next_start(self):
+        "Next datetime when the task can be potentially run (more of a guess)"
+        now = datetime.datetime.now()
+        
+        if bool(self._execution_condition):
+            return now
+        cond = self._execution_condition
+        events = cond.function()
+        latest_run = max(events)
+        
+        
+        period = cond.period
+        curr_interv = period.next(latest_run) # Current interval
+        next_interv = period.next(curr_interv.right + pd.Timedelta.resolution)
+        return next_interv.left
 
     @property
     def is_running(self):
@@ -279,29 +299,45 @@ class Task:
     @property
     def cycle(self):
         "Determine Time object for the interval (maximum possible if time independent as 'or')"
-        execution = self.execution_condition
+        execution = self._execution_condition
         if execution is not None:
-            return execution.condition.period 
+            return execution.period 
 
     @property
-    def execution_condition(self):
-        execution = self.execution
-        if execution is not None:
-            if isinstance(execution, str):
-                return ~task_ran(task=self).in_cycle(self.execution)
-            else:
-                # period is the execution variable
-                cond = task_ran(task=self)
-                cond.period = execution
-                return ~cond
+    def execution(self):
+        return self._execution
+
+    @execution.setter
+    def execution(self, value):
+        self._execution = value
+
+        if value is None:
+            self._execution_condition = AlwaysTrue()
+            return
+
+        if isinstance(value, str):
+            self._execution_condition = ~task_ran(task=self).in_cycle(value)
+        else:
+            # period is the execution variable
+            cond = task_ran(task=self)
+            cond.period = value
+            self._execution_condition = ~cond
 
     @property
-    def dependency_condition(self):
-        if self.dependent is not None:
-            return conditions.All([
-                task_ran(get_task(task)).in_period(get_task(task).cycle)
-                for task in self.dependent
-            ])
+    def dependent(self):
+        return self._dependent
+
+    @dependent.setter
+    def dependent(self, value):
+        self._dependent = value
+        if value is None:
+            self._dependency_condition = AlwaysTrue()
+            return
+        conds = [
+            task_ran(get_task(task)).in_period(get_task(task).cycle)
+            for task in value
+        ]
+        self._dependency_condition = conditions.All(conds)
 
 # Additional way to define execution
     def between(self, *args, **kwargs):
@@ -312,7 +348,7 @@ class Task:
             self.execution &= execution
         return self
 
-    def past(self, *args, **kwargs):
+    def every(self, *args, **kwargs):
         execution = period_factory.past(*args, **kwargs)
         if self.execution is None:
             self.execution = execution

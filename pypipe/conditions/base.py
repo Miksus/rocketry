@@ -234,8 +234,3 @@ class TimeCondition(BaseCondition):
             return f'<is {repr(self.period)}>'
         else:
             return type(self).__name__
-
-    @property
-    def cycle(self):
-        "Aggregate the TimePeriods the condition has"
-        return self.period

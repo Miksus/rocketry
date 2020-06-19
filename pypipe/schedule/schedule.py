@@ -5,6 +5,7 @@ from multiprocessing import Process, cpu_count
 import multiprocessing
 
 import traceback
+import warnings
 import time
 import sys
 import logging
@@ -16,6 +17,8 @@ from queue import Empty
 
 from .task import Task, get_task
 from pypipe.log import FilterAll
+
+from pypipe.utils import is_pickleable
 
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
@@ -30,7 +33,7 @@ class Scheduler:
     min_sleep = 0.1
     max_sleep = 10 * 60
 
-    def __init__(self, tasks, maintain_condition=None, shut_condition=None):
+    def __init__(self, tasks, maintain_tasks=None, shut_condition=None):
         """[summary]
 
         Arguments:
@@ -41,7 +44,7 @@ class Scheduler:
             shut_cond {[type]} -- Condition to shut down scheduler (default: {None})
         """
         self.tasks = tasks
-        self.maintain_condition = True if maintain_condition is None else maintain_condition
+        self.maintain_tasks = maintain_tasks
         self.shut_condition = False if shut_condition is None else shut_condition
 
     def __call__(self):
@@ -53,9 +56,7 @@ class Scheduler:
 
                 self.hibernate()
                 self.run_cycle()
-
-                if bool(self.maintain_condition):
-                    self.maintain()
+                self.maintain()
 
         except KeyboardInterrupt as exc:
             self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
@@ -89,6 +90,11 @@ class Scheduler:
             - Update the packages
         """
         self.logger.info(f"Maintaining the scheduler...", extra={"action": "maintain"})
+        tasks = [] if self.maintain_tasks is None else self.maintain_tasks
+        self.logger.info(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
+        for task in tasks:
+            if bool(task):
+                self.run_task(task, params={"scheduler": self})
     
     def restart(self):
         """Restart the scheduler by creating a new process
@@ -115,8 +121,9 @@ class Scheduler:
         tasks = self.task_list
         self.logger.info(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
-            if bool(task.start_cond):
+            if bool(task):
                 self.run_task(task)
+                task.force_run = False
 
     def run_task(self, task):
         "Run/execute one task"
@@ -124,7 +131,7 @@ class Scheduler:
         
         start_time = datetime.datetime.now()
         try:
-            task()
+            task(**self.get_params(task))
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -138,6 +145,12 @@ class Scheduler:
             start_time=start_time, end_time=end_time,
             exception=exception
         )
+
+    def get_params(self):
+        variable_params = {key: val() for key, val in self.variable_params.items()}
+        params = {**variable_params, **self.fixed_params}
+        return {key:val for key, val in params.items()}
+        
 
 # Logging
     def log_status(self, task, status, **kwargs):
@@ -166,13 +179,16 @@ class Scheduler:
         now = datetime.datetime.now()
         try:
             delay = min(
-                task.start_cond.cycle.next(now).left
+                task.next_start - now
                 for task in self.tasks
             )
         except AttributeError:
             delay = 0
+        else:
+            delay = delay.total_seconds()
+        delay = min(max(delay, self.min_sleep), self.max_sleep)
         self.logger.debug(f"Next run cycle at {delay} seconds.")
-        return min(max(delay, self.min_sleep), self.max_sleep)
+        return delay
 
     @property
     def task_list(self):
@@ -201,13 +217,15 @@ class Scheduler:
 
 
 
-def _run_task_as_process(task, queue):
+def _run_task_as_process(task, queue, params):
     "Run a task in a separate process (has own memory)"
     # TODO: set the queue here, make again the logger to the task and add QueueHandler to the logger
     
     logger = logging.getLogger("pypipe.schedule.process")
     logger.setLevel(logging.INFO)
-    task.set_logger(logger)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        task.set_logger(logger)
     #task.logger.addHandler(
     #    logging.StreamHandler(sys.stdout)
     #)
@@ -217,7 +235,7 @@ def _run_task_as_process(task, queue):
 
 
     try:
-        task()
+        task(**params)
     except Exception as exc:
         exception = exc
         status = "fail"
@@ -251,6 +269,9 @@ class MultiScheduler(Scheduler):
         super().__init__(*args, **kwargs)
         self.max_processes = cpu_count() if max_processes is None else max_processes
 
+        self.variable_params = {}
+        self.fixed_params = {}
+
 
     def run_cycle(self):
         "Run a cycle of tasks"
@@ -260,12 +281,12 @@ class MultiScheduler(Scheduler):
             self.handle_logs()
             if self.is_task_runnable(task):
                 # Run the actual task
-                self.run_task(task)
+                self.run_task_as_process(task)
             elif self.is_task_killable(task):
                 # Terminate the task
                 self.terminate_task(task)
 
-    def run_task(self, task):
+    def run_task_as_process(self, task):
         # TODO: Log that the task is running here as it will take a moment for the task itself to do it
         # (There is a high risk that the task is running twice as the condition did not get the info in time)
         self.logger.debug(f"Running task {task.name}")
@@ -276,16 +297,25 @@ class MultiScheduler(Scheduler):
         proc_task = copy(task)
         proc_task.logger = None
         proc_task.start_cond = None
+        proc_task._execution_condition = None
+        proc_task._dependency_condition = None
 
         #child_pipe, parent_pipe = multiprocessing.Pipe() # Make 2 way connection
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue,))
+        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params()))
         #task._conn = parent_pipe
 
         task._process.start()
         task._start_time = datetime.datetime.now()
+
         self.handle_next_log()
         # In case there are others waiting
         self.handle_logs()
+        
+
+    def get_params(self):
+        variable_params = {key: val() for key, val in self.variable_params.items()}
+        params = {**variable_params, **self.fixed_params}
+        return {key:val for key, val in params.items() if is_pickleable(val)}
 
     def terminate_task(self, task):
         self.logger.debug(f"Terminating task '{task.name}'")
@@ -306,7 +336,7 @@ class MultiScheduler(Scheduler):
         "Whether the task should be run"
         is_not_running = not self.is_alive(task)
         has_free_processors = self.has_free_processors()
-        is_condition = bool(task.start_cond)
+        is_condition = bool(task)
         return is_not_running and has_free_processors and is_condition
 
     def is_task_killable(self, task):
@@ -335,7 +365,7 @@ class MultiScheduler(Scheduler):
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = get_task(record.task_name)
-                task.logger.handle(record)
+                task.log_record(record)
 
     def handle_next_log(self):
         "Handle the status queue and carries the logging on their behalf"
@@ -344,7 +374,7 @@ class MultiScheduler(Scheduler):
 
         self.logger.debug(f"Inserting record for' {record.task_name}' ({record.action})")
         task = get_task(record.task_name)
-        task.logger.handle(record)
+        task.log_record(record)
 
     def setup(self):
         "Set up the scheduler"

@@ -134,6 +134,25 @@ class Statement(BaseCondition):
         else:
             return len(result)
 
+    def next_trigger(self):
+        "Get next datetime when the event can be the opposing value"
+        # TODO: find better name
+        # TODO: Is there better way?
+        if not self.historical:
+            raise AttributeError("Statement is not historical")
+        occurrences = self()
+        is_occurring = bool(self)
+        if is_occurring:
+            continue_to_occur = all(limiting not in self.comparisons for limiting in ("__eq__", "__ne__", "__le__", "__lt__"))
+            if is_occurring and continue_to_occur:
+                if isinstance(self.period, TimeInterval):
+                    return self.period.next(self.current_datetime).left
+                elif isinstance(self.period, TimeCycle):
+                    return self.period.next(self.current_datetime).left
+                elif isinstance(self.period, TimeDelta):
+                    oldest_occurrence = min(sorted(occurrences)[-more_or_equal:])
+                    return self.period.next(oldest_occurrence).right
+
     @property
     def cycle(self):
         if self.historical:
@@ -267,6 +286,8 @@ class Statement(BaseCondition):
     def copy(self):
         # Cannot deep copy self as if task is in kwargs, failure occurs
         new = copy(self)
-        new.comparisons = copy(self.comparisons)
-        new.period = copy(self.period)
+        if hasattr(self, "comparisons"):
+            new.comparisons = copy(self.comparisons)
+        if hasattr(self, "period"):
+            new.period = copy(self.period)
         return new
