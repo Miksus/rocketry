@@ -15,13 +15,14 @@ from pathlib import Path
 from copy import deepcopy, copy
 from queue import Empty
 
-from .task import Task, get_task
-from pypipe.log import FilterAll
+from pypipe.task.base import Task, get_task
+from pypipe.task import ScriptTask, JupyterTask, FuncTask, CommandTask
+from pypipe.log import FilterAll, read_logger
 
 from .exceptions import SchedulerRestart
 
 from pypipe.utils import is_pickleable
-from .utils import set_statement_defaults
+from pypipe.conditions import set_statement_defaults
 
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
@@ -89,6 +90,7 @@ class Scheduler:
 
     def __call__(self):
         "Start and run the scheduler"
+        exception = None
         try:
             self.setup()
 
@@ -114,7 +116,6 @@ class Scheduler:
             raise
         else:
             self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
-            exception = None
         finally:
             self.shut_down(exception=exception)
 # Core
@@ -224,6 +225,10 @@ class Scheduler:
         tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
         tb_string = ''.join(tb)
         self.logger.error(f"Task {task} failed: \n{tb_string}")
+
+    def get_history(self, group=None):
+        logger = Task.get_logger(group=group)
+        return read_logger(logger)
 
 # Core properties
     @property

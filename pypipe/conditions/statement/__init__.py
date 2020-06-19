@@ -7,7 +7,8 @@ __all__ = [
     "ram_used",
     "task_running",
     "scheduler_cycles",
-    "Statement"
+    "Statement",
+    "set_statement_defaults"
 ]
 
 from .base import Statement
@@ -20,3 +21,5 @@ from .builtin import (
     task_running,
     scheduler_cycles
 )
+
+from .utils import set_statement_defaults

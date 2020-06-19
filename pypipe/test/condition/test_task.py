@@ -1,6 +1,7 @@
 from pypipe.conditions import task_ran, task_failed, task_succeeded
-from pypipe import Task
-from pypipe.schedule.task import clear_tasks
+
+from pypipe import Scheduler, FuncTask
+from pypipe.task.base import Task
 
 Task.use_instance_naming = True
 
@@ -15,7 +16,7 @@ def test_task_has_run(tmpdir):
     # Going to tempdir to dump the log files there
 
     with tmpdir.as_cwd() as old_dir:
-        task = Task(
+        task = FuncTask(
             run_successful_func, 
             execution="daily",
         )
@@ -28,7 +29,7 @@ def test_task_has_not_run(tmpdir):
     # Going to tempdir to dump the log files there
 
     with tmpdir.as_cwd() as old_dir:
-        task = Task(
+        task = FuncTask(
             run_successful_func, 
             execution="daily",
         )
@@ -41,7 +42,7 @@ def test_task_set(tmpdir):
     # Going to tempdir to dump the log files there
 
     with tmpdir.as_cwd() as old_dir:
-        task = Task(
+        task = FuncTask(
             run_successful_func, 
             start_cond=task_ran,
             execution="daily",

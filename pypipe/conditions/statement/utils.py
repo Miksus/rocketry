@@ -1,6 +1,6 @@
 
-from pypipe.conditions import Statement
-from pypipe.conditions.base import BaseCondition
+from .base import Statement
+from ..base import BaseCondition
 
 def _set_default_param(condition, **kwargs):
     if isinstance(condition, Statement):

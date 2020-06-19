@@ -1,11 +1,11 @@
 
 
 
-class ScheduerInterupt:
+class ScheduerInterupt(Exception):
     "Close the scheduler"
 
-class SchedulerRestart:
+class SchedulerRestart(Exception):
     "Restart the scheduler"
 
-class CycleInterupt:
+class CycleInterupt(Exception):
     "Stop executing the current cycle"
