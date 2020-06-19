@@ -52,17 +52,17 @@ class TimePeriod:
     def next_time_span(self, dt, *, include_current=False) -> tuple:
         "Return (start, end) for next "
         if include_current:
-            next_dt = self.rollforward(dt)
+            next_dt = self.rollstart(dt)
             
         return (self.floor(next_dt), self.ceil(next_dt))
 
     def estimate_timedelta(self, dt):
         "Time for beginning of the next start time of the condition"
-        dt_next_start = self.rollforward(dt)
+        dt_next_start = self.rollstart(dt)
         return dt_next_start - dt
 
     def __contains__(self, other):
-        interval = self.next(other)
+        interval = self.rollforward(other)
         return other in interval
 
     def __and__(self, other):
@@ -103,12 +103,12 @@ class TimeInterval(TimePeriod):
         raise NotImplementedError("Contains not implemented.")
 
     @abstractmethod
-    def rollforward(self, dt):
+    def rollstart(self, dt):
         "Roll forward to next point in time that on the period"
         raise NotImplementedError("Contains not implemented.")
 
     @abstractmethod
-    def rollback(self, dt):
+    def rollend(self, dt):
         "Roll back to previous point in time that is on the period"
         raise NotImplementedError("Contains not implemented.")
 
@@ -136,10 +136,10 @@ class TimeInterval(TimePeriod):
     def from_between(start, end):
         raise NotImplementedError("__between__ not implemented.")
 
-    def next(self, dt):
+    def rollforward(self, dt):
         "Get next time interval of the period"
 
-        start = self.rollforward(dt)
+        start = self.rollstart(dt)
         end = self.next_end(dt)
 
         start = pd.Timestamp(start)
@@ -147,10 +147,10 @@ class TimeInterval(TimePeriod):
         
         return pd.Interval(start, end, closed="both")
     
-    def prev(self, dt):
+    def rollback(self, dt):
         "Get previous time interval of the period"
 
-        end = self.rollback(dt)
+        end = self.rollend(dt)
         start = self.prev_start(dt)
 
         start = pd.Timestamp(start)
@@ -187,13 +187,13 @@ class TimeDelta(TimePeriod):
         end = self.reference
         return start <= dt <= end
 
-    def prev(self, dt):
+    def rollback(self, dt):
         start = dt - self.duration
         start = pd.Timestamp(start)
         end = pd.Timestamp(dt)
         return pd.Interval(start, end) 
 
-    def next(self, dt):
+    def rollforward(self, dt):
         end = dt + self.duration
         start = pd.Timestamp(dt)
         end = pd.Timestamp(end)
@@ -227,7 +227,7 @@ class TimeCycle(TimePeriod):
     def __mul__(self, value):
         return type(self)(self.start, n=value)
 
-    def prev(self, dt):
+    def rollback(self, dt):
         dt_start = dt - (self.n - 1) * self.offset
         if self.get_time_element(dt_start) > self.start:
             #       dt
@@ -246,7 +246,7 @@ class TimeCycle(TimePeriod):
 
         return pd.Interval(start, end)
 
-    def next(self, dt):
+    def rollforward(self, dt):
         dt_end = dt - (self.n - 1) * self.offset
         if self.get_time_element(dt_end) > self.start:
             #       dt
@@ -265,13 +265,13 @@ class TimeCycle(TimePeriod):
         
         return pd.Interval(start, end)
 
-    def rollback(self, dt):
+    def rollend(self, dt):
         """All datetimes are in the cycle thus rolls
         returns the same datetime. This method is for
         convenience"""
         return dt
 
-    def rollforward(self, dt):
+    def rollstart(self, dt):
         """All datetimes are in the cycle thus rolls
         returns the same datetime. This method is for
         convenience"""
@@ -313,9 +313,9 @@ class All(TimePeriod):
             raise TypeError("All is only supported with TimePeriods")
         self.periods = args
 
-    def prev(self, dt):
+    def rollback(self, dt):
         intervals = [
-            period.prev(dt)
+            period.rollback(dt)
             for period in self.periods
         ]
         if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
@@ -328,11 +328,11 @@ class All(TimePeriod):
             return pd.Interval(start, end)
         else:
             starts = [interval.left for interval in intervals]
-            return self.prev(max(starts) - datetime.datetime.resolution)
+            return self.rollback(max(starts) - datetime.datetime.resolution)
 
-    def next(self, dt):
+    def rollforward(self, dt):
         intervals = [
-            period.next(dt)
+            period.rollforward(dt)
             for period in self.periods
         ]
         if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
@@ -355,9 +355,9 @@ class Any(TimePeriod):
             raise TypeError("Any is only supported with TimePeriods")
         self.periods = args
 
-    def prev(self, dt):
+    def rollback(self, dt):
         intervals = [
-            period.prev(dt)
+            period.rollback(dt)
             for period in self.periods
         ]
         starts = [interval.left for interval in intervals]
@@ -367,9 +367,9 @@ class Any(TimePeriod):
         end = max(ends)
         return pd.Interval(start, end)
 
-    def next(self, dt):
+    def rollforward(self, dt):
         intervals = [
-            period.next(dt)
+            period.rollforward(dt)
             for period in self.periods
         ]
         starts = [interval.left for interval in intervals]
@@ -388,16 +388,16 @@ class Offsetted(TimePeriod):
         self.period = period
         self.n = n
 
-    def prev(self, dt):
-        interval = self.period.prev(dt)
+    def rollback(self, dt):
+        interval = self.period.rollback(dt)
         new_dt = interval.left - pd.Timestamp.resolution
-        interval = self.period.prev(new_dt)
+        interval = self.period.rollback(new_dt)
         return interval
 
-    def next(self, dt):
-        interval = self.period.next(dt)
+    def rollforward(self, dt):
+        interval = self.period.rollforward(dt)
         new_dt = interval.right + pd.Timestamp.resolution
-        interval = self.period.next(new_dt)
+        interval = self.period.rollforward(new_dt)
         return interval
 
 class StaticInterval(TimePeriod):
@@ -409,7 +409,7 @@ class StaticInterval(TimePeriod):
         self.start = start if start is not None else self.min
         self.end = end if end is not None else self.max
 
-    def prev(self, dt):
+    def rollback(self, dt):
         dt = pd.Timestamp(dt)
         start = pd.Timestamp(self.start)
         if start > dt:
@@ -417,7 +417,7 @@ class StaticInterval(TimePeriod):
             return pd.Interval(self.min, self.min)
         return pd.Interval(start, dt)
 
-    def next(self, dt):
+    def rollforward(self, dt):
         dt = pd.Timestamp(dt)
         end = pd.Timestamp(self.end)
         if end < dt:

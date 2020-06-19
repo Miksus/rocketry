@@ -21,13 +21,13 @@ import pytest
     ("2020-01-01 10:00", "2019-12-31 11:00", "2019-12-31 13:00"),
     ("2020-01-01 14:00", "2020-01-01 11:00", "2020-01-01 13:00"),
 ], ids=["In interval", "In interval, left", "In interval, right", "Outside interval, left", "Outside interval, right"])
-def test_prev(dt, expected_left, expected_right):
+def test_rollback(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
 
     time = TimeOfDay("11:00", "13:00")
-    interval = time.prev(dt)
+    interval = time.rollback(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -43,13 +43,13 @@ def test_prev(dt, expected_left, expected_right):
     ("2020-01-01 10:00", "2020-01-01 11:00", "2020-01-01 13:00"),
     ("2020-01-01 14:00", "2020-01-02 11:00", "2020-01-02 13:00"), 
 ], ids=["In interval", "In interval, left", "In interval, right", "Outside interval, left", "Outside interval, right"])
-def test_next(dt, expected_left, expected_right):
+def test_rollforward(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
     
     time = TimeOfDay("11:00", "13:00")
-    interval = time.next(dt)
+    interval = time.rollforward(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -72,7 +72,7 @@ def test_prev_overnight(dt, expected_left, expected_right):
     expected_right = pd.Timestamp(expected_right)
 
     time = TimeOfDay("23:00", "01:00")
-    interval = time.prev(dt)
+    interval = time.rollback(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -93,7 +93,7 @@ def test_next_overnight(dt, expected_left, expected_right):
     expected_right = pd.Timestamp(expected_right)
 
     time = TimeOfDay("23:00", "01:00")
-    interval = time.next(dt)
+    interval = time.rollforward(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left

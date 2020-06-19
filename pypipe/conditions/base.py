@@ -220,7 +220,7 @@ class TimeCondition(BaseCondition):
         return self.current_datetime in self.period
 
     def estimate_next(self, dt):
-        interval = self.period.next(dt)
+        interval = self.period.rollforward(dt)
         return dt - interval.left
 
     @classmethod

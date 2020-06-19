@@ -110,7 +110,7 @@ class Statement(BaseCondition):
         kwargs = self._kwargs
         if self.historical:
             ref_dt = self.current_datetime
-            interval = self.period.prev(ref_dt)
+            interval = self.period.rollback(ref_dt)
             start = interval.left
             end = interval.right
             kwargs.update({"start": start, "end": end})
@@ -146,12 +146,12 @@ class Statement(BaseCondition):
             continue_to_occur = all(limiting not in self.comparisons for limiting in ("__eq__", "__ne__", "__le__", "__lt__"))
             if is_occurring and continue_to_occur:
                 if isinstance(self.period, TimeInterval):
-                    return self.period.next(self.current_datetime).left
+                    return self.period.rollforward(self.current_datetime).left
                 elif isinstance(self.period, TimeCycle):
-                    return self.period.next(self.current_datetime).left
+                    return self.period.rollforward(self.current_datetime).left
                 elif isinstance(self.period, TimeDelta):
                     oldest_occurrence = min(sorted(occurrences)[-more_or_equal:])
-                    return self.period.next(oldest_occurrence).right
+                    return self.period.rollforward(oldest_occurrence).right
 
     @property
     def cycle(self):

@@ -14,11 +14,11 @@ class PandasPeriod(TimeCycle):
     def __init__(self, freq=None):
         self.freq = freq
 
-    def prev(self, dt):
+    def rollback(self, dt):
         df_start = pd.Period(dt, freq=self.freq).to_timestamp(how="start")
         return pd.Interval(dt_start, dt)
 
-    def next(self, dt):
+    def rollforward(self, dt):
         dt_end = pd.Period(dt, freq=self.freq).to_timestamp(how="end")
         return pd.Interval(dt, dt_end)
 

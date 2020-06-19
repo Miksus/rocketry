@@ -18,10 +18,10 @@ class Randomly(TimeCondition):
     
     def __bool__(self):
         # TODO
-        curr_interval = self.period.prev(dt)
+        curr_interval = self.period.rollback(dt)
         prev_interval = self._prev_interval
 
-        next_interval = self.period.next(dt)
+        next_interval = self.period.rollforward(dt)
 
         if next_interval != self._prev_next_interval:
             start = next_interval.left

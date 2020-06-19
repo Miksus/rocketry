@@ -17,13 +17,13 @@ import pytest
     # Inside
     ("2020-06-02 12:00", "2020-06-01 10:00", "2020-06-02 12:00"), 
 ], ids=["In interval"])
-def test_prev(dt, expected_left, expected_right):
+def test_rollback(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
 
     time = TimeDelta("1 days 2 hours")
-    interval = time.prev(dt)
+    interval = time.rollback(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -34,13 +34,13 @@ def test_prev(dt, expected_left, expected_right):
     # Inside
     ("2020-06-02 12:00", "2020-06-02 12:00", "2020-06-03 14:00"), 
 ], ids=["In interval"])
-def test_next(dt, expected_left, expected_right):
+def test_rollforward(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
 
     time = TimeDelta("1 days 2 hours")
-    interval = time.next(dt)
+    interval = time.rollforward(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left

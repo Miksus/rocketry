@@ -21,13 +21,13 @@ import pytest
     ("2020-06-01 23:59:59.999999", "2020-05-26 00:00", "2020-05-27 23:59:59.999999"),
     ("2020-06-04 00:00", "2020-06-02 00:00", "2020-06-03 23:59:59.999999"),
 ], ids=["In interval", "In interval, left", "In interval, right", "Outside interval, left", "Outside interval, right"])
-def test_prev(dt, expected_left, expected_right):
+def test_rollback(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
 
     time = DaysOfWeek("Tue", "Wed")
-    interval = time.prev(dt)
+    interval = time.rollback(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -43,13 +43,13 @@ def test_prev(dt, expected_left, expected_right):
     ("2020-06-01 23:59:59.999999", "2020-06-02 00:00", "2020-06-03 23:59:59.999999"),
     ("2020-06-04 00:00", "2020-06-09 00:00", "2020-06-10 23:59:59.999999"),
 ], ids=["In interval", "In interval, left", "In interval, right", "Outside interval, left", "Outside interval, right"])
-def test_next(dt, expected_left, expected_right):
+def test_rollforward(dt, expected_left, expected_right):
     dt = pd.Timestamp(dt)
     expected_left = pd.Timestamp(expected_left)
     expected_right = pd.Timestamp(expected_right)
     
     time = DaysOfWeek("Tue", "Wed")
-    interval = time.next(dt)
+    interval = time.rollforward(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -70,7 +70,7 @@ def test_prev_over_weekend(dt, expected_left, expected_right):
     expected_right = pd.Timestamp(expected_right)
 
     time = DaysOfWeek("Sun", "Mon")
-    interval = time.prev(dt)
+    interval = time.rollback(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left
@@ -91,7 +91,7 @@ def test_next_over_weekend(dt, expected_left, expected_right):
     expected_right = pd.Timestamp(expected_right)
     
     time = DaysOfWeek("Sun", "Mon")
-    interval = time.next(dt)
+    interval = time.rollforward(dt)
 
     assert isinstance(interval, pd.Interval)
     assert expected_left == interval.left

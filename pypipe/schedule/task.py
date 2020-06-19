@@ -280,9 +280,8 @@ class Task:
         
         
         period = cond.period
-        curr_interv = period.next(latest_run) # Current interval
-        next_interv = period.next(curr_interv.right + pd.Timedelta.resolution)
-        return next_interv.left
+        next_interval = period.next(latest_run) # Current interval
+        return next_interval.left
 
     @property
     def is_running(self):

@@ -38,7 +38,7 @@ class HasOccurred(TimeCondition):
 
     def __bool__(self):
         dt = self.current_datetime
-        item = self.time_period.prev(dt)
+        item = self.time_period.rollback(dt)
         start, end = item.left, item.right
         observations = self.event.observe(start=start, end=end)
         return observations
@@ -80,7 +80,7 @@ class HasNotOccurred(TimeCondition):
 
     def __bool__(self):
         dt = self.current_datetime
-        item = self.time_period.prev(dt)
+        item = self.time_period.rollback(dt)
         start, end = item.left, item.right
         observations = self.event.observe(start=start, end=end)
         return not observations

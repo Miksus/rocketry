@@ -22,12 +22,12 @@ class OffsetInterval(TimeInterval):
         # thus forced to bool
         return bool(self.offset.is_on_offset(dt))
 
-    def rollforward(self, dt):
+    def rollstart(self, dt):
         "Roll forward till the next start datetime (if not already)"
-        return self.offset.rollforward(dt)
+        return self.offset.rollstart(dt)
 
-    def rollback(self, dt):
-        return self.offset.rollback(dt)
+    def rollend(self, dt):
+        return self.offset.rollend(dt)
 
     def next_start(self, dt):
         return dt + self.offset
@@ -265,18 +265,18 @@ class DaysOfWeek(OffsetInterval):
         string = ', '.join(self.weekdays)
         return f'<{string}>'
 
-    def rollforward(self, dt):
-        dt_rolled = super().rollforward(dt)
+    def rollstart(self, dt):
+        dt_rolled = super().rollstart(dt)
         return floor_time(dt_rolled) if dt_rolled != dt else dt_rolled
 
-    def rollback(self, dt):
-        dt_rolled = super().rollback(dt)
+    def rollend(self, dt):
+        dt_rolled = super().rollend(dt)
         return ceil_time(dt_rolled) if dt_rolled != dt else dt_rolled
 
     def next_end(self, dt):
         # We loop days before we hit a day that 
         # is not on the week mask
-        dt = self.rollforward(dt)
+        dt = self.rollstart(dt)
         while self.offset.weekmask[(dt + pd.offsets.Day()).weekday()]:
             dt = dt + pd.offsets.Day()
         return ceil_time(dt)
@@ -284,7 +284,7 @@ class DaysOfWeek(OffsetInterval):
     def prev_start(self, dt):
         # We loop days before we hit a day that 
         # is not on the week mask
-        dt = self.rollback(dt)
+        dt = self.rollend(dt)
         while self.offset.weekmask[(dt - pd.offsets.Day()).weekday()]:
             dt = dt - pd.offsets.Day()
         return floor_time(dt)
@@ -323,10 +323,10 @@ class RelativeDay(TimeInterval):
 
     def __init__(self, day, *, start_time=None, end_time=None):
         self.day = day
-        self.start_time = datetime.date.min if start_time is None else start_time
-        self.end_time = datetime.date.max if end_time is None else end_time
+        self.start_time = self.min.date() if start_time is None else start_time
+        self.end_time = self.max.date() if end_time is None else end_time
 
-    def prev(self, dt):
+    def rollback(self, dt):
         offset = self.offsets[self.day]
         dt = dt - offset
         return pd.Interval(
@@ -334,9 +334,12 @@ class RelativeDay(TimeInterval):
             pd.Timestamp.combine(dt, self.end_time)
         )
 
-    def next(self, dt):
+    def rollforward(self, dt):
         raise AttributeError("RelativeDay has no next day")
 
+    def __repr__(self):
+        'start_time='
+        return f"RelativeDay({self.day})"
 
 weekend = DaysOfWeek("Sat", "Sun")
 weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
