@@ -18,7 +18,10 @@ from queue import Empty
 from .task import Task, get_task
 from pypipe.log import FilterAll
 
+from .exceptions import SchedulerRestart
+
 from pypipe.utils import is_pickleable
+from .utils import set_statement_defaults
 
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
@@ -44,8 +47,45 @@ class Scheduler:
             shut_cond {[type]} -- Condition to shut down scheduler (default: {None})
         """
         self.tasks = tasks
-        self.maintain_tasks = maintain_tasks
+        self.maintain_tasks = [] if maintain_tasks is None else maintain_tasks
         self.shut_condition = False if shut_condition is None else shut_condition
+
+        set_statement_defaults(self.shut_condition, scheduler=self)
+
+        for task in self.maintain_tasks:
+            set_statement_defaults(task.start_cond, scheduler=self)
+            task.group = "maintain"
+            task.set_logger() # Resetting the logger as group changed
+
+        self.variable_params = {}
+        self.fixed_params = {}
+
+    @staticmethod
+    def set_default_logger(logger):
+        # Emptying existing handlers
+        if logger is None:
+            logger = __name__
+        elif isinstance(logger, str):
+            logger = logging.getLogger(logger)
+
+        logger.handlers = []
+
+        # Making sure the log folder is found
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+
+        # Adding the default handler
+        handler = CsvHandler(
+            filename,
+            fields=[
+                "asctime",
+                "levelname",
+                "action",
+                "task_name",
+                "exc_text",
+            ]
+        )
+
+        logger.addHandler(handler)
 
     def __call__(self):
         "Start and run the scheduler"
@@ -56,7 +96,13 @@ class Scheduler:
 
                 self.hibernate()
                 self.run_cycle()
+
                 self.maintain()
+
+        except SchedulerRestart as exc:
+            self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
+            exception = exc
+            self.restart()
 
         except KeyboardInterrupt as exc:
             self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
@@ -75,6 +121,8 @@ class Scheduler:
     def setup(self):
         "Set up the scheduler"
         self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
+        self.n_cycles = 0
+        self.startup_time = datetime.datetime.now()
 
     def hibernate(self):
         "Go to sleep and wake up when next task can be executed"
@@ -90,11 +138,12 @@ class Scheduler:
             - Update the packages
         """
         self.logger.info(f"Maintaining the scheduler...", extra={"action": "maintain"})
-        tasks = [] if self.maintain_tasks is None else self.maintain_tasks
-        self.logger.info(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
-        for task in tasks:
-            if bool(task):
-                self.run_task(task, params={"scheduler": self})
+        tasks = self.maintain_tasks
+        if tasks:
+            self.logger.info(f"Beginning maintaining cycle. Has {len(tasks)} tasks", extra={"action": "run"})
+            for task in tasks:
+                if bool(task):
+                    self.run_task(task, scheduler=True)
     
     def restart(self):
         """Restart the scheduler by creating a new process
@@ -124,14 +173,15 @@ class Scheduler:
             if bool(task):
                 self.run_task(task)
                 task.force_run = False
+        self.n_cycles += 1
 
-    def run_task(self, task):
+    def run_task(self, task, scheduler=False):
         "Run/execute one task"
         self.logger.debug(f"Running task {task}")
         
         start_time = datetime.datetime.now()
         try:
-            task(**self.get_params(task))
+            task(**self.get_params(scheduler=scheduler))
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -147,10 +197,12 @@ class Scheduler:
             exception=exception
         )
 
-    def get_params(self):
+    def get_params(self, scheduler):
         variable_params = {key: val() for key, val in self.variable_params.items()}
         params = {**variable_params, **self.fixed_params}
-        return {key:val for key, val in params.items()}
+        if scheduler:
+            params["scheduler"] = self
+        return params
         
 
 # Logging
@@ -277,9 +329,6 @@ class MultiScheduler(Scheduler):
         super().__init__(*args, **kwargs)
         self.max_processes = cpu_count() if max_processes is None else max_processes
 
-        self.variable_params = {}
-        self.fixed_params = {}
-
 
     def run_cycle(self):
         "Run a cycle of tasks"
@@ -293,6 +342,7 @@ class MultiScheduler(Scheduler):
             elif self.is_task_killable(task):
                 # Terminate the task
                 self.terminate_task(task)
+        self.n_cycles += 1
 
     def run_task_as_process(self, task):
         # TODO: Log that the task is running here as it will take a moment for the task itself to do it
@@ -309,7 +359,7 @@ class MultiScheduler(Scheduler):
         proc_task._dependency_condition = None
 
         #child_pipe, parent_pipe = multiprocessing.Pipe() # Make 2 way connection
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params()))
+        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
         #task._conn = parent_pipe
 
         task._process.start()
@@ -320,10 +370,14 @@ class MultiScheduler(Scheduler):
         self.handle_logs()
         
 
-    def get_params(self):
+    def get_params(self, only_picleable=False, scheduler=False):
         variable_params = {key: val() for key, val in self.variable_params.items()}
         params = {**variable_params, **self.fixed_params}
-        return {key:val for key, val in params.items() if is_pickleable(val)}
+        if only_picleable:
+            params = {key:val for key, val in params.items() if is_pickleable(val)}
+        if scheduler:
+            params["scheduler"] = self
+        return params
 
     def terminate_task(self, task):
         self.logger.debug(f"Terminating task '{task.name}'")
@@ -386,8 +440,9 @@ class MultiScheduler(Scheduler):
 
     def setup(self):
         "Set up the scheduler"
-        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
+        #self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         #self.setup_listener()
+        super().setup()
         self._log_queue = multiprocessing.Queue(-1)
 
     def setup_listener(self):

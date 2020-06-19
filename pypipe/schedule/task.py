@@ -9,6 +9,7 @@ from pypipe.log import TaskAdapter, CsvHandler
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.time import period_factory
 from pypipe import conditions
+from .utils import set_statement_defaults
 
 from pathlib import Path
 import subprocess
@@ -24,17 +25,19 @@ TASKS = {}
 def get_task(task):
     return TASKS[task]
 
-def _set_default_param(cond, task):
-    if hasattr(cond, "event"):
-        # is Occurrence condition
-        event = cond.event
-        if event.has_param("task") and not event.has_param_set("task"):
-            cond.event.kwargs["task"] = task
-        
-def set_default_logger(cls, filename="log/tasks.csv"):
-    # Emptying existing handlers
+def clear_tasks():
+    global TASKS
+    TASKS = {}
 
-    cls.logger.handlers = []
+
+def set_default_logger(logger=None, filename="log/tasks.csv"):
+    # Emptying existing handlers
+    if logger is None:
+        logger = __name__
+    elif isinstance(logger, str):
+        logger = logging.getLogger(logger)
+
+    logger.handlers = []
 
     # Making sure the log folder is found
     Path(filename).parent.mkdir(parents=True, exist_ok=True)
@@ -51,7 +54,7 @@ def set_default_logger(cls, filename="log/tasks.csv"):
         ]
     )
 
-    cls.logger.addHandler(handler)
+    logger.addHandler(handler)
 
 def set_queue_logger(queue):
     """Queue logging is required in case of multiprocessing
@@ -68,31 +71,18 @@ def init_with_register(init):
     def new_init(self, *args, **kwargs):
         init(self, *args, **kwargs)
         if self.name in TASKS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}")
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(TASKS.keys())}")
         TASKS[self.name] = self
 
     return new_init
 
-def init_with_default_logger(init):
-    "Set the default handler if missing"
-    @wraps(init)
-    def new_init(self, *args, **kwargs):
-        cls = type(self)
-        if not cls.logger.handlers:
-            # Setting default handler 
-            # as handler missing
-            set_default_logger(cls)
-        init(self, *args, **kwargs)
-
-    return new_init
 
 class TaskMeta(type):
     def __new__(mcs, name, bases, class_dict):
 
         cls = type.__new__(mcs, name, bases, class_dict)
         cls.__init__ = init_with_register(cls.__init__)
-        cls.__init__ = init_with_default_logger(cls.__init__)
-        
+
         return cls
 
 class Task(metaclass=TaskMeta):
@@ -120,7 +110,9 @@ class Task(metaclass=TaskMeta):
         execution {str, TimePeriod} : Time period when the task is allowed to run once and only once
             examples: "daily", "past 2 hours", "between 11:00 and 12:00"
         dependent {List[str]} : List of task names to must run before this task (in their execution cycle)
+
         name {str} : Name of the task. Must be unique
+        group {str} : Name of the group the task is part of. The name of the logger is derived using this.
 
         force_run {bool} : Run the task manually once
 
@@ -145,19 +137,16 @@ class Task(metaclass=TaskMeta):
 
 
     """
-
+    use_instance_naming = False
     # TODO:
     #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
-
-
-    logger = logging.getLogger(__name__)
 
     def __init__(self, action, 
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None):
+                name=None, group=None):
         """[summary]
 
         Arguments:
@@ -189,8 +178,9 @@ class Task(metaclass=TaskMeta):
         self.execution = execution
         self.dependent = dependent
 
+        self.group = group
         self.set_name(name)
-        self.set_logger(self.logger)
+        self.set_logger()
         self._set_default_task()
 
         if self.status == "run":
@@ -199,14 +189,55 @@ class Task(metaclass=TaskMeta):
             # run status and releasing the task
             self.logger.warning(f'Task {self.name} previously crashed unexpectedly.', extra={"action": "crash_release"})
 
-    def set_logger(self, logger):
+    def set_logger(self, logger=None):
+        "Set the logger (and adapter)"
+        if logger is None:
+
+            logger = self.get_logger(self.group) # Getting class/instance logger
+            if not logger.handlers:
+                # Setting default handlers to allow 2 way by default
+                self.set_default_logger(logger)
         self.logger = TaskAdapter(logger, task=self)
+
+    @classmethod
+    def get_logger(cls, group=None):
+        logger_name = __name__
+        if group is not None:
+            logger_name += '.' + group
+        return logging.getLogger(logger_name)
+
+    @classmethod
+    def set_default_logger(cls, logger=None, group=None, filename="log/task.csv"):
+        
+        if logger is None:
+            logger = cls.get_logger(group=group)
+
+        # Emptying existing handlers
+        logger.handlers = []
+
+        # Making sure the log folder is found
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+
+        # Adding the default handler
+        handler = CsvHandler(
+            filename,
+            fields=[
+                "asctime",
+                "levelname",
+                "action",
+                "task_name",
+                "exc_text",
+            ]
+        )
+
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        return logger
     
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
         for cond_set in (self.start_cond, self.run_cond, self.end_cond):
-            if isinstance(cond_set, BaseCondition) and hasattr(cond_set, "apply"):
-                cond_set.apply(_set_default_param, task=self)
+            set_statement_defaults(cond_set, task=self)
 
     def __call__(self, *args, **params):
         self.log_running()
@@ -316,6 +347,10 @@ class Task(metaclass=TaskMeta):
             return None
         return record["action"]
 
+    def get_history(self):
+        records = self.logger.get_records()
+        return records
+
     @property
     def cycle(self):
         "Determine Time object for the interval (maximum possible if time independent as 'or')"
@@ -404,19 +439,23 @@ class Task(metaclass=TaskMeta):
         if name is not None:
             self.name = name
         else:
-            func = self.action
-            self.name = func.__name__
+            if self.use_instance_naming:
+                self.name = id(self)
+            else:
+                self.name = self.get_default_name()
+
+    def get_default_name(self):
+        func = self.action
+        return func.__name__
+
 
 class ScriptTask(Task):
 
     main_func = "main"
 
-    def set_name(self, name):
-        if name is not None:
-            self.name = name
-        else:
-            file = self.action
-            self.name = '.'.join(file.parts).replace(r'/main.py', '')
+    def get_default_name(self):
+        file = self.action
+        return '.'.join(file.parts).replace(r'/main.py', '')
 
     def execute_action(self, *args, **kwargs):
 
@@ -433,12 +472,9 @@ class CommandTask(Task):
 
     timeout = None
 
-    def set_name(self, name):
-        if name is not None:
-            self.name = name
-        else:
-            command = self.action
-            self.name = command if isinstance(command, str) else ' '.join(command)
+    def get_default_name(self):
+        command = self.action
+        return command if isinstance(command, str) else ' '.join(command)
 
     def execute_action(self, *args, **kwargs):
         command = self.action

@@ -1,14 +1,11 @@
 from .schedule import Scheduler, MultiScheduler, Task
 
-from .conditions import (
-    HasOccurred, HasNotOccurred, Occurring,
-    IsTimeOfDay, IsDaysOfWeek
-)
 
 from . import time
 #from . import event
 from . import schedule
 from .schedule import Task
+from . import conditions
 
 from .log import CsvHandler
 

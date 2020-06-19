@@ -4,7 +4,8 @@ import psutil
 import os
 import numpy as np
 
-@Statement(historical=True)
+# Task related
+@Statement(historical=True, quantitative=True)
 def task_ran(task, start=None, end=None):
     records = task.logger.get_records(start=start, end=end, action="run")
     run_times = records["asctime"].tolist()
@@ -30,6 +31,19 @@ def task_running(task):
     "Check whether "
     record = task.logger.get_latest()
     return record["action"] == "run"
+
+# Scheduler related (useful only for maintaining or shutdown)
+@Statement(quantitative=True)
+def scheduler_cycles(scheduler):
+    "Check whether "
+    return scheduler.n_cycles
+
+@Statement(historical=True)
+def scheduler_started(scheduler, start, end):
+    "Check whether "
+    dt = scheduler.startup_time
+    return start <= dt <= end
+
 
 @Statement(quantitative=True)
 def ram_free(absolute=False):
