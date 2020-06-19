@@ -42,6 +42,10 @@ class TimePeriod:
         month
     """
 
+    resolution = pd.Timestamp.resolution
+    min = pd.Timestamp.min
+    max = pd.Timestamp.max
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -51,6 +55,7 @@ class TimePeriod:
 
     def next_time_span(self, dt, *, include_current=False) -> tuple:
         "Return (start, end) for next "
+        # TODO: Remove
         if include_current:
             next_dt = self.rollstart(dt)
             
@@ -58,6 +63,7 @@ class TimePeriod:
 
     def estimate_timedelta(self, dt):
         "Time for beginning of the next start time of the condition"
+        # TODO: Remove
         dt_next_start = self.rollstart(dt)
         return dt_next_start - dt
 
@@ -78,6 +84,29 @@ class TimePeriod:
 
         return Any(self, other)
 
+    def rollforward(self, dt):
+        "Get previous time interval of the period"
+        raise NotImplementedError
+
+    def rollback(self, dt):
+        "Get previous time interval of the period"
+        raise NotImplementedError
+
+    def next(self, dt):
+        "Get next interval (excluding currently ongoing if any)"
+        interv = self.rollforward(dt)
+        if dt in interv:
+            # Offsetting the end point with minimum amount to get new full interval
+            interv = self.rollforward(dt.right + self.resolution)
+        return interv
+
+    def prev(self, dt):
+        "Get previous interval (excluding currently ongoing if any)"
+        interv = self.rollback(dt)
+        if dt in interv:
+            # Offsetting the end point with minimum amount to get new full interval
+            interv = self.rollback(dt.left - self.resolution)
+        return interv
 
 class TimeInterval(TimePeriod):
     """Base for all time intervals
@@ -188,16 +217,21 @@ class TimeDelta(TimePeriod):
         return start <= dt <= end
 
     def rollback(self, dt):
+        "Get previous interval (including currently ongoing)"
         start = dt - self.duration
         start = pd.Timestamp(start)
         end = pd.Timestamp(dt)
         return pd.Interval(start, end) 
 
     def rollforward(self, dt):
+        "Get next interval (including currently ongoing)"
         end = dt + self.duration
         start = pd.Timestamp(dt)
         end = pd.Timestamp(end)
         return pd.Interval(start, end)
+
+
+
 
 class TimeCycle(TimePeriod):
     """Base for all time cycles
@@ -229,7 +263,7 @@ class TimeCycle(TimePeriod):
 
     def rollback(self, dt):
         dt_start = dt - (self.n - 1) * self.offset
-        if self.get_time_element(dt_start) > self.start:
+        if self.get_time_element(dt_start) >= self.start:
             #       dt
             #  -->--------------------->-----------
             #  time   |              time     |    
@@ -247,9 +281,9 @@ class TimeCycle(TimePeriod):
         return pd.Interval(start, end)
 
     def rollforward(self, dt):
-        dt_end = dt - (self.n - 1) * self.offset
-        if self.get_time_element(dt_end) > self.start:
-            #       dt
+        dt_end = dt + (self.n - 1) * self.offset
+        if self.get_time_element(dt_end) >= self.start:
+            #       dt           (dt_end)
             #  -->--------------------->-----------
             #  time   |              time     |    
             dt_end = dt_end + self.offset
@@ -261,7 +295,7 @@ class TimeCycle(TimePeriod):
         dt_end = self.replace(dt_end)
 
         start = pd.Timestamp(dt)
-        end = pd.Timestamp(dt_end)
+        end = pd.Timestamp(dt_end) - self.resolution
         
         return pd.Interval(start, end)
 
@@ -403,8 +437,7 @@ class Offsetted(TimePeriod):
 class StaticInterval(TimePeriod):
     """Inverval that is fixed in specific datetimes
     """
-    min = pd.Timestamp.min
-    max = pd.Timestamp.max
+
     def __init__(self, start=None, end=None):
         self.start = start if start is not None else self.min
         self.end = end if end is not None else self.max

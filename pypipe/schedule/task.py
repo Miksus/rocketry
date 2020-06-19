@@ -1,7 +1,6 @@
 
 
-from pathlib import Path
-import subprocess
+
 
 from pypipe.conditions.base import BaseCondition
 from pypipe.conditions.event import task_ran
@@ -10,9 +9,13 @@ from pypipe.log import TaskAdapter, CsvHandler
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.time import period_factory
 from pypipe import conditions
+
+from pathlib import Path
+import subprocess
 import logging
 import inspect
 import datetime
+from functools import wraps
 
 import pandas as pd
 
@@ -28,9 +31,10 @@ def _set_default_param(cond, task):
         if event.has_param("task") and not event.has_param_set("task"):
             cond.event.kwargs["task"] = task
         
-def set_default_logger(filename="log/tasks.csv"):
+def set_default_logger(cls, filename="log/tasks.csv"):
     # Emptying existing handlers
-    Task.logger.handlers = []
+
+    cls.logger.handlers = []
 
     # Making sure the log folder is found
     Path(filename).parent.mkdir(parents=True, exist_ok=True)
@@ -46,7 +50,8 @@ def set_default_logger(filename="log/tasks.csv"):
             "exc_text",
         ]
     )
-    Task.logger.addHandler(handler)
+
+    cls.logger.addHandler(handler)
 
 def set_queue_logger(queue):
     """Queue logging is required in case of multiprocessing
@@ -57,8 +62,40 @@ def set_queue_logger(queue):
     handler = logging.handlers.QueueHandler(queue)
     Task.logger.addHandler(handler)
 
+def init_with_register(init):
+    "Register the Task in order to allow accessing it via name"
+    @wraps(init)
+    def new_init(self, *args, **kwargs):
+        init(self, *args, **kwargs)
+        if self.name in TASKS:
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}")
+        TASKS[self.name] = self
 
-class Task:
+    return new_init
+
+def init_with_default_logger(init):
+    "Set the default handler if missing"
+    @wraps(init)
+    def new_init(self, *args, **kwargs):
+        cls = type(self)
+        if not cls.logger.handlers:
+            # Setting default handler 
+            # as handler missing
+            set_default_logger(cls)
+        init(self, *args, **kwargs)
+
+    return new_init
+
+class TaskMeta(type):
+    def __new__(mcs, name, bases, class_dict):
+
+        cls = type.__new__(mcs, name, bases, class_dict)
+        cls.__init__ = init_with_register(cls.__init__)
+        cls.__init__ = init_with_default_logger(cls.__init__)
+        
+        return cls
+
+class Task(metaclass=TaskMeta):
     """Executable task 
 
     This class is meant to be container
@@ -116,22 +153,6 @@ class Task:
 
     logger = logging.getLogger(__name__)
 
-    def __new__(cls, *args, **kwargs):
-        "Store created tasks for easy acquisition"
-        if not cls.logger.handlers:
-            # Setting default handler 
-            # as handler missing
-            set_default_logger()
-
-        instance = super().__new__(cls)
-        task_name = kwargs.get("name", id(instance))
-
-        if task_name in TASKS:
-            raise KeyError(f"All tasks must have unique names. Given: {task_name}")
-
-        TASKS[task_name] = instance
-        return instance
-
     def __init__(self, action, 
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
@@ -168,7 +189,7 @@ class Task:
         self.execution = execution
         self.dependent = dependent
 
-        self.name = id(self) if name is None else name
+        self.set_name(name)
         self.set_logger(self.logger)
         self._set_default_task()
 
@@ -379,10 +400,23 @@ class Task:
             self.execution &= execution
         return self
 
+    def set_name(self, name):
+        if name is not None:
+            self.name = name
+        else:
+            func = self.action
+            self.name = func.__name__
 
 class ScriptTask(Task):
 
     main_func = "main"
+
+    def set_name(self, name):
+        if name is not None:
+            self.name = name
+        else:
+            file = self.action
+            self.name = '.'.join(file.parts).replace(r'/main.py', '')
 
     def execute_action(self, *args, **kwargs):
 
@@ -398,6 +432,13 @@ class ScriptTask(Task):
 class CommandTask(Task):
 
     timeout = None
+
+    def set_name(self, name):
+        if name is not None:
+            self.name = name
+        else:
+            command = self.action
+            self.name = command if isinstance(command, str) else ' '.join(command)
 
     def execute_action(self, *args, **kwargs):
         command = self.action

@@ -140,6 +140,7 @@ class Scheduler:
             status = "success"
         end_time = datetime.datetime.now()
 
+        # TODO: Is there double logging? Task may do it already
         self.log_status(
             task, status, 
             start_time=start_time, end_time=end_time,
@@ -211,7 +212,14 @@ class Scheduler:
         tasks = []
         for file in path.glob('**/main.py'):
             if file.is_file():
-                task = Task.from_file(file, name=str(file).replace(r'/main.py', ''))
+                
+                name = '.'.join(file.parts).replace(r'/main.py', '')
+                task = ScriptTask(file, name=name)
+                tasks.append(task)
+
+        for file in path.glob('**/*.ipynb'):
+            if file.is_file():
+                task = NotebookTask(file)
                 tasks.append(task)
         return cls(tasks)
 

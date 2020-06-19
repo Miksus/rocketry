@@ -24,10 +24,10 @@ class OffsetInterval(TimeInterval):
 
     def rollstart(self, dt):
         "Roll forward till the next start datetime (if not already)"
-        return self.offset.rollstart(dt)
+        return self.offset.rollforward(dt)
 
     def rollend(self, dt):
-        return self.offset.rollend(dt)
+        return self.offset.rollback(dt)
 
     def next_start(self, dt):
         return dt + self.offset
@@ -92,7 +92,7 @@ class TimeOfDay(OffsetInterval):
     def next_end(self, dt):
         end_time = self.offset.end[0]
 
-        if dt.time() < end_time:
+        if dt.time() <= end_time:
             # in period
             #                    dt             
             # --<---------->-----------<-------------->--
@@ -338,8 +338,13 @@ class RelativeDay(TimeInterval):
         raise AttributeError("RelativeDay has no next day")
 
     def __repr__(self):
-        'start_time='
-        return f"RelativeDay({self.day})"
+        args_str = str(self.day)
+        if self.start_time != self.min.date():
+            args_str += f', start_time={self.start_time}'
+        if self.end_time != self.max.date():
+            args_str += f', end_time={self.end_time}'
+
+        return f"RelativeDay({args_str})"
 
 weekend = DaysOfWeek("Sat", "Sun")
 weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
