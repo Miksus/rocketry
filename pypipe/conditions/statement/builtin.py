@@ -4,6 +4,9 @@ import psutil
 import os
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Task related
 @Statement(historical=True, quantitative=True)
 def task_ran(task, start=None, end=None):
@@ -11,17 +14,17 @@ def task_ran(task, start=None, end=None):
     run_times = records["asctime"].tolist()
     return run_times
 
-@Statement(historical=True)
+@Statement(historical=True, quantitative=True)
 def task_failed(task, start, end):
     records = task.logger.get_records(start=start, end=end, action="fail")
     return not records.empty
 
-@Statement(historical=True)
+@Statement(historical=True, quantitative=True)
 def task_succeeded(task, start, end):
     records = task.logger.get_records(start=start, end=end, action="success")
     return not records.empty
 
-@Statement(historical=True)
+@Statement(historical=True, quantitative=True)
 def task_finished(task, start, end):
     records = task.logger.get_records(start=start, end=end, action=["success", "fail"])
     return not records.empty
@@ -32,10 +35,12 @@ def task_running(task):
     record = task.logger.get_latest()
     return record["action"] == "run"
 
+
 # Scheduler related (useful only for maintaining or shutdown)
 @Statement(quantitative=True)
 def scheduler_cycles(scheduler):
     "Check whether "
+    logger.debug(f"Inspecting {scheduler} (type: {type(scheduler)} cycles...")
     return scheduler.n_cycles
 
 @Statement(historical=True)
@@ -45,6 +50,7 @@ def scheduler_started(scheduler, start, end):
     return start <= dt <= end
 
 
+# OS related
 @Statement(quantitative=True)
 def ram_free(absolute=False):
     "Check whether "

@@ -130,3 +130,11 @@ class CsvHandler(FileHandler):
         )
         parse_dates = kwargs.pop("parse_dates", dt_cols)
         return pd.read_csv(self.baseFilename, parse_dates=parse_dates, dialect=self.formatter.writer.dialect, **kwargs)
+
+    def clear_log(self):
+        "Empty the logging file"
+        self.close()
+        file = self.baseFilename
+        with open(file, "w") as f:
+            pass
+        self.write_headers()

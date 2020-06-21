@@ -24,6 +24,9 @@ def clear_tasks():
     global TASKS
     TASKS = {}
 
+def reset_logger():
+    Task.set_default_logger()
+
 class Task(_ExecutionMixin, _LoggingMixin):
     """Executable task 
 
@@ -132,8 +135,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
-        for cond_set in (self.start_cond, self.run_cond, self.end_cond):
-            set_statement_defaults(cond_set, task=self)
+        self.start_cond = set_statement_defaults(self.start_cond, task=self)
+        self.run_cond = set_statement_defaults(self.run_cond, task=self)
+        self.end_cond = set_statement_defaults(self.end_cond, task=self)
 
     def _register_instance(self):
         if self.name in TASKS:
@@ -151,9 +155,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
         except Exception as exception:
             status = "failed"
             self.log_failure()
+            self.process_failure(exception=exception)
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
-            if self.on_failure:
-                self.on_failure(exception=exception)
+
             self.exception = exception
             raise
 
@@ -172,29 +176,19 @@ class Task(_ExecutionMixin, _LoggingMixin):
         if self.force_run:
             return True
         
-        return bool(self.start_cond & self._dependency_condition & self._execution_condition)
-        
+        cond = bool(self.start_cond & self._dependency_condition & self._execution_condition)
+
+        # There may be condition that set force_run True
+        if self.force_run:
+            return True
+        return cond
 
     def filter_params(self, params):
-        sig = inspect.signature(self.action)
-        required_params = [
-            val
-            for name, val in sig.parameters
-            if val.kind in (
-                inspect.Parameter.POSITIONAL_OR_KEYWORD, # Normal argument
-                inspect.Parameter.KEYWORD_ONLY # Keyword argument
-            )
-        ]
-        kwargs = {}
-        for param in required_params:
-            if param in params:
-                kwargs[param] = params[param]
-        return kwargs
-
+        raise NotImplementedError(f"Parameter filter not implemented to {type(self)}")
 
     def execute_action(self, *args, **kwargs):
         "Run the actual, given, task"
-        raise NotImplementedError("Method 'execute_action' not implemented")
+        raise NotImplementedError(f"Method 'execute_action' not implemented to {type(self)}")
 
     def process_failure(self, exception):
         if self.on_failure:
@@ -238,4 +232,4 @@ class Task(_ExecutionMixin, _LoggingMixin):
                 self.name = self.get_default_name()
 
     def get_default_name(self):
-        raise NotImplementedError("Method 'get_default_name' not implemented")
+        raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")

@@ -51,12 +51,12 @@ class Scheduler:
         self.maintain_tasks = [] if maintain_tasks is None else maintain_tasks
         self.shut_condition = False if shut_condition is None else shut_condition
 
-        set_statement_defaults(self.shut_condition, scheduler=self)
+        self.shut_condition = set_statement_defaults(self.shut_condition, scheduler=self)
 
-        for task in self.maintain_tasks:
-            set_statement_defaults(task.start_cond, scheduler=self)
-            task.group = "maintain"
-            task.set_logger() # Resetting the logger as group changed
+        for maintain_task in self.maintain_tasks:
+            maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
+            maintain_task.group = "maintain"
+            maintain_task.set_logger() # Resetting the logger as group changed
 
         self.variable_params = {}
         self.fixed_params = {}

@@ -10,6 +10,8 @@ import numpy as np
 from ..base import BaseCondition
 from pypipe.time import period_factory, StaticInterval
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Statement(BaseCondition):
     """
@@ -103,7 +105,11 @@ class Statement(BaseCondition):
 
     def __bool__(self):
         outcome = self._func(*self.args, **self.kwargs)
-        return self.to_boolean(outcome)
+        result = self.to_boolean(outcome)
+
+        logger.debug(f"Statement {str(self)} status: {result}")
+
+        return result
 
     @property
     def kwargs(self):
@@ -168,10 +174,11 @@ class Statement(BaseCondition):
             return self.function()
 
         if self._func is None:
+            # Completing statement
             self._func = args[0]
             return self
 
-        new = copy(self)
+        new = self.copy()
 
         new.set_params(*args, **kwargs)
         return new
@@ -268,6 +275,10 @@ class Statement(BaseCondition):
             period
         )
 
+    def __str__(self):
+        name = self._func.__name__
+        return f"< Statement '{name}'>"
+
     @property
     def name(self):
         return self._func.__name__
@@ -290,4 +301,6 @@ class Statement(BaseCondition):
             new.comparisons = copy(self.comparisons)
         if hasattr(self, "period"):
             new.period = copy(self.period)
+        new._kwargs = copy(new._kwargs)
+        new.args = copy(new.args)
         return new

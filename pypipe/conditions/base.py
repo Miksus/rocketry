@@ -74,11 +74,14 @@ class ConditionContainer:
 
     def apply(self, func, **kwargs):
         "Apply the function to all subconditions"
+        subconds = []
         for subcond in self.subconditions:
             if isinstance(subcond, ConditionContainer):
-                subcond.apply(func, **kwargs)
+                subcond = subcond.apply(func, **kwargs)
             else:
-                func(subcond, **kwargs)
+                subcond = func(subcond, **kwargs)
+            subconds.append(subcond)
+        return type(self)(*subconds)
         
     def __getitem__(self, val):
         return self.subconditions[val]

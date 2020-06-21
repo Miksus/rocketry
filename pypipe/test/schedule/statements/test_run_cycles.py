@@ -22,11 +22,12 @@ def succeeding():
     print("Success")
 
 def test_simple(tmpdir):
+    clear_tasks()
     with tmpdir.as_cwd() as old_dir:
 
 
-        task_success = FuncTask(succeeding)
-        task_fail = FuncTask(failing)
+        task_success = FuncTask(succeeding, name="succeeding")
+        task_fail = FuncTask(failing, name="failing")
         scheduler = Scheduler(
             [
                 task_success,
@@ -35,13 +36,9 @@ def test_simple(tmpdir):
         )
         
         scheduler()
-        assert scheduler.n_cycles == 3
-
-        print(task_success.logger.logger.handlers[0].baseFilename)
-        print("Success name:", task_success.name)
-        print("Failure name:", task_fail.name)
 
         history = task_success.get_history()
+        print(history)
         assert 3 == (history["action"] == "run").sum()
         assert 3 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
@@ -52,6 +49,7 @@ def test_simple(tmpdir):
         assert 3 == (history["action"] == "fail").sum()
 
 def test_simple_multiprocess(tmpdir):
+    clear_tasks()
     with tmpdir.as_cwd() as old_dir:
         
 
@@ -65,26 +63,20 @@ def test_simple_multiprocess(tmpdir):
         )
         
         scheduler()
-        assert scheduler.n_cycles == 3
-
-        print(task_success.logger.logger.handlers[0].baseFilename)
-        print("Success name:", task_success.name)
-        print("Failure name:", task_fail.name)
 
         history = task_success.get_history()
-        print(history)
         assert 3 == (history["action"] == "run").sum()
         assert 3 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
 
         history = task_fail.get_history()
-        print(history)
         assert 3 == (history["action"] == "run").sum()
         assert 0 == (history["action"] == "success").sum()
         assert 3 == (history["action"] == "fail").sum()
 
 
 def test_priority(tmpdir):
+    clear_tasks()
     with tmpdir.as_cwd() as old_dir:
         FuncTask.set_default_logger()
 
@@ -98,21 +90,11 @@ def test_priority(tmpdir):
                 task_3
             ], shut_condition=scheduler_cycles >= 1
         )
-
+        
         scheduler()
-        assert scheduler.n_cycles == 1
-
-        print(task_1.logger.logger.handlers[0].baseFilename)
-        print("Task 1 name:", task_1.name)
-        print("Task 2 name:", task_2.name)
-        print("Task 3 name:", task_3.name)
 
         history = scheduler.get_history()
         history = history.set_index("action")
-
-        print(history)
-        print("Logger file", Task.get_logger().handlers[0].baseFilename)
-        print("Logger cont", Task.get_logger().handlers[0].read())
 
         task_1_start = history[(history["task_name"] == "first")].loc["run", "asctime"]
         task_3_start = history[(history["task_name"] == "second")].loc["run", "asctime"]

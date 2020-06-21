@@ -143,6 +143,11 @@ class _LoggingMixin:
         logger.setLevel(logging.INFO)
         return logger
 
+    @classmethod
+    def add_logger_handler(cls, handler, group=None):
+        logger = cls.get_logger(group=group)
+        logger.addHandler(handler)
+
     def log_running(self):
         self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
 
