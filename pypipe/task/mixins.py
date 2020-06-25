@@ -166,6 +166,10 @@ class _LoggingMixin:
     def log_success(self):
         self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
 
+    def log_termination(self, reason=None):
+        reason = reason or "unknown reason"
+        self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate"})
+
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
         self.logger.handle(record)

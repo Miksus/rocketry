@@ -34,10 +34,7 @@ class Scheduler:
 
     logger = logging.getLogger(__name__)
 
-    min_sleep = 0.1
-    max_sleep = 10 * 60
-
-    def __init__(self, tasks, maintain_tasks=None, shut_condition=None):
+    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600):
         """[summary]
 
         Arguments:
@@ -60,6 +57,9 @@ class Scheduler:
 
         self.variable_params = {}
         self.fixed_params = {}
+
+        self.min_sleep = min_sleep
+        self.max_sleep = max_sleep
 
     @staticmethod
     def set_default_logger(logger):
@@ -353,7 +353,10 @@ class MultiScheduler(Scheduler):
             if self.is_task_runnable(task):
                 # Run the actual task
                 self.run_task_as_process(task)
-            elif self.is_task_killable(task):
+            elif self.is_timeouted(task):
+                # Terminate the task
+                self.terminate_task(task, reason="timeout")
+            elif self.is_out_of_condition(task):
                 # Terminate the task
                 self.terminate_task(task)
         self.n_cycles += 1
@@ -373,6 +376,8 @@ class MultiScheduler(Scheduler):
         proc_task._dependency_condition = None
 
         #child_pipe, parent_pipe = multiprocessing.Pipe() # Make 2 way connection
+        #process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
+        #task._processes.append(process)
         task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
         #task._conn = parent_pipe
 
@@ -393,16 +398,31 @@ class MultiScheduler(Scheduler):
             params["scheduler"] = self
         return params
 
-    def terminate_task(self, task):
+    def terminate_all(self, reason=None):
+        "Terminate all running tasks"
+        for task in self.tasks:
+            if self.is_alive(task):
+                self.terminate_task(task, reason=reason)
+
+
+    def terminate_task(self, task, reason=None):
         self.logger.debug(f"Terminating task '{task.name}'")
         task._process.terminate()
+        # Waiting till the termination is finished. 
+        # Otherwise may try to terminate it many times as the process is alive for a brief moment
+        task._process.join() 
+        task.log_termination(reason=reason)
 
     def is_timeouted(self, task):
+        if not self.is_alive(task):
+            return False
+
         timeout = task.timeout
         if timeout is None:
             return False
-        run_time = task._start_time - datetime.datetime.now()
-        return run_time > timeout
+        run_time = datetime.datetime.now() - task._start_time
+        run_time_seconds = run_time.total_seconds()
+        return run_time_seconds > timeout
 
     @staticmethod
     def is_alive(task):
@@ -415,12 +435,12 @@ class MultiScheduler(Scheduler):
         is_condition = bool(task)
         return is_not_running and has_free_processors and is_condition
 
-    def is_task_killable(self, task):
+    def is_out_of_condition(self, task):
         "Whether the task should be terminated"
         is_alive = self.is_alive(task)
-        is_overtime = self.is_timeouted(task)
-        is_within_condition = bool(task.end_cond) or not bool(task.run_cond)
-        return is_alive and (is_overtime or is_within_condition)
+        if not is_alive:
+            return False
+        return bool(task.end_cond) or not bool(task.run_cond)
 
     def handle_status(self, task):
         "Update task status"
@@ -497,12 +517,21 @@ class MultiScheduler(Scheduler):
         Python exception) to properly inform the maintainer
         and log the event
         """
+        print(exception)
         try:
             if exception is None:
                 while self.n_alive:
                     #time.sleep(self.min_sleep)
                     self.handle_logs()
-                
+                    for task in self.tasks:
+                        if self.is_timeouted(task):
+                            # Terminate the task
+                            self.terminate_task(task, reason="timeout")
+                        elif self.is_out_of_condition(task):
+                            # Terminate the task
+                            self.terminate_task(task)
+            else:
+                self.terminate_all(reason="shutdown")
         except Exception as exc:
             self.shut_down(exception=exc)
         else:
