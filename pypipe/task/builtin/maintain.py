@@ -63,3 +63,10 @@ class SocetTriggerTask:
     def trigger_task(self, task):
         "Force task to run as soon as possible"
         task.force_run = True
+
+
+# https://pipenv-fork.readthedocs.io/en/latest/basics.html
+update_pipenv = CommandlineTask(["pipenv", "install"])
+pull_master = CommandlineTask(["git", "pull", "origin", "master"])
+
+#run_tests = CommandlineTask(["py.test", "pyargs", "origin", "master"])

@@ -2,6 +2,8 @@ from pypipe.conditions import task_ran, task_failed, task_succeeded
 
 from pypipe import Scheduler, FuncTask
 from pypipe.task.base import Task
+from pypipe import reset
+
 
 Task.use_instance_naming = True
 
@@ -55,7 +57,7 @@ def test_default_copying_all(tmpdir):
 
 def test_task_has_run(tmpdir):
     # Going to tempdir to dump the log files there
-
+    reset()
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
             run_successful_func, 

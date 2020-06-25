@@ -1,5 +1,5 @@
 from pypipe.conditions.base import BaseCondition
-from pypipe.conditions import task_ran
+from pypipe.conditions import task_ran, task_succeeded
 
 
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
@@ -217,10 +217,10 @@ class Task(_ExecutionMixin, _LoggingMixin):
             self._dependency_condition = AlwaysTrue()
             return
         conds = [
-            task_ran(get_task(task)).in_period(get_task(task).cycle)
+            task_succeeded(task=get_task(task)).in_period(get_task(task).period)
             for task in value
         ]
-        self._dependency_condition = conditions.All(conds)
+        self._dependency_condition = conditions.All(*conds)
 
     def set_name(self, name):
         if name is not None:

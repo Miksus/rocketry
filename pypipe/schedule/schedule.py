@@ -263,22 +263,31 @@ class Scheduler:
 
 # Factory
     @classmethod
-    def from_folder(cls, path):
-        path = Path(path)
-
+    def from_folder(cls, path, include_main=True, include_ipynb=True, **kwargs):
+        root = Path(path)
+        
         tasks = []
-        for file in path.glob('**/main.py'):
-            if file.is_file():
-                
-                name = '.'.join(file.parts).replace(r'/main.py', '')
-                task = ScriptTask(file, name=name)
-                tasks.append(task)
+        if include_main:
+            for file in root.glob('**/main.py'):
+                if file.is_file():
+                    
 
-        for file in path.glob('**/*.ipynb'):
-            if file.is_file():
-                task = NotebookTask(file)
-                tasks.append(task)
-        return cls(tasks)
+                    relative_path = Path(*file.parts[len(root.parts):]) # Removed beginning, C://myuser/...
+
+                    group = '.'.join(relative_path.parts[:-2]) # All but the mytask/main.py
+                    name = '.'.join(relative_path.parts[:-1]) # All but the main.py
+                    task = ScriptTask.from_file(file, name=name, group=group) # Figures the conditions etc.
+                    tasks.append(task)
+
+        if include_ipynb:
+            for file in path.glob('**/*.ipynb'):
+                if file.is_file():
+                    relative_path = Path(*file.parts[len(root.parts):]) # Removed beginning, C://myuser/...
+                    name = '.'.join(relative_path.parts).replace(".ipynb", "") # All but the main.py
+                    task = NotebookTask.from_file(file, name=name)
+                    tasks.append(task)
+
+        return cls(tasks, **kwargs)
 
 
 
@@ -480,3 +489,21 @@ class MultiScheduler(Scheduler):
     @property
     def n_alive(self):
         return sum(self.is_alive(task) for task in self.tasks)
+
+    def shut_down(self, traceback=None, exception=None):
+        """Shut down the scheduler
+        This method is meant to controllably close the
+        scheduler in case the scheduler crashed (with 
+        Python exception) to properly inform the maintainer
+        and log the event
+        """
+        try:
+            if exception is None:
+                while self.n_alive:
+                    #time.sleep(self.min_sleep)
+                    self.handle_logs()
+                
+        except Exception as exc:
+            self.shut_down(exception=exc)
+        else:
+            self.handle_logs()

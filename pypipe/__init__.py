@@ -11,6 +11,11 @@ from .log import CsvHandler
 
 import logging as _logging
 
+def reset():
+    "Reset logging, tasks etc. to default. Useful for testing"
+    task.base.clear_tasks()
+    task.base.Task.get_logger().handlers = []
+
 def setup_logging():
     from pathlib import Path
     Path("log").mkdir(parents=True, exist_ok=True)

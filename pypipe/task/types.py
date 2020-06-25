@@ -2,6 +2,7 @@
 
 
 from .base import Task
+from .config import parse_config
 
 import inspect
 import importlib
@@ -39,6 +40,9 @@ class FuncTask(Task):
 
 class ScriptTask(Task):
     """Task that executes a Python script
+
+    ScriptTask("folder/subfolder/main.py")
+    ScriptTask("folder/subfolder/mytask.py")
     """
     main_func = "main"
 
@@ -58,18 +62,39 @@ class ScriptTask(Task):
         del self._task_func
         super().process_finish(*args, **kwargs)
 
+    def get_module(self):
+        script_path = self.action
+        spec = importlib.util.spec_from_file_location("task", script_path)
+        task_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(task_module)
+        return task_module
+
     def get_task_func(self):
         if not hasattr(self, "_task_func"):
             # _task_func is cached to faster performance
-            script_path = self.action
-            spec = importlib.util.spec_from_file_location("task", script_path)
-            task_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(task_module)
-
+            task_module = self.get_module()
             task_func = getattr(task_module, self.main_func)
             self._task_func = task_func
         return self._task_func
 
+    @classmethod
+    def from_file(cls, path):
+        confs = self._get_config(self.get_module())
+        if not confs:
+            confs = parse_config(path)
+        obj = cls(action=path, **confs)
+        return obj
+
+    @staticmethod
+    def _get_config(module):
+        "Get config from the module"
+
+        confitems = ("start_condition", "run_condition", "end_condition", "dependent", "execution")
+        confs = {}
+        for item in confitems:
+            if hasattr(module, item):
+                confs[item] = getattr(module, item.upper(), None)
+        return confs
 
 class CommandTask(Task):
     """Task that executes a commandline command
@@ -192,3 +217,16 @@ class JupyterTask(Task):
     @notebook.deleter
     def notebook(self):
         del self._notebook
+
+    @classmethod
+    def from_file(cls, path):
+
+        obj = cls(action=path, **parse_config(path))
+        return obj
+        
+
+    def _get_config(self, path):
+        notebook = JupyterNotebook(path)
+        conf_cell = notebook.get_cells(["taskconf"])
+        conf_string = conf_cell.source
+        conf_string

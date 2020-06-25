@@ -7,7 +7,7 @@ from pypipe.conditions import task_ran
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.log import TaskAdapter, CsvHandler
 
-from pypipe.time import period_factory
+from pypipe.time import period_factory, StaticInterval
 
 class _ExecutionMixin:
 
@@ -37,6 +37,7 @@ class _ExecutionMixin:
         if self.execution is None:
             self.execution = execution
         else:
+            # TODO
             self.execution &= execution
         return self
 
@@ -45,6 +46,7 @@ class _ExecutionMixin:
         if self.execution is None:
             self.execution = execution
         else:
+            # TODO
             self.execution &= execution
         return self
 
@@ -53,6 +55,7 @@ class _ExecutionMixin:
         if self.execution is None:
             self.execution = execution
         else:
+            # TODO
             self.execution &= execution
         return self
 
@@ -61,6 +64,7 @@ class _ExecutionMixin:
         if self.execution is None:
             self.execution = execution
         else:
+            # TODO
             self.execution &= execution
         return self
 
@@ -69,15 +73,20 @@ class _ExecutionMixin:
         if self.execution is None:
             self.execution = execution
         else:
+            # TODO
             self.execution &= execution
         return self
 
     @property
-    def cycle(self):
+    def period(self):
         "Determine Time object for the interval (maximum possible if time independent as 'or')"
         execution = self._execution_condition
-        if execution is not None:
+        if hasattr(execution, "period"):
             return execution.period 
+        elif hasattr(execution, "__magicmethod__"):
+            return functools.reduce(lambda a, b : getattr(a, "__magicmethod__")(b), execution.subconditions)
+        else:
+            return StaticInterval()
 
     @property
     def next_start(self):

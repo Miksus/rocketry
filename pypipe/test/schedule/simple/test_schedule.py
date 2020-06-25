@@ -2,14 +2,11 @@
 from pypipe import Scheduler, MultiScheduler, FuncTask
 from pypipe.task.base import Task, clear_tasks
 from pypipe.conditions import scheduler_cycles
+from pypipe import reset
 
 import pytest
 import logging
 import sys
-
-
-
-
 
 
 def myfunc():
@@ -22,6 +19,7 @@ def succeeding():
     print("Success")
 
 def test_simple(tmpdir):
+    reset()
     with tmpdir.as_cwd() as old_dir:
 
 
@@ -52,6 +50,7 @@ def test_simple(tmpdir):
         assert 3 == (history["action"] == "fail").sum()
 
 def test_simple_multiprocess(tmpdir):
+    reset()
     with tmpdir.as_cwd() as old_dir:
         
 
@@ -85,6 +84,7 @@ def test_simple_multiprocess(tmpdir):
 
 
 def test_priority(tmpdir):
+    reset()
     with tmpdir.as_cwd() as old_dir:
         FuncTask.set_default_logger()
 
