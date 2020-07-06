@@ -72,4 +72,3 @@ def ram_used(absolute=False):
 @Statement()
 def file_exists(filename):
     return os.path.exists(filename)
-

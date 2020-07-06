@@ -8,17 +8,6 @@ from pypipe import reset
 Task.use_instance_naming = True
 
 
-def test_construct(tmpdir, successing_script_path):
-    # Going to tempdir to dump the log files there
-    reset()
-    with tmpdir.as_cwd() as old_dir:
-        task = ScriptTask(
-            successing_script_path, 
-            execution="daily",
-        )
-        assert task.status is None
-
-
 def test_success(tmpdir, successing_script_path):
     # Going to tempdir to dump the log files there
     reset()

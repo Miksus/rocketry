@@ -32,7 +32,7 @@ class FileTriggerTask:
         "Force task to run as soon as possible"
         task.force_run = True
 
-class SocetTriggerTask:
+class SocketTriggerTask:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

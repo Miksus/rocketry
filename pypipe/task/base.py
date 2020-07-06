@@ -173,6 +173,13 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
     def __bool__(self):
         "Check whether the task can be run or not"
+        
+        # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
+        # Also add methods: 
+        #    pause() : Set forced_state to False
+        #    resume() : Reset forced_state to None
+        #    set_running() : Set forced_state to True
+
         if self.force_run:
             return True
         

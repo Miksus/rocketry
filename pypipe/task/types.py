@@ -4,6 +4,7 @@
 from .base import Task
 from .config import parse_config
 
+from pathlib import Path
 import inspect
 import importlib
 
@@ -62,59 +63,128 @@ class ScriptTask(Task):
         del self._task_func
         super().process_finish(*args, **kwargs)
 
-    def get_module(self):
-        script_path = self.action
-        spec = importlib.util.spec_from_file_location("task", script_path)
-        task_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(task_module)
-        return task_module
 
     def get_task_func(self):
         if not hasattr(self, "_task_func"):
             # _task_func is cached to faster performance
-            task_module = self.get_module()
+            task_module = self.get_module(self.action)
             task_func = getattr(task_module, self.main_func)
             self._task_func = task_func
         return self._task_func
 
     @classmethod
-    def from_file(cls, path):
-        confs = self._get_config(self.get_module())
-        if not confs:
-            confs = parse_config(path)
+    def from_file(cls, path, **kwargs):
+        confs = cls._get_config(cls.get_module(path))
+        confs.update(kwargs)
         obj = cls(action=path, **confs)
         return obj
+
+    @classmethod
+    def from_project_folder(cls, path, main_file="main.py"):
+        """get all tasks from a project folder
+        Project folder is a folder with sub folders 
+        that contain 'main files' used as
+        the actual tasks. 
+
+        Example:
+            path structure:
+                | my_tasks/
+                |____ fetch/
+                     |____ prices/
+                     |    |____ main.py
+                     |____ index/
+                          |____ main.py
+                          |____ utils.py
+                          |____ tickers/
+                               |____ main.py
+                               |____ utils.py
+
+            ScriptTask.from_project_folder("my_tasks")
+            >>> [Task(name="fetch.prices", ...), Task(name="fetch.index", ...), Task(name="fetch.index.tickers", ...)]
+            ....
+        """
+        root = Path(path)
+
+        tasks = []
+        glob = f"**/{main_file}"
+        for file in root.glob(glob):
+            root_len = len(root.parts)
+            name = '.'.join(file.parts[root_len:-1])
+            tasks.append(cls.from_file(file, name=name)) 
+        return tasks
+
+    @classmethod
+    def from_module_folder(cls, path, glob="*.py"):
+        """get all tasks from folder
+        
+        Example:
+            path structure:
+                | my_tasks/
+                |____ fetch_prices.py
+                |____ fetch_index.py
+
+            ScriptTask.from_module_folder("my_tasks")
+            >>> [Task(name="fetch_prices", ...), Task(name="fetch_index", ...)]
+        """
+        root = Path(path)
+
+        tasks = []
+        for file in root.glob(glob):
+            tasks.append(cls.from_file(file, name=file.name.replace(file.suffix, ""))) 
+        return tasks
+
+    @staticmethod
+    def get_module(path):
+        spec = importlib.util.spec_from_file_location("task", path)
+        task_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(task_module)
+        return task_module
 
     @staticmethod
     def _get_config(module):
         "Get config from the module"
 
-        confitems = ("start_condition", "run_condition", "end_condition", "dependent", "execution")
+        confitems = {
+            "start_cond": "START_CONDITION",
+            "run_cond": "RUN_CONDITION",
+            "end_cond": "END_CONDITION",
+            "dependent": "DEPENDENT",
+            "execution": "EXECUTION",
+        }
         confs = {}
-        for item in confitems:
-            if hasattr(module, item):
-                confs[item] = getattr(module, item.upper(), None)
+        for key, var in confitems.items():
+            if hasattr(module, var):
+                confs[key] = getattr(module, var)
         return confs
+
 
 class CommandTask(Task):
     """Task that executes a commandline command
     """
     timeout = None
 
+    def __init__(self, *args, cwd=None, shell=False, **kwags):
+        super().__init__(*args, **kwargs)
+        self.kwargs_popen = {"cwd": cwd, "shell":shell}
+        # About shell: https://stackoverflow.com/a/36299483/13696660
+
     def execute_action(self, *args, **kwargs):
         command = self.action
         if args:
             command = [command] + list(args) if isinstance(command, str) else command + list(args)
-
+        # command can be: "myfile.bat", "echo Hello!", ["python", "v"]
+        # https://stackoverflow.com/a/5469427/13696660
         pipe = subprocess.Popen(command,
-                                shell=True,
+                                #shell=True,
+                                capture_output=True,
                                 #stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                #stdout=subprocess.PIPE,
+                                #stderr=subprocess.PIPE,
+                                **self.kwargs_popen
                                 )
         try:
             outs, errs = pipe.communicate(timeout=self.timeout)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             # https://docs.python.org/3.3/library/subprocess.html#subprocess.Popen.communicate
             pipe.kill()
             outs, errs = pipe.communicate()
@@ -133,6 +203,18 @@ class CommandTask(Task):
         command = self.action
         return command if isinstance(command, str) else ' '.join(command)
 
+    @classmethod
+    def from_folder(cls, path):
+        "get all tasks from folder"
+        root = Path(path)
+
+        types = ("**/*.bat", "**/*.sh")
+
+        tasks = []
+        for type_ in types:
+            for file in root.glob(type_):
+                tasks.append(cls.from_file(file)) 
+        return tasks
 
 class JupyterTask(Task):
     """Task that executes a Jupyter Notebook
@@ -140,7 +222,7 @@ class JupyterTask(Task):
 
     parameter_tag = "parameter"
 
-    def __init__(self, *args, on_preprocess=None, param_names=None, clear_outputs=True, **kwags):
+    def __init__(self, *args, on_preprocess=None, param_names=None, clear_outputs=True, **kwargs):
         self.on_preprocess = on_preprocess
         self.param_names = [] if param_names is None else param_names
         super().__init__(*args, **kwargs)
@@ -166,12 +248,13 @@ class JupyterTask(Task):
 
         nb = run_notebook(
             notebook=nb,
-            # Note, we do not pass the methods
+            # Note, we do not pass the methods 
+            # (process_finish, process_success etc.)
             # to prevent double call
             on_finally=self.on_finish,
             on_success=self.on_success,
             on_failure=self.on_failure,
-            parameters=kwargs,
+            # parameters=kwargs, # Parameters are set elsewhere
             clear_outputs=self.clear_outputs,
             parameter_tag=self.parameter_tag
         )
@@ -182,6 +265,13 @@ class JupyterTask(Task):
             self.on_preprocess(nb, **kwargs)
 
     def set_params(self, nb, **kwargs):
+        # TODO:
+        #   An option to set arbitrary parameters using picke
+        #       1. write the parameter(s) to a pickle file
+        #       2. manipulate param cell in a way that it reads
+        #          these parameters
+        #       3. Run the notebook
+        #       4. Possibly clear the pickle files
         param_cells = nb.get_cells(tags=[self.parameter_tag])
 
         cell = CodeCell.from_variable_dict(kwargs)
@@ -224,6 +314,25 @@ class JupyterTask(Task):
         obj = cls(action=path, **parse_config(path))
         return obj
         
+    @classmethod
+    def from_folder(cls, path):
+        """get all tasks from folder
+        
+        Example:
+            path structure:
+                | my_notebooks/
+                |____ do_report.ipynb
+                |____ do_analysis.ipynb
+                
+            JupyterTask.from_folder("my_notebooks")
+            >>> [Task(name="do_report", ...), Task(name="do_analysis", ...)]
+        """
+        root = Path(path)
+
+        tasks = []
+        for file in root.glob("*.ipynb"):
+            tasks.append(cls.from_file(file)) 
+        return tasks
 
     def _get_config(self, path):
         notebook = JupyterNotebook(path)
