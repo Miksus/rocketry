@@ -9,25 +9,25 @@ logger = logging.getLogger(__name__)
 
 # Task related
 @Statement(historical=True, quantitative=True)
-def task_ran(task, start=None, end=None):
-    records = task.logger.get_records(start=start, end=end, action="run")
+def task_ran(task, _start_=None, _end_=None):
+    records = task.logger.get_records(start=_start_, end=_end_, action="run")
     run_times = records["asctime"].tolist()
     return run_times
 
 @Statement(historical=True, quantitative=True)
-def task_failed(task, start, end):
-    records = task.logger.get_records(start=start, end=end, action="fail")
-    return not records.empty
+def task_failed(task, _start_, _end_):
+    records = task.logger.get_records(start=_start_, end=_end_, action="fail")
+    return records
 
 @Statement(historical=True, quantitative=True)
-def task_succeeded(task, start, end):
-    records = task.logger.get_records(start=start, end=end, action="success")
-    return not records.empty
+def task_succeeded(task, _start_, _end_):
+    records = task.logger.get_records(start=_start_, end=_end_, action="success")
+    return records
 
 @Statement(historical=True, quantitative=True)
-def task_finished(task, start, end):
-    records = task.logger.get_records(start=start, end=end, action=["success", "fail"])
-    return not records.empty
+def task_finished(task, _start_, _end_):
+    records = task.logger.get_records(start=_start_, end=_end_, action=["success", "fail"])
+    return records
 
 @Statement()
 def task_running(task):
@@ -44,10 +44,10 @@ def scheduler_cycles(scheduler):
     return scheduler.n_cycles
 
 @Statement(historical=True)
-def scheduler_started(scheduler, start, end):
+def scheduler_started(scheduler, _start_, _end_):
     "Check whether "
     dt = scheduler.startup_time
-    return start <= dt <= end
+    return _start_ <= dt <= _end_
 
 
 # OS related

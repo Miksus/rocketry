@@ -8,12 +8,12 @@ import numpy as np
 
 # TODO: convert Observation to a "statement" when comparison?
 from ..base import BaseCondition
-from pypipe.time import period_factory, StaticInterval
+from .mixins import _Historical, _Quantitative
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Statement(BaseCondition):
+class Statement(BaseCondition, _Historical, _Quantitative):
     """
 
     @Statement
@@ -41,6 +41,9 @@ class Statement(BaseCondition):
         file_modified.in_("today")              # TimeInterval("00:00", "24:00")
         file_modified.in_("yesterday")          # TimeInterval("00:00", "24:00") - pd.Timedelta("1 day")
         file_modified.in_("hour")               # hourly
+
+        file_modified.after(another_statement)  # file modified after last occurence of another_staement
+        file_modified.before(another_statement) # file modified before first occurence of another_staement
 
     Quantitative example:
         @Statement(quantitative=True)
@@ -88,9 +91,10 @@ class Statement(BaseCondition):
         self.historical = historical
 
         if self.historical:
-            self.period = StaticInterval()
+            self._init_historical()
+
         if self.quantitative:
-            self.comparisons = {}
+            self._init_quantitative()
 
         self.args = ()
         self._kwargs = {}
@@ -104,7 +108,11 @@ class Statement(BaseCondition):
         )
 
     def __bool__(self):
-        outcome = self._func(*self.args, **self.kwargs)
+        try:
+            outcome = self._func(*self.args, **self.kwargs)
+        except IndexError:
+            # Exceptions are considered that the statement is false
+            return False
         result = self.to_boolean(outcome)
 
         logger.debug(f"Statement {str(self)} status: {result}")
@@ -115,14 +123,25 @@ class Statement(BaseCondition):
     def kwargs(self):
         kwargs = self._kwargs
         if self.historical:
-            ref_dt = self.current_datetime
-            interval = self.period.rollback(ref_dt)
-            start = interval.left
-            end = interval.right
-            kwargs.update({"start": start, "end": end})
+            kwargs.update(self.get_time_kwargs())
         return kwargs
 
     def to_boolean(self, result):
+        
+        if self.historical and not self.has_param("_start_", "_end_"):
+            # result should be datelike or list of datelike
+            start = self.get_start()
+            end = self.get_end()
+            if is_datelike(result):
+                result = start < result < end
+            else:
+                # List of datelike
+                result = [
+                    event
+                    for event in result
+                    if start < event < end
+                ]
+
         if self.quantitative:
             result = self.to_count(result)
             comparisons = self.comparisons or {"__gt__": 0}
@@ -164,7 +183,6 @@ class Statement(BaseCondition):
         if self.historical:
             return self.period
             
-
     @property
     def require_task(self):
         return self.has_param("task")
@@ -188,92 +206,12 @@ class Statement(BaseCondition):
         self.args = (*self.args, *args)
         self._kwargs.update(kwargs)
 
-
     def has_param(self, *params):
         sig = signature(self._func)
         return all(param in sig.parameters for param in params)
 
     def has_param_set(self, *params):
         return all(param in self.kwargs for param in params)
-
-# Comparisons
-    def __eq__(self, other):
-        # self == other
-        obs = self.copy()
-        obs._set_comparison("__eq__", other)
-        return obs
-
-    def __ne__(self, other):
-        # self != other
-        obs = self.copy()
-        obs._set_comparison("__ne__", other)
-        return obs
-
-    def __lt__(self, other):
-        # self < other
-        obs = self.copy()
-        obs._set_comparison("__lt__", other)
-        return obs
-
-    def __gt__(self, other):
-        # self > other
-        obs = self.copy()
-        obs._set_comparison("__gt__", other)
-        return obs
-
-    def __le__(self, other):
-        # self <= other
-        obs = copy(self)
-        obs._set_comparison("__le__", other)
-        return obs
-        
-    def __ge__(self, other):
-        # self >= other
-        obs = self.copy()
-        obs._set_comparison("__ge__", other)
-        return obs
-
-    def more_than(self, num):
-        return self > numb
-
-    def less_than(self, num):
-        return self < numb
-
-    def _set_comparison(self, key, val):
-        if not self.quantitative:
-            raise TypeError(f"Statement '{self.name}' is not quantitative and cannot be compared.")
-        self.comparisons[key] = val
-
-# Time related
-    def between(self, *args, **kwargs):
-        return self._set_period(
-            period_factory.between(*args, **kwargs)
-        )
-
-    def past(self, *args, **kwargs):
-        return self._set_period(
-            period_factory.past(*args, **kwargs)
-        )
-
-    def in_(self, *args, **kwargs):
-        return self._set_period(
-            period_factory.in_(*args, **kwargs)
-        )
-
-    def from_(self, *args, **kwargs):
-        return self._set_period(
-            period_factory.from_(*args, **kwargs)
-        )
-
-    def in_cycle(self, *args, **kwargs):
-        return self._set_period(
-            period_factory.in_cycle(*args, **kwargs)
-        )
-
-    def in_period(self, period):
-        return self._set_period(
-            period
-        )
 
     def __str__(self):
         name = self._func.__name__
@@ -282,17 +220,6 @@ class Statement(BaseCondition):
     @property
     def name(self):
         return self._func.__name__
-
-    def _set_period(self, period):
-        stmt = self.copy()
-        if not stmt.historical:
-            raise TypeError(f"Statement '{stmt.name}' is not historical and does not have past.")
-        if isinstance(period, StaticInterval) and period.is_max_interval:
-            stmt.period = period
-        else:
-            stmt.period &= period
-        return stmt
-
 
     def copy(self):
         # Cannot deep copy self as if task is in kwargs, failure occurs
