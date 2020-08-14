@@ -30,6 +30,7 @@ def test_force_run(tmpdir):
         assert bool(task)
         assert bool(task)
         task()
+        assert not task.force_run
         assert not bool(task)
 
 

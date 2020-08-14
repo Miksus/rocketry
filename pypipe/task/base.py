@@ -53,8 +53,8 @@ class Task(_ExecutionMixin, _LoggingMixin):
             examples: "daily", "past 2 hours", "between 11:00 and 12:00"
         dependent {List[str]} : List of task names to must run before this task (in their execution cycle)
 
-        name {str} : Name of the task. Must be unique
-        group {str} : Name of the group the task is part of. The name of the logger is derived using this.
+        name {str, tuple} : Name of the task. Must be unique
+        groups {tuple} : Name of the group the task is part of. Different groups use different loggers
 
         force_run {bool} : Run the task manually once
 
@@ -81,6 +81,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
     """
     use_instance_naming = False
     _logger_basename = __name__
+
+    # Used to join tupled name into one
+    group_delimiter = "/"
     # TODO:
     #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
@@ -89,7 +92,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, group=None):
+                name=None, groups=None):
         """[summary]
 
         Arguments:
@@ -121,8 +124,8 @@ class Task(_ExecutionMixin, _LoggingMixin):
         self.execution = execution
         self.dependent = dependent
 
-        self.group = group
-        self.set_name(name)
+        #self.group = group
+        self.set_name(name, groups=groups)
         self.set_logger()
         self._set_default_task()
 
@@ -173,10 +176,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
     def __bool__(self):
         "Check whether the task can be run or not"
-        
         # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
         # Also add methods: 
-        #    pause() : Set forced_state to False
+        #    set_pending() : Set forced_state to False
         #    resume() : Reset forced_state to None
         #    set_running() : Set forced_state to True
 
@@ -224,19 +226,40 @@ class Task(_ExecutionMixin, _LoggingMixin):
             self._dependency_condition = AlwaysTrue()
             return
         conds = [
-            task_succeeded(task=get_task(task)).in_period(get_task(task).period)
+            # Whether task hasn't run after the dependency task
+            # | dep ran              | dep ran
+            # --------------------------------
+            #   | self ran      | self ran
+            task_succeeded(task=get_task(task)).before(task_ran(task=self))
             for task in value
         ]
         self._dependency_condition = conditions.All(*conds)
 
-    def set_name(self, name):
-        if name is not None:
-            self.name = name
-        else:
+    def set_name(self, name, groups=None):
+        # TODO: if name is tuple, the name[:-1] are groups
+        if name is None:
             if self.use_instance_naming:
-                self.name = id(self)
+                self._name = id(self)
             else:
-                self.name = self.get_default_name()
+                self._name = self.get_default_name()
+
+        elif isinstance(name, tuple):
+            self._name = self.group_delimiter.join(name)
+            groups = name[:-1]
+        else:
+            self._name = str(name)
+
+        self.groups = groups
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def group_name(self):
+        if self.groups is None:
+            return None
+        return self.group_delimiter.join(self.groups)
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")

@@ -14,7 +14,7 @@ def run_failing_func():
     print("Running func")
     raise RuntimeError("Task failed")
 
-def test_before(tmpdir):
+def test_before_true(tmpdir):
     # Going to tempdir to dump the log files there
     reset()
     with tmpdir.as_cwd() as old_dir:
@@ -30,10 +30,31 @@ def test_before(tmpdir):
         condition = task_ran(task=task).before(task_ran(task=task_parent))
         assert not bool(condition)
         task()
-        assert not bool(condition)
+        assert bool(condition)
         task_parent()
         assert bool(condition)
 
+def test_before_false(tmpdir):
+    # Going to tempdir to dump the log files there
+    reset()
+    with tmpdir.as_cwd() as old_dir:
+        task = FuncTask(
+            run_successful_func, 
+            execution="daily",
+        )
+        task_parent = FuncTask(
+            run_successful_func, 
+            execution="daily",
+        )
+        
+        condition = task_ran(task=task).before(task_ran(task=task_parent))
+        assert not bool(condition)
+        task_parent()
+        assert not bool(condition)
+        task()
+        assert not bool(condition)
+        task_parent()
+        assert not bool(condition)
 
 def test_before_with_period(tmpdir):
     # Going to tempdir to dump the log files there
@@ -51,7 +72,7 @@ def test_before_with_period(tmpdir):
         condition = task_ran(task=task).before(task_ran(task=task_parent).past("1 seconds"))
         assert not bool(condition)
         task()
-        assert not bool(condition)
+        assert bool(condition)
         task_parent()
         assert bool(condition)
 

@@ -110,25 +110,26 @@ class _LoggingMixin:
     def set_logger(self, logger=None):
         "Set the logger (and adapter)"
         if logger is None:
+            logger = self.get_logger(self.group_name) # Getting class/instance logger
 
-            logger = self.get_logger(self.group) # Getting class/instance logger
             if not logger.handlers:
                 # Setting default handlers to allow 2 way by default
                 self.set_default_logger(logger)
         self.logger = TaskAdapter(logger, task=self)
 
     @classmethod
-    def get_logger(cls, group=None):
+    def get_logger(cls, group_name=None):
+        "Get the Task logger"
         logger_name = cls._logger_basename
-        if group is not None:
-            logger_name += '.' + group
+        if group_name is not None:
+            logger_name += '.' + group_name
         return logging.getLogger(logger_name)
 
     @classmethod
-    def set_default_logger(cls, logger=None, group=None, filename="log/task.csv"):
+    def set_default_logger(cls, logger=None, group_name=None, filename="log/task.csv"):
         
         if logger is None:
-            logger = cls.get_logger(group=group)
+            logger = cls.get_logger(group_name=group_name)
 
         # Emptying existing handlers
         logger.handlers = []

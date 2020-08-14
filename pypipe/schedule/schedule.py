@@ -52,7 +52,7 @@ class Scheduler:
 
         for maintain_task in self.maintain_tasks:
             maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
-            maintain_task.group = "maintain"
+            maintain_task.groups = ("maintain",)
             maintain_task.set_logger() # Resetting the logger as group changed
 
         self.variable_params = {}
@@ -226,8 +226,8 @@ class Scheduler:
         tb_string = ''.join(tb)
         self.logger.error(f"Task {task} failed: \n{tb_string}")
 
-    def get_history(self, group=None):
-        logger = Task.get_logger(group=group)
+    def get_history(self, group_name=None):
+        logger = Task.get_logger(group_name=group_name)
         return read_logger(logger)
 
 # Core properties
@@ -240,7 +240,7 @@ class Scheduler:
                 task.next_start - now
                 for task in self.tasks
             )
-        except AttributeError:
+        except (AttributeError, ValueError): # Raises ValueError if min() is empty
             delay = 0
         else:
             delay = delay.total_seconds()
@@ -265,7 +265,7 @@ class Scheduler:
     @classmethod
     def from_folder(cls, path, include_main=True, include_ipynb=True, **kwargs):
         root = Path(path)
-        
+        # TODO: Probably better to delete for now
         tasks = []
         if include_main:
             for file in root.glob('**/main.py'):
@@ -384,7 +384,7 @@ class MultiScheduler(Scheduler):
         task._process.start()
         task._start_time = datetime.datetime.now()
 
-        self.handle_next_log()
+        self.handle_next_run_log()
         # In case there are others waiting
         self.handle_logs()
         
@@ -463,14 +463,18 @@ class MultiScheduler(Scheduler):
                 task = get_task(record.task_name)
                 task.log_record(record)
 
-    def handle_next_log(self):
-        "Handle the status queue and carries the logging on their behalf"
-        queue = self._log_queue
-        record = queue.get()
+    def handle_next_run_log(self):
+        "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
+        action = None
+        while action != "run":
+            queue = self._log_queue
+            record = queue.get()
 
-        self.logger.debug(f"Inserting record for' {record.task_name}' ({record.action})")
-        task = get_task(record.task_name)
-        task.log_record(record)
+
+            self.logger.debug(f"Inserting record for' {record.task_name}' ({record.action})")
+            task = get_task(record.task_name)
+            task.log_record(record)
+            action = record.action
 
     def setup(self):
         "Set up the scheduler"

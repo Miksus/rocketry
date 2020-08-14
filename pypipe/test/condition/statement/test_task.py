@@ -50,8 +50,10 @@ def test_default_copying_all(tmpdir):
             start_cond=task_ran & task_ran,
             execution="daily",
         )
-        assert task_b.start_cond.kwargs["task"] is task_b
-        assert task_a.start_cond.kwargs["task"] is task_a
+        assert task_b.start_cond[0].kwargs["task"] is task_b
+        assert task_b.start_cond[1].kwargs["task"] is task_b
+        assert task_a.start_cond[0].kwargs["task"] is task_a
+        assert task_a.start_cond[1].kwargs["task"] is task_a
         assert task_a.start_cond is not task_b.start_cond
 
 

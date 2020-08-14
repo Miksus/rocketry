@@ -1,14 +1,19 @@
+
 import pytest
 
 from pypipe import Scheduler, JupyterTask
-from pypipe.task.base import Task
+from pypipe.task.base import Task, get_task
 from pypipe import reset
 
-def test_from_folder(tmpdir):
-    # Going to tempdir to dump the log files there
+from nbconvert.preprocessors import CellExecutionError
+
+Task.use_instance_naming = True
+
+
+def test_success(tmpdir):
     reset()
 
-    nb_a = r"""{
+    nb_success = r"""{
  "cells": [
   {
    "cell_type": "raw",
@@ -28,6 +33,16 @@ def test_from_folder(tmpdir):
     "from pypipe.conditions import task_ran\n",
     "start_condition = task_ran(\"mytask\") == 1"
    ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "x = 5\n",
+    "print(x)"
+   ]
   }
  ],
  "metadata": {
@@ -54,28 +69,50 @@ def test_from_folder(tmpdir):
  "nbformat_minor": 4
 }
 """
+    task_folder = tmpdir.mkdir("tasks")
+    task_folder.join("task_success.ipynb").write(nb_success)
 
-    nb_b = r"""{
+    # Going to tempdir to dump the log files there
+    with tmpdir.as_cwd() as old_dir:
+        task = JupyterTask(
+            "tasks/task_success.ipynb", 
+            execution="daily",
+        )
+        task()
+        assert task.status == "success"
+
+def test_failure(tmpdir):
+    reset()
+
+    nb_failure = r"""{
  "cells": [
   {
    "cell_type": "raw",
    "metadata": {},
    "source": [
-    "This is a notebook 2"
+    "This is a notebook"
    ]
   },
   {
-   "cell_type": "code",
-   "execution_count": null,
+   "cell_type": "raw",
    "metadata": {
     "tags": [
      "conditions"
     ]
    },
-   "outputs": [],
    "source": [
     "from pypipe.conditions import task_ran\n",
-    "start_condition = task_ran(\"mytask\") == 0"
+    "start_condition = task_ran(\"mytask\") == 1"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "x = 5\n",
+    "raise RuntimeError('Notebook Failed')"
    ]
   }
  ],
@@ -103,13 +140,15 @@ def test_from_folder(tmpdir):
  "nbformat_minor": 4
 }
 """
-    with tmpdir.as_cwd() as old_dir:
-        task_folder = tmpdir.mkdir("tasks")
-        task_folder.join("task_a.ipynb").write(nb_a)
-        task_folder.join("task_b.ipynb").write(nb_b)
-        tasks = JupyterTask.from_folder("tasks/")
-        assert tasks[0].name == "task_a"
-        assert tasks[1].name == "task_b"
+    task_folder = tmpdir.mkdir("tasks")
+    task_folder.join("task_fail.ipynb").write(nb_failure)
 
-        assert tasks[0].start_cond.comparisons["__eq__"] ==  1
-        assert tasks[1].start_cond.comparisons["__eq__"] ==  0
+    # Going to tempdir to dump the log files there
+    with tmpdir.as_cwd() as old_dir:
+        task = JupyterTask(
+            "tasks/task_fail.ipynb", 
+            execution="daily", 
+        )
+        with pytest.raises(CellExecutionError):
+            task()
+        assert task.status == "fail"
