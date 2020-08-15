@@ -292,12 +292,28 @@ class Scheduler:
 
 
 def _run_task_as_process(task, queue, params):
-    "Run a task in a separate process (has own memory)"
-    # TODO: set the queue here, make again the logger to the task and add QueueHandler to the logger
+    """Run a task in a separate process (has own memory)"""
+
+    # NOTE: This is in the process and other info in the application
+    # cannot be accessed here.
     
+    # The task's logger has been removed by MultiScheduler.run_task_as_process
+    # (see the method for more info) and we need to recreate the logger now
+    # in the actual multiprocessing's process. We only add QueueHandler to the
+    # logger (with multiprocessing.Queue as queue) so that all the logging
+    # records end up in the main process to be logged properly. 
+
+    # Set the process logger
     logger = logging.getLogger("pypipe.schedule.process")
     logger.setLevel(logging.INFO)
+
     with warnings.catch_warnings():
+        # task.set_logger will warn that 
+        # we do not use two-way logger here 
+        # but that is not needed as running 
+        # the task itself does not require
+        # knowing the status of the task
+        # or other tasks
         warnings.simplefilter("ignore")
         task.set_logger(logger)
     #task.logger.addHandler(
@@ -311,13 +327,13 @@ def _run_task_as_process(task, queue, params):
     try:
         task(**params)
     except Exception as exc:
-        exception = exc
-        status = "fail"
-    else:
-        status = "success"
-    #conn.send({"status": task.status, "end_time": datetime.datetime.now()})
+        # Just catching all exceptions.
+        # There is nothing to raise it
+        # to :(
+        pass
 
 def _listen_task_status(handlers, queue):
+    # TODO: Probably remove
     # https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
     logger = logging.getLogger(__name__)
     logger.handlers = handlers
@@ -365,10 +381,25 @@ class MultiScheduler(Scheduler):
         # TODO: Log that the task is running here as it will take a moment for the task itself to do it
         # (There is a high risk that the task is running twice as the condition did not get the info in time)
         self.logger.debug(f"Running task {task.name}")
-        #task.log_running()
-        # Multiprocessing pickles the task but the logger in a task
-        # cannot be pickled due to locks etc. We circumvent this by
-        # copying the task without the logger
+
+        # Multiprocessing's process has its own memory that cause
+        # sone issues. Because of this, multiprocessing need to 
+        # pickle the parameters passed to the process' function.
+        # Issue arises when the logger of a task cannot be pickled
+        # due to locks, file buffers etc. in the handlers.
+        # To fix this, we need to mirror the task: the task running
+        # in the process has its logger removed and the logger
+        # is formed in the process function itself (so not passed).
+
+        # The mirror logger just creates and sends all the log records 
+        # to the main process (this scheduler) via multiprocessing.Queue
+        # and the log records are handled (logged) by the original version 
+        # of the task using task.logger.handle(record).
+
+        # Also, the logging records may be best to be handled in the main
+        # process anyways: if multiple tasks are writing same log file
+        # at the same time, issues may arise.
+
         proc_task = copy(task)
         proc_task.logger = None
         proc_task.start_cond = None
@@ -384,7 +415,15 @@ class MultiScheduler(Scheduler):
         task._process.start()
         task._start_time = datetime.datetime.now()
 
+        # There is one more issue to handle: the task must be logged as
+        # running before exiting this method (otherwise there is 
+        # risk for the task being run multiple times in the same instant
+        # as the log about that the task is already running has not yet 
+        # arrived). To fix this, we wait till we get approval that the
+        # log about that the task is running has arrived and is logged.
+
         self.handle_next_run_log()
+
         # In case there are others waiting
         self.handle_logs()
         
