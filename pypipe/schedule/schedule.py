@@ -257,7 +257,7 @@ class Scheduler:
                     task.priority, 
                     task.start_cond.estimate_timedelta(now)
                     if hasattr(task.start_cond, "estimate_timedelta")
-                    else 0
+                    else datetime.timedelta.resolution
                 )
             )
 
