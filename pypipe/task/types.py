@@ -337,7 +337,7 @@ class JupyterTask(Task):
         """
         root = Path(path)
 
-        glob = "*.ipynb" or glob
+        glob = glob or "*.ipynb"
         name_func = (
             (lambda relative_path: tuple(part.replace('.ipynb', '') for part in relative_path.parts)) 
             if name_func is None else name_func
@@ -348,7 +348,7 @@ class JupyterTask(Task):
 
             kwargs.update(cls._get_conf_from_file(file))
             task_name = name_func(Path(*file.parts[len(root.parts):]))
-            tasks.append(cls(action=path, name=task_name, **kwargs))
+            tasks.append(cls(action=file, name=task_name, **kwargs))
         return tasks
 
     @staticmethod
