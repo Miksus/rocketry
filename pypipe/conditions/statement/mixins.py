@@ -189,3 +189,9 @@ class _Quantitative:
             raise TypeError(f"Statement '{self.name}' is not quantitative and cannot be compared.")
         self.comparisons[key] = val
 
+    def every(self, nth):
+        "The statement is true for every nth count of outcomes"
+        func = lambda result: (result % nth) == 0
+
+        self._set_comparison("every", func)
+# TODO: _set_comparison is just name and function, remove magic methods
