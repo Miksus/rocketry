@@ -18,5 +18,5 @@ setup(
         "Operating System :: OS Independent",
      ],
      include_package_data=True, # for MANIFEST.in
-     python_requires='>=3.6',
+     python_requires='>=3.6.6',
 )
