@@ -146,7 +146,9 @@ class Statement(BaseCondition, _Historical, _Quantitative):
             result = self.to_count(result)
             comparisons = self.comparisons or {"__gt__": 0}
             return all(
-                getattr(result, comp)(val) 
+                getattr(result, comp)(val) # Comparison is magic method (==, !=, etc.)
+                if comp.startswith("__") and comp.endswith("__")
+                else val(result) # val is function (like: "every": lambda...)
                 for comp, val in comparisons.items()
             )
         else:
