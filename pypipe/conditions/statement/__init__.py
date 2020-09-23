@@ -7,6 +7,7 @@ __all__ = [
     "ram_used",
     "task_running",
     "scheduler_cycles",
+    "scheduler_started",
     "Statement",
     "set_statement_defaults"
 ]
@@ -19,7 +20,8 @@ from .builtin import (
     ram_free,
     ram_used,
     task_running,
-    scheduler_cycles
+    scheduler_cycles,
+    scheduler_started,
 )
 
 from .utils import set_statement_defaults
