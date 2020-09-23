@@ -29,7 +29,20 @@ from pypipe.conditions import set_statement_defaults
 
 class Scheduler:
     """
-    Simple Scheduler 
+    One treaded Scheduler 
+
+    Flow of action:
+    ---------------
+        __call__() : Start and run the scheduler
+            setup() : Set up the scheduler (set up scheduler logger etc.)
+            Check and possibly run runnable tasks until shut_condition is not met
+                hibernate() : Put scheduler to sleep (to throttle down the scheduler)
+                run_cycle() : Iterate tasks once through and run tasks that can be run 
+                    Check if task's start_cond is met. If it is:
+                        run_task() : Executes the actual task
+                            Task.__call__() : Handles logging and how the task is run
+                maintain() : Run maintanance tasks that may operate on the scheduler
+
     """
 
     logger = logging.getLogger(__name__)
