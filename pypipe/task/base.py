@@ -173,6 +173,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
         finally:
             self.process_finish(status=status)
+            self.force_run = False
 
     def __bool__(self):
         "Check whether the task can be run or not"
