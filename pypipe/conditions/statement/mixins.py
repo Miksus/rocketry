@@ -24,6 +24,8 @@ class _Historical:
         #    start       end
         #  ---------------<-------t0
         #     EOP       event
+
+        # _before : self has happened before latest event of "_before" (and after start of the "_before"'s latest window)
         before_start = self._before.get_time_kwargs(dt)["_start_"] if self._before is not None else StaticInterval.min
         before_end = self._before.get_latest_obs() if self._before is not None else StaticInterval.max
 
@@ -31,7 +33,8 @@ class _Historical:
         #                 start       end
         #  ----------------->------------------------t0
         #  EOP   event    event       EOP 
-        after_start = self._after.get_earliest_obs() if self._after is not None else StaticInterval.min
+        # _after : self has happened after earliest event of "_after" (and before start of the "_before"'s latest window)
+        after_start = self._after.get_latest_obs() if self._after is not None else StaticInterval.min
         after_end = self._after.get_time_kwargs(dt)["_end_"] if self._after is not None else StaticInterval.max
 
         # If self happened before x? and x never happened --> True if self has happened
@@ -54,13 +57,13 @@ class _Historical:
         return obs[-1]
 
     def get_earliest_obs(self):
-        "Get latest occurence of the event"
+        "Get earliest occurence of the event"
         obs = self.function()
         if isinstance(obs, str):
             return pd.Timestamp(obs)
         if len(obs) == 0:
             return None
-        return obs[-1]
+        return obs[0]
 
 # Time related
     def between(self, *args, **kwargs):
