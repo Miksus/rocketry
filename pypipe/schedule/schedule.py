@@ -369,6 +369,7 @@ class MultiScheduler(Scheduler):
             if self.is_task_runnable(task):
                 # Run the actual task
                 self.run_task_as_process(task)
+                task.force_run = False
             elif self.is_timeouted(task):
                 # Terminate the task
                 self.terminate_task(task, reason="timeout")
