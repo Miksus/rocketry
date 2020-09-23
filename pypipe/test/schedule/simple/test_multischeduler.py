@@ -2,7 +2,7 @@
 
 from pypipe import Scheduler, MultiScheduler, FuncTask
 from pypipe.task.base import Task, clear_tasks
-from pypipe.conditions import scheduler_cycles
+from pypipe.conditions import scheduler_cycles, task_ran, scheduler_started
 from pypipe import reset
 
 import pytest
@@ -43,13 +43,13 @@ def test_timeout(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         
 
-        task_success = FuncTask(slow_func, timeout=5, name="successing")
-        task_terminated = FuncTask(slow_func, timeout=1, name="failing")
+        task_success = FuncTask(slow_func, timeout=10, name="successing", start_cond=~task_ran)
+        task_terminated = FuncTask(slow_func, timeout=1, name="failing", start_cond=~task_ran)
         scheduler = MultiScheduler(
             [
                 task_success,
                 task_terminated
-            ], shut_condition=scheduler_cycles >= 1, min_sleep=0.5
+            ], shut_condition=(scheduler_cycles >= 1) & ~scheduler_started.past("7 seconds"), min_sleep=0.5
         )
         
         scheduler()
