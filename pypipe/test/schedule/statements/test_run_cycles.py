@@ -96,13 +96,24 @@ def test_dependent(tmpdir):
         assert 0 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
 
+        # Test if the tasks ran in correct order
+        history = scheduler.get_history()
+        history = history.set_index("action")
 
-def test_execution(tmpdir):
+        for i in range(3):
+            start_a = history[(history["task_name"] == "a")].loc["run", "asctime"].iloc[i]
+            start_b = history[(history["task_name"] == "b")].loc["run", "asctime"].iloc[i]
+            start_c = history[(history["task_name"] == "c")].loc["run", "asctime"].iloc[i]
+            start_dependent = history[(history["task_name"] == "dependent_success")].loc["run", "asctime"].iloc[i]
+        
+            assert start_a < start_dependent and start_b < start_dependent
+
+def test_priority(tmpdir):
     reset()
     with tmpdir.as_cwd() as old_dir:
         FuncTask.set_default_logger()
 
-        task_1 = FuncTask(succeeding, execution="", name="first")
+        task_1 = FuncTask(succeeding, priority=1, name="first")
         task_2 = FuncTask(failing, priority=10, name="last")
         task_3 = FuncTask(failing, priority=5, name="second")
         scheduler = Scheduler(

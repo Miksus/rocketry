@@ -172,6 +172,9 @@ class Daily(TimeCycle):
     def transform_start(self, arg=None):
         if arg is None:
             return datetime.time.min
+        # This is slight hack. pd.offsets.Timestamp accepts
+        # also only time part (ie. pd.offsets.Timestamp("10:00:12"))
+        # TODO: Make a check that no date is passed with arg or change pd.offsets.Timestamp to pd.offsets.CustomBusinessHour
         return pd.offsets.Timestamp(arg).time()
 
     def get_time_element(self, dt):
@@ -196,6 +199,9 @@ class Weekly(TimeCycle):
             return self.mapping[0]
         if hasattr(arg, "weekday"):
             arg = arg.weekday()
+        elif isinstance(arg, str):
+            # calendar.day_name and calendar.day_abbr both are capitalized thus forcing
+            arg = arg.capitalize()
         return self.mapping[arg]
 
     def get_time_element(self, dt):
@@ -206,19 +212,5 @@ class Weekly(TimeCycle):
         dt = dt + pd.offsets.Day() * diff
         return pd.Timestamp.combine(dt, self.start_time)
 
-daily = Daily()
-today = Daily()
-yesterday = Daily(n=2)
-weekly = Weekly()
+# TODO: This in init
 #monthly = Monthly(access_name="monthly")
-
-
-today.register("today", group="from_")
-yesterday.register("yesterday", group="from_")
-
-daily.register("daily", group="in_cycle")
-weekly.register("weekly", group="in_cycle")
-
-# Register all week days
-for weekday in (*calendar.day_name, *calendar.day_abbr):
-    Weekly(weekday).register(weekday, group="from_")

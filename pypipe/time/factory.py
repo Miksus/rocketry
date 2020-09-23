@@ -5,20 +5,95 @@ import re
 from .base import PERIOD_CLASSES, get_period
 from .base import TimeInterval, TimeDelta, TimeCycle
 
-from .cycle import (Daily, Weekly)
+from .cycle import (Weekly, Daily, Hourly, Minutely)
+from .interval import DaysOfWeek, TimeOfDay, TimeOfHour
 
+
+def _get_cycle(type_, start=None):
+    type_ = type_.lower()
+    cls = {
+        "daily": Daily,
+        "weekly": Weekly,
+        "hourly": Hourly,
+        "minutely": Minutely,
+    }[type_]
+    if start is None:
+        return cls()
+    elif start.isdigit():
+        return cls(int(start))
+    else:
+        return cls(start)
+
+def _get_interval(type_, start=None, end=None):
+    type_ = type_.lower()
+    cls = {
+        "daily": TimeOfDay,
+        "weekly": DaysOfWeek,
+        "hourly": TimeOfHour,
+    }[type_]
+    return cls(start=start, end=end)
+
+def _get_delta(value):
+    return TimeDelta(value)
 
 class _PeriodFactory:
 
     _weekdays = '|'.join(calendar.day_name) + "|" + '|'.join(calendar.day_abbr)
+
+    # Expressions for dynamic string parameters
+    expressions = [
+        (r"(?P<type_>monthly|weekly|daily|hourly|minutely) starting (?P<start>.+)", _get_cycle),
+        # (r"(?P<type_>monthly|weekly|daily|hourly|minutely) ending (?P<end>.+)", _get_cycle),
+
+        (r"(?P<type_>monthly|weekly|daily|hourly|minutely) between (?P<start>.+) and (?P<end>.+)", _get_interval),
+        (r"(?P<type_>monthly|weekly|daily|hourly|minutely) after (?P<start>.+)", _get_interval),
+        (r"(?P<type_>monthly|weekly|daily|hourly|minutely) before (?P<end>.+)", _get_interval),
+
+        (r"(?P<type_>monthly|weekly|daily|hourly|minutely)", _get_cycle),
+        (r"past (?P<value>.+)", _get_delta),
+    ]
+
     cycle_expressions = {
-        r"daily at (?P<start>[0-9][0-9]:[0-9][0-9])": Daily,
-        fr"weekly on (?P<start>({_weekdays}))": Weekly,
+
+        r"daily at (?P<start>[0-9][0-9]:[0-9][0-9])": Daily, # "daily at 11:00"
+        fr"weekly on (?P<start>({_weekdays}))": Weekly, # Intended (not working): "weekly from tuesday"
         # r"monthly on (?P<start>[1-3]?[0-9])": Monthly,
         # fr"yearly on (?P<start>({_months}))": Yearly,
         # fr"yearly on (?P<start_day>[0-3][0-9]\.(?P<start>({_months}))": Yearly,
+
+        # TODO:
+        # quarterly from first --> Quarterly(start=1)
+        # quarterly from third --> Starts from third quarter (3/4 of hour)
+        # hourly at third --> Starts from third quarter (3/4 of hour)
     }
     del _weekdays
+
+    def when(self, s:str):
+        """Create time period from a string
+
+        Examples:
+        ---------
+            _PeriodFactory().when("Monthly starting 5")
+            _PeriodFactory().when("Weekly starting monday")
+            _PeriodFactory().when("Daily between 11:00 and 15:00")
+            _PeriodFactory().when("past 5 hours")
+
+        Args:
+            s (str): [description]
+
+        Raises:
+            ValueError: If construction not found
+
+        Returns:
+            [TimePeriod]: [description]
+        """
+        for expr, func in self.expressions:
+            res = re.search(expr, s, flags=re.IGNORECASE)
+            if res:
+                return func(**res.groupdict())
+        else:
+            raise ValueError(f"Unknown conversion for: {s}")
+
 
     def between(self, start, end):
         """[summary]
@@ -105,13 +180,15 @@ class _PeriodFactory:
         if isinstance(cycle, TimeCycle):
             return cycle
         try:
-            return get_period(cycle, group="in_cycle")
+            return get_period(cycle, group=TimeCycle)()
         except KeyError:
             # Try expressions
             for expr, cls in self.cycle_expressions.items():
                 result = re.search(expr, cycle)
                 if result is not None:
                     return cls(**result.groupdict())
+            else:
+                raise ValueError
                 
 
     def from_(self, value):

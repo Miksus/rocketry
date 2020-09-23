@@ -4,10 +4,11 @@ import calendar
 
 from .base import TimeInterval, register_class
 
-from .utils import floor_time, ceil_time
+from .utils import floor_time, ceil_time, to_dict, to_nanoseconds
 
 import pandas as pd
-
+import re
+import dateutil
 
 # Pandas
 class OffsetInterval(TimeInterval):
@@ -30,18 +31,317 @@ class OffsetInterval(TimeInterval):
         return self.offset.rollback(dt)
 
     def next_start(self, dt):
+        # TODO: Is this needed?
         return dt + self.offset
 
     def previous(self, dt):
+        # TODO: Is this needed?
         return dt - self.offset
 
 
-class TimeOfDay(OffsetInterval):
+class AnchoredInterval(TimeInterval):
+    """Base for interval for those that have fixed time unit (that can be converted to nanoseconds)
+    """
+    components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
+    _scope = None # ie. day, hour, second, microsecond
+
+    def __init__(self, start=None, end=None):
+        self.start = start
+        self.end = end
+
+    def _to_relative_nanoseconds(self, dt):
+        "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
+        components = self.components
+        components = components[components.index(self._scope) + 1:]
+        d = to_dict(dt)
+        d = {
+            key: val
+            for key, val in d.items()
+            if key in components
+        }
+
+        return to_nanoseconds(**d)
+
+    def __contains__(self, dt):
+        ns = self._to_relative_nanoseconds(dt) # In relative nanoseconds (removed more accurate than scope)
+        ns_start = self.start_in_nanoseconds
+        ns_end = self.end_in_nanoseconds
+
+        is_over_period = ns_start > ns_end
+        if not is_over_period:
+            return ns_start <= ns <= ns_end
+        else:
+            return ns >= ns_start or ns <= ns_end
+
+    def rollstart(self, dt):
+        "Roll forward to next point in time that on the period"
+        if dt in self:
+            return dt
+        else:
+            return self.next_start(dt)
+
+    def rollend(self, dt):
+        "Roll back to previous point in time that is on the period"
+        if dt in self:
+            return dt
+        else:
+            return self.prev_end(dt)
+
+    def next_start(self, dt):
+        "Get next start point of the period"
+        ns = self._to_relative_nanoseconds(dt) # In relative nanoseconds (removed more accurate than scope)
+        ns_start = self.start_in_nanoseconds
+        ns_end = self.end_in_nanoseconds
+
+        if ns < ns_start:
+            # not in period, over night
+            #                     dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, earlier than start
+            #          dt                              
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            
+            # in period, over night, earlier than start
+            #            dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+            offset = pd.Timedelta(nanoseconds=int(ns_start) - int(ns))
+        else:
+            # not in period, later than start
+            #      dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+
+            # in period, over night, later than start
+            #       dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # in period
+            #                    dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            offset = pd.Timedelta(nanoseconds=int(ns_start) - int(ns) + self.period_in_nanoseconds)
+        return dt + offset
+
+    def next_end(self, dt):
+        "Get next end point of the period"
+        ns = self._to_relative_nanoseconds(dt) # In relative nanoseconds (removed more accurate than scope)
+        ns_start = self.start_in_nanoseconds
+        ns_end = self.end_in_nanoseconds
+
+        if ns <= ns_end:
+            # in period
+            #                    dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            
+            # in period, over night, earlier than end
+            #            dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, earlier than end
+            #          dt                              
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            offset = pd.Timedelta(nanoseconds=int(ns_end) - int(ns))
+        else:
+            # not in period, over night
+            #                     dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, later than end
+            #      dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+
+            # in period, over night, later than end
+            #       dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+            offset = pd.Timedelta(nanoseconds=int(ns_end) - int(ns) + self.period_in_nanoseconds)
+        return dt + offset
+
+    def prev_start(self, dt):
+        "Get previous start point of the period"
+        ns = self._to_relative_nanoseconds(dt) # In relative nanoseconds (removed more accurate than scope)
+        ns_start = self.start_in_nanoseconds
+        ns_end = self.end_in_nanoseconds
+
+        if ns < ns_start:
+            # not in period, over night
+            #                     dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, earlier than start
+            #          dt                              
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            
+            # in period, over night, earlier than start
+            #            dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+            offset = pd.Timedelta(nanoseconds=int(ns_start) - int(ns) - self.period_in_nanoseconds)
+        else:
+            # not in period, later than start
+            #      dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+
+            # in period, over night, later than start
+            #       dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # in period
+            #                    dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            offset = pd.Timedelta(nanoseconds=int(ns_start) - int(ns))
+        return dt + offset
+
+    def prev_end(self, dt):
+        "Get pervious end point of the period"
+        ns = self._to_relative_nanoseconds(dt) # In relative nanoseconds (removed more accurate than scope)
+        ns_start = self.start_in_nanoseconds
+        ns_end = self.end_in_nanoseconds
+
+        if ns < ns_end:
+            # in period
+            #                    dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            
+            # in period, over night, earlier than end
+            #            dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, earlier than end
+            #          dt                              
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+            offset = pd.Timedelta(nanoseconds=int(ns_end) - int(ns) - self.period_in_nanoseconds)
+        else:
+            # not in period, over night
+            #                     dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+
+            # not in period, later than end
+            #      dt             
+            # --<---------->-----------<-------------->--
+            #  end   |   start        end    |      start
+
+            # in period, over night, later than end
+            #       dt
+            #  -->----------<----------->--------------<-
+            #  start   |   end        start     |     end
+            offset = pd.Timedelta(nanoseconds=int(ns_end) - int(ns))
+
+        return dt + offset
+
+    @property
+    def period_in_nanoseconds(self):
+        return int(to_nanoseconds(**{self._scope: 1}))
+
+    @property
+    def start_in_nanoseconds(self):
+        return self.to_time_element(self.start)
+
+    @property
+    def end_in_nanoseconds(self):
+        return self.to_time_element(self.end)
+
+    def to_time_element(self, value):
+
+        if isinstance(value, dict):
+            # {"hour": 10, "minute": 20}
+            components = self.sub_time_components
+            if any(key not in components for key in kwargs):
+                invalid_comp = [key for key in kwargs if key not in components]
+                raise ValueError(f"Items {invalid_comp} not in allowed components")
+            return to_nanoseconds(**value)
+        elif isinstance(value, int):
+            # start is considered as unit of the second behind scope
+            component = self.sub_time_components[0]
+            return to_nanoseconds(**{component: value})
+        elif isinstance(value, str):
+            
+            if self._scope == "day":
+                # ie. "10:00:15"
+                dt = dateutil.parser.parse(value)
+                d = to_dict(dt)
+                components = self.sub_time_components
+                return to_nanoseconds(**{key: int(val) for key, val in d.items() if key in components})
+
+            elif self._scope == "hour":
+                # ie. 12:30.123
+                res = re.search(r"(?P<minute>[0-9][0-9]):(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?(?P<nanosecond>[0-9]+)?", value, flags=re.IGNORECASE)
+                if res:
+                    if res["microsecond"] is not None:
+                        res["microsecond"] = res["microsecond"].ljust(6, "0")
+                    return to_nanoseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
+            elif self._scope == "minute":
+                # ie. 30.123
+                res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?(?P<nanosecond>[0-9]+)?", value, flags=re.IGNORECASE)
+                if res:
+                    res["microsecond"] = res["microsecond"].ljust(6, "0")
+                    return to_nanoseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
+
+            # Last try
+            if self._scope in ("hour", "minute"):
+                # ie. 1 quarter
+                res = re.search(r"(?P<n>[1-4] ?(quarter|q))", value, flags=re.IGNORECASE)
+                if res:
+                    # ie. "1 quarter"
+                    n_quarters = res["n"]
+                    component = self.sub_time_components[0]
+                    return to_nanoseconds(**{component: n_quarters * 15})
+
+
+        raise TypeError(value)
+
+    @property
+    def sub_time_components(self):
+        "Sub time components of the interval"
+        components = self.components
+        return components[components.index(self._scope) + 1:]
+
+    def __repr__(self):
+        return f'{self._scope}({self.start}, {self.end})'
+
+class TimeOfSecond(AnchoredInterval):
+    # WIP!
+    _scope = "second"
+
+class TimeOfMinute(AnchoredInterval):
+    # WIP!
+    _scope = "minute"
+
+class TimeOfHour(AnchoredInterval):
+    # WIP!
+    _scope = "hour"
+
+class TimeOfDay(AnchoredInterval):
+    # WIP!
+    _scope = "day"
+
+class TimeOfDay2(OffsetInterval):
 
     """Time of Day, ie. from 11:00 to 15:00
     """
 
     def __init__(self, start, end):
+        # NOTE: CustomBusinessHour does allow only HH:MM and not seconds or smaller units
+        # Whether seconds or smaller are needed with TimeOfDay is questionable. The scheduler is not meant for extremely time critical stuff.
         self.offset = pd.offsets.CustomBusinessHour(start=start, end=end, weekmask=[1,1,1,1,1,1,1])
 
     def __invert__(self):
@@ -222,15 +522,44 @@ class DaysOfWeek(OffsetInterval):
     """
 
     def __init__(self, *weekdays, **kwargs):
-
-        self.offset = pd.offsets.CustomBusinessDay(weekmask=self.get_weekmask(weekdays))
+        # TODO: Start & end
+        weekmask = self.get_weekmask(*weekdays, start=kwargs.pop("start", None), end=kwargs.pop("end", None))
+        self.offset = pd.offsets.CustomBusinessDay(weekmask=weekmask)
         # self.conditions = (DayOfWeek(weekday) for weekday in weekdays)
 
     def __invert__(self):
         weekmask = [{1:0, 0:1}[d] for d in self.offset.weekmask]
         return DaysOfWeek(weekmask)
 
-    def get_weekmask(self, values):
+    def get_weekmask(self, *values, start=None, end=None):
+        "Turn values to week mask (ie. Tuesday & Thursday --> [0, 1, 0, 1, 0, 0, 0])"
+        if values:
+            return self._get_weekmask_from_values(*values)
+        else:
+            return self._get_weekmask_from_span(start=start, end=end)
+
+    def _get_weekmask_from_span(self, start, end):
+
+        start = 0 if start is None else start
+        end = 6 if end is None else end
+        
+        start = start.capitalize() if isinstance(start, str) else start
+        end = end.capitalize() if isinstance(end, str) else end
+
+        weeknum_mapping = {
+            **dict(zip(calendar.day_name, range(7))), 
+            **dict(zip(calendar.day_abbr, range(7))), 
+            **dict(zip(range(7), range(7)))
+        }
+
+        start = weeknum_mapping[start]
+        end = weeknum_mapping[end] + 1
+
+        weekmask = [0] * 7
+        weekmask[slice(start, end)] = [1] * len(range(start, end))
+        return weekmask
+
+    def _get_weekmask_from_values(self, *values):
         "Turn values to week mask (ie. Tuesday & Thursday --> [0, 1, 0, 1, 0, 0, 0])"
         if len(values) == 7 and all(val in (0, 1) for val in values):
             # Already binary
@@ -243,7 +572,7 @@ class DaysOfWeek(OffsetInterval):
 
         if isinstance(values, (list, tuple, set)):
             for i in range(7):
-                if weekday_abbrs[i] in values or weekday_names[i] in values:
+                if weekday_abbrs[i] in values or weekday_names[i] in values or i in values:
                     weekdays_binary.append(1)
                 else:
                     weekdays_binary.append(0)
@@ -345,21 +674,3 @@ class RelativeDay(TimeInterval):
             args_str += f', end_time={self.end_time}'
 
         return f"RelativeDay({args_str})"
-
-weekend = DaysOfWeek("Sat", "Sun")
-weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
-
-month_end = OffsetInterval(pd.offsets.MonthEnd())
-month_begin = OffsetInterval(pd.offsets.MonthBegin())
-
-# Register instances
-
-weekend.register("weekend", group="in_")
-weekday.register("weekday", group="in_")
-# Register all week days
-for weekday in (*calendar.day_name, *calendar.day_abbr):
-    DaysOfWeek(weekday).register(weekday, group="in_")
-
-# Register classes
-register_class(TimeOfDay)
-register_class(DaysOfWeek)

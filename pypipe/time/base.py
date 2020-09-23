@@ -13,7 +13,15 @@ SYNTAX_MAPPING = {
 }
 
 def get_period(name, group):
-    return SYNTAX_MAPPING[group][name]
+    periods = PERIOD_CLASSES[group]
+    period = [
+        period
+        for period in periods
+        if period.__name__.lower() == name.lower()
+    ]
+    if len(period) == 0:
+        raise ValueError(f"Period {name} from {group} not found. (Options: {periods})")
+    return period[0]
 
 def register_class(cls):
     parents = inspect.getmro(cls)
@@ -208,6 +216,8 @@ class TimeDelta(TimePeriod):
     _type_name = "delta"
     def __init__(self, *args, **kwargs):
         self.duration = abs(pd.Timedelta(*args, **kwargs))
+        if pd.isna(self.duration):
+            raise ValueError("TimeDelta duration cannot be 'not a time'")
 
     @abstractmethod
     def __contains__(self, dt):
