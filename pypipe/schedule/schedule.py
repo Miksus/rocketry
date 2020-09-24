@@ -23,6 +23,7 @@ from .exceptions import SchedulerRestart
 
 from pypipe.utils import is_pickleable
 from pypipe.conditions import set_statement_defaults
+from pypipe.parameters import Parameters
 
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
@@ -47,7 +48,7 @@ class Scheduler:
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600):
+    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None):
         """[summary]
 
         Arguments:
@@ -73,6 +74,8 @@ class Scheduler:
 
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
+
+        self.parameters = Parameters() if parameters is None else Parameters
 
     @staticmethod
     def set_default_logger(logger):
@@ -195,7 +198,8 @@ class Scheduler:
         
         start_time = datetime.datetime.now()
         try:
-            task(**self.get_params(scheduler=scheduler))
+            params = self.parameters[task]
+            task(**params)
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -420,10 +424,13 @@ class MultiScheduler(Scheduler):
         proc_task._execution_condition = None
         proc_task._dependency_condition = None
 
+        params = self.parameters[task]
+        params.remove_unpicklable()
+
         #child_pipe, parent_pipe = multiprocessing.Pipe() # Make 2 way connection
         #process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
         #task._processes.append(process)
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
+        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, params))
         #task._conn = parent_pipe
 
         task._process.start()
