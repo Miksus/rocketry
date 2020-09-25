@@ -46,9 +46,13 @@ class TaskAdapter(logging.LoggerAdapter):
             if hasattr(handler, "query"):
                 kwds = {"asctime": (start, end), "action": action, "task_name": task_name}
                 df = pd.DataFrame(handler.query(**kwds))
+                df["task_name"] = df["task_name"].astype(str)
+                
                 return df
             elif hasattr(handler, "read"):
                 df = pd.DataFrame(handler.read())
+                df["task_name"] = df["task_name"].astype(str)
+
                 df = df[df["task_name"] == task_name]
                 if action is not None:
                     action = [action] if isinstance(action, str) else action 

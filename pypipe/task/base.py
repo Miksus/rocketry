@@ -240,9 +240,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
         # TODO: if name is tuple, the name[:-1] are groups
         if name is None:
             if self.use_instance_naming:
-                self._name = id(self)
+                self._name = str(id(self))
             else:
-                self._name = self.get_default_name()
+                self._name = str(self.get_default_name())
 
         elif isinstance(name, tuple):
             self._name = self.group_delimiter.join(name)
