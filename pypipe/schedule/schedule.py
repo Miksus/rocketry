@@ -68,6 +68,7 @@ class Scheduler:
             maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
             maintain_task.groups = ("maintain",)
             maintain_task.set_logger() # Resetting the logger as group changed
+            maintain_task.is_maintenance = True
 
         self.variable_params = {}
         self.fixed_params = {}
@@ -75,7 +76,8 @@ class Scheduler:
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
 
-        self.parameters = Parameters() if parameters is None else Parameters
+        self.parameters = Parameters() if parameters is None else parameters
+        self.parameters.scheduler = self # For maintenance tasks
 
     @staticmethod
     def set_default_logger(logger):
@@ -198,14 +200,15 @@ class Scheduler:
         
         start_time = datetime.datetime.now()
         try:
-            params = self.parameters[task]
-            task(**params)
+            output = task(parameters=self.parameters[task])
         except Exception as exc:
             exception = exc
             status = "fail"
         else:
             exception = None
             status = "success"
+            # Set output to other task to use
+            self.parameters[task.name] = output
         end_time = datetime.datetime.now()
 
         # TODO: Is there double logging? Task may do it already
@@ -340,14 +343,15 @@ def _run_task_as_process(task, queue, params):
         QueueHandler(queue)
     )
 
-
     try:
-        task(**params)
+        output = task(parameters=params)
     except Exception as exc:
         # Just catching all exceptions.
         # There is nothing to raise it
         # to :(
         pass
+    else:
+        params.send(output)
 
 def _listen_task_status(handlers, queue):
     # TODO: Probably remove
@@ -514,7 +518,7 @@ class MultiScheduler(Scheduler):
         queue = self._log_queue
         while True:
             try:
-                record = queue.get(timeout=timeout)
+                record = queue.get(block=False)
             except Empty:
                 self.logger.debug(f"Task log queue empty.")
                 break
@@ -522,6 +526,7 @@ class MultiScheduler(Scheduler):
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = get_task(record.task_name)
                 task.log_record(record)
+        self.parameters.listen()
 
     def handle_next_run_log(self):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
@@ -542,6 +547,7 @@ class MultiScheduler(Scheduler):
         #self.setup_listener()
         super().setup()
         self._log_queue = multiprocessing.Queue(-1)
+        self.parameters.que = multiprocessing.Queue(-1)
 
     def setup_listener(self):
         # TODO

@@ -3,6 +3,7 @@ from pypipe.conditions import task_ran, task_succeeded
 
 
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
+from pypipe.parameters import ParameterSet
 
 from pypipe import conditions
 from pypipe.conditions import set_statement_defaults
@@ -92,7 +93,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, groups=None):
+                name=None, groups=None, inputs=None):
         """[summary]
 
         Arguments:
@@ -136,6 +137,12 @@ class Task(_ExecutionMixin, _LoggingMixin):
             self.logger.warning(f'Task {self.name} previously crashed unexpectedly.', extra={"action": "crash_release"})
         self._register_instance()
 
+        # Whether the task is maintenance task
+        self.is_maintenance = False
+
+        # Input task
+        self.inputs = [] if inputs is None else inputs
+
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
         self.start_cond = set_statement_defaults(self.start_cond, task=self)
@@ -147,13 +154,15 @@ class Task(_ExecutionMixin, _LoggingMixin):
             raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(TASKS.keys())}")
         TASKS[self.name] = self
 
-    def __call__(self, *args, **params):
+    def __call__(self, parameters=None):
+        if parameters is None:
+            parameters = ParameterSet()
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
         
         try:
-            params = self.filter_params(params)
-            output = self.execute_action(*args, **params)
+            params = self.filter_params(parameters)
+            output = self.execute_action(parameters)
 
         except Exception as exception:
             status = "failed"
@@ -169,6 +178,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(output)
+            
             return output
 
         finally:
@@ -194,7 +204,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
         return cond
 
     def filter_params(self, params):
-        raise NotImplementedError(f"Parameter filter not implemented to {type(self)}")
+        return params
 
     def execute_action(self, *args, **kwargs):
         "Run the actual, given, task"

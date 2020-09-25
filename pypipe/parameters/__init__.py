@@ -1,1 +1,1 @@
-from .parameters import Parameters, PickleParameters, YamlParameters, StaticParameters
+from .parameters import Parameters, PickleParameters, YamlParameters, StaticParameters, ParameterSet
