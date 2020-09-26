@@ -351,7 +351,7 @@ def _run_task_as_process(task, queue, params):
         # to :(
         pass
     else:
-        params.send(output)
+        params._send(output, name=task.name)
 
 def _listen_task_status(handlers, queue):
     # TODO: Probably remove
@@ -520,7 +520,7 @@ class MultiScheduler(Scheduler):
             try:
                 record = queue.get(block=False)
             except Empty:
-                self.logger.debug(f"Task log queue empty.")
+                #self.logger.debug(f"Task log queue empty.")
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")

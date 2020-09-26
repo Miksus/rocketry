@@ -117,6 +117,23 @@ class Parameters:
             name, args, kwargs = output
             self[name] = args, kwargs
 
+    def materialize(self, include_scheduler=False):
+        args = ()
+        kwargs = {}
+        for params in self.parameter_set:
+            param_args, param_kwargs = params.extract()
+            args = args + param_args
+            kwargs.update(param_kwargs)
+
+        for name, params in self.parameter_ret.items():
+            param_args, param_kwargs = params.extract()
+            args = args + param_args
+            kwargs.update(param_kwargs)
+
+        if include_scheduler:
+            kwargs["scheduler"] = self.scheduler
+        return args, kwargs
+
 class ParameterSet:
     """A set of parameters (args & kwargs)
     
