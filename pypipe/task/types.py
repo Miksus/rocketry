@@ -7,6 +7,7 @@ from .config import parse_config
 from pathlib import Path
 import inspect
 import importlib
+import subprocess
 
 from pypipe.parameters import ParameterSet
 
@@ -199,16 +200,21 @@ class CommandTask(Task):
     """
     timeout = None
 
-    def __init__(self, *args, cwd=None, shell=False, **kwags):
+    def __init__(self, *args, cwd=None, shell=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.kwargs_popen = {"cwd": cwd, "shell":shell}
         # About shell: https://stackoverflow.com/a/36299483/13696660
 
     def execute_action(self, parameters):
+
+        args, kwargs = parameters.materialize()
         command = self.action
-        if args:
-            command = [command] + list(args) if isinstance(command, str) else command + list(args)
-        # command can be: "myfile.bat", "echo Hello!", ["python", "v"]
+
+        # TODO: kwargs to parameters, ie.
+        # {"x": 123, "y": "a value"} --> "-x 123", "-y 'a value'"
+
+        command = [command] + list(args) if isinstance(command, str) else command + list(args)
+        # command can be: "myfile.bat", "echo Hello!" or ["python", "v"]
         # https://stackoverflow.com/a/5469427/13696660
         pipe = subprocess.Popen(command,
                                 #shell=True,
@@ -229,7 +235,7 @@ class CommandTask(Task):
         if pipe.returncode != 0:
             errs = errs.decode("utf-8", errors="ignore")
             raise OSError(f"Failed running command: \n{errs}")
-        return stout
+        return outs
 
     def filter_params(self, params):
         # TODO: Figure out way to include custom parameters
