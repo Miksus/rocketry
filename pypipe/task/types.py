@@ -8,6 +8,7 @@ from pathlib import Path
 import inspect
 import importlib
 import subprocess
+import re
 
 from pypipe.parameters import ParameterSet
 
@@ -91,8 +92,7 @@ class ScriptTask(Task):
 
     def filter_params(self, params):
         # TODO: remove
-        task_func = self.get_task_func()
-        return FuncTask.get_reguired_params(task_func, params)
+        return params
 
     def process_finish(self, *args, **kwargs):
         del self._task_func
@@ -194,6 +194,34 @@ class ScriptTask(Task):
                 confs[key] = getattr(module, var)
         return confs
 
+    @property
+    def pos_args(self):
+        task_func = self.get_task_func()
+        sig = inspect.signature(task_func)
+        pos_args = [
+            val.name
+            for name, val in sig.parameters.items()
+            if val.kind in (
+                inspect.Parameter.POSITIONAL_ONLY, # NOTE: Python <= 3.8 do not have positional arguments, but maybe in the future?
+                inspect.Parameter.POSITIONAL_OR_KEYWORD # Keyword argument
+            )
+        ]
+        return pos_args
+
+    @property
+    def kw_args(self):
+        task_func = self.get_task_func()
+        sig = inspect.signature(task_func)
+        kw_args = [
+            val.name
+            for name, val in sig.parameters.items()
+            if val.kind in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD, # Normal argument
+                inspect.Parameter.KEYWORD_ONLY # Keyword argument
+            )
+        ]
+        return kw_args
+
 
 class CommandTask(Task):
     """Task that executes a commandline command
@@ -239,7 +267,7 @@ class CommandTask(Task):
 
     def filter_params(self, params):
         # TODO: Figure out way to include custom parameters
-        return {}
+        return params
 
     def get_default_name(self):
         command = self.action
@@ -271,20 +299,7 @@ class JupyterTask(Task):
         self.clear_outputs = clear_outputs
 
     def filter_params(self, params):
-        # TODO: Refactor, possibly delete
-        nb = self.notebook
-        try:
-            param_cell = nb.cells.get(tags=[self.parameter_tag])[0]
-        except IndexError:
-            return {}
-        code = param_cell.source
-        param_vars = re.findall(r"""
-        (?<=\n)                               # Must start with new line
-        (?P<var_name>[A-Za-z_][A-Za-z_0-9]*)  # Variable name must start with letter, underscore but then numbers are allowed
-        [ ]*=[ ]*                             # Can have spaces before and after the equal sign
-        """, '\n' + code, re.VERBOSE)
-
-        return {key:val for key, val in params.items() if key in param_vars or key in self.param_names}
+        return params
 
     def execute_action(self, parameters):
         nb = self.notebook
@@ -413,7 +428,27 @@ class JupyterTask(Task):
 
 
     def _get_config(self, path):
+        # TODO
         notebook = JupyterNotebook(path)
         conf_cell = notebook.cells.get(tags=["taskconf"])
         conf_string = conf_cell.source
         conf_string
+
+    @property
+    def pos_args(self):
+        return []
+
+    @property
+    def kw_args(self):
+        nb = self.notebook
+        src_param_cell = nb.cells.get(tags=["parameter"])
+        if not src_param_cell:
+            return []
+        src_param_cell = src_param_cell[0].source
+
+        kw_args = []
+        for line in src_param_cell.split("\n"):
+            var = re.search(r"^([a-zA-Z_]+[0-9a-zA-Z_]*)(?=$| *=)", line)
+            if var:
+                kw_args.append(var.group())
+        return kw_args
