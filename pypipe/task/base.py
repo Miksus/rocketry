@@ -19,6 +19,8 @@ import pandas as pd
 TASKS = {}
 
 def get_task(task):
+    if isinstance(task, Task):
+        return task
     return TASKS[task]
 
 def clear_tasks():

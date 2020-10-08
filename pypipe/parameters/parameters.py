@@ -1,7 +1,14 @@
 
-from pypipe.utils import is_pickleable, parse_return
+from pypipe.utils import is_pickleable
+from pypipe.utils.meta.func.func import parse_return
+from pypipe.utils.meta.check.strong_type import is_instance
 import multiprocessing as mp
 from queue import Empty
+
+from textwrap import dedent
+from pypipe.utils.meta.code.format import declare_variable, to_expression
+
+import pandas as pd
 
 class Parameters:
     """Pool of parameters
@@ -178,9 +185,26 @@ class ParameterSet:
         declarations = []
         imports = []
         for key, val in self.kwargs.items():
-            declr, imp = code.variable_declaration(var=key, value=val)
+            # TODO: if instance, use pickle
+            if is_instance(val):
+                val = PickleArgument(val, f"{key}.pkl")
+
+            if not isinstance(val, Argument):
+                try:
+                    declr, imp = declare_variable(var=key, value=val)
+                except ValueError:
+                    # Cannot turn to Python robustly --> use pickle
+                    val = PickleArgument(val, f"{key}.pkl")
+                    declr, imp = val.materialize_to_code(var=key)
+            elif hasattr(val, "materialize_to_code"):
+                declr, imp = val.materialize_to_code(var=key)
+                # The argument defines it
+
             declarations.append(declr)
-            imports.append(imp)
+            if imp:
+                imports.append(imp)
+            
+        imports = list(dict.fromkeys(imports)) # Removing duplicates
         if imports:
             imports += [""] # One empty line between imports and declarations
         return '\n'.join(imports + declarations)
@@ -214,9 +238,101 @@ class PickleParameters(ParameterSet):
         pass
 
 class YamlParameters(ParameterSet):
-    "Get parameters from YAML file"
+    """Get parameters from YAML file
+    
+    Examples:
+        In config.yaml
+            -
+            - arg 1
+            - arg 2
+            - arg 3
+            - 
+            kw1: 1
+            kw2: 2
+        >>> (('arg 1', 'arg 2', 'arg 3'), {'kw1': 1, 'kw2': 2})
 
+        In config.yaml
+            - arg 1
+            - arg 2
+            - arg 3
+        >>> (('arg 1', 'arg 2', 'arg 3'), {})
+
+        In config.yaml
+                kw1: 1
+                kw2: 2
+        >>> ((), {'kw1': 1, 'kw2': 2})
+    """
+
+    def __init__(self, file):
+        self.file = file
+
+    def materialize(self):
+        with open(self.file, 'r') as file:
+            cont = yaml.safe_load(file)
+        args = () if isinstance(cont, dict) else tuple(cont) if isinstance(cont, (tuple, list)) else (cont,)
+        kwargs = cont if isinstance(cont, dict) else {}
+        return args, kwargs
 
 # Arguments
 class Argument:
     "Argument is one parameter for a task that may or may not be materialized"
+
+class YamlArgument(Argument):
+    """[summary]
+
+    Args:
+        Argument ([type]): [description]
+    """
+
+    utils = dedent("""
+    def _read_yaml(path, items=None):
+        items = [] if items is None else items
+        with open(path, 'r') as file:
+            cont = yaml.safe_load(file)
+            for item in items:
+                cont = cont[item]
+        return cont"""[1:])
+
+    def __init__(self, file, items=None):
+        self.file = file
+        self.items = [] if items is None else items
+
+    def materialize(self):
+        with open(path, 'r') as file:
+            cont = yaml.safe_load(file)
+        
+        for item in self.items:
+            if isinstance(item, Argument):
+                item = item.materialize()
+            cont = cont[item]
+
+        return cont
+
+    def materialize_to_code(self, var):
+        "Transform the argument to code. May be messy but made for Jupyter Notebooks etc."
+
+        utils = self.utils
+        code = f"{var} = read_yaml({self.file})"
+
+        return code[1:], "import yaml", utils
+
+class PickleArgument(Argument):
+    """[summary]
+
+    Args:
+        Argument ([type]): [description]
+    """
+
+    def __init__(self, obj, file):
+        pd.to_pickle(obj, file)
+        self.file = file
+
+    def materialize(self):
+        return pd.read_pickle(self.file)
+
+    def materialize_to_code(self, var):
+        "Transform the argument to code. May be messy but made for Jupyter Notebooks etc."
+
+        code = f"{var} = pd.read_pickle({to_expression(self.file)[0]})"
+
+        return code, "import pandas as pd"
