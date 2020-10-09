@@ -77,6 +77,8 @@ class _PeriodFactory:
             _PeriodFactory().when("Weekly starting monday")
             _PeriodFactory().when("Daily between 11:00 and 15:00")
             _PeriodFactory().when("past 5 hours")
+            _PeriodFactory().when("Daily after 13:00")
+            _PeriodFactory().when("Daily before 08:00")
 
         Args:
             s (str): [description]

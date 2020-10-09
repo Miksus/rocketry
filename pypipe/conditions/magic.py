@@ -1,4 +1,6 @@
 
+# TODO: Delete. This seems not to be used
+
 class ConditionContainer:
     "Wraps another condition"
 

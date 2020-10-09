@@ -84,6 +84,7 @@ class _ExecutionMixin:
         if hasattr(execution, "period"):
             return execution.period 
         elif hasattr(execution, "__magicmethod__"):
+            # TODO: What the fuck is this?
             return functools.reduce(lambda a, b : getattr(a, "__magicmethod__")(b), execution.subconditions)
         else:
             return StaticInterval()

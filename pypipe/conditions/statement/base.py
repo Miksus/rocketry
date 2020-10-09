@@ -130,6 +130,7 @@ class Statement(BaseCondition, _Historical, _Quantitative):
         
         if self.historical and not self.has_param("_start_", "_end_"):
             # result should be datelike or list of datelike
+            # TODO: This is NOT working
             start = self.get_start()
             end = self.get_end()
             if is_datelike(result):
