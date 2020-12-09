@@ -8,7 +8,7 @@ from .base import (
 )
 from .cycle import (
     
-    Hourly, Quarterly, Minutely,
+    Hourly, Minutely, # , Quarterly
     Daily, Weekly
 )
 from .interval import (
@@ -53,7 +53,7 @@ for weekday in (*calendar.day_name, *calendar.day_abbr):
 
 # Register classes
 for cls in (
-    Weekly, Daily, Hourly, Quarterly, Minutely,
+    Weekly, Daily, Hourly, Minutely, # , Quarterly
     TimeOfDay, DaysOfWeek
     ):
     register_class(cls)
