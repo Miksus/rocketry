@@ -97,6 +97,10 @@ class _Historical:
         )
 
     def _set_period(self, period):
+        
+        if not self.historical:
+            raise TypeError(f"Statement '{stmt.name}' is not historical and does not have past.")
+
         stmt = self.copy()
         if not stmt.historical:
             raise TypeError(f"Statement '{stmt.name}' is not historical and does not have past.")
@@ -190,6 +194,8 @@ class _Quantitative:
     def _set_comparison(self, key, val):
         if not self.quantitative:
             raise TypeError(f"Statement '{self.name}' is not quantitative and cannot be compared.")
+        elif not isinstance(val, (int, float)):
+            raise TypeError(f"Value '{val}' is not quantitative.")
         self.comparisons[key] = val
 
     def every(self, nth):
