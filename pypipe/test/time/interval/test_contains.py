@@ -1,7 +1,7 @@
 
 from datetime import datetime
 
-from pypipe.time.interval import (
+from pypipe.builtin.time.interval import (
     TimeOfDay, DaysOfWeek
 )
 

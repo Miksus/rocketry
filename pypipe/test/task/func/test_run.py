@@ -1,9 +1,10 @@
 
 import pytest
 
-from pypipe import Scheduler, FuncTask
-from pypipe.task.base import Task, get_task
-from pypipe import reset
+from pypipe.core import Scheduler
+from pypipe.builtin.task import FuncTask
+from pypipe.core.task.base import Task, get_task
+from pypipe.core import reset
 
 Task.use_instance_naming = True
 
@@ -20,7 +21,6 @@ def test_success(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
             run_successful_func, 
-            execution="daily",
         )
         task()
         assert task.status == "success"
@@ -31,7 +31,6 @@ def test_failure(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
             run_failing_func, 
-            execution="daily", 
         )
         with pytest.raises(RuntimeError):
             task()

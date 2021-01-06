@@ -1,10 +1,11 @@
 
 import pytest
 
-from pypipe import Scheduler, FuncTask
-from pypipe.task.base import Task, get_task, clear_tasks
-from pypipe.task import base
-from pypipe import reset
+from pypipe.core import Scheduler
+from pypipe.builtin.task import FuncTask
+from pypipe.core.task.base import Task, get_task, clear_tasks
+from pypipe.core.task import base
+from pypipe.core import reset
 
 Task.use_instance_naming = True
 
@@ -18,7 +19,6 @@ def test_get_task(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
             run_successful_func, 
-            execution="daily",
             name="example"
         )
         
@@ -31,7 +31,6 @@ def test_clear_task(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
             run_successful_func, 
-            execution="daily",
             name="example"
         )
         

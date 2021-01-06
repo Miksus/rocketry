@@ -4,7 +4,7 @@ from .statement import parse_statement
 from pybox.string.parse import ClosureParser
 from pybox.container.visitor import Visitor
 
-from pypipe.conditions.base import All, Any, Not
+from pypipe.core.conditions.base import All, Any, Not
 
 import re
 

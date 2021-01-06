@@ -2,10 +2,11 @@
 import pytest
 import time
 
-from pypipe import Scheduler, FuncTask
-from pypipe.task.base import Task, get_task
-from pypipe.conditions import AlwaysFalse
-from pypipe import reset
+from pypipe.core import Scheduler
+from pypipe.builtin.task import FuncTask
+from pypipe.core.task.base import Task, get_task
+from pypipe.core.conditions import AlwaysFalse
+from pypipe.core import reset
 
 Task.use_instance_naming = True
 

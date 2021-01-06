@@ -1,11 +1,12 @@
 
-import pytest
-
-from pypipe import Scheduler, ScriptTask
-from pypipe.task.base import Task
-from pypipe import reset
-
-Task.use_instance_naming = True
+# TODO
+#import pytest
+#
+#from pypipe import Scheduler, ScriptTask
+#from pypipe.core.task.base import Task
+#from pypipe.core import reset
+#
+#Task.use_instance_naming = True
 
 
 def test_success(tmpdir, successing_script_path):

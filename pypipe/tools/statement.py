@@ -1,5 +1,5 @@
 
-from pypipe.conditions import (
+from pypipe.builtin.conditions import (
     TaskFinished, 
     TaskFailed, 
     TaskSucceeded, 
@@ -12,8 +12,8 @@ from pypipe.conditions import (
     AlwaysTrue,
     AlwaysFalse,
 )
-from pypipe.conditions.base import BaseCondition
-from pypipe.time import (
+from pypipe.core.conditions.base import BaseCondition
+from pypipe.core.time import (
     TimeOfDay,
     DaysOfWeek,
     TimeOfHour,

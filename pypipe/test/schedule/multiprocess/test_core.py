@@ -1,10 +1,11 @@
 
-from pypipe import MultiScheduler, FuncTask
-from pypipe.task.base import Task, clear_tasks
-from pypipe.conditions import SchedulerCycles, TaskFinished, TaskStarted
-from pypipe.parameters import GLOBAL_PARAMETERS
-from pypipe import reset
-from pypipe import session
+from pypipe.core import MultiScheduler
+from pypipe.builtin.task import FuncTask
+from pypipe.core.task.base import Task, clear_tasks
+from pypipe.builtin.conditions import SchedulerCycles, TaskFinished, TaskStarted
+from pypipe.core.parameters import GLOBAL_PARAMETERS
+from pypipe.core import reset
+from pypipe.builtin.session import session
 
 import pytest
 import logging

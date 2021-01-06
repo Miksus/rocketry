@@ -1,13 +1,13 @@
-
-import pytest
-
-from pypipe import Scheduler, JupyterTask
-from pypipe.task.base import Task, get_task
-from pypipe import reset
-
-from nbconvert.preprocessors import CellExecutionError
-
-Task.use_instance_naming = True
+# TODO
+#import pytest
+#
+#from pypipe import Scheduler, JupyterTask
+#from pypipe.task.base import Task, get_task
+#from pypipe.core import reset
+#
+#from nbconvert.preprocessors import CellExecutionError
+#
+#Task.use_instance_naming = True
 
 
 def test_success(tmpdir):

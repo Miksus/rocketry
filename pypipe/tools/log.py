@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-from pypipe.log import TaskAdapter
+from pypipe.core.log import TaskAdapter
 
 def _set_run_id(df):
     # Set run_id for run actions

@@ -1,8 +1,8 @@
 import pytest
 
-from pypipe import Scheduler, JupyterTask
-from pypipe.task.base import Task
-from pypipe import reset
+#rom pypipe import Scheduler, JupyterTask
+from pypipe.core.task.base import Task
+from pypipe.core import reset
 
 def test_from_folder(tmpdir):
     # Going to tempdir to dump the log files there
@@ -25,7 +25,7 @@ def test_from_folder(tmpdir):
     ]
    },
    "source": [
-    "from pypipe.conditions import TaskStarted\n",
+    "from pypipe.core.conditions import TaskStarted\n",
     "start_condition = TaskStarted(\"mytask\") == 1"
    ]
   }
@@ -74,7 +74,7 @@ def test_from_folder(tmpdir):
    },
    "outputs": [],
    "source": [
-    "from pypipe.conditions import TaskStarted\n",
+    "from pypipe.core.conditions import TaskStarted\n",
     "start_condition = TaskStarted(\"mytask\") == 0"
    ]
   }

@@ -2,16 +2,17 @@ import pytest
 
 from textwrap import dedent
 
-from pypipe import Scheduler, ScriptTask
-from pypipe.task.base import Task
-from pypipe import reset
+from pypipe.core import Scheduler
+#from pypipe.builtin.task import ScriptTask
+from pypipe.core.task.base import Task
+from pypipe.core import reset
 
 def test_from_project_folder(tmpdir):
     # Going to tempdir to dump the log files there
     reset()
 
     script_a = dedent("""
-        from pypipe.conditions import ram_free
+        from pypipe.core.conditions import ram_free
 
         START_CONDITION = ram_free(absolute=False)
 
@@ -20,7 +21,7 @@ def test_from_project_folder(tmpdir):
     """)
 
     script_b = dedent("""
-        from pypipe.conditions import ram_free
+        from pypipe.core.conditions import ram_free
 
         START_CONDITION = ram_free(absolute=True)
 
@@ -43,7 +44,7 @@ def test_from_module_folder(tmpdir):
     reset()
 
     script_a = dedent("""
-        from pypipe.conditions import ram_free
+        from pypipe.core.conditions import ram_free
 
         START_CONDITION = ram_free(absolute=False)
 
@@ -51,7 +52,7 @@ def test_from_module_folder(tmpdir):
             pass
     """)
     script_b = dedent("""
-        from pypipe.conditions import ram_free
+        from pypipe.core.conditions import ram_free
 
         START_CONDITION = ram_free(absolute=True)
 

@@ -1,5 +1,5 @@
 
-from pypipe.task.base import get_task
+from pypipe.core.task.base import get_task
 
 def get_dependencies(task):
     """Get tasks the inputted task depends on

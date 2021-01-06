@@ -7,7 +7,7 @@ import sys
 
 import pypipe
 
-from pypipe.task.base import Task, clear_tasks
+from pypipe.core.task.base import Task, clear_tasks
 
 
 import logging

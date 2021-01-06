@@ -1,6 +1,6 @@
 
 
-from pypipe.time import (
+from pypipe.core.time import (
     TimeDelta
 )
 import pytest

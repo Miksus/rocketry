@@ -1,4 +1,4 @@
-from pypipe.conditions import (
+from pypipe.builtin.conditions import (
     TaskStarted, 
 
     TaskFinished, 
@@ -7,13 +7,13 @@ from pypipe.conditions import (
 
     DependFinish,
     DependFailure,
-    DependSuccess,
-    set_statement_defaults
+    DependSuccess
 )
+from pypipe.core.conditions import set_statement_defaults
 
-from pypipe import Scheduler, FuncTask
-from pypipe.task.base import Task
-from pypipe import reset
+from pypipe.core import Scheduler
+from pypipe.builtin.task import FuncTask
+from pypipe.core import reset
 
 import pytest
 def run_task(fail=False):

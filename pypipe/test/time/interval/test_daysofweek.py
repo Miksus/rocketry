@@ -1,10 +1,10 @@
 
 from datetime import datetime
 
-from pypipe.time.interval import (
+from pypipe.builtin.time.interval import (
     TimeOfDay, DaysOfWeek
 )
-from pypipe.time import TimeDelta
+from pypipe.core.time import TimeDelta
 
 import pandas as pd
 import pytest

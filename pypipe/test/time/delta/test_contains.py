@@ -1,7 +1,7 @@
 
 from datetime import datetime
 
-from pypipe.time import (
+from pypipe.core.time import (
     TimeDelta
 )
 
