@@ -105,26 +105,30 @@ class _LoggingMixin:
     def set_logger(self, logger=None):
         "Set the logger (and adapter)"
         if logger is None:
-            logger = self.get_logger(self.group_name) # Getting class/instance logger
+            logger = self.get_logger() # Getting class/instance logger
 
             if not logger.handlers:
                 # Setting default handlers to allow 2 way by default
                 self.set_default_logger(logger)
+        elif not logger.name.startswith(self._logger_basename):
+            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+
         self.logger = TaskAdapter(logger, task=self)
 
     @classmethod
-    def get_logger(cls, group_name=None):
+    def get_logger(cls, name=None):
         "Get the Task logger"
+        # Loggers are named as "pypipe.task.my_task_group"
         logger_name = cls._logger_basename
-        if group_name is not None:
-            logger_name += '.' + group_name
+        if name is not None:
+            logger_name += '.' + name
         return logging.getLogger(logger_name)
 
     @classmethod
-    def set_default_logger(cls, logger=None, group_name=None, filename="log/task.csv"):
+    def set_default_logger(cls, logger=None, filename="log/task.csv"):
         
         if logger is None:
-            logger = cls.get_logger(group_name=group_name)
+            logger = cls.get_logger()
 
         # Emptying existing handlers
         logger.handlers = []

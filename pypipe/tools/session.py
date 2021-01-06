@@ -10,7 +10,7 @@ import logging
 import pandas as pd
 
 from pypipe.log import TaskAdapter
-from pypipe.task.base import TASKS
+from pypipe.task.base import TASKS, Task
 from pypipe.schedule.schedule import SCHEDULERS
 from pypipe.parameters import GLOBAL_PARAMETERS
 
@@ -32,17 +32,17 @@ class _Session:
         return SCHEDULERS
 
     @staticmethod
-    def get_task_loggers(with_adapter=True) -> dict:
+    def get_task_loggers(with_adapters=True) -> dict:
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
-            name: TaskAdapter(logger, None) if with_adapter else logger 
+            name: TaskAdapter(logger, None) if with_adapters else logger 
             for name, logger in logging.root.manager.loggerDict.items() 
             if name.startswith("pypipe.task") 
             and not isinstance(logger, logging.PlaceHolder)
         }
 
     def get_task_log(self, **kwargs):
-        loggers = self.get_task_loggers(with_adapter=True)
+        loggers = self.get_task_loggers(with_adapters=True)
         dfs = [
             logger.get_records(**kwargs)
             for logger in loggers.values()

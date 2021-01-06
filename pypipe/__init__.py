@@ -6,6 +6,7 @@ from . import time
 #from . import event
 from . import schedule
 from . import conditions
+from .tools.session import session
 
 from .log import CsvHandler
 

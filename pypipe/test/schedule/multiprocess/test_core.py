@@ -4,6 +4,7 @@ from pypipe.task.base import Task, clear_tasks
 from pypipe.conditions import SchedulerCycles, TaskFinished, TaskStarted
 from pypipe.parameters import GLOBAL_PARAMETERS
 from pypipe import reset
+from pypipe import session
 
 import pytest
 import logging
@@ -124,7 +125,7 @@ def test_priority(tmpdir):
         scheduler()
         assert scheduler.n_cycles == 1
 
-        history = scheduler.get_history()
+        history = session.get_task_log()
         history = history.set_index("action")
 
         task_1_start = history[(history["task_name"] == "first")].loc["run", "asctime"]

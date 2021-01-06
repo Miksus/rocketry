@@ -85,8 +85,6 @@ class Task(_ExecutionMixin, _LoggingMixin):
     use_instance_naming = False
     _logger_basename = __name__
 
-    # Used to join tupled name into one
-    group_delimiter = "/"
     # TODO:
     #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
@@ -254,12 +252,6 @@ class Task(_ExecutionMixin, _LoggingMixin):
     @property
     def name(self):
         return self._name
-
-    @property
-    def group_name(self):
-        if self.groups is None:
-            return None
-        return self.group_delimiter.join(self.groups)
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
