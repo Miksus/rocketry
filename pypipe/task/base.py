@@ -93,7 +93,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, groups=None, inputs=None):
+                name=None, inputs=None):
         """[summary]
 
         Arguments:
@@ -127,7 +127,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
             self.set_dependent(dependent)
 
         #self.group = group
-        self.set_name(name, groups=groups)
+        self.name = name
         self.set_logger()
         self._set_default_task()
 
@@ -233,25 +233,19 @@ class Task(_ExecutionMixin, _LoggingMixin):
         # TODO: Use DependSuccess
         self.start_cond &= All(TaskSucceeded(dep) for dep in dependent)
 
-    def set_name(self, name, groups=None):
-        # TODO: if name is tuple, the name[:-1] are groups
-        if name is None:
-            if self.use_instance_naming:
-                self._name = str(id(self))
-            else:
-                self._name = str(self.get_default_name())
-
-        elif isinstance(name, tuple):
-            self._name = self.group_delimiter.join(name)
-            groups = name[:-1]
-        else:
-            self._name = str(name)
-
-        self.groups = groups
-
     @property
     def name(self):
         return self._name
+    
+    @name.setter
+    def name(self, name):
+        if name is None:
+            name = (
+                id(self)
+                if self.use_instance_naming 
+                else self.get_default_name()
+            )
+        self._name = str(name)
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
