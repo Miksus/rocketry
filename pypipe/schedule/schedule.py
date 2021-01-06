@@ -311,24 +311,31 @@ def _run_task_as_process(task, queue, return_queue, params):
     # records end up in the main process to be logged properly. 
 
     # Set the process logger
-    logger = logging.getLogger("pypipe.schedule.process")
+    
+    logger = logging.getLogger(task._logger_basename + "._process") # task._logger_basename
     logger.setLevel(logging.INFO)
-
-    with warnings.catch_warnings():
-        # task.set_logger will warn that 
-        # we do not use two-way logger here 
-        # but that is not needed as running 
-        # the task itself does not require
-        # knowing the status of the task
-        # or other tasks
-        warnings.simplefilter("ignore")
-        task.set_logger(logger)
-    #task.logger.addHandler(
-    #    logging.StreamHandler(sys.stdout)
-    #)
-    task.logger.addHandler(
+    logger.addHandler(
         QueueHandler(queue)
     )
+    try:
+        with warnings.catch_warnings():
+            # task.set_logger will warn that 
+            # we do not use two-way logger here 
+            # but that is not needed as running 
+            # the task itself does not require
+            # knowing the status of the task
+            # or other tasks
+            warnings.simplefilter("ignore")
+            task.set_logger(logger)
+        #task.logger.addHandler(
+        #    logging.StreamHandler(sys.stdout)
+        #)
+        #task.logger.addHandler(
+        #    QueueHandler(queue)
+        #)
+    except:
+        logger.critical(f"Task '{task.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": task.name})
+        raise
 
     try:
         output = task(**params)
@@ -384,7 +391,9 @@ class MultiScheduler(Scheduler):
             elif self.is_out_of_condition(task):
                 # Terminate the task
                 self.terminate_task(task)
+            pass
         self.n_cycles += 1
+        #self.handle_zombie_tasks()
 
     def run_task_as_process(self, task):
         # TODO: Log that the task is running here as it will take a moment for the task itself to do it
@@ -431,7 +440,7 @@ class MultiScheduler(Scheduler):
         # arrived). To fix this, we wait till we get approval that the
         # log about that the task is running has arrived and is logged.
 
-        self.handle_next_run_log()
+        self._handle_next_run_log(task)
 
         # In case there are others waiting
         self.handle_logs()
@@ -511,6 +520,12 @@ class MultiScheduler(Scheduler):
         # return_values = self._param_queue.get(block=False)
         # self.returns[return_values[0]] = return_values[1]
 
+    def handle_zombie_tasks(self):
+        "If there are tasks that has been crashed during setting up the task loggers, this method finds those out and logs them"
+        for task in self.tasks:
+            if task.status == "run" and not self.is_alive(task):
+                task.logger.critical(f"Task '{task.name}' crashed in process setup", extra={"action": "crash"})
+
     def handle_return(self):
         "Handle task return queue and saves task return values for other tasks to use"
         while True:
@@ -525,18 +540,29 @@ class MultiScheduler(Scheduler):
                 # there should be a maintainer task to take them there
                 self.task_returns[task_name] = return_value
 
-    def handle_next_run_log(self):
+    def _handle_next_run_log(self, task):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
         action = None
+        timeout = 10 # Seconds allowed the setup to take before declaring setup to crash
+
+        queue = self._log_queue
+        #record = queue.get(block=True, timeout=None)
         while action != "run":
-            queue = self._log_queue
-            record = queue.get()
+            try:
+                record = queue.get(block=True, timeout=timeout)
+            except Empty:
+                if not self.is_alive(task):
+                    # There will be no "run" log record thus ending the task gracefully
+                    task.logger.critical(f"Task '{task.name}' crashed in setup", extra={"action": "fail"})
+                    return
+            else:
+                
+                self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
+                task = get_task(record.task_name)
+                task.log_record(record)
 
+                action = record.action
 
-            self.logger.debug(f"Inserting record for' {record.task_name}' ({record.action})")
-            task = get_task(record.task_name)
-            task.log_record(record)
-            action = record.action
 
     def setup(self):
         "Set up the scheduler"
