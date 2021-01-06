@@ -4,6 +4,11 @@ __pycache__/
 *$py.class
 *pyx
 
+# Build & packaging
+build/*
+dist/*
+*egg-info/*
+
 # Jupyter Notebook
 .ipynb_checkpoints
 prototype*
