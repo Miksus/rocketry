@@ -2,7 +2,7 @@
 from pypipe import MultiScheduler, FuncTask
 from pypipe.task.base import Task, clear_tasks
 from pypipe.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
-from pypipe import reset
+from pypipe import reset, session
 
 import pytest
 import logging
@@ -61,7 +61,7 @@ def test_dependent(tmpdir):
 
         scheduler()
 
-        history = scheduler.get_history()
+        history = session.get_task_log()
         history = history.set_index("action")
 
         a_start = history[(history["task_name"] == "A")].loc["run", "asctime"]
