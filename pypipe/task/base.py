@@ -1,9 +1,8 @@
 from pypipe.conditions.base import BaseCondition
-from pypipe.conditions import task_ran, task_succeeded
+from pypipe.conditions import TaskStarted, TaskSucceeded, All
 
 
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
-from pypipe.parameters import ParameterSet
 
 from pypipe import conditions
 from pypipe.conditions import set_statement_defaults
@@ -13,6 +12,7 @@ import logging
 import inspect
 
 from functools import wraps
+from copy import copy
 
 import pandas as pd
 
@@ -111,11 +111,11 @@ class Task(_ExecutionMixin, _LoggingMixin):
         self.action = action
 
 
-        self.start_cond = AlwaysTrue() if start_cond is None else start_cond
-        self.run_cond = AlwaysTrue() if run_cond is None else run_cond
-        self.end_cond = AlwaysFalse() if end_cond is None else end_cond
+        self.start_cond = AlwaysTrue() if start_cond is None else copy(start_cond)
+        self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
+        self.end_cond = AlwaysFalse() if end_cond is None else copy(end_cond)
 
-        self.timeout = timeout
+        self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
         self.priority = priority
         self.force_run = False
 
@@ -125,7 +125,8 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
         # Additional conditions
         self.execution = execution
-        self.dependent = dependent
+        if dependent is not None:
+            self.set_dependent(dependent)
 
         #self.group = group
         self.set_name(name, groups=groups)
@@ -147,24 +148,22 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
-        self.start_cond = set_statement_defaults(self.start_cond, task=self)
-        self.run_cond = set_statement_defaults(self.run_cond, task=self)
-        self.end_cond = set_statement_defaults(self.end_cond, task=self)
+        set_statement_defaults(self.start_cond, task=self)
+        set_statement_defaults(self.run_cond, task=self)
+        set_statement_defaults(self.end_cond, task=self)
 
     def _register_instance(self):
         if self.name in TASKS:
             raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(TASKS.keys())}")
         TASKS[self.name] = self
 
-    def __call__(self, parameters=None):
-        if parameters is None:
-            parameters = ParameterSet()
+    def __call__(self, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
         
         try:
-            params = self.filter_params(parameters)
-            output = self.execute_action(parameters)
+            params = self.filter_params(params)
+            output = self.execute_action(params)
 
         except Exception as exception:
             status = "failed"
@@ -198,7 +197,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
         if self.force_run:
             return True
         
-        cond = bool(self.start_cond & self._dependency_condition & self._execution_condition)
+        cond = bool(self.start_cond)
 
         # There may be condition that set force_run True
         if self.force_run:
@@ -228,25 +227,13 @@ class Task(_ExecutionMixin, _LoggingMixin):
     def is_running(self):
         return self.status == "run"
 
-    @property
-    def dependent(self):
-        return self._dependent
+    def set_execution(self, exec):
+        # TODO: Remove?
+        self.start_cond &= parse_statement(exec)
 
-    @dependent.setter
-    def dependent(self, value):
-        self._dependent = value
-        if value is None:
-            self._dependency_condition = AlwaysTrue()
-            return
-        conds = [
-            # Whether task hasn't run after the dependency task
-            # | dep ran              | dep ran
-            # --------------------------------
-            #   | self ran      | self ran
-            task_succeeded(task=get_task(task)).before(task_ran(task=self))
-            for task in value
-        ]
-        self._dependency_condition = conditions.All(*conds)
+    def set_dependent(self, dependent:list):
+        # TODO: Use DependSuccess
+        self.start_cond &= All(TaskSucceeded(dep) for dep in dependent)
 
     def set_name(self, name, groups=None):
         # TODO: if name is tuple, the name[:-1] are groups

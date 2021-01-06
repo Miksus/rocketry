@@ -88,6 +88,10 @@ class ConditionContainer:
     def __getitem__(self, val):
         return self.subconditions[val]
 
+    def __iter__(self):
+        return iter(self.subconditions)
+
+
 class Any(BaseCondition, ConditionContainer):
 
     __magicmethod__ = "__or__"
@@ -132,7 +136,7 @@ class Any(BaseCondition, ConditionContainer):
 
 class All(BaseCondition, ConditionContainer):
 
-    __magicmethod__ = "__or__"
+    __magicmethod__ = "__and__"
 
     def __init__(self, *conditions):
         self.subconditions = []
@@ -197,12 +201,15 @@ class Not(BaseCondition, ConditionContainer):
             # Cannot be determined --> all times may be valid
             return time.StaticInterval()
 
-    def __getattr__(self, name):
-        """Called as last resort so the actual 
-        condition's attribute returned to be more
-        flexible"""
-        return getattr(self.condition, name)
+#    def __getattr__(self, name):
+#        """Called as last resort so the actual 
+#        condition's attribute returned to be more
+#        flexible"""
+#        return getattr(self.condition, name)
 
+    def __iter__(self):
+        return iter((self.condition,))
+        
     def __invert__(self):
         "inverse of inverse is the actual condition"
         return self.condition

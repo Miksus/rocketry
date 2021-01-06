@@ -3,7 +3,7 @@ import datetime
 import logging
 from pathlib import Path
 
-from pypipe.conditions import task_ran
+from pypipe.conditions import TaskStarted
 from pypipe.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.log import TaskAdapter, CsvHandler
 
@@ -23,13 +23,7 @@ class _ExecutionMixin:
             self._execution_condition = AlwaysTrue()
             return
 
-        if isinstance(value, str):
-            self._execution_condition = ~task_ran(task=self).in_cycle(value)
-        else:
-            # period is the execution variable
-            cond = task_ran(task=self)
-            cond.period = value
-            self._execution_condition = ~cond
+        self._execution_condition = ~TaskStarted(task=self, period=value)
 
 # Additional way to define execution
     def between(self, *args, **kwargs):
@@ -179,7 +173,7 @@ class _LoggingMixin:
     @property
     def status(self):
         record = self.logger.get_latest()
-        if record is None:
+        if not record:
             # No previous status
             return None
         return record["action"]

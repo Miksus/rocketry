@@ -19,7 +19,8 @@ class TaskAdapter(logging.LoggerAdapter):
         logger = TaskAdapter(logger, {"task": "mything"})
     """
     def __init__(self, logger, task):
-        super().__init__(logger, {"task_name": task.name})
+        task_name = task.name if task is not None else task
+        super().__init__(logger, {"task_name": task_name})
 
         is_readable = any(
             hasattr(handler, "read") or hasattr(handler, "query")
@@ -44,8 +45,14 @@ class TaskAdapter(logging.LoggerAdapter):
         handlers = self.logger.handlers
         for handler in handlers:
             if hasattr(handler, "query"):
-                kwds = {"asctime": (start, end), "action": action, "task_name": task_name}
-                df = pd.DataFrame(handler.query(**kwds))
+                
+                kwds = {"asctime": (start, end), "action": action}
+                if task_name is not None:
+                    kwds["task_name"] = task_name
+                    # If task_name is None, then adapter is not task specific (used for readonly)
+
+                cont = handler.query(**kwds)
+                df = pd.DataFrame(cont)
                 df["task_name"] = df["task_name"].astype(str)
                 
                 return df
@@ -53,7 +60,10 @@ class TaskAdapter(logging.LoggerAdapter):
                 df = pd.DataFrame(handler.read())
                 df["task_name"] = df["task_name"].astype(str)
 
-                df = df[df["task_name"] == task_name]
+                if task_name is not None:
+                    df = df[df["task_name"] == task_name]
+                    # If task_name is None, then adapter is not task specific (used for readonly)
+
                 if action is not None:
                     action = [action] if isinstance(action, str) else action 
                     df = df[df["action"].isin(action)]
@@ -65,11 +75,12 @@ class TaskAdapter(logging.LoggerAdapter):
         else:
             raise AttributeError("No handlers that could read the logs (missing methods 'read' or 'query')")
 
-    def get_latest(self):
-        df = self.get_records()
+    def get_latest(self, action=None) -> dict:
+        "Get latest log record"
+        df = self.get_records(action=action)
         if df.empty:
-            return None
-        return df.iloc[-1, :]
+            return {}
+        return df.iloc[-1, :].to_dict()
 
 # For some reason the logging.Adapter is missing some
 # methods that are on logging.Logger

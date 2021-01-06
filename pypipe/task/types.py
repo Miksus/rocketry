@@ -10,7 +10,7 @@ import importlib
 import subprocess
 import re
 
-from pypipe.parameters import ParameterSet
+#from pypipe.parameters import ParameterSet
 
 from jubox import JupyterNotebook, CodeCell
 from jubox.builtin import run_notebook
@@ -18,17 +18,19 @@ from jubox.builtin import run_notebook
 class FuncTask(Task):
     """Function Task, task that executes a function
     """
-    def execute_action(self, parameters:ParameterSet):
+    def execute_action(self, kwargs):
         "Run the actual, given, task"
-        args, kwargs = parameters.materialize()
-        return self.action(*args, **kwargs)
+        return self.action(**kwargs)
 
     def get_default_name(self):
         func = self.action
         return func.__name__
         
     def filter_params(self, params):
-        return params
+        return {
+            key: val for key, val in params.items()
+            if key in self.kw_args
+        }
 
     @staticmethod
     def get_reguired_params(func, params):
@@ -81,18 +83,13 @@ class ScriptTask(Task):
     """
     main_func = "main"
 
-    def execute_action(self, parameters:ParameterSet):
-        args, kwargs = parameters.materialize()
+    def execute_action(self, params:dict):
         task_func = self.get_task_func()
-        return task_func(*args, **kwargs)
+        return task_func(**params)
 
     def get_default_name(self):
         file = self.action
         return '.'.join(file.parts).replace(r'/main.py', '')
-
-    def filter_params(self, params):
-        # TODO: remove
-        return params
 
     def process_finish(self, *args, **kwargs):
         del self._task_func
@@ -235,13 +232,13 @@ class CommandTask(Task):
 
     def execute_action(self, parameters):
 
-        args, kwargs = parameters.materialize()
+        # args, kwargs = parameters.materialize()
         command = self.action
 
         # TODO: kwargs to parameters, ie.
         # {"x": 123, "y": "a value"} --> "-x 123", "-y 'a value'"
 
-        command = [command] + list(args) if isinstance(command, str) else command + list(args)
+        # command = [command] + list(args) if isinstance(command, str) else command + list(args)
         # command can be: "myfile.bat", "echo Hello!" or ["python", "v"]
         # https://stackoverflow.com/a/5469427/13696660
         pipe = subprocess.Popen(command,
@@ -264,10 +261,6 @@ class CommandTask(Task):
             errs = errs.decode("utf-8", errors="ignore")
             raise OSError(f"Failed running command: \n{errs}")
         return outs
-
-    def filter_params(self, params):
-        # TODO: Figure out way to include custom parameters
-        return params
 
     def get_default_name(self):
         command = self.action
@@ -324,7 +317,7 @@ class JupyterTask(Task):
         if self.on_preprocess is not None:
             self.on_preprocess(nb, **kwargs)
 
-    def set_params(self, nb, parameters:ParameterSet):
+    def set_params(self, nb, parameters):
         # TODO:
         #   An option to set arbitrary parameters using picke
         #       1. write the parameter(s) to a pickle file

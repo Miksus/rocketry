@@ -16,6 +16,7 @@ import dateutil
 class OffsetInterval(TimeInterval):
     """Base for interval constructed from pandas.offsets
     """
+    # TODO: Remove
     def __init__(self, offset):
         self.offset = offset
 
@@ -87,6 +88,9 @@ class TimeOfMonth(MonthMixin, AnchoredInterval):
         # From 10 o'clock to 15 o'clock
         TimeOfMonth("1st", "5th")
     """
+    # TODO: Support for month end (ie. last 5th day of month to last 2nd)
+    # Could be implemented by allowing minus _start and minus _end
+    #   rollforward/rollback/contains would need slight changes 
 
 class TimeOfYear(YearMixin, AnchoredInterval):
     """Time interval anchored to day cycle of a clock

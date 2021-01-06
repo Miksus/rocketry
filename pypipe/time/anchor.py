@@ -113,6 +113,14 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
         self.start = start
         self.end = end
 
+    @classmethod
+    def from_starting(cls, starting):
+        # Replaces TimeCycles
+        obj = cls(starting)
+        if obj._start != 0:
+            # End is one nanosecond away from start
+            obj._end = obj._start - 1 
+
     @property
     def start(self):
         delta = pd.Timedelta(self._start, unit="ns")
@@ -138,8 +146,9 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
             if val is not None 
             else self._scope_max
         )
-        if self._ceil_end_time:
-            has_time = (ns % to_nanoseconds(day=1)) != 0
+
+        has_time = (ns % to_nanoseconds(day=1)) != 0
+        if self._ceil_end_time and has_time:
             ns = ns + (to_nanoseconds(day=1) - 1)
 
         self._end = ns

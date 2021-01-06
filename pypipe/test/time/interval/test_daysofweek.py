@@ -1,9 +1,6 @@
 
 from datetime import datetime
 
-from pypipe.time.cycle import (
-    Daily, Weekly
-)
 from pypipe.time.interval import (
     TimeOfDay, DaysOfWeek
 )

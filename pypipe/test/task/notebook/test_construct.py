@@ -25,8 +25,8 @@ def test_from_folder(tmpdir):
     ]
    },
    "source": [
-    "from pypipe.conditions import task_ran\n",
-    "start_condition = task_ran(\"mytask\") == 1"
+    "from pypipe.conditions import TaskStarted\n",
+    "start_condition = TaskStarted(\"mytask\") == 1"
    ]
   }
  ],
@@ -74,8 +74,8 @@ def test_from_folder(tmpdir):
    },
    "outputs": [],
    "source": [
-    "from pypipe.conditions import task_ran\n",
-    "start_condition = task_ran(\"mytask\") == 0"
+    "from pypipe.conditions import TaskStarted\n",
+    "start_condition = TaskStarted(\"mytask\") == 0"
    ]
   }
  ],

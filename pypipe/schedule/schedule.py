@@ -15,6 +15,8 @@ from pathlib import Path
 from copy import deepcopy, copy
 from queue import Empty
 
+import pandas as pd
+
 from pypipe.task.base import Task, get_task
 from pypipe.task import ScriptTask, JupyterTask, FuncTask, CommandTask
 from pypipe.log import FilterAll, read_logger
@@ -23,10 +25,22 @@ from .exceptions import SchedulerRestart
 
 from pypipe.utils import is_pickleable
 from pypipe.conditions import set_statement_defaults
-from pypipe.parameters import Parameters
+from pypipe.parameters import Parameters, GLOBAL_PARAMETERS
 
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
+
+SCHEDULERS = {} # Probably will be only one but why not support multiple?
+
+def get_scheduler(sched):
+    if isinstance(sched, Scheduler):
+        return sched
+    return SCHEDULERS[sched]
+
+def clear_schedulers():
+    global SCHEDULERS
+    SCHEDULERS = {}
+    
 
 class Scheduler:
     """
@@ -47,8 +61,9 @@ class Scheduler:
     """
 
     logger = logging.getLogger(__name__)
+    parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
-    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None):
+    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None, name=None):
         """[summary]
 
         Arguments:
@@ -60,27 +75,34 @@ class Scheduler:
         """
         self.tasks = tasks
         self.maintain_tasks = [] if maintain_tasks is None else maintain_tasks
-        self.shut_condition = False if shut_condition is None else shut_condition
+        self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
-        self.shut_condition = set_statement_defaults(self.shut_condition, scheduler=self)
+        set_statement_defaults(self.shut_condition, scheduler=self)
 
         for maintain_task in self.maintain_tasks:
-            maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
+            #maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
             maintain_task.groups = ("maintain",)
             maintain_task.set_logger() # Resetting the logger as group changed
             maintain_task.is_maintenance = True
 
-        self.variable_params = {}
-        self.fixed_params = {}
-
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
 
-        self.parameters = Parameters() if parameters is None else parameters
-        self.parameters.scheduler = self # For maintenance tasks
+        self.task_returns = Parameters()
+        if parameters is not None:
+            self.parameters.update(parameters)
+
+        self.name = name if name is not None else id(self)
+        self._register_instance()
+        
+    def _register_instance(self):
+        if self.name in SCHEDULERS:
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(SCHEDULERS.keys())}")
+        SCHEDULERS[self.name] = self
 
     @staticmethod
     def set_default_logger(logger):
+        # TODO
         # Emptying existing handlers
         if logger is None:
             logger = __name__
@@ -198,9 +220,10 @@ class Scheduler:
         "Run/execute one task"
         self.logger.debug(f"Running task {task}")
         
+        params = self.parameters | self.task_returns
         start_time = datetime.datetime.now()
         try:
-            output = task(parameters=self.parameters[task])
+            output = task(**params)
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -208,7 +231,7 @@ class Scheduler:
             exception = None
             status = "success"
             # Set output to other task to use
-            self.parameters[task.name] = output
+            self.task_returns[task.name] = output
         end_time = datetime.datetime.now()
 
         # TODO: Is there double logging? Task may do it already
@@ -218,13 +241,6 @@ class Scheduler:
             exception=exception
         )
 
-    def get_params(self, scheduler):
-        variable_params = {key: val() for key, val in self.variable_params.items()}
-        params = {**variable_params, **self.fixed_params}
-        if scheduler:
-            params["scheduler"] = self
-        return params
-        
 
 # Logging
     def log_status(self, task, status, **kwargs):
@@ -281,37 +297,8 @@ class Scheduler:
                 )
             )
 
-# Factory
-    @classmethod
-    def from_folder(cls, path, include_main=True, include_ipynb=True, **kwargs):
-        root = Path(path)
-        # TODO: Probably better to delete for now
-        tasks = []
-        if include_main:
-            for file in root.glob('**/main.py'):
-                if file.is_file():
-                    
 
-                    relative_path = Path(*file.parts[len(root.parts):]) # Removed beginning, C://myuser/...
-
-                    group = '.'.join(relative_path.parts[:-2]) # All but the mytask/main.py
-                    name = '.'.join(relative_path.parts[:-1]) # All but the main.py
-                    task = ScriptTask.from_file(file, name=name, group=group) # Figures the conditions etc.
-                    tasks.append(task)
-
-        if include_ipynb:
-            for file in path.glob('**/*.ipynb'):
-                if file.is_file():
-                    relative_path = Path(*file.parts[len(root.parts):]) # Removed beginning, C://myuser/...
-                    name = '.'.join(relative_path.parts).replace(".ipynb", "") # All but the main.py
-                    task = NotebookTask.from_file(file, name=name)
-                    tasks.append(task)
-
-        return cls(tasks, **kwargs)
-
-
-
-def _run_task_as_process(task, queue, params):
+def _run_task_as_process(task, queue, return_queue, params):
     """Run a task in a separate process (has own memory)"""
 
     # NOTE: This is in the process and other info in the application
@@ -344,14 +331,14 @@ def _run_task_as_process(task, queue, params):
     )
 
     try:
-        output = task(parameters=params)
+        output = task(**params)
     except Exception as exc:
         # Just catching all exceptions.
         # There is nothing to raise it
         # to :(
         pass
     else:
-        params._send(output, name=task.name)
+        return_queue.put((task.name, output))
 
 def _listen_task_status(handlers, queue):
     # TODO: Probably remove
@@ -374,12 +361,11 @@ class MultiScheduler(Scheduler):
     """Multiprocessing scheduler
     """
 
-    timeout = datetime.timedelta(0, 30*60)
-
-    def __init__(self, *args, max_processes=None, **kwargs):
+    def __init__(self, *args, max_processes=None, timeout="30 minutes", **kwargs):
         super().__init__(*args, **kwargs)
         self.max_processes = cpu_count() if max_processes is None else max_processes
 
+        self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
     def run_cycle(self):
         "Run a cycle of tasks"
@@ -387,6 +373,7 @@ class MultiScheduler(Scheduler):
         self.logger.info(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
             self.handle_logs()
+            self.handle_return()
             if self.is_task_runnable(task):
                 # Run the actual task
                 self.run_task_as_process(task)
@@ -428,14 +415,11 @@ class MultiScheduler(Scheduler):
         proc_task._execution_condition = None
         proc_task._dependency_condition = None
 
-        params = self.parameters[task]
-        params.remove_unpicklable()
+        params = GLOBAL_PARAMETERS | self.task_returns
 
-        #child_pipe, parent_pipe = multiprocessing.Pipe() # Make 2 way connection
-        #process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self.get_params(only_picleable=True)))
-        #task._processes.append(process)
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, params))
-        #task._conn = parent_pipe
+        # TODO: set daemon attribute of Process using 1. Task.daemon 2. Scheduler.daemon 3. None
+        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self._return_queue, params)) 
+        # TODO: Pass self._ret_queue to Process (to get the return value of the task)
 
         task._process.start()
         task._start_time = datetime.datetime.now()
@@ -451,16 +435,8 @@ class MultiScheduler(Scheduler):
 
         # In case there are others waiting
         self.handle_logs()
-        
-
-    def get_params(self, only_picleable=False, scheduler=False):
-        variable_params = {key: val() for key, val in self.variable_params.items()}
-        params = {**variable_params, **self.fixed_params}
-        if only_picleable:
-            params = {key:val for key, val in params.items() if is_pickleable(val)}
-        if scheduler:
-            params["scheduler"] = self
-        return params
+        self.handle_return()
+    
 
     def terminate_all(self, reason=None):
         "Terminate all running tasks"
@@ -481,12 +457,17 @@ class MultiScheduler(Scheduler):
         if not self.is_alive(task):
             return False
 
-        timeout = task.timeout
+        timeout_task = task.timeout
+        timeout_sched = self.timeout
+        timeout = (
+            min(timeout_task, timeout_sched) 
+            if timeout_task is not None and timeout_sched is not None
+            else timeout_task or timeout_sched
+        )
         if timeout is None:
             return False
-        run_time = datetime.datetime.now() - task._start_time
-        run_time_seconds = run_time.total_seconds()
-        return run_time_seconds > timeout
+        run_duration = datetime.datetime.now() - task._start_time
+        return run_duration > timeout
 
     @staticmethod
     def is_alive(task):
@@ -526,7 +507,23 @@ class MultiScheduler(Scheduler):
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = get_task(record.task_name)
                 task.log_record(record)
-        self.parameters.listen()
+        # self.parameters.listen()
+        # return_values = self._param_queue.get(block=False)
+        # self.returns[return_values[0]] = return_values[1]
+
+    def handle_return(self):
+        "Handle task return queue and saves task return values for other tasks to use"
+        while True:
+            try:
+                output = self._return_queue.get(block=False)
+                task_name, return_value = output
+            except Empty:
+                break
+            else:
+                pass
+                # If the return values are to put as GLOBAL_PARAMETERS
+                # there should be a maintainer task to take them there
+                self.task_returns[task_name] = return_value
 
     def handle_next_run_log(self):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
@@ -547,7 +544,7 @@ class MultiScheduler(Scheduler):
         #self.setup_listener()
         super().setup()
         self._log_queue = multiprocessing.Queue(-1)
-        self.parameters.que = multiprocessing.Queue(-1)
+        self._return_queue = multiprocessing.Queue(-1)
 
     def setup_listener(self):
         # TODO
@@ -587,12 +584,13 @@ class MultiScheduler(Scheduler):
         Python exception) to properly inform the maintainer
         and log the event
         """
-        print(exception)
-        try:
-            if exception is None:
+        if exception is None:
+            try:
+                # Gracefully shut down (allow remaining tasks to finish)
                 while self.n_alive:
                     #time.sleep(self.min_sleep)
                     self.handle_logs()
+                    self.handle_return()
                     for task in self.tasks:
                         if self.is_timeouted(task):
                             # Terminate the task
@@ -600,9 +598,11 @@ class MultiScheduler(Scheduler):
                         elif self.is_out_of_condition(task):
                             # Terminate the task
                             self.terminate_task(task)
+            except Exception as exc:
+                # Fuck it, terminate all
+                self.shut_down(exception=exc)
             else:
-                self.terminate_all(reason="shutdown")
-        except Exception as exc:
-            self.shut_down(exception=exc)
+                self.handle_logs()
+                self.handle_return()
         else:
-            self.handle_logs()
+            self.terminate_all(reason="shutdown")

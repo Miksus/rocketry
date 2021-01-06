@@ -8,12 +8,13 @@ import numpy as np
 
 # TODO: convert Observation to a "statement" when comparison?
 from ..base import BaseCondition
-from .mixins import _Historical, _Quantitative
+#from .mixins import _Historical, Comparable
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Statement(BaseCondition, _Historical, _Quantitative):
+
+class Statement(BaseCondition):
     """
 
     @Statement
@@ -77,8 +78,42 @@ class Statement(BaseCondition, _Historical, _Quantitative):
 
             tasks_alive == 0
     """
+    historical = False
+    quantitative = False
+    name = None
 
-    def __init__(self, func=None, *, quantitative=False, historical=False):
+    @classmethod
+    def from_func(cls, func=None, *, historical=False, quantitative=False):
+        "Create statement from function (returns new class)"
+        if func is None:
+            # Acts as decorator
+            return partial(cls.from_func, historical=historical, quantitative=quantitative)
+
+        name = func.__name__
+        #bases = (cls,)
+
+        bases = []
+        if historical: bases.append(Historical)
+        if quantitative: bases.append(Comparable)
+        bases.append(cls)
+        bases = tuple(bases)
+
+        attrs = {
+            "historical": historical,
+            "quantitative": quantitative,
+            # Methods
+            "observe": staticmethod(func),
+        }
+
+        # Creating class dynamically
+        cls = type(
+            name,
+            tuple(bases),
+            attrs
+        )
+        return cls
+
+    def __init__(self, *args, period=None, **kwargs):
         """Base for events
 
         Keyword Arguments:
@@ -86,74 +121,55 @@ class Statement(BaseCondition, _Historical, _Quantitative):
             quantitative {bool} -- Whether the statement function returns number
             historical {bool} -- Whether the statement has start and end times
         """
-        self._func = func
-        self.quantitative = quantitative
-        self.historical = historical
 
-        if self.historical:
-            self._init_historical()
-
-        if self.quantitative:
-            self._init_quantitative()
-
-        self.args = ()
-        self._kwargs = {}
-
-    @property
-    def function(self):
-        return partial(
-            self._func, 
-            *self.args, 
-            **self.kwargs
-        )
+        self._args = args
+        self._kwargs = kwargs
+        self._period = period
 
     def __bool__(self):
         try:
-            outcome = self._func(*self.args, **self.kwargs)
+            outcome = self.observe(*self.args, **self.get_kwargs())
+            status = self._to_bool(outcome)
         except IndexError:
             # Exceptions are considered that the statement is false
             return False
-        result = self.to_boolean(outcome)
 
-        logger.debug(f"Statement {str(self)} status: {result}")
+        #logger.debug(f"Statement {str(self)} status: {status}")
 
-        return result
+        return status
+
+    @abstractmethod
+    def observe(self, *args, **kwargs):
+        "Observe status of the statement (returns true/false)"
+        return True
+
+    def _to_bool(self, res):
+        return bool(res)
+
+    def get_kwargs(self):
+        return self._kwargs
 
     @property
     def kwargs(self):
         kwargs = self._kwargs
         if self.historical:
-            kwargs.update(self.get_time_kwargs())
+            self._update_kwargs_hist()
         return kwargs
 
-    def to_boolean(self, result):
-        
-        if self.historical and not self.has_param("_start_", "_end_"):
-            # result should be datelike or list of datelike
-            # TODO: This is NOT working
-            start = self.get_start()
-            end = self.get_end()
-            if is_datelike(result):
-                result = start < result < end
-            else:
-                # List of datelike
-                result = [
-                    event
-                    for event in result
-                    if start < event < end
-                ]
+    def _update_kwargs_hist(self, dt=None):
+        if dt is None:
+            dt = self.current_datetime
 
-        if self.quantitative:
-            result = self.to_count(result)
-            comparisons = self.comparisons or {"__gt__": 0}
-            return all(
-                getattr(result, comp)(val) # Comparison is magic method (==, !=, etc.)
-                if comp.startswith("__") and comp.endswith("__")
-                else val(result) # val is function (like: "every": lambda...)
-                for comp, val in comparisons.items()
-            )
-        else:
-            return bool(result)
+        interval = self.period.rollback(dt)
+        start = interval.left
+        end = interval.right
+        self._kwargs["_start_"] = start
+        self._kwargs["_end_"] = end
+        return
+
+    @property
+    def args(self):
+        return self._args
 
     def to_count(self, result):
         "Turn event result to quantitative number"
@@ -161,76 +177,100 @@ class Statement(BaseCondition, _Historical, _Quantitative):
             return result
         else:
             return len(result)
-
-    def next_trigger(self):
-        "Get next datetime when the event can be the opposing value"
-        # TODO: find better name
-        # TODO: Is there better way?
-        if not self.historical:
-            raise AttributeError("Statement is not historical")
-        occurrences = self()
-        is_occurring = bool(self)
-        if is_occurring:
-            continue_to_occur = all(limiting not in self.comparisons for limiting in ("__eq__", "__ne__", "__le__", "__lt__"))
-            if is_occurring and continue_to_occur:
-                if isinstance(self.period, TimeInterval):
-                    return self.period.rollforward(self.current_datetime).left
-                elif isinstance(self.period, TimeCycle):
-                    return self.period.rollforward(self.current_datetime).left
-                elif isinstance(self.period, TimeDelta):
-                    oldest_occurrence = min(sorted(occurrences)[-more_or_equal:])
-                    return self.period.rollforward(oldest_occurrence).right
-
-    @property
-    def cycle(self):
-        if self.historical:
-            return self.period
-            
-    @property
-    def require_task(self):
-        return self.has_param("task")
-
-    def __call__(self, *args, **kwargs):
-        if not args and not kwargs:
-            return self.function()
-
-        if self._func is None:
-            # Completing statement
-            self._func = args[0]
-            return self
-
-        new = self.copy()
-
-        new.set_params(*args, **kwargs)
-        return new
         
     def set_params(self, *args, **kwargs):
         "Add arguments to the experiment"
-        self.args = (*self.args, *args)
+        self._args = (*self._args, *args)
         self._kwargs.update(kwargs)
 
     def has_param(self, *params):
-        sig = signature(self._func)
+        sig = signature(self.observe)
         return all(param in sig.parameters for param in params)
 
     def has_param_set(self, *params):
         return all(param in self.kwargs for param in params)
 
     def __str__(self):
-        name = self._func.__name__
+        name = self.name
         return f"< Statement '{name}'>"
-
-    @property
-    def name(self):
-        return self._func.__name__
 
     def copy(self):
         # Cannot deep copy self as if task is in kwargs, failure occurs
         new = copy(self)
-        if hasattr(self, "comparisons"):
-            new.comparisons = copy(self.comparisons)
-        if hasattr(self, "period"):
-            new.period = copy(self.period)
         new._kwargs = copy(new._kwargs)
-        new.args = copy(new.args)
+        new._args = copy(new._args)
         return new
+
+
+class Comparable(Statement):
+    # TODO
+    pass
+
+    def _to_bool(self, res):
+        # For:
+        # [1,2,3] --> 3
+        # 
+        if isinstance(res, bool):
+            return super()._to_bool(res)
+
+        res = len(res) if hasattr(res, "__len__") else res
+
+        comps = {
+            f"_{comp}_": self._kwargs[comp]
+            for comp in ("_eq_", "_ne_", "_lt_", "_gt_", "_le_", "_ge_")
+            if comp in self._kwargs
+        }
+        if not comps:
+            return res > 0
+        return all(
+            getattr(res, comp)(val) # Comparison is magic method (==, !=, etc.)
+            for comp, val in comps.items()
+        )
+
+# Quantitative extra
+    def __eq__(self, other):
+        # self == other
+        return self._set_comparison("_eq_", other)
+
+    def __ne__(self, other):
+        # self != other
+        return self._set_comparison("_ne_", other)
+
+    def __lt__(self, other):
+        # self < other
+        return self._set_comparison("_lt_", other)
+
+    def __gt__(self, other):
+        # self > other
+        return self._set_comparison("_gt_", other)
+
+    def __le__(self, other):
+        # self <= other
+        return self._set_comparison("_le_", other)
+        
+    def __ge__(self, other):
+        # self >= other
+        return self._set_comparison("_ge_", other)        
+
+    def _set_comparison(self, key, val):
+        obj = self.copy()
+        obj._kwargs[key] = val
+        return obj
+
+    def get_kwargs(self):
+        return super().get_kwargs()
+
+class Historical(Statement):
+
+    def get_kwargs(self):
+        kwargs = super().get_kwargs()
+        if not hasattr(self, "period"):
+            return kwargs
+        dt = self.current_datetime
+
+        interval = self.period.rollback(dt)
+        start = interval.left
+        end = interval.right
+        kwargs["_start_"] = start
+        kwargs["_end_"] = end
+        return kwargs

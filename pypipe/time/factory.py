@@ -36,6 +36,14 @@ def _get_interval(type_, start=None, end=None):
 def _get_delta(value):
     return TimeDelta(value)
 
+def _get_during(value):
+    if value == "weekend":
+        return DaysOfWeek("Sat", "Sun")
+    elif value == "weekdays":
+        return DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
+    else:
+        raise
+
 class _PeriodFactory:
 
     _weekdays = '|'.join(calendar.day_name) + "|" + '|'.join(calendar.day_abbr)
@@ -51,6 +59,8 @@ class _PeriodFactory:
 
         (r"(?P<type_>monthly|weekly|daily|hourly|minutely)", _get_cycle),
         (r"past (?P<value>.+)", _get_delta),
+
+        (r"during (?P<value>.+)", _get_during),
     ]
 
     cycle_expressions = {

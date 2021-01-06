@@ -30,8 +30,8 @@ def test_success(tmpdir):
     ]
    },
    "source": [
-    "from pypipe.conditions import task_ran\n",
-    "start_condition = task_ran(\"mytask\") == 1"
+    "from pypipe.conditions import TaskStarted\n",
+    "start_condition = TaskStarted(\"mytask\") == 1"
    ]
   },
   {
@@ -101,8 +101,8 @@ def test_failure(tmpdir):
     ]
    },
    "source": [
-    "from pypipe.conditions import task_ran\n",
-    "start_condition = task_ran(\"mytask\") == 1"
+    "from pypipe.conditions import TaskStarted\n",
+    "start_condition = TaskStarted(\"mytask\") == 1"
    ]
   },
   {

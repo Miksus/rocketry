@@ -3,6 +3,7 @@ import pandas as pd
 # TODO: Way to calculate how much time (ie. seconds) to next event
 
 from abc import abstractmethod
+from typing import List
 import inspect
 import itertools
 
@@ -37,6 +38,7 @@ def register_class(cls):
 
     parent = TimeCycle if is_cycle else TimeInterval if is_interval else TimeDelta
     PERIOD_CLASSES[parent].append(cls)
+
 
 class TimePeriod:
     """Base for all classes that represent a time period
@@ -115,6 +117,7 @@ class TimePeriod:
             # Offsetting the end point with minimum amount to get new full interval
             interv = self.rollback(dt.left - self.resolution)
         return interv
+
 
 class TimeInterval(TimePeriod):
     """Base for all time intervals
@@ -196,7 +199,6 @@ class TimeInterval(TimePeriod):
         return pd.Interval(start, end, closed="both")
 
 
-
 class TimeDelta(TimePeriod):
     """Base for all time deltas
 
@@ -214,33 +216,41 @@ class TimeDelta(TimePeriod):
     Answers to "past 1 hour"
     """
     _type_name = "delta"
-    def __init__(self, *args, **kwargs):
-        self.duration = abs(pd.Timedelta(*args, **kwargs))
-        if pd.isna(self.duration):
-            raise ValueError("TimeDelta duration cannot be 'not a time'")
+    def __init__(self, past=None, future=None, kws_past=None, kws_future=None):
+
+        past = 0 if past is None else past
+        future = 0 if future is None else future
+
+        kws_past = {} if kws_past is None else kws_past
+        kws_future = {} if kws_future is None else kws_future
+        
+        self.past = abs(pd.Timedelta(past, **kws_past))
+        self.future = abs(pd.Timedelta(future, **kws_future))
+        if pd.isna(self.past):
+            raise future("TimeDelta past duration cannot be 'not a time'")
+        if pd.isna(self.past):
+            raise ValueError("TimeDelta future duration cannot be 'not a time'")
 
     @abstractmethod
     def __contains__(self, dt):
         "Check whether the datetime is in "
-        start = self.reference - self.duration
-        end = self.reference
+        start = self.reference - abs(self.past)
+        end = self.reference + abs(self.future)
         return start <= dt <= end
 
     def rollback(self, dt):
         "Get previous interval (including currently ongoing)"
-        start = dt - self.duration
+        start = dt - abs(self.past)
         start = pd.Timestamp(start)
         end = pd.Timestamp(dt)
         return pd.Interval(start, end) 
 
     def rollforward(self, dt):
         "Get next interval (including currently ongoing)"
-        end = dt + self.duration
+        end = dt + abs(self.future)
         start = pd.Timestamp(dt)
         end = pd.Timestamp(end)
         return pd.Interval(start, end)
-
-
 
 
 class TimeCycle(TimePeriod):
@@ -349,6 +359,21 @@ class TimeCycle(TimePeriod):
         #  time      |           time     |    
 
 
+def all_overlap(times:List[pd.Interval]):
+    return all(a.overlaps(b) for a, b in itertools.combinations(times, 2))
+
+def get_overlapping(times):
+    # Example:
+    # A:    <-------------->
+    # B:     <------>
+    # C:         <------>
+    # Out:       <-->
+    starts = [interval.left for interval in times]
+    ends = [interval.right for interval in times]
+
+    start = max(starts)
+    end = min(ends)
+    return pd.Interval(start, end)
 
 class All(TimePeriod):
 
@@ -362,15 +387,20 @@ class All(TimePeriod):
             period.rollback(dt)
             for period in self.periods
         ]
-        if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
-            # All overlaps, can be defined conveniently using max, min
-            starts = [interval.left for interval in intervals]
-            ends = [interval.right for interval in intervals]
 
-            start = max(starts)
-            end = min(ends)
-            return pd.Interval(start, end)
+        if all_overlap(intervals):
+            # Example:
+            # A:    <-------------->
+            # B:     <------>
+            # C:         <------>
+            # Out:       <-->
+            return get_overlapping(intervals)
         else:
+            # A:         <---------------->
+            # B:            <--->     <--->
+            # C:         <------->
+            # Try from:             <-|
+
             starts = [interval.left for interval in intervals]
             return self.rollback(max(starts) - datetime.datetime.resolution)
 
@@ -379,18 +409,21 @@ class All(TimePeriod):
             period.rollforward(dt)
             for period in self.periods
         ]
-        if all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2)):
-            # All overlaps, can be defined conveniently using max, min
-            starts = [interval.left for interval in intervals]
-            ends = [interval.right for interval in intervals]
-
-            start = max(starts)
-            end = min(ends)
-            return pd.Interval(start, end)
+        if all_overlap(intervals):
+            # Example:
+            # A:    <-------------->
+            # B:     <------>
+            # C:         <------>
+            # Out:       <-->
+            return get_overlapping(intervals)
         else:
+            # A:          <---------------->
+            # B:            <--->     <--->
+            # C:                  <------->
+            # Try from:         |->
             ends = [interval.right for interval in intervals]
-            # Tries next interval
-            return self.nex(min(ends) + datetime.datetime.resolution)
+            return self.rollforward(min(ends) + datetime.datetime.resolution)
+
 
 class Any(TimePeriod):
 
@@ -404,11 +437,43 @@ class Any(TimePeriod):
             period.rollback(dt)
             for period in self.periods
         ]
+
+        # Example:
+        # A:    <-------------->
+        # B:     <------>
+        # C:         <------------->
+        # Out:  <------------------>
+
+        # Example:
+        # A:    <-->   
+        # B:     <--->     <--->
+        # C:     <------>
+        # Out:  <------->
+
+        # Example:
+        # A:    <-->   
+        # B:    <--->     <--->
+        # C:        <----->
+        # Out:  <------------->
         starts = [interval.left for interval in intervals]
         ends = [interval.right for interval in intervals]
 
         start = min(starts)
         end = max(ends)
+
+        next_intervals = [
+            period.rollback(start - datetime.datetime.resolution)
+            for period in self.periods
+        ]
+        if any(pd.Interval(start, end).overlaps(interval) for interval in next_intervals):
+            # Example:
+            # A:    <-->   
+            # B:    <--->     <--->
+            # C:        <----->
+            # Out:  <---------|--->
+            extended = self.rollback(start - datetime.datetime.resolution)
+            start = extended.left
+
         return pd.Interval(start, end)
 
     def rollforward(self, dt):
@@ -416,11 +481,27 @@ class Any(TimePeriod):
             period.rollforward(dt)
             for period in self.periods
         ]
+
         starts = [interval.left for interval in intervals]
         ends = [interval.right for interval in intervals]
 
         start = min(starts)
         end = max(ends)
+
+        next_intervals = [
+            period.rollforward(end + datetime.datetime.resolution)
+            for period in self.periods
+        ]
+
+        if any(pd.Interval(start, end).overlaps(interval) for interval in next_intervals):
+            # Example:
+            # A:    <-->   
+            # B:    <--->     <--->
+            # C:        <----->
+            # Out:  <---------|--->
+            extended = self.rollforward(end + datetime.datetime.resolution)
+            end = extended.right
+
         return pd.Interval(start, end)
 
 class Offsetted(TimePeriod):

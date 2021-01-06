@@ -8,8 +8,8 @@ from .statement import *
 #(
 #    Statement,
 #    task_ran,
-#    task_failed,
-#    task_succeeded,
+#    TaskFailed,
+#    TaskSucceeded,
 #    ram_free,
 #    ram_used,
 #    task_running
