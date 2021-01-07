@@ -29,16 +29,19 @@ from pypipe.core.parameters import Parameters, GLOBAL_PARAMETERS
 # TODO: Controlled crashing
 #   Wrap __call__ with a decor that has try except
 
-SCHEDULERS = {} # Probably will be only one but why not support multiple?
+_SCHEDULERS = {} # Probably will be only one but why not support multiple?
+
+def get_all_schedulers():
+    return _SCHEDULERS
 
 def get_scheduler(sched):
     if isinstance(sched, Scheduler):
         return sched
-    return SCHEDULERS[sched]
+    return _SCHEDULERS[sched]
 
 def clear_schedulers():
-    global SCHEDULERS
-    SCHEDULERS = {}
+    global _SCHEDULERS
+    _SCHEDULERS = {}
     
 
 class Scheduler:
@@ -59,7 +62,8 @@ class Scheduler:
 
     """
 
-    logger = logging.getLogger(__name__)
+    _logger_basename = __name__
+    logger = logging.getLogger(_logger_basename)
     parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
     def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None, name=None):
@@ -94,37 +98,9 @@ class Scheduler:
         self._register_instance()
         
     def _register_instance(self):
-        if self.name in SCHEDULERS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(SCHEDULERS.keys())}")
-        SCHEDULERS[self.name] = self
-
-    @staticmethod
-    def set_default_logger(logger):
-        # TODO
-        # Emptying existing handlers
-        if logger is None:
-            logger = __name__
-        elif isinstance(logger, str):
-            logger = logging.getLogger(logger)
-
-        logger.handlers = []
-
-        # Making sure the log folder is found
-        Path(filename).parent.mkdir(parents=True, exist_ok=True)
-
-        # Adding the default handler
-        handler = CsvHandler(
-            filename,
-            fields=[
-                "asctime",
-                "levelname",
-                "action",
-                "task_name",
-                "exc_text",
-            ]
-        )
-
-        logger.addHandler(handler)
+        if self.name in _SCHEDULERS:
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_SCHEDULERS.keys())}")
+        _SCHEDULERS[self.name] = self
 
     def __call__(self):
         "Start and run the scheduler"
@@ -260,10 +236,6 @@ class Scheduler:
         tb_string = ''.join(tb)
         self.logger.error(f"Task {task} failed: \n{tb_string}")
 
-    def get_history(self, group_name=None):
-        logger = Task.get_logger(group_name=group_name)
-        return read_logger(logger)
-
 # Core properties
     @property
     def delay(self):
@@ -324,7 +296,7 @@ def _run_task_as_process(task, queue, return_queue, params):
             # knowing the status of the task
             # or other tasks
             warnings.simplefilter("ignore")
-            task.set_logger(logger)
+            task.logger = logger
         #task.logger.addHandler(
         #    logging.StreamHandler(sys.stdout)
         #)
@@ -417,11 +389,6 @@ class MultiScheduler(Scheduler):
         # at the same time, issues may arise.
 
         proc_task = copy(task)
-        proc_task.logger = None
-        proc_task.start_cond = None
-        proc_task._execution_condition = None
-        proc_task._dependency_condition = None
-
         params = GLOBAL_PARAMETERS | self.task_returns
 
         # TODO: set daemon attribute of Process using 1. Task.daemon 2. Scheduler.daemon 3. None
