@@ -1,8 +1,9 @@
 
 from pypipe.core.conditions import AlwaysTrue, AlwaysFalse, All
-
+from pypipe.core.log import TaskAdapter
 from pypipe.core.conditions import set_statement_defaults
 from .mixins import _ExecutionMixin, _LoggingMixin
+
 
 import logging
 import inspect
@@ -12,16 +13,19 @@ from copy import copy
 
 import pandas as pd
 
-TASKS = {}
+_TASKS = {}
+
+def get_all_tasks():
+    return _TASKS
 
 def get_task(task):
     if isinstance(task, Task):
         return task
-    return TASKS[task]
+    return _TASKS[task]
 
 def clear_tasks():
-    global TASKS
-    TASKS = {}
+    global _TASKS
+    _TASKS = {}
 
 def reset_logger():
     Task.set_default_logger()
@@ -80,6 +84,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
     """
     use_instance_naming = False
     _logger_basename = __name__
+    default_logger = logging.getLogger(_logger_basename)
 
     # TODO:
     #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
@@ -89,7 +94,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None):
+                name=None, inputs=None, logger=None):
         """[summary]
 
         Arguments:
@@ -124,7 +129,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
         #self.group = group
         self.name = name
-        self.set_logger()
+        self.logger = logger
         self._set_default_task()
 
         if self.status == "run":
@@ -147,9 +152,9 @@ class Task(_ExecutionMixin, _LoggingMixin):
         set_statement_defaults(self.end_cond, task=self)
 
     def _register_instance(self):
-        if self.name in TASKS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(TASKS.keys())}")
-        TASKS[self.name] = self
+        if self.name in _TASKS:
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_TASKS.keys())}")
+        _TASKS[self.name] = self
 
     def __call__(self, **params):
         self.log_running()
@@ -245,3 +250,68 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
+
+
+# Logging
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        if logger is None:
+            # Get class logger (default logger)
+            logger = type(self).default_logger
+
+        if not logger.name.startswith(self._logger_basename):
+            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+
+        if not isinstance(logger, TaskAdapter):
+            logger = TaskAdapter(logger, task=self)
+        self._logger = logger
+
+    def log_running(self):
+        self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
+
+    def log_failure(self):
+        self.logger.error(f"Task '{self.name}' failed", exc_info=True, extra={"action": "fail"})
+
+    def log_success(self):
+        self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
+
+    def log_termination(self, reason=None):
+        reason = reason or "unknown reason"
+        self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate"})
+
+    def log_record(self, record):
+        "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
+        self.logger.handle(record)
+
+    @property
+    def status(self):
+        record = self.logger.get_latest()
+        if not record:
+            # No previous status
+            return None
+        return record["action"]
+
+    def get_history(self):
+        records = self.logger.get_records()
+        return records
+
+    def __getstate__(self):
+
+        # capture what is normally pickled
+        state = self.__dict__.copy()
+
+        # remove unpicklable
+        state['_logger'] = None
+        # state['default_logger'] = None
+        state['start_cond'] = None
+        state['end_cond'] = None
+        state['_execution_condition'] = None
+        state['_dependency_condition'] = None
+        state['_dependency_condition'] = None
+
+        # what we return here will be stored in the pickle
+        return state

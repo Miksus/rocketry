@@ -104,61 +104,24 @@ class _ExecutionMixin:
 
 class _LoggingMixin:
 
+    default_logger = None
 
-    def set_logger(self, logger=None):
-        "Set the logger (and adapter)"
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
         if logger is None:
-            logger = self.get_logger() # Getting class/instance logger
+            # Get class logger (default logger)
+            logger = type(self).default_logger
 
-            if not logger.handlers:
-                # Setting default handlers to allow 2 way by default
-                self.set_default_logger(logger)
-        elif not logger.name.startswith(self._logger_basename):
+        if not logger.name.startswith(self._logger_basename):
             raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
 
-        self.logger = TaskAdapter(logger, task=self)
-
-    @classmethod
-    def get_logger(cls, name=None):
-        "Get the Task logger"
-        # Loggers are named as "pypipe.task.my_task_group"
-        logger_name = cls._logger_basename
-        if name is not None:
-            logger_name += '.' + name
-        return logging.getLogger(logger_name)
-
-    @classmethod
-    def set_default_logger(cls, logger=None, filename="log/task.csv"):
-        # TODO: Remove
-        if logger is None:
-            logger = cls.get_logger()
-
-        # Emptying existing handlers
-        logger.handlers = []
-
-        # Making sure the log folder is found
-        Path(filename).parent.mkdir(parents=True, exist_ok=True)
-
-        # Adding the default handler
-        handler = CsvHandler(
-            filename,
-            fields=[
-                "asctime",
-                "levelname",
-                "action",
-                "task_name",
-                "exc_text",
-            ]
-        )
-
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        return logger
-
-    @classmethod
-    def add_logger_handler(cls, handler, group=None):
-        logger = cls.get_logger(group=group)
-        logger.addHandler(handler)
+        if not isinstance(logger, TaskAdapter):
+            logger = TaskAdapter(logger, task=self)
+        self._logger = logger
 
     def log_running(self):
         self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
