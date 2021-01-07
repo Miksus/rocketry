@@ -1,5 +1,5 @@
 
-from pypipe.builtin.conditions import (
+from pypipe.conditions import (
     TaskFinished, 
     TaskFailed, 
     TaskSucceeded, 

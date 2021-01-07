@@ -3,7 +3,7 @@ import pytest
 from textwrap import dedent
 
 from pypipe.core import Scheduler
-#from pypipe.builtin.task import ScriptTask
+#from pypipe.task import ScriptTask
 from pypipe.core.task.base import Task
 from pypipe import session
 

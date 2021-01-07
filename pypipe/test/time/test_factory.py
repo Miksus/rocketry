@@ -1,8 +1,8 @@
 # TODO
 
-#from pypipe.builtin.time import TimeInterval, TimeDelta, TimeCycle, TimePeriod
+#from pypipe.time import TimeInterval, TimeDelta, TimeCycle, TimePeriod
 #
-#from pypipe.builtin.time import TimeOfDay, DaysOfWeek#, period_factory
+#from pypipe.time import TimeOfDay, DaysOfWeek#, period_factory
 #
 #import datetime
 

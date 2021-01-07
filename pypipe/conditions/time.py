@@ -1,4 +1,4 @@
-from pypipe.builtin.time import TimeOfDay, DaysOfWeek
+from pypipe.time import TimeOfDay, DaysOfWeek
 
 from pypipe.core.conditions.base import TimeCondition
 

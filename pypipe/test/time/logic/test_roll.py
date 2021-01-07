@@ -4,7 +4,7 @@ from datetime import datetime
 from pypipe.core.time.base import (
     All, Any
 )
-from pypipe.builtin.time.interval import TimeOfDay
+from pypipe.time.interval import TimeOfDay
 import pandas as pd
 import pytest
 

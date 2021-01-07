@@ -1,4 +1,4 @@
-from pypipe.builtin.conditions import IsTimeOfDay
+from pypipe.conditions import IsTimeOfDay
 
 import datetime
 

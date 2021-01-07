@@ -1,2 +1,2 @@
 
-from .command import parse_sentence
+#from .command import parse_sentence

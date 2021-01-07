@@ -3,7 +3,7 @@ import pytest
 import time
 
 from pypipe.core import Scheduler
-from pypipe.builtin.task import FuncTask
+from pypipe.task import FuncTask
 from pypipe.core.task.base import Task, get_task
 from pypipe.core.conditions import AlwaysFalse
 from pypipe import session

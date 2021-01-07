@@ -8,7 +8,7 @@ import subprocess
 import re
 
 from jubox import JupyterNotebook, CodeCell
-from jubox.builtin import run_notebook
+from jubox import run_notebook
 
 class JupyterTask(Task):
     """Task that executes a Jupyter Notebook

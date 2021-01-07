@@ -8,7 +8,7 @@ from pypipe.core.conditions import AlwaysTrue, AlwaysFalse
 from pypipe.core.log import TaskAdapter
 
 # TODO: This logger be set elsewhere than in core
-from pypipe.builtin.log import CsvHandler
+from pypipe.log import CsvHandler
 
 from pypipe.core.time import StaticInterval
 

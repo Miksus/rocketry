@@ -15,7 +15,7 @@ from pypipe.core.schedule.schedule import Scheduler, clear_schedulers, get_all_s
 
 
 from pypipe.core.parameters import Parameters, GLOBAL_PARAMETERS
-from pypipe.builtin.log import CsvHandler
+from pypipe.log import CsvHandler
 
 class _Session:
     """Collection of the relevant data and methods
