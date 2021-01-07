@@ -5,11 +5,11 @@ from textwrap import dedent
 from pypipe.core import Scheduler
 #from pypipe.builtin.task import ScriptTask
 from pypipe.core.task.base import Task
-from pypipe.core import reset
+from pypipe import session
 
 def test_from_project_folder(tmpdir):
     # Going to tempdir to dump the log files there
-    reset()
+    session.reset()
 
     script_a = dedent("""
         from pypipe.core.conditions import ram_free
@@ -41,7 +41,7 @@ def test_from_project_folder(tmpdir):
         assert tasks[1].start_cond.kwargs["absolute"] ==  True
 
 def test_from_module_folder(tmpdir):
-    reset()
+    session.reset()
 
     script_a = dedent("""
         from pypipe.core.conditions import ram_free
@@ -76,8 +76,8 @@ def test_from_module_folder(tmpdir):
 
 def test_init(tmpdir, successing_script_path):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = ScriptTask(
             successing_script_path, 
             execution="daily",

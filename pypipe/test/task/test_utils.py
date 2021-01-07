@@ -5,7 +5,7 @@ from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, get_task, clear_tasks
 from pypipe.core.task import base
-from pypipe.core import reset
+from pypipe import session
 
 Task.use_instance_naming = True
 
@@ -26,7 +26,7 @@ def test_get_task(tmpdir):
         assert t is task
 
 def test_clear_task(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(

@@ -14,7 +14,7 @@ from pypipe.core.conditions import set_statement_defaults
 from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
 #from pypipe.core.task.base import Task
-from pypipe.core import reset
+from pypipe import session
 
 import pytest
 
@@ -26,8 +26,8 @@ def run_task(fail=False):
 @pytest.mark.parametrize("cls", [TaskFinished, TaskSucceeded, TaskFailed], ids=["TaskFinished", "TaskSucceeded", "TaskFailed"])
 def test_task_set_default(tmpdir, cls):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(
             run_task, 
             name="a task"
@@ -45,8 +45,8 @@ def test_task_set_default(tmpdir, cls):
 @pytest.mark.parametrize("oper", ["__and__", "__or__"], ids=["&", "|"])
 def test_task_set_default_nested(tmpdir, oper):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
 
         base_cond = TaskFinished(task="nondefault")
         conditions = [
@@ -74,8 +74,8 @@ def test_task_set_default_nested(tmpdir, oper):
 
 def test_task_set_default_nested_deep(tmpdir):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
 
         base_cond = TaskFinished(task="nondefault")
         

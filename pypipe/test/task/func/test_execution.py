@@ -6,7 +6,7 @@ from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, get_task
 from pypipe.core.conditions import AlwaysFalse
-from pypipe.core import reset
+from pypipe import session
 
 Task.use_instance_naming = True
 
@@ -18,7 +18,7 @@ def run_failing_func():
     raise RuntimeError("Task failed")
 
 def test_force_run(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
@@ -36,7 +36,7 @@ def test_force_run(tmpdir):
 
 
 def test_dependency(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task_a = FuncTask(
@@ -59,7 +59,7 @@ def test_dependency(tmpdir):
         assert bool(task_dependent)
 
 def test_execution_delta_success(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
@@ -73,7 +73,7 @@ def test_execution_delta_success(tmpdir):
         assert bool(task)
 
 def test_execution_delta_fail(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(

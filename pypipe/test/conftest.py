@@ -7,7 +7,7 @@ import sys
 
 import pypipe
 
-from pypipe.core.task.base import Task, clear_tasks
+from pypipe.core.task.base import Task
 
 
 import logging
@@ -37,22 +37,15 @@ def reset_loggers():
     # prepare something ahead of all tests
     # request.addfinalizer(finalizer_function)
 
-    for hndlr in Task.get_logger().handlers:
-        hndlr.close()
-    Task.get_logger().handlers = []
-    clear_tasks()
-    Task.use_instance_naming = True
-
-    
+    pypipe.session.reset()
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(action)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
 
-    Task.set_default_logger()
-    clear_tasks()
+    Task.default_logger.addHandler(handler)
     #Task.add_logger_handler(handler)
     yield
-    clear_tasks()
+    pypipe.session.reset()
 
     #

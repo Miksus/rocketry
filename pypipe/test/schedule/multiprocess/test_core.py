@@ -4,7 +4,7 @@ from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, clear_tasks
 from pypipe.builtin.conditions import SchedulerCycles, TaskFinished, TaskStarted
 from pypipe.core.parameters import GLOBAL_PARAMETERS
-from pypipe.core import reset
+from pypipe import session
 from pypipe.builtin.session import session
 
 import pytest
@@ -36,8 +36,8 @@ def run_with_param(int_5):
     assert int_5 == 5
 
 def test_task_execution(tmpdir):
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside pypipe
@@ -69,8 +69,8 @@ def test_task_execution(tmpdir):
     ],
 )
 def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(task_func, name="task")
 
         scheduler = MultiScheduler(
@@ -87,8 +87,8 @@ def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
 
 
 def test_task_timeout(tmpdir):
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(run_slow, name="slow task")
 
         scheduler = MultiScheduler(
@@ -108,9 +108,8 @@ def test_task_timeout(tmpdir):
 
 
 def test_priority(tmpdir):
-    reset()
     with tmpdir.as_cwd() as old_dir:
-        FuncTask.set_default_logger()
+        session.reset()
 
         task_1 = FuncTask(run_succeeding, priority=1, name="first")
         task_2 = FuncTask(run_failing, priority=10, name="last")
@@ -136,8 +135,8 @@ def test_priority(tmpdir):
         assert task_1_start < task_3_start < task_2_start
 
 def test_pass_params(tmpdir):
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(run_with_param, name="parametrized")
         scheduler = MultiScheduler(
             [

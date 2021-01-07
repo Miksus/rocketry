@@ -4,15 +4,15 @@
 #
 #from pypipe import Scheduler, ScriptTask
 #from pypipe.core.task.base import Task
-#from pypipe.core import reset
+#
 #
 #Task.use_instance_naming = True
-
+from pypipe import session
 
 def test_success(tmpdir, successing_script_path):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = ScriptTask(
             successing_script_path, 
             execution="daily",
@@ -22,8 +22,8 @@ def test_success(tmpdir, successing_script_path):
 
 def test_failure(tmpdir, failing_script_path):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = ScriptTask(
             failing_script_path, 
             execution="daily",

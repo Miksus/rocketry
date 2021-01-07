@@ -4,7 +4,7 @@ import pytest
 from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, get_task
-from pypipe.core import reset
+from pypipe import session
 
 Task.use_instance_naming = True
 
@@ -16,7 +16,7 @@ def run_failing_func():
     raise RuntimeError("Task failed")
 
 def test_success(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
@@ -26,7 +26,7 @@ def test_success(tmpdir):
         assert task.status == "success"
 
 def test_failure(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(

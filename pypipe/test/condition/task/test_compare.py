@@ -10,10 +10,9 @@ from pypipe.builtin.conditions import (
     DependSuccess
 )
 from pypipe.core.conditions import set_statement_defaults
-
+from pypipe import session
 from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
-from pypipe.core import reset
 
 import pytest
 def run_task(fail=False):
@@ -23,8 +22,8 @@ def run_task(fail=False):
 
 def test_task_finish_compare(tmpdir):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         equals = TaskFinished(task="runned task") == 2
         greater = TaskFinished(task="runned task") > 2
         less = TaskFinished(task="runned task") < 2

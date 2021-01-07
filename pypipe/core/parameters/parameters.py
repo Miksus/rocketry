@@ -65,4 +65,6 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def items(self):
         return self._params.items()
 
-
+    def clear(self):
+        "Empty the parameters"
+        self._params = {}

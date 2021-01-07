@@ -6,13 +6,16 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-
+from pathlib import Path
 import pandas as pd
 
 from pypipe.core.log import TaskAdapter
-from pypipe.core.task.base import TASKS, Task
-from pypipe.core.schedule.schedule import SCHEDULERS
-from pypipe.core.parameters import GLOBAL_PARAMETERS
+from pypipe.core.task.base import Task, clear_tasks, get_task, get_all_tasks
+from pypipe.core.schedule.schedule import Scheduler, clear_schedulers, get_all_schedulers
+
+
+from pypipe.core.parameters import Parameters, GLOBAL_PARAMETERS
+from pypipe.builtin.log import CsvHandler
 
 class _Session:
     """Collection of the relevant data and methods
@@ -21,15 +24,24 @@ class _Session:
     Returns:
         [type]: [description]
     """
-    parameters = GLOBAL_PARAMETERS
+    # TODO:
+    #   .reset() Put logger to default, clear Parameters, Schedulers and Tasks
+    #   .
+    
+    # Global parameters
+    _global_parameters = GLOBAL_PARAMETERS
 
     @staticmethod
     def get_tasks():
-        return TASKS
+        return get_all_tasks()
+
+    @staticmethod
+    def get_task(task):
+        return get_task(task)
 
     @staticmethod
     def get_schedulers():
-        return SCHEDULERS
+        return get_all_schedulers()
 
     @staticmethod
     def get_task_loggers(with_adapters=True) -> dict:
@@ -41,6 +53,7 @@ class _Session:
             and not isinstance(logger, logging.PlaceHolder)
         }
 
+# Log data
     def get_task_log(self, **kwargs):
         loggers = self.get_task_loggers(with_adapters=True)
         dfs = [
@@ -63,6 +76,43 @@ class _Session:
                 "end_condition": task.end_cond
             } for name, task in session.get_tasks().items()
         ])
+
+    def reset(self):
+        "Set Pypipe ecosystem to default settings (clearing tasks etc)"
+        clear_tasks()
+        clear_schedulers()
+
+        self.parameters.clear()
+
+        # Setting task logger
+        log_file = "log/task.csv"
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        task_logger = logging.getLogger(Task._logger_basename)
+        task_logger.handlers = []
+
+        handler = CsvHandler(
+            log_file,
+            fields=[
+                "asctime",
+                "levelname",
+                "action",
+                "task_name",
+                "exc_text",
+            ]
+        )
+
+        task_logger.addHandler(handler)
+        task_logger.setLevel(logging.INFO)
+        Task.default_logger = task_logger # In case if this has been replaced with something else
+
+        # Set scheduler logger
+        sched_logger = logging.getLogger(Scheduler._logger_basename)
+        Scheduler.logger = sched_logger
+        
+    @property
+    def parameters(self):
+        "Readonly attribute"
+        return self._global_parameters
 
 def _set_run_id(df):
     # Set run_id for run actions

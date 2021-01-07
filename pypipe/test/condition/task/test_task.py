@@ -11,10 +11,9 @@ from pypipe.builtin.conditions import (
 )
 from pypipe.core.task import Task
 from pypipe.core.conditions import set_statement_defaults
-
+from pypipe import session
 from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
-from pypipe.core import reset
 
 import pytest
 
@@ -58,8 +57,9 @@ def run_task(fail=False):
 )
 def test_task_status(tmpdir, cls, succeeding, expected):
     # Going to tempdir to dump the log files there
-    reset()
+
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         condition = cls(task="runned task")
 
         task = FuncTask(
@@ -99,8 +99,8 @@ def test_task_status(tmpdir, cls, succeeding, expected):
 )
 def test_task_depend_fail(tmpdir, cls, expected):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
@@ -164,8 +164,8 @@ def test_task_depend_fail(tmpdir, cls, expected):
 )
 def test_task_depend_success(tmpdir, cls, expected):
     # Going to tempdir to dump the log files there
-    reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(

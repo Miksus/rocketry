@@ -4,10 +4,10 @@ import pytest
 from pypipe.core import Scheduler
 from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, get_task
-from pypipe.core import reset
+from pypipe import session
 
 def test_construct(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(
@@ -16,7 +16,7 @@ def test_construct(tmpdir):
         assert task.status is None
 
 def test_get_task(tmpdir):
-    reset()
+    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
         task = FuncTask(

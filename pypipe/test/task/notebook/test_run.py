@@ -3,15 +3,15 @@
 #
 #from pypipe import Scheduler, JupyterTask
 #from pypipe.task.base import Task, get_task
-#from pypipe.core import reset
+#
 #
 #from nbconvert.preprocessors import CellExecutionError
 #
 #Task.use_instance_naming = True
-
+from pypipe import session
 
 def test_success(tmpdir):
-    reset()
+    session.reset()
 
     nb_success = r"""{
  "cells": [
@@ -82,7 +82,7 @@ def test_success(tmpdir):
         assert task.status == "success"
 
 def test_failure(tmpdir):
-    reset()
+    session.reset()
 
     nb_failure = r"""{
  "cells": [

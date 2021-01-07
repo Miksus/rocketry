@@ -2,11 +2,11 @@ import pytest
 
 #rom pypipe import Scheduler, JupyterTask
 from pypipe.core.task.base import Task
-from pypipe.core import reset
+from pypipe import session
 
 def test_from_folder(tmpdir):
     # Going to tempdir to dump the log files there
-    reset()
+    session.reset()
 
     nb_a = r"""{
  "cells": [

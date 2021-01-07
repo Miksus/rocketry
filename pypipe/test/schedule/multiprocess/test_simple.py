@@ -3,8 +3,8 @@ from pypipe.core import MultiScheduler
 from pypipe.builtin.task import FuncTask
 from pypipe.core.task.base import Task, clear_tasks
 from pypipe.builtin.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
-from pypipe.core import reset
-from pypipe.builtin.session import session
+
+from pypipe import session
 
 import pytest
 import logging
@@ -27,9 +27,8 @@ def create_line_to_file():
         file.write("line created\n")
 
 def test_dependent(tmpdir):
-    reset()
     with tmpdir.as_cwd() as old_dir:
-        FuncTask.set_default_logger()
+        session.reset()
 
         # Running the master tasks only once
         task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(task="A"))
