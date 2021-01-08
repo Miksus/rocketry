@@ -2,8 +2,13 @@
 from pypipe.core.conditions import AlwaysTrue, AlwaysFalse, All
 from pypipe.core.log import TaskAdapter
 from pypipe.core.conditions import set_statement_defaults
-from .mixins import _ExecutionMixin, _LoggingMixin
+from pypipe.core.utils import is_pickleable
 
+from .utils import get_execution, get_dependencies
+
+# Rare exception: We need something from builtins (outside core) to be user friendly
+from pypipe.parse import parse_condition
+from pypipe.conditions import DependSuccess
 
 import logging
 import inspect
@@ -30,7 +35,7 @@ def clear_tasks():
 def reset_logger():
     Task.set_default_logger()
 
-class Task(_ExecutionMixin, _LoggingMixin):
+class Task:
     """Executable task 
 
     This class is meant to be container
@@ -122,10 +127,7 @@ class Task(_ExecutionMixin, _LoggingMixin):
         self.on_success = on_success
         self.on_finish = on_finish
 
-        # Additional conditions
-        self.execution = execution
-        if dependent is not None:
-            self.set_dependent(dependent)
+        self.dependent = dependent
 
         #self.group = group
         self.name = name
@@ -144,6 +146,35 @@ class Task(_ExecutionMixin, _LoggingMixin):
 
         # Input task
         self.inputs = [] if inputs is None else inputs
+
+    @property
+    def start_cond(self):
+        return self._start_cond
+    
+    @start_cond.setter
+    def start_cond(self, cond):
+        self._start_cond = parse_condition(cond) if isinstance(cond, str) else cond
+
+    @property
+    def end_cond(self):
+        return self._end_cond
+    
+    @end_cond.setter
+    def end_cond(self, cond):
+        self._end_cond = parse_condition(cond) if isinstance(cond, str) else cond
+
+    @property
+    def dependent(self):
+        return get_dependencies(self)
+
+    @dependent.setter
+    def dependent(self, tasks:list):
+        # tasks: List[str]
+        if not tasks:
+            # TODO: Remove dependent parts
+            return
+        dep_cond = All(*(DependSuccess(depend_task=task, task=self) for task in tasks))
+        self.start_cond &= dep_cond
 
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
@@ -226,14 +257,6 @@ class Task(_ExecutionMixin, _LoggingMixin):
     def is_running(self):
         return self.status == "run"
 
-    def set_execution(self, exec):
-        # TODO: Remove?
-        self.start_cond &= parse_statement(exec)
-
-    def set_dependent(self, dependent:list):
-        # TODO: Use DependSuccess
-        self.start_cond &= All(TaskSucceeded(dep) for dep in dependent)
-
     @property
     def name(self):
         return self._name
@@ -305,13 +328,16 @@ class Task(_ExecutionMixin, _LoggingMixin):
         state = self.__dict__.copy()
 
         # remove unpicklable
+        # TODO: Include conditions by enforcing tasks are passed to the conditions as names
         state['_logger'] = None
-        # state['default_logger'] = None
-        state['start_cond'] = None
-        state['end_cond'] = None
-        state['_execution_condition'] = None
-        state['_dependency_condition'] = None
-        state['_dependency_condition'] = None
+        state['_start_cond'] = None
+        state['_end_cond'] = None
 
         # what we return here will be stored in the pickle
         return state
+
+
+    @property
+    def period(self):
+        "Determine Time object for the interval (maximum possible if time independent as 'or')"
+        return get_execution(self)
