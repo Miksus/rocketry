@@ -12,8 +12,9 @@ from pypipe.conditions import (
     AlwaysTrue,
     AlwaysFalse,
 )
+
 from pypipe.core.conditions.base import BaseCondition
-from pypipe.core.time import (
+from pypipe.time import (
     TimeOfDay,
     DaysOfWeek,
     TimeOfHour,

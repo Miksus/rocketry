@@ -8,7 +8,7 @@ from pypipe.core.conditions.base import All, Any, Not
 
 import re
 
-def parse_sentence(s:str):
+def parse_condition(s:str):
     p = ClosureParser()
     v = Visitor(visit_types=(list,))
 
@@ -16,22 +16,22 @@ def parse_sentence(s:str):
     l = p.to_list(s)
 
     # 2. Split operations
-    v.assign_elements(l, split_operations)
+    v.assign_elements(l, _split_operations)
     
     # 2a. Remove extra tuples
-    v.apply(l, flatten_tuples)
+    v.apply(l, _flatten_tuples)
     
-    v.assign_elements(l, parse)
+    v.assign_elements(l, _parse)
     
-    e = v.reduce(l, assemble)
+    e = v.reduce(l, _assemble) 
     return e
 
-def split_operations(s):
+def _split_operations(s):
     regex = r'([&|\-+~])'
     s = s.strip()
     if bool(re.search(regex, s)):
         l = re.split(regex, s)
-        l = [elem for elem in l if elem]
+        l = [elem for elem in l if elem.strip()]
         if len(l) == 1:
             # Has only the 
             return l[0]
@@ -40,7 +40,7 @@ def split_operations(s):
     else:
         return s
 
-def flatten_tuples(cont):
+def _flatten_tuples(cont):
 
     for i, item in enumerate(cont):
         if isinstance(item, tuple):
@@ -50,19 +50,22 @@ def flatten_tuples(cont):
     
     return cont
 
-def parse(s:tuple):
+def _parse(s:tuple):
     def parse_string(s):
         try:
             return parse_statement(s)
         except ValueError:
-            return s.strip()
+            s = s.strip()
+            if s not in ("&", "|", "~"):
+                raise ValueError(f"Invalid token: '{s}'")
+            return s
 
     if isinstance(s, str):
         return parse_string(s)
     else:
         return tuple(parse_string(e) for e in s)
 
-def assemble(*s:tuple):
+def _assemble(*s:tuple):
     def assemble_not(s:tuple):
         def contains_not(s):
             for e in s:
@@ -70,7 +73,6 @@ def assemble(*s:tuple):
                     return True
             return False
         
-        res = []
         s = list(reversed(s))
         while contains_not(s):
             pos = _index(s, ["~"])
@@ -78,22 +80,46 @@ def assemble(*s:tuple):
             del s[pos]
         return tuple(reversed(s))
 
-    def assemble_comparison(s:tuple):
-        
-        def contains_comparison(s):
+    def assemble_and(s):
+        def contains_and(s):
             for e in s:
-                if isinstance(e, str) and e in ("&", "|"):
+                if isinstance(e, str) and e in ("&",):
                     return True
             return False
 
-        res = []
-        s = list(s)
-        while contains_comparison(s):
-            pos = _index(s, ["&", "|"])
-            oper = {"|": any_, "&": all_}[s[pos]]
-            s[pos] = oper(s[pos-1], s[pos+1])
+        s = list(reversed(s))
+        while contains_and(s):
+            pos = _index(s, ["&"])
+
+            # Set the comparison object to "&" in the list
+            s[pos] = all_(s[pos+1], s[pos-1])
+            # NOTE: We have reversed the "s" thus we also put the arguments to 
+
+            # Remove lhs and rhs of the comparison as they are embedded in comparison object
             del s[pos-1]
-            del s[pos+1-1]
+            del s[pos+1-1] # We -1 because we already removed one element thus pos is misaligned
+            
+        return tuple(reversed(s))
+
+    def assemble_or(s):
+        def contains_or(s):
+            for e in s:
+                if isinstance(e, str) and e in ("|",):
+                    return True
+            return False
+        
+        s = list(reversed(s))
+        while contains_or(s):
+            pos = _index(s, ["|"])
+
+            # Set the comparison object to "|" in the list
+            s[pos] = any_(s[pos+1], s[pos-1])
+            # NOTE: We have reversed the "s" thus we also put the arguments to 
+
+            # Remove lhs and rhs of the comparison as they are embedded in comparison object
+            del s[pos-1]
+            del s[pos+1-1] # We -1 because we already removed one element thus pos is misaligned
+
         return tuple(reversed(s))
 
     def _flatten(*args, types, with_attr):
@@ -128,10 +154,23 @@ def assemble(*s:tuple):
                 return i
         raise KeyError
 
+
     v = Visitor(visit_types=(list, tuple))
     s = v.flatten(s)
 
     s = assemble_not(s)
-    s = assemble_comparison(s)
+    s = assemble_and(s)
+    s = assemble_or(s)
+    
+    # TODO: Clean this mess (but be careful)
+    # TODO: Unify and modularize compare_... functions
+    #   A class "Assembler"?
+    #       Methods
+    #           assemble(tupl)
+    #               Turns tuple into assembled tuple (calls seek and build)
+    #           seek(tupl)
+    #               Find next occurence of the operation in the tuple
+    #           build(lhs, rhs) (lhs=left hand side, rhs=right hand side)
+    #               - lhs=None for Not
 
     return s[0] if isinstance(s, tuple) else s
