@@ -61,7 +61,13 @@ class BaseCondition:
         # By default the time cycle cannot be determined thus full range is given
         return time.StaticInterval()
 
-class ConditionContainer:
+    def __eq__(self, other):
+        "Equal operation"
+        is_same_class = isinstance(other, type(self))
+        return is_same_class
+
+
+class _ConditionContainer:
     "Wraps another condition"
 
     __magicmethod__ = None
@@ -91,8 +97,16 @@ class ConditionContainer:
     def __iter__(self):
         return iter(self.subconditions)
 
+    def __eq__(self, other):
+        "Equal operation"
+        is_same_class = isinstance(other, type(self))
+        if is_same_class:
+            return self.subconditions == other.subconditions
+        else:
+            return False
 
-class Any(BaseCondition, ConditionContainer):
+
+class Any(_ConditionContainer, BaseCondition):
 
     __magicmethod__ = "__or__"
 
@@ -134,7 +148,7 @@ class Any(BaseCondition, ConditionContainer):
             # Cannot be determined --> all times may be valid
             return time.StaticInterval()
 
-class All(BaseCondition, ConditionContainer):
+class All(_ConditionContainer, BaseCondition):
 
     __magicmethod__ = "__and__"
 
@@ -173,7 +187,7 @@ class All(BaseCondition, ConditionContainer):
         "Aggregate the TimePeriods the condition has"
         return time.All(*[cond.cycle for cond in self.subconditions])
 
-class Not(BaseCondition, ConditionContainer):
+class Not(_ConditionContainer, BaseCondition):
 
     __magicmethod__ = "__invert__"
 
@@ -214,17 +228,29 @@ class Not(BaseCondition, ConditionContainer):
         "inverse of inverse is the actual condition"
         return self.condition
 
+    def __eq__(self, other):
+        "Equal operation"
+        is_same_class = isinstance(other, type(self))
+        if is_same_class:
+            return self.condition == other.condition
+        else:
+            return False
 
 class AlwaysTrue(BaseCondition):
     "Condition that is always true"
     def __bool__(self):
         return True
 
+    def __repr__(self):
+        return 'AlwaysTrue'
+
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
     def __bool__(self):
         return False
 
+    def __repr__(self):
+        return 'AlwaysFalse'
 
 class TimeCondition(BaseCondition):
     """Base class for Time conditions (whether currently is specified time of day)
@@ -252,3 +278,11 @@ class TimeCondition(BaseCondition):
             return f'<is {repr(self.period)}>'
         else:
             return type(self).__name__
+
+    def __eq__(self, other):
+        "Equal operation"
+        is_same_class = isinstance(other, type(self))
+        if is_same_class:
+            return self.period == other.period
+        else:
+            return False

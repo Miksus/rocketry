@@ -201,6 +201,16 @@ class Statement(BaseCondition):
         new._args = copy(new._args)
         return new
 
+    def __eq__(self, other):
+        "Equal operation"
+        is_same_class = isinstance(other, type(self))
+        if is_same_class:
+            has_same_args = self._args == other._args
+            has_same_kwargs = self._kwargs == other._kwargs
+            has_same_period = self._period == other._period
+            return has_same_args and has_same_kwargs and has_same_period
+        else:
+            return False
 
 class Comparable(Statement):
     # TODO
@@ -230,6 +240,11 @@ class Comparable(Statement):
 # Quantitative extra
     def __eq__(self, other):
         # self == other
+        is_same_class = isinstance(other, type(self))
+        if is_same_class:
+            # Not storing as parameter to statement but
+            # check whether the statements are same
+            return super().__eq__(other)
         return self._set_comparison("_eq_", other)
 
     def __ne__(self, other):
