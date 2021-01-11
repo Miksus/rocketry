@@ -167,9 +167,19 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
         return to_nanoseconds(**d)
 
     def __contains__(self, dt):
-        ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
+        "Whether dt is in the interval"
+
         ns_start = self._start
         ns_end = self._end
+
+        if ns_start == ns_end:
+            # As there is no time in between, 
+            # the interval is considered full
+            # cycle (ie. from 10:00 to 10:00)
+            return True
+
+        ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
+
 
         is_over_period = ns_start > ns_end
         if not is_over_period:
