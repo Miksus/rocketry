@@ -114,6 +114,8 @@ class Task:
         """
         self.action = action
 
+        self.name = name
+        self.logger = logger
 
         self.start_cond = AlwaysTrue() if start_cond is None else copy(start_cond)
         self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
@@ -129,10 +131,6 @@ class Task:
 
         self.dependent = dependent
 
-        #self.group = group
-        self.name = name
-        self.logger = logger
-        self._set_default_task()
 
         if self.status == "run":
             # Previously crashed unexpectedly during running
@@ -146,6 +144,8 @@ class Task:
 
         # Input task
         self.inputs = [] if inputs is None else inputs
+
+        self._set_default_task()
 
     @property
     def start_cond(self):
@@ -173,7 +173,7 @@ class Task:
         if not tasks:
             # TODO: Remove dependent parts
             return
-        dep_cond = All(*(DependSuccess(depend_task=task, task=self) for task in tasks))
+        dep_cond = All(*(DependSuccess(depend_task=task, task=self.name) for task in tasks))
         self.start_cond &= dep_cond
 
     def _set_default_task(self):
