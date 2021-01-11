@@ -18,7 +18,6 @@ class BaseCondition:
         - Scheduler is maintained
 
     """
-    mode = "prod"
 
     @abstractmethod
     def __bool__(self):
@@ -41,19 +40,6 @@ class BaseCondition:
         # ~self
         # bitwise not
         return Not(self)
-
-    @property
-    def current_datetime(self):
-        """Get current time. Use this method instead of
-        datetime.datetime.now() as testing different times is easier"""
-        if self.mode == "test" and hasattr(self, "_current_datetime"):
-            return self._current_datetime
-        return datetime.datetime.now()
-
-    @classmethod
-    def set_current_datetime(self, value):
-        """For testing purposes only"""
-        self._current_datetime = value
 
     @property
     def cycle(self):
@@ -82,6 +68,7 @@ class _ConditionContainer:
 
     def apply(self, func, **kwargs):
         "Apply the function to all subconditions"
+        # TODO: Delete?
         subconds = []
         for subcond in self.subconditions:
             if isinstance(subcond, ConditionContainer):
@@ -261,7 +248,8 @@ class TimeCondition(BaseCondition):
             self.period = self.period_class(*args, **kwargs)
 
     def __bool__(self):
-        return self.current_datetime in self.period
+        now = datetime.datetime.now()
+        return now in self.period
 
     def estimate_next(self, dt):
         interval = self.period.rollforward(dt)

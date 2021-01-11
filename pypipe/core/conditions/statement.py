@@ -3,6 +3,7 @@ from copy import copy, deepcopy
 from functools import partial
 from abc import abstractmethod
 from inspect import signature
+import datetime
 
 import numpy as np
 
@@ -158,7 +159,7 @@ class Statement(BaseCondition):
 
     def _update_kwargs_hist(self, dt=None):
         if dt is None:
-            dt = self.current_datetime
+            dt = datetime.datetime.now()
 
         interval = self.period.rollback(dt)
         start = interval.left
@@ -281,7 +282,7 @@ class Historical(Statement):
         kwargs = super().get_kwargs()
         if not hasattr(self, "period"):
             return kwargs
-        dt = self.current_datetime
+        dt = datetime.datetime.now()
 
         interval = self.period.rollback(dt)
         start = interval.left

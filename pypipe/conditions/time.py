@@ -3,6 +3,7 @@ from pypipe.time import TimeOfDay, DaysOfWeek
 from pypipe.core.conditions.base import TimeCondition
 
 from scipy import stats
+import datetime
 
 class IsTimeOfDay(TimeCondition):
     period_class = TimeOfDay
@@ -32,7 +33,7 @@ class Randomly(TimeCondition):
 
             self._timestamps = [pd.Timestamp.utcfromtimestamp(time) for time in true_times]
 
-        return self.current_datetime in self.period
+        return datetime.datetime.now() in self.period
 
     def normal(self, start, end, std, mean=None):
         start_sec = start.timestamp()
