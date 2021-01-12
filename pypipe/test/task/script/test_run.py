@@ -53,3 +53,38 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
         ] == records
 
 
+# Parametrization
+def test_parametrization_runtime(tmpdir, script_files):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = ScriptTask(
+            "scripts/parameterized_script.py", 
+            name="a task",
+        )
+
+        task(integer=1, string="X", optional_float=1.1, extra_parameter="Should not be passed")
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="record")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
+def test_parametrization_local(tmpdir, script_files):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = ScriptTask(
+            "scripts/parameterized_script.py", 
+            name="a task",
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1}
+        )
+
+        task()
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="record")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records

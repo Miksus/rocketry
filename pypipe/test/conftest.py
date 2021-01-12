@@ -27,8 +27,10 @@ def copy_file_to_tmpdir(tmpdir, source_file, target_path):
 def script_files(tmpdir):
     for folder in Path("scripts").parts:
         tmpdir = tmpdir.mkdir(folder)
+    
     copy_file_to_tmpdir(tmpdir, source_file="succeeding_script.py", target_path="scripts/succeeding_script.py")
     copy_file_to_tmpdir(tmpdir, source_file="failing_script.py", target_path="scripts/failing_script.py")
+    copy_file_to_tmpdir(tmpdir, source_file="parameterized_script.py", target_path="scripts/parameterized_script.py")
 
 
 @pytest.fixture(scope="session", autouse=True)
