@@ -113,17 +113,6 @@ class Any(_ConditionContainer, BaseCondition):
         string = ' | '.join(map(repr, self.subconditions))
         return f'({string})'
 
-    def estimate_timedelta(self, dt):
-        # As any of the conditions must be
-        # true, it is safe to wait for the
-        # one closest 
-        return min(
-            cond.estimate_timedelta(dt)
-            if hasattr("estimate_timedelta")
-            else 0
-            for cond in self.subconditions
-        )
-
     @property
     def cycle(self):
         "Aggregate the TimePeriods the condition has"
@@ -154,17 +143,6 @@ class All(_ConditionContainer, BaseCondition):
     def __repr__(self):
         string = ' & '.join(map(repr, self.subconditions))
         return f'({string})'
-
-    def estimate_timedelta(self, dt):
-        # As all of the conditions must be
-        # true, it is safe to wait for the
-        # one furthest away 
-        return max(
-            cond.estimate_timedelta(dt)
-            if hasattr(cond, "estimate_timedelta")
-            else datetime.timedelta.resolution
-            for cond in self.subconditions
-        )
 
     def __getitem__(self, val):
         return self.subconditions[val]

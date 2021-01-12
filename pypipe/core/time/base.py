@@ -71,12 +71,6 @@ class TimePeriod:
             
         return (self.floor(next_dt), self.ceil(next_dt))
 
-    def estimate_timedelta(self, dt):
-        "Time for beginning of the next start time of the condition"
-        # TODO: Remove
-        dt_next_start = self.rollstart(dt)
-        return dt_next_start - dt
-
     def __contains__(self, other):
         interval = self.rollforward(other)
         return other in interval

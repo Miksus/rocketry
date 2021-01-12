@@ -254,12 +254,7 @@ class Scheduler:
         now = datetime.datetime.now()
         return sorted(
                 self.tasks, 
-                key=lambda task: (
-                    task.priority, 
-                    task.start_cond.estimate_timedelta(now)
-                    if hasattr(task.start_cond, "estimate_timedelta")
-                    else datetime.timedelta.resolution
-                )
+                key=lambda task: task.priority
             )
 
     @property
