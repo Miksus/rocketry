@@ -1,4 +1,5 @@
 from .interval import *
+from pypipe.core.time import TimeDelta
 
 # Syntax
 import pandas as pd
