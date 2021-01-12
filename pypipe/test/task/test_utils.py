@@ -3,7 +3,7 @@ import pytest
 
 from pypipe.core import Scheduler
 from pypipe.task import FuncTask
-from pypipe.core.task.base import Task, get_task, clear_tasks
+from pypipe.core.task.base import Task, get_task, clear_tasks, get_all_tasks
 from pypipe.core.task import base
 from pypipe import session
 
@@ -33,6 +33,6 @@ def test_clear_task(tmpdir):
             run_successful_func, 
             name="example"
         )
-        
+        assert get_all_tasks() != {}
         clear_tasks()
-        assert base.TASKS == {}
+        assert get_all_tasks() == {}
