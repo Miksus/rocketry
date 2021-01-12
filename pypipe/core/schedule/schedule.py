@@ -66,7 +66,7 @@ class Scheduler:
     logger = logging.getLogger(_logger_basename)
     parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
-    def __init__(self, tasks, maintain_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None, name=None):
+    def __init__(self, tasks, maintainer_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None, name=None):
         """[summary]
 
         Arguments:
@@ -77,7 +77,7 @@ class Scheduler:
             shut_cond {[type]} -- Condition to shut down scheduler (default: {None})
         """
         self.tasks = tasks
-        self.maintain_tasks = [] if maintain_tasks is None else maintain_tasks
+        self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
         set_statement_defaults(self.shut_condition, scheduler=self)
@@ -148,7 +148,7 @@ class Scheduler:
             - Update the packages
         """
         self.logger.info(f"Maintaining the scheduler...", extra={"action": "maintain"})
-        tasks = self.maintain_tasks
+        tasks = self.maintainer_tasks
         if tasks:
             self.logger.info(f"Beginning maintaining cycle. Has {len(tasks)} tasks", extra={"action": "run"})
             for task in tasks:
@@ -261,6 +261,16 @@ class Scheduler:
                     else datetime.timedelta.resolution
                 )
             )
+
+    @property
+    def maintainer_tasks(self):
+        return self._maintainer_tasks
+
+    @maintainer_tasks.setter
+    def maintainer_tasks(self, tasks:list):
+        for task in tasks:
+            task.parameters["_scheduler_"] = self
+        self._maintainer_tasks = tasks
 
 
 def _run_task_as_process(task, queue, return_queue, params):

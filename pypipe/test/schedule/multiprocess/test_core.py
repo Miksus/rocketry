@@ -1,7 +1,7 @@
 
 from pypipe.core import MultiScheduler
 from pypipe.task import FuncTask
-from pypipe.core.task.base import Task, clear_tasks
+from pypipe.core.task.base import Task, clear_tasks, get_task
 from pypipe.conditions import SchedulerCycles, TaskFinished, TaskStarted
 from pypipe.core.parameters import GLOBAL_PARAMETERS
 from pypipe import session
@@ -34,6 +34,10 @@ def create_line_to_file():
 
 def run_with_param(int_5):
     assert int_5 == 5
+
+def run_maintainer(_scheduler_):
+    assert isinstance(_scheduler_, MultiScheduler)
+    _scheduler_.name = "maintained scheduler"
 
 def test_task_execution(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -201,3 +205,29 @@ def test_pass_params_as_local_and_global(tmpdir):
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
+
+
+# Maintainer
+def test_maintainer_task(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        # To be confident the scheduler won't lie to us
+        # we test the task execution with a job that has
+        # actual measurable impact outside pypipe
+        scheduler = MultiScheduler(
+            tasks=[],
+            maintainer_tasks=[
+                FuncTask(run_maintainer, name="maintainer"),
+            ], 
+            shut_condition=TaskStarted(task="maintainer") >= 1,
+            name="unmaintained scheduler"
+        )
+
+        scheduler()
+
+        history = get_task("maintainer").get_history()
+        assert 1 == (history["action"] == "run").sum()
+        assert 1 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+        assert scheduler.name == "maintained scheduler"
