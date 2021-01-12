@@ -7,8 +7,12 @@ import importlib
 import subprocess
 import re
 
-from jubox import JupyterNotebook, CodeCell
-from jubox import run_notebook
+import warnings
+try:
+    from jubox import JupyterNotebook, CodeCell
+    from jubox import run_notebook
+except ImportError as exc:
+    warnings.warn(f"Jubox functionalities not found: '{exc}'", ImportWarning)
 
 class JupyterTask(Task):
     """Task that executes a Jupyter Notebook
