@@ -1,7 +1,7 @@
 # TODO
 #import pytest
 #
-#from pypipe import Scheduler, JupyterTask
+from pypipe.task import JupyterTask
 #from pypipe.task.base import Task, get_task
 #
 #
