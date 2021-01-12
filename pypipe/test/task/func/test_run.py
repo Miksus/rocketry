@@ -18,6 +18,10 @@ def run_failing_func():
     print("Running func")
     raise RuntimeError("Task failed")
 
+def run_parametrized(integer, string, optional_float=None):
+    assert isinstance(integer, int)
+    assert isinstance(string, str)
+    assert isinstance(optional_float, float)
 
 @pytest.mark.parametrize(
     "task_func,expected_outcome,exc_cls",
@@ -103,3 +107,39 @@ def test_dependency(tmpdir):
         task_b()
         assert bool(task_dependent)
 
+
+# Parametrization
+def test_parametrization_runtime(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            run_parametrized, 
+            name="a task",
+        )
+
+        task(integer=1, string="X", optional_float=1.1, extra_parameter="Should not be passed")
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="record")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
+def test_parametrization_local(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            run_parametrized, 
+            name="a task",
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1}
+        )
+
+        task()
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="record")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records

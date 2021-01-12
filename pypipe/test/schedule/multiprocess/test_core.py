@@ -134,7 +134,7 @@ def test_priority(tmpdir):
         
         assert task_1_start < task_3_start < task_2_start
 
-def test_pass_params(tmpdir):
+def test_pass_params_as_global(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = FuncTask(run_with_param, name="parametrized")
@@ -143,8 +143,58 @@ def test_pass_params(tmpdir):
                 task,
             ], shut_condition=TaskStarted(task="parametrized") >= 1
         )
-        GLOBAL_PARAMETERS["int_5"] = 5
-        GLOBAL_PARAMETERS["extra_param"] = "something"
+
+        # Passing global parameters
+        session.parameters["int_5"] = 5
+        session.parameters["extra_param"] = "something"
+
+        scheduler()
+
+        history = task.get_history()
+        assert 1 == (history["action"] == "run").sum()
+        assert 1 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+    
+def test_pass_params_as_local(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            run_with_param, 
+            name="parametrized", 
+            parameters={"int_5": 5, "extra_param": "something"}
+        )
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=TaskStarted(task="parametrized") >= 1
+        )
+
+        scheduler()
+
+        history = task.get_history()
+        assert 1 == (history["action"] == "run").sum()
+        assert 1 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+
+def test_pass_params_as_local_and_global(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            run_with_param, 
+            name="parametrized", 
+            parameters={"int_5": 5}
+        )
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=TaskStarted(task="parametrized") >= 1
+        )
+
+        # Additional parameters
+        session.parameters["extra_param"] = "something"
+
         scheduler()
 
         history = task.get_history()

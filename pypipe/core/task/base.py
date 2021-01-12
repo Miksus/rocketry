@@ -9,6 +9,7 @@ from .utils import get_execution, get_dependencies
 # Rare exception: We need something from builtins (outside core) to be user friendly
 from pypipe.parse import parse_condition
 from pypipe.conditions import DependSuccess
+from pypipe.core.parameters import Parameters
 
 import logging
 import inspect
@@ -95,7 +96,7 @@ class Task:
     #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
 
-    def __init__(self, action, 
+    def __init__(self, action, parameters=None,
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
@@ -130,6 +131,7 @@ class Task:
         self.on_finish = on_finish
 
         self.dependent = dependent
+        self.parameters = parameters
 
 
         if self.status == "run":
@@ -176,6 +178,17 @@ class Task:
         dep_cond = All(*(DependSuccess(depend_task=task, task=self.name) for task in tasks))
         self.start_cond &= dep_cond
 
+    @property
+    def parameters(self):
+        return self._parameters
+
+    @parameters.setter
+    def parameters(self, val):
+        if val is None:
+            self._parameters = Parameters()
+        else:
+            self._parameters = Parameters(**val)
+
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
         set_statement_defaults(self.start_cond, task=self)
@@ -192,6 +205,7 @@ class Task:
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
         
         try:
+            params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
             output = self.execute_action(params)
 
