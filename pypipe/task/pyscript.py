@@ -25,7 +25,8 @@ class ScriptTask(Task):
         return '.'.join(file.parts).replace(r'/main.py', '')
 
     def process_finish(self, *args, **kwargs):
-        del self._task_func
+        if hasattr(self, "_task_func"):
+            del self._task_func
         super().process_finish(*args, **kwargs)
 
 
