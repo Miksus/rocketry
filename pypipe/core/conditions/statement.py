@@ -123,9 +123,8 @@ class Statement(BaseCondition):
             historical {bool} -- Whether the statement has start and end times
         """
 
-        self._args = args
-        self._kwargs = kwargs
-        self._period = period
+        self.args = args
+        self.kwargs = kwargs
 
     def __bool__(self):
         try:
@@ -148,29 +147,7 @@ class Statement(BaseCondition):
         return bool(res)
 
     def get_kwargs(self):
-        return self._kwargs
-
-    @property
-    def kwargs(self):
-        kwargs = self._kwargs
-        if self.historical:
-            self._update_kwargs_hist()
-        return kwargs
-
-    def _update_kwargs_hist(self, dt=None):
-        if dt is None:
-            dt = datetime.datetime.now()
-
-        interval = self.period.rollback(dt)
-        start = interval.left
-        end = interval.right
-        self._kwargs["_start_"] = start
-        self._kwargs["_end_"] = end
-        return
-
-    @property
-    def args(self):
-        return self._args
+        return self.kwargs
 
     def to_count(self, result):
         "Turn event result to quantitative number"
@@ -181,8 +158,8 @@ class Statement(BaseCondition):
         
     def set_params(self, *args, **kwargs):
         "Add arguments to the experiment"
-        self._args = (*self._args, *args)
-        self._kwargs.update(kwargs)
+        self.args = (*self.args, *args)
+        self.kwargs.update(kwargs)
 
     def has_param(self, *params):
         sig = signature(self.observe)
@@ -198,18 +175,17 @@ class Statement(BaseCondition):
     def copy(self):
         # Cannot deep copy self as if task is in kwargs, failure occurs
         new = copy(self)
-        new._kwargs = copy(new._kwargs)
-        new._args = copy(new._args)
+        new.kwargs = copy(new.kwargs)
+        new.args = copy(new.args)
         return new
 
     def __eq__(self, other):
         "Equal operation"
         is_same_class = isinstance(other, type(self))
         if is_same_class:
-            has_same_args = self._args == other._args
-            has_same_kwargs = self._kwargs == other._kwargs
-            has_same_period = self._period == other._period
-            return has_same_args and has_same_kwargs and has_same_period
+            has_same_args = self.args == other._args
+            has_same_kwargs = self.kwargs == other.kwargs
+            return has_same_args and has_same_kwargs
         else:
             return False
 
@@ -227,9 +203,9 @@ class Comparable(Statement):
         res = len(res) if hasattr(res, "__len__") else res
 
         comps = {
-            f"_{comp}_": self._kwargs[comp]
+            f"_{comp}_": self.kwargs[comp]
             for comp in ("_eq_", "_ne_", "_lt_", "_gt_", "_le_", "_ge_")
-            if comp in self._kwargs
+            if comp in self.kwargs
         }
         if not comps:
             return res > 0
@@ -241,7 +217,7 @@ class Comparable(Statement):
 # Quantitative extra
     def __eq__(self, other):
         # self == other
-        is_same_class = isinstance(other, type(self))
+        is_same_class = isinstance(other, Comparable)
         if is_same_class:
             # Not storing as parameter to statement but
             # check whether the statements are same
@@ -270,7 +246,7 @@ class Comparable(Statement):
 
     def _set_comparison(self, key, val):
         obj = self.copy()
-        obj._kwargs[key] = val
+        obj.kwargs[key] = val
         return obj
 
     def get_kwargs(self):
@@ -278,10 +254,15 @@ class Comparable(Statement):
 
 class Historical(Statement):
 
+    def __init__(self, *args, period=None, **kwargs):
+        self.period = period
+        super().__init__(*args, **kwargs)
+
     def get_kwargs(self):
         kwargs = super().get_kwargs()
-        if not hasattr(self, "period"):
+        if self.period is None:
             return kwargs
+
         dt = datetime.datetime.now()
 
         interval = self.period.rollback(dt)
@@ -290,3 +271,13 @@ class Historical(Statement):
         kwargs["_start_"] = start
         kwargs["_end_"] = end
         return kwargs
+
+    def __eq__(self, other):
+        # self == other
+        is_same_class = isinstance(other, Historical)
+        if is_same_class:
+            # Not storing as parameter to statement but
+            # check whether the statements are same
+            has_same_period = self.period == other.period
+            return super().__eq__(other) and has_same_period
+        return super().__eq__(other)

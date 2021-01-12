@@ -9,6 +9,10 @@ from pypipe.conditions import (
     DependFailure,
     DependSuccess
 )
+from pypipe.time import (
+    TimeDelta,
+)
+
 from pypipe.core.task import Task
 from pypipe.core.conditions import set_statement_defaults
 from pypipe import session
@@ -16,6 +20,8 @@ from pypipe.core import Scheduler
 from pypipe.task import FuncTask
 
 import pytest
+
+from time import sleep
 
 Task.use_instance_naming = True
 
@@ -204,3 +210,51 @@ def test_task_depend_success(tmpdir, cls, expected):
         # -----|-----------|-----------|------------|-------- t0
         task()
         assert not bool(condition)
+
+@pytest.mark.parametrize(
+    "get_condition,wait,expected",
+    [
+        pytest.param(
+            lambda:TaskFinished(task="the task", period=TimeDelta("5 seconds")), 
+            0.1,
+            True,
+            id="TaskFinished in TimeDelta"),
+        pytest.param(
+            lambda:TaskFinished(task="the task", period=TimeDelta("1 microseconds")), 
+            1,
+            False,
+            id="TaskFinished not in TimeDelta"),
+            
+        pytest.param(
+            lambda:~TaskFinished(task="the task", period=TimeDelta("1 microseconds")), 
+            1,
+            True,
+            id="~TaskFinished in TimeDelta"),
+        pytest.param(
+            lambda:~TaskFinished(task="the task", period=TimeDelta("5 seconds")), 
+            0.1,
+            False,
+            id="~TaskFinished not in TimeDelta"),
+    ],
+)
+def test_task_period(tmpdir, wait, get_condition, expected):
+    
+
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        
+        task = FuncTask(
+            run_task, 
+            name="the task"
+        )
+
+        condition = get_condition()
+
+        task()
+        sleep(wait)
+
+        if expected:
+            assert bool(condition) 
+        else:
+            assert not bool(condition)
