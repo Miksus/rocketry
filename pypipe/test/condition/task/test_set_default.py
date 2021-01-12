@@ -35,12 +35,12 @@ def test_task_set_default(tmpdir, cls):
 
         condition = cls()
         set_statement_defaults(condition, task=task.name)
-        assert condition._kwargs["task"] == task.name
+        assert condition.kwargs["task"] == task.name
 
         # Test not
         condition = cls()
         set_statement_defaults(~condition, task=task.name)
-        assert condition._kwargs["task"] == task.name
+        assert condition.kwargs["task"] == task.name
 
 @pytest.mark.parametrize("oper", ["__and__", "__or__"], ids=["&", "|"])
 def test_task_set_default_nested(tmpdir, oper):
@@ -67,9 +67,9 @@ def test_task_set_default_nested(tmpdir, oper):
 
         for i, cond in enumerate(base_cond):
             if i == 0:
-                assert cond._kwargs["task"] == "nondefault"
+                assert cond.kwargs["task"] == "nondefault"
             else:
-                assert cond._kwargs["task"] == task.name
+                assert cond.kwargs["task"] == task.name
 
 
 def test_task_set_default_nested_deep(tmpdir):
@@ -92,7 +92,7 @@ def test_task_set_default_nested_deep(tmpdir):
         )
 
         set_statement_defaults(condition, task=task.name)
-        assert finished1._kwargs["task"] == task.name
-        assert failed1._kwargs["task"] == task.name
-        assert succeed1._kwargs["task"] == task.name
-        assert finished_pre_set._kwargs["task"] == "predefined"
+        assert finished1.kwargs["task"] == task.name
+        assert failed1.kwargs["task"] == task.name
+        assert succeed1.kwargs["task"] == task.name
+        assert finished_pre_set.kwargs["task"] == "predefined"

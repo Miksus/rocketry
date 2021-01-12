@@ -15,16 +15,16 @@ def get_dependencies(task):
     # TODO: Don't put the task itself to dependent tasks
     dep_tasks = []
     if isinstance(stmt, (TaskSucceeded,)):
-        dep_task = base.get_task(stmt._kwargs["task"])
+        dep_task = base.get_task(stmt.kwargs["task"])
         if dep_task is not task:
             dep_tasks.append(dep_task)
 
     elif isinstance(stmt, All):
         for sub_stmt in stmt:
             if isinstance(sub_stmt, (TaskSucceeded,)):
-                dep_task = base.get_task(sub_stmt._kwargs["task"])
+                dep_task = base.get_task(sub_stmt.kwargs["task"])
                 if dep_task is not task:
-                    dep_tasks.append(sub_stmt._kwargs["task"]) 
+                    dep_tasks.append(sub_stmt.kwargs["task"]) 
     else:
         return None
     return dep_tasks
@@ -36,7 +36,7 @@ def get_execution(task):
     stmt = task.start_cond
 
     if isinstance(stmt, (TaskFinished,)):
-        if base.get_task(stmt._kwargs["task"]) is task:
+        if base.get_task(stmt.kwargs["task"]) is task:
             return stmt
         else:
             return StaticInterval()
@@ -45,7 +45,7 @@ def get_execution(task):
         task_periods = []
         for sub_stmt in stmt:
 
-            if isinstance(sub_stmt, (TaskFinished,)) and base.get_task(sub_stmt._kwargs["task"]) is task:
+            if isinstance(sub_stmt, (TaskFinished,)) and base.get_task(sub_stmt.kwargs["task"]) is task:
                 
                 task_periods.append(sub_stmt.period) 
         return TaskFinished(task=task, period=All(*task_periods))
