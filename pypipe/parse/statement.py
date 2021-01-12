@@ -136,13 +136,10 @@ EXPRESSIONS = [
 
 def parse_statement(s:str) -> BaseCondition:
     "Parse single statement"
-    #print(s)
     expressions = EXPRESSIONS
     for expr, func in expressions:
-        #print(expr)
         res = re.search(expr, s, flags=re.IGNORECASE)
         if res:
-            print(expr)
             # Found the right regex expression
             output =  func(**res.groupdict())
             break

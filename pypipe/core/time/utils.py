@@ -19,7 +19,6 @@ def string_to_datetime(string, formats, ceil=False):
         for format_key, method in ceiling.items():
             if format_key not in fmt:
                 datelike = datelike.replace(**method) if isinstance(method, dict) else method(datelike)
-    print(datelike)
     return datelike
 
 import datetime

@@ -107,11 +107,9 @@ class _ConditionFactory:
 
 
     def _parse_statement_string(self, s):
-        #print(s)
         expressions = self.expressions
         
         for expr, func in expressions:
-            #print(expr)
             res = re.search(expr, s, flags=re.IGNORECASE)
             if res:
                 output =  func(**res.groupdict())
