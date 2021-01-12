@@ -82,11 +82,6 @@ class Scheduler:
 
         set_statement_defaults(self.shut_condition, scheduler=self)
 
-        for maintain_task in self.maintain_tasks:
-            #maintain_task.start_cond = set_statement_defaults(maintain_task.start_cond, scheduler=self)
-            maintain_task.set_logger() # Resetting the logger as group changed
-            maintain_task.is_maintenance = True
-
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
 
