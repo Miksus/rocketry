@@ -14,21 +14,21 @@ import logging
 from importlib import reload
 
 
-def copy_file_to_tmpdir(tmpdir, filename):
-    path = Path(os.path.dirname(__file__)) / "test_files" / filename
+def copy_file_to_tmpdir(tmpdir, source_file, target_path):
+    target_path = Path(target_path)
+    source_path = Path(os.path.dirname(__file__)) / "test_files" / source_file
 
-    fh = tmpdir.join(filename)
-    with open(path) as f:
+    fh = tmpdir.join(target_path.name)
+    with open(source_path) as f:
         fh.write(f.read())
-    return path
+    return fh
 
 @pytest.fixture
-def successing_script_path(tmpdir):
-    return copy_file_to_tmpdir(tmpdir, filename="succeeding_script.py")
-
-@pytest.fixture
-def failing_script_path(tmpdir):
-    return copy_file_to_tmpdir(tmpdir, filename="failing_script.py")
+def script_files(tmpdir):
+    for folder in Path("scripts").parts:
+        tmpdir = tmpdir.mkdir(folder)
+    copy_file_to_tmpdir(tmpdir, source_file="succeeding_script.py", target_path="scripts/succeeding_script.py")
+    copy_file_to_tmpdir(tmpdir, source_file="failing_script.py", target_path="scripts/failing_script.py")
 
 
 @pytest.fixture(scope="session", autouse=True)
