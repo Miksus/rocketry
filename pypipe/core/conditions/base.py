@@ -157,6 +157,7 @@ class Not(_ConditionContainer, BaseCondition):
     __magicmethod__ = "__invert__"
 
     def __init__(self, condition):
+        # TODO: rename condition as child
         self.condition = condition
 
     def __bool__(self):
@@ -217,10 +218,19 @@ class AlwaysFalse(BaseCondition):
     def __repr__(self):
         return 'AlwaysFalse'
 
+
+class IsPeriod(BaseCondition):
+    def __init__(self, period):
+        self.period = period
+
+    def __bool__(self):
+        return datetime.datetime.now() in self.period
+
+
 class TimeCondition(BaseCondition):
     """Base class for Time conditions (whether currently is specified time of day)
     """
-
+    # TODO: Replace with IsPeriod
     def __init__(self, *args, **kwargs):
         if hasattr(self, "period_class"):
             self.period = self.period_class(*args, **kwargs)
