@@ -114,7 +114,7 @@ class Statement(BaseCondition):
         )
         return cls
 
-    def __init__(self, *args, period=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Base for events
 
         Keyword Arguments:
@@ -183,7 +183,7 @@ class Statement(BaseCondition):
         "Equal operation"
         is_same_class = isinstance(other, type(self))
         if is_same_class:
-            has_same_args = self.args == other._args
+            has_same_args = self.args == other.args
             has_same_kwargs = self.kwargs == other.kwargs
             return has_same_args and has_same_kwargs
         else:
