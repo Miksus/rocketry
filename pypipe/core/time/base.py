@@ -228,6 +228,8 @@ class TimeDelta(TimePeriod):
     @abstractmethod
     def __contains__(self, dt):
         "Check whether the datetime is in "
+        if not hasattr(self, "reference"):
+            raise AttributeError("TimeDelta requires reference point to compare whether a datetime is in the period.")
         start = self.reference - abs(self.past)
         end = self.reference + abs(self.future)
         return start <= dt <= end
@@ -265,6 +267,7 @@ class TimeCycle(TimePeriod):
         weekly
         monthly
     """
+    # TODO: Delete
     _type_name = "cycle"
 
     offset = None

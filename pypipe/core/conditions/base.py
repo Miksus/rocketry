@@ -221,6 +221,8 @@ class AlwaysFalse(BaseCondition):
 
 class IsPeriod(BaseCondition):
     def __init__(self, period):
+        if isinstance(period, time.TimeDelta):
+            raise AttributeError("TimeDelta does not have __contains__.")
         self.period = period
 
     def __bool__(self):
