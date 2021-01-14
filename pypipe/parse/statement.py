@@ -22,6 +22,8 @@ from pypipe.time import (
     TimeOfDay,
     DaysOfWeek,
     TimeOfHour,
+
+    TimeDelta,
 )
 
 import re
@@ -92,7 +94,7 @@ EXPRESSIONS = [
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) before (?P<end>.+)",
-        lambda type_, start: TaskExecutable(period=get_before(type_, end))
+        lambda type_, end: TaskExecutable(period=get_before(type_, end))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)", 
