@@ -4,7 +4,7 @@ import pytest
 from pypipe.core import Scheduler
 from pypipe.task import FuncTask
 from pypipe.core.task.base import Task, get_task
-from pypipe.conditions import AlwaysFalse, AlwaysTrue, DependSuccess
+from pypipe.conditions import AlwaysFalse, AlwaysTrue, DependSuccess, Any
 from pypipe import session
 
 def test_construct(tmpdir):
