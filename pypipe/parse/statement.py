@@ -5,12 +5,16 @@ from pypipe.conditions import (
     TaskSucceeded, 
     TaskRunning,
 
+    TaskExecutable,
+
     DependSuccess,
     DependFinish,
     DependFailure,
 
     AlwaysTrue,
     AlwaysFalse,
+
+    IsPeriod,
 )
 
 from pypipe.core.conditions.base import BaseCondition
@@ -63,43 +67,40 @@ def get_full_cycle(type_):
 EXPRESSIONS = [
     # Another task ran as
     # TODO: These are always true after one run
-    (r"after task '(?P<task>.+)'",      TaskFinished),
-    (r"after finished '(?P<task>.+)'",  TaskFinished),
-
-    (r"after failed '(?P<task>.+)'",    TaskFailed),
-    (r"after succeeded '(?P<task>.+)'", TaskSucceeded),
-    (r"during running '(?P<task>.+)'",   TaskRunning), # TODO: Maybe rename as "during running ''"
+    (r"after task '(?P<depend_task>.+)'",      DependSuccess),
+    (r"after succeeded '(?P<depend_task>.+)'",        DependSuccess),
+    (r"after finished '(?P<depend_task>.+)'",  DependFinish),
+    (r"after failed '(?P<depend_task>.+)'",    DependFailure),
+    
+    (r"during running '(?P<task>.+)'",   TaskRunning), 
     # (r"after started '(?P<task>.+)'",   TaskStarted), # TODO
-
-    # Advanced another task ran as
-    (r"depend on success '(?P<task>.+)'", lambda task: DependSuccess(depend_task=task)), # NOTE: the other task is passed later
 
     # Run the task itself during specified 
     # (the task itself has not previously run during given period)
     (
         # TODO
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) starting (?P<start>.+)", 
-        lambda type_, start: ~TaskFinished(period=get_starting(type_, start))
+        lambda type_, start: TaskExecutable(period=get_starting(type_, start))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) between (?P<start>.+) and (?P<end>.+)", 
-        lambda type_, start, end: ~TaskFinished(period=get_between(type_, start, end))
+        lambda type_, start, end: TaskExecutable(period=get_between(type_, start, end))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) after (?P<start>.+)", 
-        lambda type_, start: ~TaskFinished(period=get_after(type_, start))
+        lambda type_, start: TaskExecutable(period=get_after(type_, start))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) before (?P<end>.+)",
-        lambda type_, start: ~TaskFinished(period=get_before(type_, end))
+        lambda type_, start: TaskExecutable(period=get_before(type_, end))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)", 
-        lambda type_: ~TaskFinished(period=get_full_cycle(type_))
+        lambda type_: TaskExecutable(period=get_full_cycle(type_))
     ),
     (
         r"(run )?every (?P<value>.+)",
-        lambda value: ~TaskFinished(period=TimeDelta(value))
+        lambda value: TaskExecutable(period=TimeDelta(value))
     ),
 
     # Time is as specified (TODO)
