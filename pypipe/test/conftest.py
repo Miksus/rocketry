@@ -4,6 +4,8 @@ import pytest
 from pathlib import Path
 import os
 import sys
+import datetime
+from dateutil.parser import parse as parse_datetime
 
 import pypipe
 
@@ -50,4 +52,26 @@ def reset_loggers():
     yield
     pypipe.session.reset()
 
-    #
+
+class mockdatetime(datetime.datetime):
+    _freezed_datetime = None
+    @classmethod
+    def now(cls):
+        return cls._freezed_datetime
+
+@pytest.fixture
+def mock_datetime_now(monkeypatch):
+    """Monkey patch datetime.datetime.now
+    Returns a function that takes datetime as string as input
+    and sets that to datetime.datetime.now()"""
+    class mockdatetime(datetime.datetime):
+        _freezed_datetime = None
+        @classmethod
+        def now(cls):
+            return cls._freezed_datetime
+
+    def wrapper(dt):
+        mockdatetime._freezed_datetime = parse_datetime(dt)
+        monkeypatch.setattr(datetime, 'datetime', mockdatetime)
+
+    return wrapper
