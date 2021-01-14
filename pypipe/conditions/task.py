@@ -1,6 +1,7 @@
 
 from pypipe.core.task import base
 from pypipe.core.conditions import Statement, Historical, Comparable
+from pypipe.core.time import TimeDelta
 from .time import IsPeriod
 
 import psutil
@@ -80,46 +81,34 @@ class TaskExecutable(Historical):
     TaskExecutable(period=TimeOfDay("10:00", "14:00"), retry=2)
     """
     def __init__(self, retries=0, task=None, period=None, **kwargs):
-
-        self._has_not_succeeded = TaskSucceeded(period=period) == 0
-        self._has_not_failed = TaskFailed(period=period) <= retries
-        #self._has_retries = TaskFailed(period=None) <= retries # BUG: Now only allows to run if task has failed
-        self._isin_period = IsPeriod(period=period)
-
         
-        super().__init__(period=period, **kwargs)
-        self.kwargs["retries"] = retries
-        self.kwargs["task"] = task 
-        #self._has_not_run = ~TaskFinished(period=self.period)
+        super().__init__(period=period, retries=retries, task=task, **kwargs)
 
         # TODO: If constant launching (allow launching alive tasks)
         # is to be implemented, there should be one more condition:
         # self._is_not_running
 
     def __bool__(self):
-        self._update_kwargs()
-        return (
-            bool(self._isin_period)
-            and bool(self._has_not_succeeded) 
-            and (bool(self._has_not_failed)) #  or bool(self._has_retries)
+        period = self.period
+        retries = self.kwargs["retries"]
+        task = self.kwargs["task"]
+
+        # Form the sub statements
+        has_not_succeeded = TaskSucceeded(period=period, task=task) == 0
+        has_not_failed = TaskFailed(period=period, task=task) <= retries
+
+        isin_period = (
+            # TimeDelta has no __contains__. One cannot say whether now is "past 2 hours".
+            True  
+            if isinstance(period, TimeDelta) 
+            else IsPeriod(period=period)
         )
 
-    def _update_kwargs(self):
-        self._has_not_succeeded.kwargs["task"] = self.kwargs["task"]
-        self._has_not_failed.kwargs["task"] = self.kwargs["task"]
-
-        self._has_not_failed.kwargs["_le_"] = self.kwargs["retries"]
-
-    @property
-    def period(self):
-        return self._isin_period.period
-    
-    @period.setter
-    def period(self, val):
-        self._has_not_failed.period = val
-        self._has_not_succeeded.period = val
-        #self._has_retries.period = val
-        self._isin_period.period = val
+        return (
+            bool(isin_period)
+            and bool(has_not_succeeded)
+            and bool(has_not_failed)
+        )
 
 
 @Statement.from_func(historical=False, quantitative=False)
