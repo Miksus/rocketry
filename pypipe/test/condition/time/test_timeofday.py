@@ -69,7 +69,7 @@ def mock_datetime_now(monkeypatch):
             id="After period overnight"),
     ],
 )
-def test_condition_time_of_day(mock_datetime_now, now, start, end, is_true):
+def test_time_of_day(mock_datetime_now, now, start, end, is_true):
     mock_datetime_now(now)
     
     cond = IsTimeOfDay(start, end)
