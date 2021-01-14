@@ -15,7 +15,7 @@ def _has_sub_conditions(obj):
 def _set_statement_default(cond, **kwargs):
     if isinstance(cond, Statement):
         for key, default in kwargs.items():
-            default_not_set = key not in cond.kwargs
+            default_not_set = key not in cond.kwargs or cond.kwargs[key] is None
             if default_not_set:
                 cond.kwargs[key] = default
 
