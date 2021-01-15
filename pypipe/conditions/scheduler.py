@@ -9,13 +9,18 @@ import numpy as np
 
 # Scheduler related (useful only for maintaining or shutdown)
 @Statement.from_func(historical=False, quantitative=True)
-def SchedulerCycles(scheduler, **kwargs):
+def SchedulerCycles(_scheduler_, **kwargs):
     "Check whether "
-    return scheduler.n_cycles
+    return _scheduler_.n_cycles
 
 @Statement.from_func(historical=True, quantitative=False)
-def SchedulerStarted(scheduler, _start_, _end_):
+def SchedulerStarted(_scheduler_, _start_, _end_):
     "Check whether "
-    dt = scheduler.startup_time
+    dt = _scheduler_.startup_time
     return _start_ <= dt <= _end_
 
+@Statement.from_func(historical=False, quantitative=False)
+def TasksAlive(_scheduler_):
+    "Check whether "
+    alive_tasks = [_scheduler_.is_alive(task) for task in _scheduler_.tasks]
+    return len(alive_tasks)

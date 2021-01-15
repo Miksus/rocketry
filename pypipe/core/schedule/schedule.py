@@ -80,7 +80,7 @@ class Scheduler:
         self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
-        set_statement_defaults(self.shut_condition, scheduler=self)
+        set_statement_defaults(self.shut_condition, _scheduler_=self)
 
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
@@ -267,6 +267,8 @@ class Scheduler:
     def maintainer_tasks(self, tasks:list):
         for task in tasks:
             task.parameters["_scheduler_"] = self
+            set_statement_defaults(task.start_cond, _scheduler_=self)
+            
         self._maintainer_tasks = tasks
 
 
