@@ -13,7 +13,7 @@ def flag_file_exists(task, folder, suffix=".flag"):
     file = Path(folder) / filename
     if file.is_file():
         # Force the task run next time
-        task.force_run = True
+        task.force_state = True
 
         # Remove the flag file
         file.unlink()

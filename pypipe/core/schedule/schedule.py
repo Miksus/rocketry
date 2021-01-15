@@ -182,7 +182,9 @@ class Scheduler:
         for task in tasks:
             if bool(task):
                 self.run_task(task)
-                task.force_run = False
+                if task.force_state is True:
+                    # Reset force_state as a run has forced
+                    task.force_state = None
         self.n_cycles += 1
 
     def run_task(self, task, scheduler=False):
@@ -354,7 +356,9 @@ class MultiScheduler(Scheduler):
             if self.is_task_runnable(task):
                 # Run the actual task
                 self.run_task_as_process(task)
-                task.force_run = False
+                if task.force_state is True:
+                    # Reset force_state as a run has forced
+                    task.force_state = None
             elif self.is_timeouted(task):
                 # Terminate the task
                 self.terminate_task(task, reason="timeout")

@@ -64,7 +64,8 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls):
         ] == records
 
 
-def test_force_run(tmpdir):
+@pytest.mark.parametrize("state",[True, False])
+def test_force_state(tmpdir, state):
     
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
@@ -72,15 +73,18 @@ def test_force_run(tmpdir):
         task = FuncTask(
             run_successful_func, 
             name="task",
-            start_cond=AlwaysFalse()
+            start_cond=AlwaysFalse() if state else AlwaysTrue()
         )
-        assert not bool(task)
-        task.force_run = True
-        assert bool(task)
-        assert bool(task)
+        task.force_state = state
+
+        if state:
+            assert bool(task)
+            assert bool(task)
+        else:
+            assert not bool(task)
+            assert not bool(task)
         task()
-        assert not task.force_run
-        assert not bool(task)
+        assert task.force_state is None
 
 
 def test_dependency(tmpdir):

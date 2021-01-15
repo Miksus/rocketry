@@ -71,7 +71,7 @@ class Task:
         name {str, tuple} : Name of the task. Must be unique
         groups {tuple} : Name of the group the task is part of. Different groups use different loggers
 
-        force_run {bool} : Run the task manually once
+        force_state {bool} : Force the task to be run once (if True) or prevent task running at all (if False)
 
     Readonly Properties:
     -----------
@@ -99,7 +99,7 @@ class Task:
     default_logger = logging.getLogger(_logger_basename)
 
     # TODO:
-    #   The force_run will not work with multiprocessing. The signal must be reseted with logging probably
+    #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
 
     def __init__(self, action, parameters=None,
@@ -132,7 +132,7 @@ class Task:
 
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
         self.priority = priority
-        self.force_run = False
+        self.force_state = None
 
         self.on_failure = on_failure
         self.on_success = on_success
@@ -244,7 +244,7 @@ class Task:
 
         finally:
             self.process_finish(status=status)
-            self.force_run = False
+            self.force_state = None
 
     def __bool__(self):
         "Check whether the task can be run or not"
@@ -254,14 +254,14 @@ class Task:
         #    resume() : Reset forced_state to None
         #    set_running() : Set forced_state to True
 
-        if self.force_run:
-            return True
-        
+        if isinstance(self.force_state, bool):
+            return self.force_state
+
         cond = bool(self.start_cond)
 
-        # There may be condition that set force_run True
-        if self.force_run:
-            return True
+        # There may be condition that set force_state True
+        if isinstance(self.force_state, bool):
+            return self.force_state
         return cond
 
     def filter_params(self, params):
