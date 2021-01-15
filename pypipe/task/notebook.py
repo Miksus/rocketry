@@ -29,7 +29,7 @@ class JupyterTask(Task):
     def filter_params(self, params):
         return params
 
-    def execute_action(self, parameters):
+    def execute_action(self, **parameters):
         nb = self.notebook
         self.process_preprocess(nb, parameters)
 

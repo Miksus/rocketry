@@ -17,7 +17,7 @@ import re
 class FuncTask(Task):
     """Function Task, task that executes a function
     """
-    def execute_action(self, kwargs):
+    def execute_action(self, **kwargs):
         "Run the actual, given, task"
         return self.action(**kwargs)
 

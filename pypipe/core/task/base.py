@@ -223,7 +223,7 @@ class Task:
         try:
             params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
-            output = self.execute_action(params)
+            output = self.execute_action(**params)
 
         except Exception as exception:
             status = "failed"

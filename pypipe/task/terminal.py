@@ -19,7 +19,7 @@ class CommandTask(Task):
         self.kwargs_popen = {"cwd": cwd, "shell":shell}
         # About shell: https://stackoverflow.com/a/36299483/13696660
 
-    def execute_action(self, parameters):
+    def execute_action(self, **parameters):
 
         # args, kwargs = parameters.materialize()
         command = self.action

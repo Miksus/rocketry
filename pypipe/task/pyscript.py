@@ -16,7 +16,7 @@ class ScriptTask(Task):
     """
     main_func = "main"
 
-    def execute_action(self, params:dict):
+    def execute_action(self, **params):
         task_func = self.get_task_func()
         return task_func(**params)
 
