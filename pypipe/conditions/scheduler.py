@@ -11,7 +11,6 @@ import numpy as np
 @Statement.from_func(historical=False, quantitative=True)
 def SchedulerCycles(scheduler, **kwargs):
     "Check whether "
-    logger.debug(f"Inspecting {scheduler} (type: {type(scheduler)} cycles...")
     return scheduler.n_cycles
 
 @Statement.from_func(historical=True, quantitative=False)
