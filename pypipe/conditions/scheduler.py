@@ -19,7 +19,7 @@ def SchedulerStarted(_scheduler_, _start_, _end_):
     dt = _scheduler_.startup_time
     return _start_ <= dt <= _end_
 
-@Statement.from_func(historical=False, quantitative=False)
+@Statement.from_func(historical=False, quantitative=True)
 def TasksAlive(_scheduler_):
     "Check whether "
     alive_tasks = [_scheduler_.is_alive(task) for task in _scheduler_.tasks]
