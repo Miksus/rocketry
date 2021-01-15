@@ -116,21 +116,31 @@ class _Session:
 
 def _set_run_id(df):
     # Set run_id for run actions
-    df_runs = df[df["action"] == "run"]
-    df = df.sort_values("asctime")
-    df.loc[df_runs.index, "run_id"] = pd.RangeIndex(len(df_runs.index))
-    df = df.sort_values("task_name")
+    if df.empty:
+        df["run_id"] = None
+        return df
     
+    df = df.sort_values(["asctime"])
+    df_runs = df[df["action"] == "run"]
+    df.loc[df_runs.index, "run_id"] = pd.RangeIndex(len(df_runs.index))
+
     # Set run_id for end of runs
+    # Dict[task_name, List[run_ids]]
     run_ids = {
-        task: df[(df["task_name"] == task) & (~df["run_id"].isna())]["run_id"].tolist()
+        task: df[
+            (df["task_name"] == task) 
+            & (~df["run_id"].isna())
+        ]["run_id"].sort_values().tolist()
         for task in df["task_name"].unique()
     }
     def find_start(ser):
         task_run_ids = run_ids[ser["task_name"]] 
+        if not task_run_ids:
+            return None
         return task_run_ids.pop(0)
-
-    df.loc[df.run_id.isna(), "run_id"] = df.loc[df.run_id.isna()].apply(find_start, axis=1)
+    
+    task_ends = df.run_id.isna()
+    df.loc[task_ends, "run_id"] = df.loc[task_ends].apply(find_start, axis=1)
     return df
 
 def get_run_info(df):
