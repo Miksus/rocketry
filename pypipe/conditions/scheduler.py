@@ -22,5 +22,5 @@ def SchedulerStarted(_scheduler_, _start_, _end_, **kwargs):
 @Statement.from_func(historical=False, quantitative=True)
 def TasksAlive(_scheduler_, **kwargs):
     "Check whether "
-    alive_tasks = [_scheduler_.is_alive(task) for task in _scheduler_.tasks]
+    alive_tasks = [task for task in _scheduler_.tasks if _scheduler_.is_alive(task)]
     return alive_tasks
