@@ -49,7 +49,7 @@ class _Session:
             # The adapter should not be used to log (but to read) thus task_name = None
             name: TaskAdapter(logger, None) if with_adapters else logger 
             for name, logger in logging.root.manager.loggerDict.items() 
-            if name.startswith("pypipe.core.task") 
+            if name.startswith(Task._logger_basename) 
             and not isinstance(logger, logging.PlaceHolder)
         }
 
@@ -114,31 +114,39 @@ class _Session:
         "Readonly attribute"
         return self._global_parameters
 
+
 def _set_run_id(df):
     # Set run_id for run actions
     if df.empty:
         df["run_id"] = None
         return df
     
-    df = df.sort_values(["asctime"])
-    df_runs = df[df["action"] == "run"]
-    df.loc[df_runs.index, "run_id"] = pd.RangeIndex(len(df_runs.index))
-
-    # Set run_id for end of runs
-    # Dict[task_name, List[run_ids]]
-    run_ids = {
-        task: df[
-            (df["task_name"] == task) 
-            & (~df["run_id"].isna())
-        ]["run_id"].sort_values().tolist()
-        for task in df["task_name"].unique()
-    }
-    def find_start(ser):
-        task_run_ids = run_ids[ser["task_name"]] 
-        if not task_run_ids:
-            return None
-        return task_run_ids.pop(0)
+    df = df.sort_values(["asctime"]) # , ascending=False
     
+    mask = df["action"] == "run"
+    n_runs = mask.sum()
+    df.loc[mask, "run_id"] = pd.RangeIndex(n_runs)
+
+    df_runs = df[df["action"] == "run"].set_index("run_id")
+    
+    def find_start(ser):
+        # Take all run ids of the task before success/failure time
+        task_run_ids = df_runs[
+            (df_runs["task_name"] == ser["task_name"])
+            & (df_runs["asctime"] <= ser["asctime"])
+        ]
+        if task_run_ids.empty:
+            return None
+
+        # FIFO: take earliest unconsumed run id
+        run_id = task_run_ids.index.min()
+        
+        # Consume the task_run_id
+        df_runs.drop(run_id, inplace=True, axis=0)
+        
+        return run_id
+    
+    df = df.sort_values("asctime")
     task_ends = df.run_id.isna()
     df.loc[task_ends, "run_id"] = df.loc[task_ends].apply(find_start, axis=1)
     return df
@@ -146,7 +154,7 @@ def _set_run_id(df):
 def get_run_info(df):
     "Task logging dataframe to run info dataframe"
     df["asctime"] = pd.to_datetime(df["asctime"])
-
+    
     df = _set_run_id(df)
 
     # Join start of runs to finish of runs (works even if missing start or end)
