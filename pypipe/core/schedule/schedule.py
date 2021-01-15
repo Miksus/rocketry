@@ -154,6 +154,9 @@ class Scheduler:
             for task in tasks:
                 if bool(task):
                     self.run_task(task, scheduler=True)
+                    if task.force_state is True:
+                        # Reset force_state as a run has forced
+                        task.force_state = None
     
     def restart(self):
         """Restart the scheduler by creating a new process
