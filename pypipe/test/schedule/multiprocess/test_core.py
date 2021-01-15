@@ -1,8 +1,9 @@
 
 from pypipe.core import MultiScheduler
 from pypipe.task import FuncTask
+from pypipe.time import TimeDelta
 from pypipe.core.task.base import Task, clear_tasks, get_task
-from pypipe.conditions import SchedulerCycles, TaskFinished, TaskStarted
+from pypipe.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from pypipe.core.parameters import GLOBAL_PARAMETERS
 from pypipe import session
 from pypipe.session import session
@@ -88,6 +89,38 @@ def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
         assert run_count == (history["action"] == "run").sum()
         assert success_count == (history["action"] == "success").sum()
         assert fail_count == (history["action"] == "fail").sum()
+
+
+@pytest.mark.parametrize("state", [True, False])
+def test_task_force_state(tmpdir, state):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        task = FuncTask(
+            run_succeeding, 
+            start_cond=AlwaysFalse() if state else AlwaysTrue(), 
+            name="task"
+        )
+        task.force_state = state
+
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+        )
+        scheduler()
+
+        run_times = 1 if state else 0 
+
+        history = task.get_history()
+        assert run_times == (history["action"] == "run").sum()
+
+        if state:
+            # The force_state should have reseted as it should have run once
+            assert task.force_state is None 
+        else:
+            # The force_state should still be False and the task should still not run
+            assert task.force_state is False 
 
 
 def test_task_timeout(tmpdir):
