@@ -29,9 +29,15 @@ def get_task(task):
         return task
     return _TASKS[task]
 
-def clear_tasks():
+def clear_tasks(exclude=None):
     global _TASKS
-    _TASKS = {}
+    if exclude is not None:
+        preserve = {task: _TASKS[task] for task in exclude}
+    else:
+        preserve = {}
+    
+    _TASKS = preserve
+
 
 def reset_logger():
     Task.set_default_logger()
@@ -100,7 +106,7 @@ class Task:
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None):
+                name=None, inputs=None, logger=None, on_exists="raise"):
         """[summary]
 
         Arguments:
@@ -112,6 +118,8 @@ class Task:
             on_success {[func]} -- Function to run on success (default: {None})
             on_failure {[func]} -- Function to run on failure (default: {None})
             on_finish {[func]} -- Function to run after running the task (default: {None})
+
+            on_exists ([str]) -- What to do if task (with same name) has already been created. (Options: 'raise', 'ignore', 'replace')
         """
         self.action = action
 
@@ -139,7 +147,7 @@ class Task:
             # a new logging record is made to prevent leaving to
             # run status and releasing the task
             self.logger.warning(f'Task {self.name} previously crashed unexpectedly.', extra={"action": "crash_release"})
-        self._register_instance()
+        self._register_instance(on_exists)
 
         # Whether the task is maintenance task
         self.is_maintenance = False
@@ -195,10 +203,18 @@ class Task:
         set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
-    def _register_instance(self):
-        if self.name in _TASKS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_TASKS.keys())}")
-        _TASKS[self.name] = self
+    def _register_instance(self, on_exists):
+        if on_exists == "raise":
+            if self.name in _TASKS:
+                raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_TASKS.keys())}")
+            else:
+                _TASKS[self.name] = self
+        elif on_exists == "replace":
+            _TASKS[self.name] = self
+        elif on_exists == "ignore":
+            pass
+        else:
+            raise ValueError(f"Invalid value for on_exists: '{on_exists}'")
 
     def __call__(self, **params):
         self.log_running()
