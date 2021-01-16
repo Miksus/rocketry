@@ -2,7 +2,6 @@ from pypipe.time import TimeOfDay, DaysOfWeek
 
 from pypipe.core.conditions.base import TimeCondition, IsPeriod
 
-from scipy import stats
 import datetime
 
 class IsTimeOfDay(TimeCondition):

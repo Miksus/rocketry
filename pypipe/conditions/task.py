@@ -4,7 +4,6 @@ from pypipe.core.conditions import Statement, Historical, Comparable
 from pypipe.core.time import TimeDelta
 from .time import IsPeriod
 
-import psutil
 import os
 import datetime
 import numpy as np
