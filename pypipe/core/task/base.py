@@ -358,6 +358,7 @@ class Task:
         state['_logger'] = None
         state['_start_cond'] = None
         state['_end_cond'] = None
+        state["_process"] = None # If MultiScheduler
 
         # what we return here will be stored in the pickle
         return state
