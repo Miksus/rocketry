@@ -39,9 +39,6 @@ def clear_tasks(exclude=None):
     _TASKS = preserve
 
 
-def reset_logger():
-    Task.set_default_logger()
-
 class Task:
     """Executable task 
 
@@ -95,8 +92,7 @@ class Task:
 
     """
     use_instance_naming = False
-    _logger_basename = __name__
-    default_logger = logging.getLogger(_logger_basename)
+    _logger_basename = "pypipe.task"
 
     # TODO:
     #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
@@ -314,7 +310,7 @@ class Task:
     def logger(self, logger):
         if logger is None:
             # Get class logger (default logger)
-            logger = type(self).default_logger
+            logger = logging.getLogger(self._logger_basename)
 
         if not logger.name.startswith(self._logger_basename):
             raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")

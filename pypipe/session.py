@@ -103,7 +103,6 @@ class _Session:
 
         task_logger.addHandler(handler)
         task_logger.setLevel(logging.INFO)
-        Task.default_logger = task_logger # In case if this has been replaced with something else
 
         # Set scheduler logger
         sched_logger = logging.getLogger(Scheduler._logger_basename)

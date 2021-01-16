@@ -47,7 +47,8 @@ def reset_loggers():
     formatter = logging.Formatter('%(asctime)s - %(action)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
 
-    Task.default_logger.addHandler(handler)
+    task_logger = logging.getLogger(Task._logger_basename)
+    task_logger.addHandler(handler)
     #Task.add_logger_handler(handler)
     yield
     pypipe.session.reset()
