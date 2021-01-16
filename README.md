@@ -1,7 +1,7 @@
 
-# PyPipe
+# ATLaS
 
-> Scheduling library for Python
+> Advanced Task Launch System
 
 > Scheduling, ETL
 
@@ -16,8 +16,8 @@
 
 - Clone the source code and pip install:
 ```shell
-git clone https://github.com/Miksus/pypipe.git
-cd pypipe
+git clone https://github.com/Miksus/atlas.git
+cd atlas
 pip install -e .
 ```
 
