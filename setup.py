@@ -19,4 +19,11 @@ setup(
      ],
      include_package_data=True, # for MANIFEST.in
      python_requires='>=3.6.6',
+
+    install_requires = [
+        'pandas >= 1.0.0',
+        'pytest >= 5.0.1',
+        'psutil >= 5.7.0',
+        'pyyaml >= 5.3.1'
+    ],
 )
