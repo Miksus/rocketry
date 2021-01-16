@@ -5,12 +5,12 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-    name="PyPipe",
+    name="atlas",
     version="0.1.0",
     author="Mikael Koli",
     author_email="koli.mikael@gmail.com",
     packages=find_packages(),
-    description="Scheduling library for Python",
+    description="Advanced Task Launch System (scheduling)",
     long_description=long_description,
     long_description_content_type="text/markdown",
      classifiers=[
