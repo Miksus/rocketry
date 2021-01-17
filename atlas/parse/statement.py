@@ -55,26 +55,26 @@ def get_before(type_, end):
     }[type_]
     return cls(None, end)
 
-def get_full_cycle(type_):
+def get_full_cycle(type_, starting=None):
     type_ = type_.lower()
     cls = {
         "daily": TimeOfDay,
         "weekly": DaysOfWeek,
         "hourly": TimeOfHour,
     }[type_]
-    return cls(None, None)
+    return cls(starting, starting)
 
 # TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
 
 EXPRESSIONS = [
     # Another task ran as
     # TODO: These are always true after one run
-    (r"after task '(?P<depend_task>.+)'",      DependSuccess),
-    (r"after succeeded '(?P<depend_task>.+)'",        DependSuccess),
-    (r"after finished '(?P<depend_task>.+)'",  DependFinish),
-    (r"after failed '(?P<depend_task>.+)'",    DependFailure),
+    (r"after '(?P<depend_task>.+)' succeeded",        DependSuccess),
+    (r"after '(?P<depend_task>.+)' finished",  DependFinish),
+    (r"after '(?P<depend_task>.+)' failed",    DependFailure),
+    (r"after '(?P<depend_task>.+)'",      DependSuccess),
     
-    (r"during running '(?P<task>.+)'",   TaskRunning), 
+    (r"while '(?P<task>.+)' is running",   TaskRunning), 
     # (r"after started '(?P<task>.+)'",   TaskStarted), # TODO
 
     # Run the task itself during specified 
@@ -82,7 +82,7 @@ EXPRESSIONS = [
     (
         # TODO
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) starting (?P<start>.+)", 
-        lambda type_, start: TaskExecutable(period=get_starting(type_, start))
+        lambda type_, start: TaskExecutable(period=get_full_cycle(type_, starting=start))
     ),
     (
         r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) between (?P<start>.+) and (?P<end>.+)", 
