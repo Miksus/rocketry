@@ -108,15 +108,15 @@ EXPRESSIONS = [
     # Time is as specified (TODO)
     (
         r"time of (?P<type_>month|week|day|hour|minute) between (?P<start>.+) and (?P<end>.+)",
-        lambda type_, start, end: IsPeriod(period=get_between(type_, start, end))
+        lambda type_, start, end: IsPeriod(period=get_between(type_ + "ly", start, end))
     ),
     (
         r"time of (?P<type_>month|week|day|hour|minute) after (?P<start>.+)",
-        lambda type_, start: IsPeriod(period=get_after(type_, start))
+        lambda type_, start: IsPeriod(period=get_after(type_ + "ly", start))
     ),
     (
         r"time of (?P<type_>month|week|day|hour|minute) before (?P<end>.+)", 
-        lambda type_, end: IsPeriod(period=get_before(type_, end))
+        lambda type_, end: IsPeriod(period=get_before(type_ + "ly", end))
     ),
 
     # Failure/Success
