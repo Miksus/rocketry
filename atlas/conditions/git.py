@@ -8,22 +8,15 @@ except ImportError:
     # TODO: raise warning
     pass
 
-def fetch(repo):
-    for remote in repo.remotes:
-        remote.fetch()
 
-def get_commits_behind(repo):
-    # TODO: Put to Pybox
-    fetch(repo)
-    return repo.iter_commits('master..origin/master')
-
-
-@Statement.from_func(historical=False, quantitative=False)
-def IsGitBehind(repo, **kwargs):
+@Statement.from_func(historical=False, quantitative=False, use_globals=True)
+def IsGitBehind(repo, fetch=False, **kwargs):
     "Check whether the GIT repository is behind"
-
+    if fetch:
+        repo.remotes.fetch()
     try:
-        next(get_commits_behind(repo))
+        commits_behind = repo.iter_commits('master..origin/master')
+        next(commits_behind)
     except StopIteration:
         return False
     else:
