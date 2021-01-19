@@ -17,13 +17,16 @@ import re
 class FuncTask(Task):
     """Function Task, task that executes a function
     """
+    def __init__(self, func, **kwargs):
+        self.func = func
+        super().__init__(**kwargs)
+
     def execute_action(self, **kwargs):
         "Run the actual, given, task"
-        return self.action(**kwargs)
+        return self.func(**kwargs)
 
     def get_default_name(self):
-        func = self.action
-        return func.__name__
+        return self.func.__name__
         
     def filter_params(self, params):
         return {
@@ -50,7 +53,7 @@ class FuncTask(Task):
 
     @property
     def pos_args(self):
-        sig = inspect.signature(self.action)
+        sig = inspect.signature(self.func)
         pos_args = [
             val.name
             for name, val in sig.parameters.items()
@@ -63,7 +66,7 @@ class FuncTask(Task):
 
     @property
     def kw_args(self):
-        sig = inspect.signature(self.action)
+        sig = inspect.signature(self.func)
         kw_args = [
             val.name
             for name, val in sig.parameters.items()

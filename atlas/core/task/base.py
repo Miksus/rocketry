@@ -98,7 +98,7 @@ class Task:
     #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
 
-    def __init__(self, action, parameters=None,
+    def __init__(self, parameters=None,
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
@@ -117,7 +117,6 @@ class Task:
 
             on_exists ([str]) -- What to do if task (with same name) has already been created. (Options: 'raise', 'ignore', 'replace')
         """
-        self.action = action
 
         self.name = name
         self.logger = logger

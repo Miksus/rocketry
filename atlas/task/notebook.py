@@ -20,10 +20,11 @@ class JupyterTask(Task):
 
     parameter_tag = "parameter"
 
-    def __init__(self, *args, on_preprocess=None, param_names=None, clear_outputs=True, **kwargs):
+    def __init__(self, path, on_preprocess=None, param_names=None, clear_outputs=True, **kwargs):
+        self.path = path
         self.on_preprocess = on_preprocess
         self.param_names = [] if param_names is None else param_names
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.clear_outputs = clear_outputs
 
     def filter_params(self, params):
@@ -84,12 +85,12 @@ class JupyterTask(Task):
         del self.notebook
 
     def get_default_name(self):
-        return self.action
+        return self.path
 
     @property
     def notebook(self):
         if not hasattr(self, "_notebook"):
-            self._notebook = JupyterNotebook(self.action)
+            self._notebook = JupyterNotebook(self.path)
         return self._notebook
 
     @notebook.deleter

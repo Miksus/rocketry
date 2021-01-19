@@ -16,6 +16,10 @@ class ScriptTask(Task):
     """
     main_func = "main"
 
+    def __init__(self, path, **kwargs):
+        self.path = path
+        super().__init__(**kwargs)
+
     def execute_action(self, **params):
         task_func = self.get_task_func()
         return task_func(**params)
@@ -27,7 +31,7 @@ class ScriptTask(Task):
         }
 
     def get_default_name(self):
-        file = self.action
+        file = self.path
         return '.'.join(file.parts).replace(r'/main.py', '')
 
     def process_finish(self, *args, **kwargs):
@@ -39,7 +43,7 @@ class ScriptTask(Task):
     def get_task_func(self):
         if not hasattr(self, "_task_func"):
             # _task_func is cached to faster performance
-            task_module = self.get_module(self.action)
+            task_module = self.get_module(self.path)
             task_func = getattr(task_module, self.main_func)
             self._task_func = task_func
         return self._task_func
