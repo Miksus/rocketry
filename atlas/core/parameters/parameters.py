@@ -44,10 +44,11 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
 
     def __or__(self, other):
         "| operator is union"
-        if isinstance(other, Parameters):
-            return type(self)(**self._params, **other._params)
-        else:
-            return type(self)(**self._params, **other)
+        left = self._params
+        right = other._params if isinstance(other, Parameters) else other
+        
+        params = {**left, **right}
+        return type(self)(**params)
 
 # Pickling
     def __getstate__(self):
