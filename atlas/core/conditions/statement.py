@@ -7,6 +7,8 @@ import datetime
 
 import numpy as np
 
+from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
+
 # TODO: convert Observation to a "statement" when comparison?
 from .base import BaseCondition
 #from .mixins import _Historical, Comparable
@@ -79,13 +81,22 @@ class Statement(BaseCondition):
 
             tasks_alive == 0
     """
-    historical = False
-    quantitative = False
+
     name = None
+    _use_global_params = False
 
     @classmethod
-    def from_func(cls, func=None, *, historical=False, quantitative=False):
-        "Create statement from function (returns new class)"
+    def from_func(cls, func=None, *, historical=False, quantitative=False, use_globals=False):
+        """Create statement from function (returns new class)
+        
+        Arguments:
+        ----------
+            func [callable] : Function to use as the "observe" method. Should return bool or 
+                              an object that can be compared if quantitative=True
+            historical [bool] : Whether the statement has a time window to check observation
+            quantitative [bool] : Whether the statement can be compared (with <, >, ==, >=, etc.)
+            use_globals [bool] : Whether to allow passing session.parameters to the observe method.
+        """
         if func is None:
             # Acts as decorator
             return partial(cls.from_func, historical=historical, quantitative=quantitative)
@@ -100,8 +111,7 @@ class Statement(BaseCondition):
         bases = tuple(bases)
 
         attrs = {
-            "historical": historical,
-            "quantitative": quantitative,
+            "_use_global_params": use_globals,
             # Methods
             "observe": staticmethod(func),
         }
@@ -147,7 +157,11 @@ class Statement(BaseCondition):
         return bool(res)
 
     def get_kwargs(self):
-        return self.kwargs
+        # TODO: Get session parameters
+        if self._use_global_params:
+            return GLOBAL_PARAMETERS | self.kwargs
+        else:
+            return self.kwargs
 
     def to_count(self, result):
         "Turn event result to quantitative number"
