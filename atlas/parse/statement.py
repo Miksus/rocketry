@@ -34,6 +34,10 @@ def get_between(type_, start, end):
         "daily": TimeOfDay,
         "weekly": DaysOfWeek,
         "hourly": TimeOfHour,
+
+        "day": TimeOfDay,
+        "week": DaysOfWeek,
+        "hour": TimeOfHour,
     }[type_]
     return cls(start, end)
 
@@ -43,6 +47,10 @@ def get_after(type_, start):
         "daily": TimeOfDay,
         "weekly": DaysOfWeek,
         "hourly": TimeOfHour,
+
+        "day": TimeOfDay,
+        "week": DaysOfWeek,
+        "hour": TimeOfHour,
     }[type_]
     return cls(start, None)
 
@@ -52,6 +60,10 @@ def get_before(type_, end):
         "daily": TimeOfDay,
         "weekly": DaysOfWeek,
         "hourly": TimeOfHour,
+
+        "day": TimeOfDay,
+        "week": DaysOfWeek,
+        "hour": TimeOfHour,
     }[type_]
     return cls(None, end)
 
@@ -61,6 +73,10 @@ def get_full_cycle(type_, starting=None):
         "daily": TimeOfDay,
         "weekly": DaysOfWeek,
         "hourly": TimeOfHour,
+    
+        "day": TimeOfDay,
+        "week": DaysOfWeek,
+        "hour": TimeOfHour,
     }[type_]
     return cls(starting, starting)
 
@@ -116,7 +132,7 @@ EXPRESSIONS = [
     ),
     (
         r"time of (?P<type_>month|week|day|hour|minute) before (?P<end>.+)", 
-        lambda type_, end: IsPeriod(period=get_before(type_ + "ly", end))
+        lambda type_, end: IsPeriod(period=get_before(type_, end))
     ),
 
     # Failure/Success
