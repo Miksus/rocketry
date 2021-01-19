@@ -315,6 +315,8 @@ def _run_task_as_process(task, queue, return_queue, params):
         raise
 
     try:
+        # NOTE: The parameters are "materialized" 
+        # here in the actual process that runs the task
         output = task(**params)
     except Exception as exc:
         # Just catching all exceptions.
