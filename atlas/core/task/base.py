@@ -272,7 +272,7 @@ class Task:
         ]
         return {
             key: val for key, val in params.items()
-            if key in self.kw_args
+            if key in kw_args
         }
 
     def execute_action(self, *args, **kwargs):
