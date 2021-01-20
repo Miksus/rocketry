@@ -260,7 +260,20 @@ class Task:
         return cond
 
     def filter_params(self, params):
-        return params
+        "By default, filter keyword arguments required by self.execute_action"
+        sig = inspect.signature(self.execute_action)
+        kw_args = [
+            val.name
+            for name, val in sig.parameters.items()
+            if val.kind in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD, # Normal argument
+                inspect.Parameter.KEYWORD_ONLY # Keyword argument
+            )
+        ]
+        return {
+            key: val for key, val in params.items()
+            if key in self.kw_args
+        }
 
     def execute_action(self, *args, **kwargs):
         "Run the actual, given, task"
