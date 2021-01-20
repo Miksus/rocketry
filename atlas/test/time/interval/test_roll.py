@@ -61,12 +61,12 @@ import pytest
             pd.Timestamp("2020-01-01 12:00:00"),
             "10:00", "10:00",
             pd.Timestamp("2020-01-01 12:00:00"), pd.Timestamp("2020-01-02 10:00:00"),
-            id="Right of full interval", marks=pytest.mark.xfail),
+            id="Right of full interval"),
         pytest.param(
             pd.Timestamp("2020-01-01 09:00:00"),
             "10:00", "10:00",
             pd.Timestamp("2020-01-01 09:00:00"), pd.Timestamp("2020-01-01 10:00:00"),
-            id="Left of full interval", marks=pytest.mark.xfail),
+            id="Left of full interval"),
     ],
 )
 def test_rollforward_timeofday(start, end, dt, roll_start, roll_end):
