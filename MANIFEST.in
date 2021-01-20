@@ -1,0 +1,2 @@
+include atlas/test/test_files/*.ipynb
+include atlas/test/test_files/*.py
