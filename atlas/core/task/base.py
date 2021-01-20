@@ -322,7 +322,7 @@ class Task:
         self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
 
     def log_failure(self):
-        self.logger.error(f"Task '{self.name}' failed", exc_info=True, extra={"action": "fail"})
+        self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail"})
 
     def log_success(self):
         self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
