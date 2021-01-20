@@ -1,6 +1,8 @@
 
 from atlas.core.task import Task
 
+import sys
+
 class PipInstall(Task):
     def execute_action(self, interpreter=None, file=None, **kwargs):
         if interpreter is None:
