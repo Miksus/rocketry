@@ -490,6 +490,21 @@ class MultiScheduler(Scheduler):
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
+                
+                if record.action == "fail":
+                    # There is a caveat in logging 
+                    # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383 
+                    # https://bugs.python.org/issue34334
+
+                    # The traceback/exception info is no longer in record.exc_info/record.exc_text 
+                    # and it has been formatted to record.message/record.msg
+                    # This means we have to rely that message really contains
+                    # the full traceback
+
+                    record.exc_info = record.message
+                    record.exc_text = record.message
+
+                
                 task = get_task(record.task_name)
                 task.log_record(record)
         # self.parameters.listen()

@@ -91,6 +91,28 @@ def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
         assert fail_count == (history["action"] == "fail").sum()
 
 
+def test_task_fail_traceback(tmpdir):
+    # There is a speciality in tracebacks in multiprocessing
+    # See: https://bugs.python.org/issue34334
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(run_failing, name="task")
+
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=TaskStarted(task="task") >= 3
+        )
+        scheduler()
+        history = task.get_history()
+        failures = history[history["action"] == "fail"]
+        assert 3 == len(failures)
+
+        for tb in failures["exc_text"]:
+            assert "Traceback (most recent call last):" in tb
+            assert "RuntimeError: Task failed" in tb
+
+
 @pytest.mark.parametrize("state", [True, False])
 def test_task_force_state(tmpdir, state):
     with tmpdir.as_cwd() as old_dir:
