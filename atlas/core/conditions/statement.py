@@ -99,7 +99,7 @@ class Statement(BaseCondition):
         """
         if func is None:
             # Acts as decorator
-            return partial(cls.from_func, historical=historical, quantitative=quantitative)
+            return partial(cls.from_func, historical=historical, quantitative=quantitative, use_globals=use_globals)
 
         name = func.__name__
         #bases = (cls,)
