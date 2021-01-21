@@ -214,7 +214,7 @@ class Task:
     def __call__(self, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
-        
+
         try:
             params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
