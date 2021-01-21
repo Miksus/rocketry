@@ -62,11 +62,13 @@ class Scheduler:
 
     """
 
-    _logger_basename = __name__
-    logger = logging.getLogger(_logger_basename)
+    _logger_basename = "atlas.scheduler"
     parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
-    def __init__(self, tasks, maintainer_tasks=None, shut_condition=None, min_sleep=0.1, max_sleep=600, parameters=None, name=None):
+    def __init__(self, tasks, maintainer_tasks=None, 
+                shut_condition=None, 
+                min_sleep=0.1, max_sleep=600, 
+                parameters=None, logger=None, name=None):
         """[summary]
 
         Arguments:
@@ -85,12 +87,13 @@ class Scheduler:
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
 
-        self.task_returns = Parameters()
+        self.task_returns = Parameters() # TODO
         if parameters is not None:
             self.parameters.update(parameters)
 
         self.name = name if name is not None else id(self)
         self._register_instance()
+        self.logger = logger
         
     def _register_instance(self):
         if self.name in _SCHEDULERS:
@@ -626,3 +629,20 @@ class MultiScheduler(Scheduler):
                 self.handle_return()
         else:
             self.terminate_all(reason="shutdown")
+
+# Logging
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        if logger is None:
+            # Get class logger (default logger)
+            logger = logging.getLogger(self._logger_basename)
+
+        if not logger.name.startswith(self._logger_basename):
+            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+
+        # TODO: Use TaskAdapter to relay the scheduler name?
+        self._logger = logger
