@@ -13,9 +13,9 @@ class Restart(Task):
             # From now on, there is no code to execute
         else:
             if new_window:
-                creation_flags = subprocess.CREATE_NEW_CONSOLE
+                creationflags = subprocess.CREATE_NEW_CONSOLE
             else:
-                creation_flags = None
+                creationflags = None
             cmd = [python, *sys.argv]
-            subprocess.Popen(cmd, shell=False, creation_flags=creation_flags)
+            subprocess.Popen(cmd, shell=False, creationflags=creationflags)
             sys.exit()
