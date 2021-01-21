@@ -7,7 +7,7 @@ import multiprocessing
 import traceback
 import warnings
 import time
-import sys, os
+import sys, os, subprocess
 import logging
 from logging.handlers import QueueHandler
 import datetime
@@ -68,7 +68,8 @@ class Scheduler:
     def __init__(self, tasks, maintainer_tasks=None, 
                 shut_condition=None, 
                 min_sleep=0.1, max_sleep=600, 
-                parameters=None, logger=None, name=None):
+                parameters=None, logger=None, name=None,
+                restarting="replace"):
         """[summary]
 
         Arguments:
@@ -94,6 +95,8 @@ class Scheduler:
         self.name = name if name is not None else id(self)
         self._register_instance()
         self.logger = logger
+
+        self.restarting = restarting
         
     def _register_instance(self):
         if self.name in _SCHEDULERS:
@@ -119,7 +122,6 @@ class Scheduler:
         except SchedulerRestart as exc:
             self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
             exception = exc
-            self.restart()
 
         except KeyboardInterrupt as exc:
             self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
@@ -132,7 +134,9 @@ class Scheduler:
         else:
             self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
         finally:
+            print("SHUT DOWN")
             self.shut_down(exception=exception)
+            print("DONE")
 # Core
     def setup(self):
         "Set up the scheduler"
@@ -172,16 +176,30 @@ class Scheduler:
         # TODO
         # https://stackoverflow.com/a/35874988
         self.logger.info(f"Restarting the scheduler...", extra={"action": "restart"})
-        os.execl(sys.executable, sys.executable, *sys.argv)
-        sys.exit(0)
+        python = sys.executable
+
+        if self.restarting == "replace":
+            os.execl(python, python, *sys.argv)
+            # After here no code will be run
+        elif self.restarting == "relaunch":
+            # Relaunch the process
+            subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
+        elif self.restarting == "fresh":
+            # Relaunch the process in new window
+            subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
     
     def shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler
         This method is meant to controllably close the
         scheduler in case the scheduler crashed (with 
         Python exception) to properly inform the maintainer
-        and log the event
+        and log the event.
+
+        Also responsible of restarting the scheduler if
+        ordered.
         """
+        if isinstance(exception, SchedulerRestart):
+            self.restart()
 
 
     def run_cycle(self):
@@ -193,6 +211,7 @@ class Scheduler:
                 self.run_task(task)
                 if task.force_state is True:
                     # Reset force_state as a run has forced
+                    # TODO: This to run_task maybe?
                     task.force_state = None
         self.n_cycles += 1
 
@@ -204,6 +223,9 @@ class Scheduler:
         start_time = datetime.datetime.now()
         try:
             output = task(**params)
+        except SchedulerRestart as exc:
+            # Allow these to flow up
+            raise
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -605,9 +627,13 @@ class MultiScheduler(Scheduler):
         This method is meant to controllably close the
         scheduler in case the scheduler crashed (with 
         Python exception) to properly inform the maintainer
-        and log the event
+        and log the event.
+
+        Also responsible of restarting the scheduler if
+        ordered.
         """
-        if exception is None:
+        non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
+        if exception is None or isinstance(exception, non_fatal_excs):
             try:
                 # Gracefully shut down (allow remaining tasks to finish)
                 while self.n_alive:
@@ -629,6 +655,11 @@ class MultiScheduler(Scheduler):
                 self.handle_return()
         else:
             self.terminate_all(reason="shutdown")
+
+        if isinstance(exception, SchedulerRestart):
+            # Clean up finished, restart is finally
+            # possible
+            self.restart()
 
 # Logging
     @property
