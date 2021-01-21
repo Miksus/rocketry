@@ -7,7 +7,7 @@ import multiprocessing
 import traceback
 import warnings
 import time
-import sys
+import sys, os
 import logging
 from logging.handlers import QueueHandler
 import datetime
@@ -109,6 +109,9 @@ class Scheduler:
                 self.run_cycle()
 
                 self.maintain()
+        except SystemExit as exc:
+            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
+            exception = exc
 
         except SchedulerRestart as exc:
             self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
@@ -166,7 +169,7 @@ class Scheduler:
         # TODO
         # https://stackoverflow.com/a/35874988
         self.logger.info(f"Restarting the scheduler...", extra={"action": "restart"})
-        subprocess.call(["bash", "restart_scheduler.sh"])
+        os.execl(sys.executable, sys.executable, *sys.argv)
         sys.exit(0)
     
     def shut_down(self, traceback=None, exception=None):

@@ -6,7 +6,10 @@ import os, sys
 class Restart(Task):
     "Restart the scheduler"
 
-    def execute_action(self, argv=None):
+    def execute_action(self, argv=None, exit=True, **kwargs):
         if argv is None:
             argv = sys.argv
-        os.execv(sys.argv[0], sys.argv)
+        # Works on Windows at least:
+        os.execl(sys.executable, sys.executable, *sys.argv)
+        if exit:
+            sys.exit()
