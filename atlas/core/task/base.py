@@ -16,6 +16,7 @@ import inspect
 
 from functools import wraps
 from copy import copy
+from itertools import count
 
 import pandas as pd
 
@@ -93,6 +94,7 @@ class Task:
     """
     use_instance_naming = False
     _logger_basename = "atlas.task"
+    on_exists = "raise"
 
     # TODO:
     #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
@@ -102,7 +104,7 @@ class Task:
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None, on_exists="raise"):
+                name=None, inputs=None, logger=None):
         """[summary]
 
         Arguments:
@@ -142,7 +144,6 @@ class Task:
             # a new logging record is made to prevent leaving to
             # run status and releasing the task
             self.logger.warning(f'Task {self.name} previously crashed unexpectedly.', extra={"action": "crash_release"})
-        self._register_instance(on_exists)
 
         # Whether the task is maintenance task
         self.is_maintenance = False
@@ -198,23 +199,12 @@ class Task:
         set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
-    def _register_instance(self, on_exists):
-        if on_exists == "raise":
-            if self.name in _TASKS:
-                raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_TASKS.keys())}")
-            else:
-                _TASKS[self.name] = self
-        elif on_exists == "replace":
-            _TASKS[self.name] = self
-        elif on_exists == "ignore":
-            pass
-        else:
-            raise ValueError(f"Invalid value for on_exists: '{on_exists}'")
-
     def __call__(self, **params):
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
+        # (If SystemExit is raised, it won't be catched in except Exception)
+        status = None
         try:
             params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
@@ -301,13 +291,39 @@ class Task:
     
     @name.setter
     def name(self, name):
+        # TODO: Change the name in _TASKS
+        old_name = None if not hasattr(self, "_name") else self._name
+
         if name is None:
             name = (
                 id(self)
                 if self.use_instance_naming 
                 else self.get_default_name()
             )
+
+        if name == old_name:
+            return
+        
         self._name = str(name)
+
+        if name in _TASKS:
+            if self.on_exists == "replace":
+                _TASKS[name] = self
+            elif self.on_exists == "raise":
+                raise KeyError(f"Task {name} already exists. (All tasks: {_TASKS})")
+            elif self.on_exists == "ignore":
+                pass
+            elif self.on_exists == "rename":
+                for i in count():
+                    new_name = name + str(i)
+                    if new_name not in _TASKS:
+                        self.name = new_name
+                        return
+        else:
+            _TASKS[name] = self
+        
+        if old_name is not None:
+            del _TASKS[old_name]
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
