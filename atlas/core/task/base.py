@@ -348,13 +348,13 @@ class Task:
         self._logger = logger
 
     def log_running(self):
-        self.logger.info(f"Running '{self.name}'", extra={"action": "run"})
+        self.logger.info(f"", extra={"action": "run"})
 
     def log_failure(self):
         self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail"})
 
     def log_success(self):
-        self.logger.info(f"Task '{self.name}' succeeded", extra={"action": "success"})
+        self.logger.info(f"", extra={"action": "success"})
 
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
