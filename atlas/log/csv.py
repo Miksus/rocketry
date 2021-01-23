@@ -4,6 +4,7 @@ import csv
 import io
 import os
 from logging import Formatter, FileHandler
+from pathlib import Path
 
 class CsvFormatter(Formatter):
     # https://stackoverflow.com/a/19766056
@@ -90,24 +91,57 @@ class CsvHandler(FileHandler):
         )
     """
     # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
-    def __init__(self, *args, headers=None, fields=None, kwds_csv=None, **kwargs):
+    def __init__(self, filename, *args, delay=False, headers=None, kwds_csv=None, make_dir=False, **kwargs):
         """
         Open the specified file and use it as the stream for logging.
         """
-        super().__init__(*args, **kwargs)
+        if make_dir and not delay:
+            # We need to create the dir before opening
+            # the stream
+            self.create_dir()
+
+        super().__init__(filename, *args, delay=delay, **kwargs)
         
         kwds_csv = kwds_csv or {}
-        self.formatter = CsvFormatter(fields=fields, **kwds_csv)
         
-        self.headers = headers if headers is not None else self.formatter.fields
-        self.write_headers()
+        self.headers = headers
+        self.make_dir = make_dir
+
+        if not delay:
+            self.write_headers()
         
     def format(self, record):
         return self.formatter.format(record)
         
+    def emit(self, record):
+
+        delay = True if self.stream is None else None
+
+        # We need to create the dir before opening 
+        # the stream (if asked)
+        if delay and self.make_dir:
+            self.create_dir()
+
+        if delay:
+            # We open the stream for Filehandler.emit
+            # as the headers should be written
+            # before the row
+            # https://github.com/python/cpython/blob/master/Lib/logging/__init__.py#L1201
+            self.stream = self._open()
+            self.write_headers()
+
+        super().emit(record)
+
+    def create_dir(self):
+        "Create directory where the log file is"
+        filename = self.baseFilename
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+
     def write_headers(self):
         file = self.baseFilename
-        header_str = self.formatter.to_row(self.headers)
+        headers = self.headers
+
+        header_str = self.formatter.to_row(headers)
         if os.path.getsize(file) == 0:
             # If the file is empty, it must miss headers
             # thus made
@@ -129,6 +163,8 @@ class CsvHandler(FileHandler):
             else None
         )
         parse_dates = kwargs.pop("parse_dates", dt_cols)
+        if not Path(self.baseFilename).exists():
+            return pd.DataFrame(columns=self.headers)
         return pd.read_csv(self.baseFilename, parse_dates=parse_dates, dialect=self.formatter.writer.dialect, **kwargs)
 
     def clear_log(self):
@@ -138,3 +174,11 @@ class CsvHandler(FileHandler):
         with open(file, "w") as f:
             pass
         self.write_headers()
+
+    @property
+    def headers(self):
+        return self.formatter.fields if self._headers is None else self._headers
+
+    @headers.setter
+    def headers(self, val):
+        self._headers = val

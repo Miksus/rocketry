@@ -15,7 +15,7 @@ from atlas.core.schedule.schedule import Scheduler, clear_schedulers, get_all_sc
 
 
 from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
-from atlas.log import CsvHandler
+from atlas.log import CsvHandler, CsvFormatter
 
 class _Session:
     """Collection of the relevant data and methods
@@ -90,15 +90,17 @@ class _Session:
         task_logger = logging.getLogger(Task._logger_basename)
         task_logger.handlers = []
 
-        handler = CsvHandler(
-            log_file,
-            fields=[
-                "asctime",
-                "levelname",
-                "action",
-                "task_name",
-                "exc_text",
-            ]
+        handler = CsvHandler(log_file, delay=True)
+        handler.setFormatter(
+            CsvFormatter(
+                fields=[
+                    "asctime",
+                    "levelname",
+                    "action",
+                    "task_name",
+                    "exc_text",
+                ]
+            )
         )
 
         task_logger.addHandler(handler)

@@ -6,7 +6,6 @@ from atlas.core.task.base import Task, clear_tasks, get_task
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas import session
-from atlas.session import session
 
 import pytest
 import logging

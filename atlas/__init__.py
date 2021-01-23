@@ -6,4 +6,4 @@ from . import (
     parameters,
     time
 )
-from .session import session
+from ._session import session
