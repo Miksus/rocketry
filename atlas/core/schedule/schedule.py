@@ -187,7 +187,9 @@ class Scheduler:
         elif self.restarting == "fresh":
             # Relaunch the process in new window
             subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
-    
+        else:
+            raise ValueError(f"Invalid restaring: {self.restarting}")
+
     def shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler
         This method is meant to controllably close the
