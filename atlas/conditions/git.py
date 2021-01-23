@@ -10,8 +10,9 @@ except ImportError:
 
 
 @Statement.from_func(historical=False, quantitative=False, use_globals=True)
-def IsGitBehind(repo, fetch=False, **kwargs):
+def IsGitBehind(repo=None, fetch=False, **kwargs):
     "Check whether the GIT repository is behind"
+    repo = Repo(repo)
     if fetch:
         repo.remotes.fetch()
     try:
