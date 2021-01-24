@@ -1,6 +1,6 @@
 
 from atlas.task.maintain import GitFetch, GitPull, PipInstall, Restart
-from atlas.conditions import TasksAlive, IsGitBehind
+from atlas.conditions import TasksAlive, IsGitBehind, DependSuccess
 
 from .tasks import TaskFinderBase
 
