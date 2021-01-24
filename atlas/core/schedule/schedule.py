@@ -145,7 +145,7 @@ class Scheduler:
     def hibernate(self):
         "Go to sleep and wake up when next task can be executed"
         delay = self.delay
-        self.logger.info(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
+        self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
         time.sleep(delay)
 
     def maintain(self):
@@ -155,10 +155,10 @@ class Scheduler:
             - Clean up the log files
             - Update the packages
         """
-        self.logger.info(f"Maintaining the scheduler...", extra={"action": "maintain"})
+        self.logger.debug(f"Maintaining the scheduler...", extra={"action": "maintain"})
         tasks = self.maintainer_tasks
         if tasks:
-            self.logger.info(f"Beginning maintaining cycle. Has {len(tasks)} tasks", extra={"action": "run"})
+            self.logger.debug(f"Beginning maintaining cycle. Has {len(tasks)} tasks", extra={"action": "run"})
             for task in tasks:
                 if bool(task):
                     self.run_task(task, scheduler=True)
@@ -173,7 +173,7 @@ class Scheduler:
         """
         # TODO
         # https://stackoverflow.com/a/35874988
-        self.logger.info(f"Restarting the scheduler...", extra={"action": "restart"})
+        self.logger.debug(f"Restarting the scheduler...", extra={"action": "restart"})
         python = sys.executable
 
         if self.restarting == "replace":
@@ -205,7 +205,7 @@ class Scheduler:
     def run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.task_list
-        self.logger.info(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
+        self.logger.debug(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
             if bool(task):
                 self.run_task(task)
@@ -256,13 +256,13 @@ class Scheduler:
 
     def log_success(self, task, **kwargs):
         "Log a succeeded task"
-        self.logger.info(f"Task {task} succeeded.")
+        self.logger.debug(f"Task {task} succeeded.")
 
     def log_failure(self, task, exception, **kwargs):
         "Log a failed task"
         tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
         tb_string = ''.join(tb)
-        self.logger.error(f"Task {task} failed: \n{tb_string}")
+        self.logger.debug(f"Task {task} failed: \n{tb_string}")
 
 # Core properties
     @property
@@ -384,7 +384,7 @@ class MultiScheduler(Scheduler):
     def run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.task_list
-        self.logger.info(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
+        self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
             self.handle_logs()
             self.handle_return()
@@ -585,7 +585,7 @@ class MultiScheduler(Scheduler):
 
     def setup(self):
         "Set up the scheduler"
-        #self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
+        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         #self.setup_listener()
         super().setup()
         self._log_queue = multiprocessing.Queue(-1)
