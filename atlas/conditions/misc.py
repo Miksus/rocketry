@@ -36,8 +36,8 @@ def FileExists(filename):
 
 # GIT
 @Statement.from_func(historical=True, quantitative=False)
-def LastCommitted(_start_, _end_, repo=None):
-    repo = Repo(repo)
+def LastCommitted(_start_, _end_, root=None):
+    repo = Repo(root)
     last_commit = next(iter(repo.iter_commits()))
     dt = pd.Timestamp(last_commit.committed_date, unit="s")
     return _start_ <= dt <= _end_
