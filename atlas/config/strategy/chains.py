@@ -6,8 +6,9 @@ from .tasks import TaskFinderBase
 
 # Premade chains
 class AutoUpdate(TaskFinderBase):
-    def __init__(self, start_cond, **kwargs):
+    def __init__(self, start_cond, requirements_txt=None, **kwargs):
         self.start_cond = start_cond
+        self.requirements_txt = requirements_txt
 
     def __call__(self, **kwargs):
         start_cond = self.start_cond
@@ -27,7 +28,7 @@ class AutoUpdate(TaskFinderBase):
         )
         pip_install = PipInstall(
             start_cond=DependSuccess(depend_task=git_pull),
-            parameters={"file": "requirements.txt"},
+            parameters={"requirements": self.requirements_txt},
             name="pip_install"
         )
         restart = Restart(
