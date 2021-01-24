@@ -585,7 +585,6 @@ class MultiScheduler(Scheduler):
 
     def setup(self):
         "Set up the scheduler"
-        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         #self.setup_listener()
         super().setup()
         self._log_queue = multiprocessing.Queue(-1)
