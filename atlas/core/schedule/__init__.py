@@ -1,1 +1,4 @@
-from .schedule import MultiScheduler, Scheduler
+from .schedule import (
+    MultiScheduler, Scheduler, 
+    clear_schedulers,
+)
