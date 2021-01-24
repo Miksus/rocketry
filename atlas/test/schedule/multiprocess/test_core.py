@@ -107,7 +107,7 @@ def test_task_fail_traceback(tmpdir):
         failures = history[history["action"] == "fail"]
         assert 3 == len(failures)
 
-        for tb in failures["exc_text"]:
+        for tb in failures["message"]:
             assert "Traceback (most recent call last):" in tb
             assert "RuntimeError: Task failed" in tb
 

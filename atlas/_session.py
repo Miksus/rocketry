@@ -16,6 +16,7 @@ from atlas.core.schedule.schedule import Scheduler, clear_schedulers, get_all_sc
 
 from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
 from atlas.log import CsvHandler, CsvFormatter
+from atlas.config import get_default
 
 class _Session:
     """Collection of the relevant data and methods
@@ -79,36 +80,8 @@ class _Session:
 
     def reset(self):
         "Set Pypipe ecosystem to default settings (clearing tasks etc)"
-        clear_tasks()
-        clear_schedulers()
-
-        self.parameters.clear()
-
-        # Setting task logger
-        log_file = "log/task.csv"
-        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
-        task_logger = logging.getLogger(Task._logger_basename)
-        task_logger.handlers = []
-
-        handler = CsvHandler(log_file, delay=True)
-        handler.setFormatter(
-            CsvFormatter(
-                fields=[
-                    "asctime",
-                    "levelname",
-                    "action",
-                    "task_name",
-                    "exc_text",
-                ]
-            )
-        )
-
-        task_logger.addHandler(handler)
-        task_logger.setLevel(logging.INFO)
-
-        # Set scheduler logger
-        sched_logger = logging.getLogger(Scheduler._logger_basename)
-        Scheduler.logger = sched_logger
+        get_default("csv_logging")
+        return
         
     @property
     def parameters(self):
