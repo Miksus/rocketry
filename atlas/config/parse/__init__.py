@@ -5,11 +5,21 @@ from .scheduler import parse_scheduler
 from .strategy import parse_strategy
 from logging.config import dictConfig as parse_logging
 
+from atlas.core.task import clear_tasks
+from atlas.core.schedule import clear_schedulers
+from atlas.core.parameters import clear_parameters
+
 # Reading config files
 from pybox.io import read_yaml
 from pathlib import Path
 
 def parse_dict_config(conf):
+    clear = conf.get("clear_existing", True)
+    if clear:
+        clear_tasks()
+        clear_schedulers()
+        clear_parameters()
+
 
     sched_conf = conf["scheduler"]
     #task_conf = conf.get("tasks", None)
