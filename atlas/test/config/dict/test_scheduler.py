@@ -1,5 +1,5 @@
 
-from atlas.config import parse_dict_config
+from atlas.config import parse_dict
 
 from atlas.core import Scheduler, MultiScheduler
 
@@ -11,7 +11,7 @@ from textwrap import dedent
 import sys
 
 def test_minimal():
-    scheduler = parse_dict_config(
+    scheduler = parse_dict(
         {"scheduler": {}}
     )
     assert isinstance(scheduler, Scheduler)
@@ -28,7 +28,7 @@ def test_basic_scheduler(tmpdir):
             pass
         """))
 
-        scheduler = parse_dict_config(
+        scheduler = parse_dict(
             {
                 "scheduler": {
                     "name": "my_scheduler",
@@ -74,7 +74,7 @@ def test_strategy_project_finder(tmpdir):
             pass
         """))
 
-        scheduler = parse_dict_config(
+        scheduler = parse_dict(
             {
                 "scheduler": {
                     "name": "my_scheduler",
