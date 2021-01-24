@@ -7,6 +7,7 @@ from atlas.conditions import AlwaysFalse
 from atlas.parse import parse_condition
 
 from textwrap import dedent
+from atlas import session
 
 import sys
 
@@ -17,6 +18,7 @@ def test_minimal():
     assert isinstance(scheduler, Scheduler)
 
 def test_basic_scheduler(tmpdir):
+    session.reset()
     with tmpdir.as_cwd() as old_dir:
         sys.path.append(str(tmpdir))
         tmpdir.join("funcs.py").write(dedent("""
