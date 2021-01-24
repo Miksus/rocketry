@@ -134,9 +134,7 @@ class Scheduler:
         else:
             self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
         finally:
-            print("SHUT DOWN")
             self.shut_down(exception=exception)
-            print("DONE")
 # Core
     def setup(self):
         "Set up the scheduler"
@@ -370,7 +368,6 @@ def _listen_task_status(handlers, queue):
             logger.handle(record)  # No level or filter logic applied - just do it!
         except Exception:
             import sys, traceback
-            print('Whoops! Problem:', file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
 
 
