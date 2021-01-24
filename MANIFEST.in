@@ -1,2 +1,3 @@
 include atlas/test/test_files/*.ipynb
 include atlas/test/test_files/*.py
+include atlas/config/defaults/*.yaml
