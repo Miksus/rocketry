@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from atlas.time.interval import (
-    TimeOfDay, DaysOfWeek
+    TimeOfDay
 )
 
 import pandas as pd
@@ -69,7 +69,7 @@ import pytest
             id="Left of full interval"),
     ],
 )
-def test_rollforward_timeofday(start, end, dt, roll_start, roll_end):
+def test_rollforward(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollforward(dt)
@@ -137,7 +137,7 @@ def test_rollforward_timeofday(start, end, dt, roll_start, roll_end):
             id="Left of full interval", marks=pytest.mark.xfail),
     ],
 )
-def test_rollback_timeofday(start, end, dt, roll_start, roll_end):
+def test_rollback(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollback(dt)

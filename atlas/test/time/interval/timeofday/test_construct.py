@@ -1,7 +1,7 @@
 
 
 from atlas.time.interval import (
-    TimeOfDay, DaysOfWeek
+    TimeOfDay
 )
 
 import pytest
@@ -47,7 +47,7 @@ NS_IN_HOUR   = 1e+9 * 60 * 60
             id="Full Open"),
     ],
 )
-def test_construct_timeofday(start, end, start_ns, end_ns):
+def test_construct(start, end, start_ns, end_ns):
     time = TimeOfDay(start, end)
     assert start_ns == time._start
     assert end_ns == time._end

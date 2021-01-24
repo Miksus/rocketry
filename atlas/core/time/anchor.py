@@ -3,123 +3,88 @@
 import re
 import dateutil
 import calendar
+from abc import abstractmethod
 
 import pandas as pd
 from .utils import to_nanoseconds, timedelta_to_str, to_dict
 from .base import TimeCycle, TimeInterval
 
-class AnchoredMixin:
+
+class AnchoredInterval(TimeInterval):
+    """Base class for interval for those that have 
+    fixed time unit (that can be converted to nanoseconds).
+
+    Converts start and end to nanoseconds where
+    0 represents the beginning of the interval
+    (ie. for a week: monday 00:00 AM) and max
+    is number of nanoseconds from start to the
+    end of the interval.
+    
+    Examples for start=0 nanoseconds
+        - for a week: Monday
+        - for a day: 00:00
+        - for a month: 1st day
+    
+
+    Methods:
+    --------
+        anchor_dict --> int : Calculate corresponding nanoseconds from dict
+        anchor_str --> int : Calculate corresponding nanoseconds from string
+        anchor_int --> int : Calculate corresponding nanoseconds from integer
+
+    Properties:
+        start --> int : Nanoseconds on the interval till the start
+        end   --> int : Nanoseconds on the interval till the end 
+
+    Class attributes:
+    -----------------
+        _scope [str] : 
+    """
+    components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
     _fixed_components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
     _scope = None # ie. day, hour, second, microsecond
     _scope_max = None
 
-    def anchor_int(self, i):
-        return to_nanoseconds(**{self._scope: i})
-
-    def anchor_dict(self, d):
-        comps = self._fixed_components[(self._fixed_components.index(self._scope) + 1):]
-        kwargs = {key: val for key, val in d.items() if key in comps}
-        return to_nanoseconds(**kwargs)
-
-    def anchor(self, value):
-        "Turn value to nanoseconds relative to scope of the class"
-        if isinstance(value, dict):
-            # {"hour": 10, "minute": 20}
-            return self.anchor_dict(value)
-
-        elif isinstance(value, int):
-            # start is considered as unit of the second behind scope
-            return self.anchor_int(value)
-
-        elif isinstance(value, str):
-            return self.anchor_str(value)
-        raise TypeError(value)
-
-class AnchoredCycle(AnchoredMixin, TimeCycle):
-    
-    def __init__(self, start=None):
-        self.start = start
-
-    @property
-    def start(self):
-        delta = pd.Timedelta(self._start, unit="ns")
-        return timedelta_to_str(delta)
-
-    @start.setter
-    def start(self, val):
-        self._start = (
-            self.anchor(val) 
-            if val is not None 
-            else 0
-        )
-# TODO
-    def rollback(self, dt):
-
-        ns = self.anchor_dt(dt)
-        ns_offset = self._start - ns
-        if ns >= self._start:
-            #       dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            pass
-        else:
-            #               dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            ns_offset -= self._scope_max
-
-        ns_offset = self._start - ns
-        offset = pd.Timedelta(ns_offset, unit="ns")
-
-        start = pd.Timestamp(dt) + offset
-        end = pd.Timestamp(dt)
-
-        return pd.Interval(start, end)
-
-    def rollforward(self, dt):
-        ns = self.anchor_dt(dt)
-        ns_offset = self._start - ns
-
-        if ns >= self._start:
-            #       dt           (dt_end)
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            ns_offset += self._scope_max
-        else:
-            #               dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            pass
-
-        
-        offset = pd.Timedelta(ns_offset - 1, unit="ns")
-
-        start = pd.Timestamp(dt)
-        end = pd.Timestamp(dt) + offset
-        
-        return pd.Interval(start, end)
-
-class AnchoredInterval(AnchoredMixin, TimeInterval):
-    """Base for interval for those that have fixed time unit (that can be converted to nanoseconds)
-    """
-    components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
-
-
-    _ceil_end_time = False
-
     def __init__(self, start=None, end=None):
         self.start = start
         self.end = end
 
-    @classmethod
-    def from_starting(cls, starting):
-        # Replaces TimeCycles
-        obj = cls(starting)
-        if obj._start != 0:
-            # End is one nanosecond away from start
-            obj._end = obj._start - 1 
+    def anchor(self, value, **kwargs):
+        "Turn value to nanoseconds relative to scope of the class"
+        if isinstance(value, dict):
+            # {"hour": 10, "minute": 20}
+            return self.anchor_dict(value, **kwargs)
+
+        elif isinstance(value, int):
+            # start is considered as unit of the second behind scope
+            return self.anchor_int(value, **kwargs)
+
+        elif isinstance(value, str):
+            return self.anchor_str(value, **kwargs)
+        raise TypeError(value)
+
+    def anchor_int(self, i, **kwargs):
+        return to_nanoseconds(**{self._scope: i})
+
+    def anchor_dict(self, d, **kwargs):
+        comps = self._fixed_components[(self._fixed_components.index(self._scope) + 1):]
+        kwargs = {key: val for key, val in d.items() if key in comps}
+        return to_nanoseconds(**kwargs)
+
+    def anchor_dt(self, dt, **kwargs):
+        "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
+        components = self.components
+        components = components[components.index(self._scope) + 1:]
+        d = to_dict(dt)
+        d = {
+            key: val
+            for key, val in d.items()
+            if key in components
+        }
+
+        return to_nanoseconds(**d)
 
     @property
     def start(self):
@@ -129,7 +94,7 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
     @start.setter
     def start(self, val):
         self._start = (
-            self.anchor(val) 
+            self.anchor(val, side="start") 
             if val is not None 
             else 0
         )
@@ -142,29 +107,26 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
     @end.setter
     def end(self, val):
         ns = (
-            self.anchor(val) 
+            self.anchor(val, side="end") 
             if val is not None 
             else self._scope_max
         )
 
         has_time = (ns % to_nanoseconds(day=1)) != 0
-        if self._ceil_end_time and has_time:
-            ns = ns + (to_nanoseconds(day=1) - 1)
 
         self._end = ns
 
-    def anchor_dt(self, dt):
-        "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
-        components = self.components
-        components = components[components.index(self._scope) + 1:]
-        d = to_dict(dt)
-        d = {
-            key: val
-            for key, val in d.items()
-            if key in components
-        }
+    @abstractmethod
+    def anchor_str(self, s, **kwargs):
+        raise NotImplementedError
 
-        return to_nanoseconds(**d)
+    @classmethod
+    def from_starting(cls, starting):
+        # Replaces TimeCycles
+        obj = cls(starting)
+        if obj._start != 0:
+            # End is one nanosecond away from start
+            obj._end = obj._start - 1 
 
     def __contains__(self, dt):
         "Whether dt is in the interval"
@@ -181,7 +143,7 @@ class AnchoredInterval(AnchoredMixin, TimeInterval):
         ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
 
 
-        is_over_period = ns_start > ns_end
+        is_over_period = ns_start > ns_end # period is overnight, over weekend etc.
         if not is_over_period:
             return ns_start <= ns <= ns_end
         else:
@@ -441,7 +403,6 @@ class WeekMixin:
 
     _scope = "week"
     _scope_max = to_nanoseconds(day=1) * 7
-    _ceil_end_time = True
 
     weeknum_mapping = {
         **dict(zip(calendar.day_name, range(7))), 
@@ -477,7 +438,6 @@ class WeekMixin:
 class MonthMixin:
 
     _scope = "year"
-    _ceil_end_time = True
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 
@@ -521,7 +481,6 @@ class YearMixin:
 
     _scope = "year"
     _scope_max = to_nanoseconds(day=1) * 366
-    _ceil_end_time = True
 
     monthnum_mapping = {
         **dict(zip(calendar.month_name[1:], range(12))), 

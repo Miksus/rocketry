@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from atlas.time.interval import (
-    TimeOfDay, DaysOfWeek
+    TimeOfDay
 )
 
 import pytest
@@ -62,7 +62,7 @@ import pytest
             id="Left of full interval"),
     ],
 )
-def test_in_timeofday(start, end, dt):
+def test_in(start, end, dt):
     time = TimeOfDay(start, end)
     assert dt in time
 
@@ -91,18 +91,6 @@ def test_in_timeofday(start, end, dt):
             id="Right from overnight interval"),
     ],
 )
-def test_not_in_timeofday(start, end, dt):
+def test_not_in(start, end, dt):
     time = TimeOfDay(start, end)
     assert dt not in time
-
-
-@pytest.mark.parametrize("dt", [datetime(2020, 6, 1, 0, 0), datetime(2020, 6, 5, 23, 59)])
-def test_daysofweek_true(dt):
-    time = DaysOfWeek("Mon", "Fri")
-    assert dt in time
-
-@pytest.mark.parametrize("dt", [datetime(2020, 6, 2, 0, 0), datetime(2020, 6, 4, 23, 59)])
-def test_daysofweek_false(dt):
-    time = DaysOfWeek("Mon", "Fri")
-    assert dt not in time
-
