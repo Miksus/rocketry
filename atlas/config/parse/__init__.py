@@ -13,7 +13,7 @@ from atlas.core.parameters import clear_parameters
 from pybox.io import read_yaml
 from pathlib import Path
 
-def parse_dict_config(conf):
+def parse_dict(conf):
     clear = conf.get("clear_existing", True)
     if clear:
         clear_tasks()
@@ -21,7 +21,7 @@ def parse_dict_config(conf):
         clear_parameters()
 
 
-    sched_conf = conf["scheduler"]
+    sched_conf = conf.get("scheduler", None)
     #task_conf = conf.get("tasks", None)
     #maintain_conf = conf.get("tasks", None)
     param_conf = conf.get("parameters", None)
@@ -34,18 +34,18 @@ def parse_dict_config(conf):
 
     scheduler = parse_scheduler(sched_conf)
 
-    if param_conf:
-        parse_params(param_conf, scheduler=scheduler)
-    if strategy_conf:
-        parse_strategy(strategy_conf, scheduler=scheduler)
+
+    parse_params(param_conf, scheduler=scheduler)
+    parse_strategy(strategy_conf, scheduler=scheduler)
     
     return scheduler
 
-def parse_yaml_config(conf):
-    conf = read_yaml(yaml)
-    return parse_dict_config(conf)
+def parse_yaml(path):
+    conf = read_yaml(path)
+    return parse_dict(conf)
 
-def parse_default_config(name):
-    root = Path(__file__).parent / "defaults"
+def get_default(name):
+    # From atlas/config/default
+    root = Path(__file__).parent.parent / "defaults"
     path = root / (name + ".yaml")
-    return parse_yaml_config(path)
+    return parse_yaml(path)

@@ -44,7 +44,7 @@ def parse_task_strategy(conf:dict):
     return cls(**conf, config=task_config)
 
 
-def parse_strategy(conf:dict, scheduler):
+def parse_strategy(conf:dict, scheduler) -> None:
     """Parse strategy part of the config
 
     Example:
@@ -55,6 +55,8 @@ def parse_strategy(conf:dict, scheduler):
             "maintainers": [...], # See parse_task_strategy
         }
     """
+    if not conf:
+        return
 
     auto_refresh = conf.pop("auto_refresh", False)
 

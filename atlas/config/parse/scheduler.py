@@ -2,7 +2,7 @@
 from atlas.core import MultiScheduler, Scheduler
 from .tasks import parse_tasks
 
-def parse_scheduler(conf:dict):
+def parse_scheduler(conf:dict) -> Scheduler:
     """Parse a scheduler section of a config
 
     Example:
@@ -15,6 +15,8 @@ def parse_scheduler(conf:dict):
             ... # Other params to __init__ of Scheduler/Multischeduler
         }
     """
+    if conf is None:
+        return None
     conf_tasks = conf.pop("tasks", None)
     conf_maintainers = conf.pop("maintainer_tasks", None)
 

@@ -7,3 +7,4 @@ from . import (
     time
 )
 from ._session import session
+from .config import *
