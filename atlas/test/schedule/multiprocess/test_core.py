@@ -47,7 +47,7 @@ def test_task_execution(tmpdir):
         # actual measurable impact outside atlas
         scheduler = MultiScheduler(
             [
-                FuncTask(create_line_to_file, name="add line to file"),
+                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue()),
             ], 
             shut_condition=TaskStarted(task="add line to file") >= 3,
         )
@@ -75,7 +75,7 @@ def test_task_execution(tmpdir):
 def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(task_func, name="task")
+        task = FuncTask(task_func, name="task", start_cond=AlwaysTrue())
 
         scheduler = MultiScheduler(
             [
@@ -95,7 +95,7 @@ def test_task_fail_traceback(tmpdir):
     # See: https://bugs.python.org/issue34334
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_failing, name="task")
+        task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue())
 
         scheduler = MultiScheduler(
             [
@@ -147,7 +147,7 @@ def test_task_force_state(tmpdir, state):
 def test_task_timeout(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_slow, name="slow task")
+        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
 
         scheduler = MultiScheduler(
             [
@@ -169,9 +169,9 @@ def test_priority(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
-        task_1 = FuncTask(run_succeeding, priority=1, name="first")
-        task_2 = FuncTask(run_failing, priority=10, name="last")
-        task_3 = FuncTask(run_failing, priority=5, name="second")
+        task_1 = FuncTask(run_succeeding, priority=1, name="first", start_cond=AlwaysTrue())
+        task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue())
+        task_3 = FuncTask(run_failing, priority=5, name="second", start_cond=AlwaysTrue())
         scheduler = MultiScheduler(
             [
                 task_1,
@@ -195,7 +195,7 @@ def test_priority(tmpdir):
 def test_pass_params_as_global(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_with_param, name="parametrized")
+        task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue())
         scheduler = MultiScheduler(
             [
                 task,
@@ -220,7 +220,8 @@ def test_pass_params_as_local(tmpdir):
         task = FuncTask(
             run_with_param, 
             name="parametrized", 
-            parameters={"int_5": 5, "extra_param": "something"}
+            parameters={"int_5": 5, "extra_param": "something"},
+            start_cond=AlwaysTrue()
         )
         scheduler = MultiScheduler(
             [
@@ -242,7 +243,8 @@ def test_pass_params_as_local_and_global(tmpdir):
         task = FuncTask(
             run_with_param, 
             name="parametrized", 
-            parameters={"int_5": 5}
+            parameters={"int_5": 5},
+            start_cond=AlwaysTrue()
         )
         scheduler = MultiScheduler(
             [
@@ -271,7 +273,7 @@ def test_maintainer_task(tmpdir):
         scheduler = MultiScheduler(
             tasks=[],
             maintainer_tasks=[
-                FuncTask(run_maintainer, name="maintainer"),
+                FuncTask(run_maintainer, name="maintainer", start_cond=AlwaysTrue()),
             ], 
             shut_condition=TaskStarted(task="maintainer") >= 1,
             name="unmaintained scheduler"

@@ -94,16 +94,19 @@ def test_dependency(tmpdir):
         session.reset()
         task_a = FuncTask(
             run_successful_func, 
-            name="task_a"
+            name="task_a", 
+            start_cond=AlwaysTrue()
         )
         task_b = FuncTask(
             run_successful_func, 
-            name="task_b"
+            name="task_b", 
+            start_cond=AlwaysTrue()
         )
         task_dependent = FuncTask(
             run_successful_func, 
             dependent=["task_a", "task_b"],
-            name="task_dependent"
+            name="task_dependent", 
+            start_cond=AlwaysTrue()
         )
         assert not bool(task_dependent)
         task_a()
