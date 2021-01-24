@@ -1,11 +1,12 @@
 
 from atlas.task.maintain import GitFetch, GitPull, PipInstall, Restart
+from atlas.conditions import TasksAlive, IsGitBehind
 
-from .tasks import TaskStrategyMeta
+from .tasks import TaskFinderBase
 
 # Premade chains
-class AutoUpdate(metaclass=TaskStrategyMeta):
-    def __init__(self, start_cond):
+class AutoUpdate(TaskFinderBase):
+    def __init__(self, start_cond, **kwargs):
         self.start_cond = start_cond
 
     def __call__(self, **kwargs):

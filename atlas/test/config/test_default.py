@@ -17,3 +17,6 @@ def test_logger():
 
     # Some of the atlas.task handlers must have two way logger (ability to read log file)
     assert any(hasattr(handler, "read") for handler in loggers["atlas.task"].handlers)
+
+def test_pyproject():
+    scheduler = get_default("py_projects")
