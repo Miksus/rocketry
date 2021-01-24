@@ -123,7 +123,7 @@ class Task:
         self.name = name
         self.logger = logger
 
-        self.start_cond = AlwaysTrue() if start_cond is None else copy(start_cond)
+        self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
         self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
         self.end_cond = AlwaysFalse() if end_cond is None else copy(end_cond)
 
@@ -304,7 +304,7 @@ class Task:
         if name == old_name:
             return
         
-        self._name = str(name)
+        
 
         if name in _TASKS:
             if self.on_exists == "replace":
@@ -322,6 +322,8 @@ class Task:
         else:
             _TASKS[name] = self
         
+        self._name = str(name)
+
         if old_name is not None:
             del _TASKS[old_name]
 
