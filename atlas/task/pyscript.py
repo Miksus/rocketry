@@ -14,10 +14,10 @@ class ScriptTask(Task):
     ScriptTask("folder/subfolder/main.py")
     ScriptTask("folder/subfolder/mytask.py")
     """
-    main_func = "main"
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, main_func=None, **kwargs):
         self.path = path
+        self.main_func = "main" if main_func is None else main_func
         super().__init__(**kwargs)
 
     def execute_action(self, **params):
