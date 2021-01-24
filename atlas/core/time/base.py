@@ -192,6 +192,15 @@ class TimeInterval(TimePeriod):
         
         return pd.Interval(start, end, closed="both")
 
+    def __eq__(self, other):
+        "Test whether self and other are essentially the same periods"
+        is_same_class = type(self) == type(other)
+        if is_same_class:
+            return (self.start == other.start) and (self.end == other.end)
+        else:
+            return False
+
+
 
 class TimeDelta(TimePeriod):
     """Base for all time deltas
@@ -208,6 +217,11 @@ class TimeDelta(TimePeriod):
         day (ie. one day from an event)
 
     Answers to "past 1 hour"
+
+    Attributes:
+    ----------
+        past [str]: the amount of time the Timedelta is from reference point to past
+        future [str]: the amount of time the Timedelta is from reference point to future
     """
     _type_name = "delta"
     def __init__(self, past=None, future=None, kws_past=None, kws_future=None):
@@ -248,6 +262,13 @@ class TimeDelta(TimePeriod):
         end = pd.Timestamp(end)
         return pd.Interval(start, end)
 
+    def __eq__(self, other):
+        "Test whether self and other are essentially the same periods"
+        is_same_class = type(self) == type(other)
+        if is_same_class:
+            return (self.past == other.past) and (self.future == other.future)
+        else:
+            return False
 
 class TimeCycle(TimePeriod):
     """Base for all time cycles
