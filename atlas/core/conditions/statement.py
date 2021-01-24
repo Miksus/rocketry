@@ -39,7 +39,7 @@ class Statement(BaseCondition):
             ...
         
         file_modified.between("10:00", "11:00") # TimeInterval("10:00", "11:00")
-        file_modified.between("Mon", "Fri")     # DaysOfWeek.between("Mon", "Fri")
+        file_modified.between("Mon", "Fri")     # TimeOfWeek.between("Mon", "Fri")
         file_modified.between("1.", "15.")      # DaysOfMonth.between("1.", "15.")
         file_modified.past("2 hours")           # TimeDelta("2 hours")
         file_modified.in_("today")              # TimeInterval("00:00", "24:00")
@@ -65,7 +65,7 @@ class Statement(BaseCondition):
             ...
         
         has_run(mytask).between("10:00", "11:00").more_than(5) # TimeInterval("10:00", "11:00")
-        has_run(mytask).between("Mon", "Fri").less_than(3)     # DaysOfWeek.between("Mon", "Fri")
+        has_run(mytask).between("Mon", "Fri").less_than(3)     # TimeOfWeek.between("Mon", "Fri")
         has_run(mytask).between("1.", "15.")                   # DaysOfMonth.between("1.", "15.")
         has_run(mytask).past("2 hours")                        # TimeDelta("2 hours")
         has_run(mytask).in_("today")                           # TimeInterval("00:00", "24:00")

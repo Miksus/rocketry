@@ -19,10 +19,9 @@ from atlas.conditions import (
 
 from atlas.core.conditions.base import BaseCondition
 from atlas.time import (
+    TimeOfWeek,
     TimeOfDay,
-    DaysOfWeek,
     TimeOfHour,
-
     TimeDelta,
 )
 
@@ -32,11 +31,11 @@ def get_between(type_, start, end):
     type_ = type_.lower()
     cls = {
         "daily": TimeOfDay,
-        "weekly": DaysOfWeek,
+        "weekly": TimeOfWeek,
         "hourly": TimeOfHour,
 
         "day": TimeOfDay,
-        "week": DaysOfWeek,
+        "week": TimeOfWeek,
         "hour": TimeOfHour,
     }[type_]
     return cls(start, end)
@@ -45,11 +44,11 @@ def get_after(type_, start):
     type_ = type_.lower()
     cls = {
         "daily": TimeOfDay,
-        "weekly": DaysOfWeek,
+        "weekly": TimeOfWeek,
         "hourly": TimeOfHour,
 
         "day": TimeOfDay,
-        "week": DaysOfWeek,
+        "week": TimeOfWeek,
         "hour": TimeOfHour,
     }[type_]
     return cls(start, None)
@@ -58,11 +57,11 @@ def get_before(type_, end):
     type_ = type_.lower()
     cls = {
         "daily": TimeOfDay,
-        "weekly": DaysOfWeek,
+        "weekly": TimeOfWeek,
         "hourly": TimeOfHour,
 
         "day": TimeOfDay,
-        "week": DaysOfWeek,
+        "week": TimeOfWeek,
         "hour": TimeOfHour,
     }[type_]
     return cls(None, end)
@@ -71,11 +70,11 @@ def get_full_cycle(type_, starting=None):
     type_ = type_.lower()
     cls = {
         "daily": TimeOfDay,
-        "weekly": DaysOfWeek,
+        "weekly": TimeOfWeek,
         "hourly": TimeOfHour,
     
         "day": TimeOfDay,
-        "week": DaysOfWeek,
+        "week": TimeOfWeek,
         "hour": TimeOfHour,
     }[type_]
     return cls(starting, starting)

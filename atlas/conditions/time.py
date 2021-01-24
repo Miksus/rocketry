@@ -1,4 +1,4 @@
-from atlas.time import TimeOfDay, DaysOfWeek
+from atlas.time import TimeOfDay, TimeOfWeek
 
 from atlas.core.conditions.base import TimeCondition, IsPeriod
 
@@ -7,8 +7,8 @@ import datetime
 class IsTimeOfDay(TimeCondition):
     period_class = TimeOfDay
 
-class IsDaysOfWeek(TimeCondition):
-    period_class = DaysOfWeek
+class IsTimeOfWeek(TimeCondition):
+    period_class = TimeOfWeek
 
 class Randomly(TimeCondition):
 
