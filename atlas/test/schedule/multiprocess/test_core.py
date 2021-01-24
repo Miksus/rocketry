@@ -35,9 +35,13 @@ def create_line_to_file():
 def run_with_param(int_5):
     assert int_5 == 5
 
-def run_maintainer(_scheduler_):
+def run_maintainer_with_params(_scheduler_, _task_):
     assert isinstance(_scheduler_, MultiScheduler)
     _scheduler_.name = "maintained scheduler"
+    assert _task_.name == "maintainer"
+
+def run_maintainer():
+    pass
 
 def test_task_execution(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -263,7 +267,6 @@ def test_pass_params_as_local_and_global(tmpdir):
         assert 0 == (history["action"] == "fail").sum()
 
 
-# Maintainer
 def test_maintainer_task(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
@@ -274,6 +277,30 @@ def test_maintainer_task(tmpdir):
             tasks=[],
             maintainer_tasks=[
                 FuncTask(run_maintainer, name="maintainer", start_cond=AlwaysTrue()),
+            ], 
+            shut_condition=TaskStarted(task="maintainer") >= 1,
+            name="unmaintained scheduler"
+        )
+
+        scheduler()
+
+        history = get_task("maintainer").get_history()
+        assert 1 == (history["action"] == "run").sum()
+        assert 1 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+
+# Maintainer
+def test_maintainer_task_with_params(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        # To be confident the scheduler won't lie to us
+        # we test the task execution with a job that has
+        # actual measurable impact outside atlas
+        scheduler = MultiScheduler(
+            tasks=[],
+            maintainer_tasks=[
+                FuncTask(run_maintainer_with_params, name="maintainer", start_cond=AlwaysTrue()),
             ], 
             shut_condition=TaskStarted(task="maintainer") >= 1,
             name="unmaintained scheduler"

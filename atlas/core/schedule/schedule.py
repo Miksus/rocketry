@@ -300,6 +300,7 @@ class Scheduler:
     def maintainer_tasks(self, tasks:list):
         for task in tasks:
             task.parameters["_scheduler_"] = self
+            task.parameters["_task_"] = task # If the task takes itself as a parameter
             set_statement_defaults(task.start_cond, _scheduler_=self)
             
         self._maintainer_tasks = tasks
