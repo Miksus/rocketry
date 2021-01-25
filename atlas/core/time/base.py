@@ -196,7 +196,7 @@ class TimeInterval(TimePeriod):
         "Test whether self and other are essentially the same periods"
         is_same_class = type(self) == type(other)
         if is_same_class:
-            return (self.start == other.start) and (self.end == other.end)
+            return (self._start == other._start) and (self._end == other._end)
         else:
             return False
 
