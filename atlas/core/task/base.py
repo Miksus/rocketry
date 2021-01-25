@@ -7,7 +7,7 @@ from atlas.core.utils import is_pickleable
 from .utils import get_execution, get_dependencies
 
 # Rare exception: We need something from builtins (outside core) to be user friendly
-from atlas.parse import parse_condition
+from atlas.parse import parse_condition_clause
 from atlas.conditions import DependSuccess
 from atlas.core.parameters import Parameters
 
@@ -159,7 +159,7 @@ class Task:
     
     @start_cond.setter
     def start_cond(self, cond):
-        self._start_cond = parse_condition(cond) if isinstance(cond, str) else cond
+        self._start_cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
 
     @property
     def end_cond(self):
@@ -167,7 +167,7 @@ class Task:
     
     @end_cond.setter
     def end_cond(self, cond):
-        self._end_cond = parse_condition(cond) if isinstance(cond, str) else cond
+        self._end_cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
 
     @property
     def dependent(self):

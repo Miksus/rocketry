@@ -3,7 +3,6 @@ from atlas.config import get_default
 
 from atlas.core import Scheduler, MultiScheduler
 from atlas.conditions import AlwaysFalse
-from atlas.parse import parse_condition
 from atlas.log import CsvHandler
 
 from textwrap import dedent

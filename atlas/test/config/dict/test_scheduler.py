@@ -4,7 +4,7 @@ from atlas.config import parse_dict
 from atlas.core import Scheduler, MultiScheduler
 
 from atlas.conditions import AlwaysFalse
-from atlas.parse import parse_condition
+from atlas.parse import parse_condition_clause
 
 from textwrap import dedent
 from atlas import session
@@ -94,7 +94,7 @@ def test_strategy_project_finder(tmpdir):
         assert ["task_1", "task_2"] == [task.name for task in scheduler.tasks]
         assert [r"projects\task_1\main.py", r"projects\task_2\main.py"] == [str(task.path) for task in scheduler.tasks]
 
-        cond_task_1 = parse_condition("daily starting 10:00")
+        cond_task_1 = parse_condition_clause("daily starting 10:00")
         cond_task_1.kwargs["task"] = scheduler.tasks[0]
         assert [cond_task_1, AlwaysFalse()] == [task.start_cond for task in scheduler.tasks]
 
