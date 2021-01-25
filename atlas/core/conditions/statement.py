@@ -140,7 +140,11 @@ class Statement(BaseCondition):
         try:
             outcome = self.observe(*self.args, **self.get_kwargs())
             status = self._to_bool(outcome)
-        except IndexError:
+        except (KeyboardInterrupt, ImportError) as exc:
+            # Let these through
+            raise
+        except Exception as exc:
+            logger.exception(f"Statement '{self}' is False due to an Exception.")
             # Exceptions are considered that the statement is false
             return False
 
