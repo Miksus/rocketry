@@ -1,4 +1,4 @@
-from atlas.core.task import Task
+from atlas.core.task import Task, register_task_cls
 #from .config import parse_config
 
 from pathlib import Path
@@ -14,6 +14,7 @@ try:
 except ImportError as exc:
     warnings.warn(f"Jubox functionalities not found: '{exc}'", ImportWarning)
 
+@register_task_cls
 class JupyterTask(Task):
     """Task that executes a Jupyter Notebook
     """

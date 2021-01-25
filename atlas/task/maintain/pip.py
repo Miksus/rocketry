@@ -1,10 +1,11 @@
 
-from atlas.core.task import Task
+from atlas.core.task import Task, register_task_cls
 
 import sys
 from pathlib import Path
 import subprocess
 
+@register_task_cls
 class PipInstall(Task):
     def execute_action(self, 
                         interpreter=None, 

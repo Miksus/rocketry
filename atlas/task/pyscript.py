@@ -1,5 +1,5 @@
 
-from atlas.core.task import Task
+from atlas.core.task import Task, register_task_cls
 
 from pathlib import Path
 import inspect
@@ -8,6 +8,7 @@ import subprocess
 import re
 
 
+@register_task_cls
 class ScriptTask(Task):
     """Task that executes a Python script
 

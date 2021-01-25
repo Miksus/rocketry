@@ -1,5 +1,5 @@
 
-from atlas.task import FuncTask, ScriptTask
+from atlas.core.task import TASK_CLASSES
 
 import importlib
 
@@ -16,10 +16,7 @@ def _parse_task(**conf):
         }
     """
     type_ = conf.pop("class")
-    cls = {
-        "FuncTask": FuncTask,
-        "ScriptTask": ScriptTask,
-    }[type_]
+    cls = TASK_CLASSES[type_]
 
     if type_ == "FuncTask":
         # Load the actual function from string

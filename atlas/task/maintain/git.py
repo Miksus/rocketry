@@ -1,5 +1,5 @@
 
-from atlas.core.task import Task
+from atlas.core.task import Task, register_task_cls
 try:
     from git import Repo
 except ImportError:
@@ -8,6 +8,7 @@ except ImportError:
     pass
 
 
+@register_task_cls
 class GitFetch(Task):
     # Tested (manually)
     def execute_action(self, root=None, **kwargs):
@@ -16,6 +17,7 @@ class GitFetch(Task):
         origin = repo.remotes.origin
         origin.fetch()
 
+@register_task_cls
 class GitPull(Task):
     # Tested (manually)
     def execute_action(self, root=None, branch="master", **kwargs):

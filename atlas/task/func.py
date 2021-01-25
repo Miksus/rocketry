@@ -1,7 +1,7 @@
 
 
 
-from atlas.core.task import Task
+from atlas.core.task import Task, register_task_cls
 #from .config import parse_config
 
 from pathlib import Path
@@ -13,7 +13,7 @@ import re
 #from atlas.core.parameters import ParameterSet
 
 
-
+@register_task_cls
 class FuncTask(Task):
     """Function Task, task that executes a function
     """

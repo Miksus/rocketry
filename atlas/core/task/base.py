@@ -21,6 +21,7 @@ from itertools import count
 import pandas as pd
 
 _TASKS = {}
+TASK_CLASSES = {}
 
 def get_all_tasks():
     return _TASKS
@@ -38,6 +39,14 @@ def clear_tasks(exclude=None):
         preserve = {}
     
     _TASKS = preserve
+
+
+def register_task_cls(cls):
+    """Add Task class to registered
+    Task dict in order to initiate
+    it from configuration"""
+    TASK_CLASSES[cls.__name__] = cls
+    return cls
 
 
 class Task:
