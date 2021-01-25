@@ -11,6 +11,7 @@ import sys, os, subprocess
 import logging
 from logging.handlers import QueueHandler
 import datetime
+import platform
 from pathlib import Path
 from copy import deepcopy, copy
 from queue import Empty
@@ -184,7 +185,11 @@ class Scheduler:
             subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
         elif self.restarting == "fresh":
             # Relaunch the process in new window
-            subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            if platform.system() == "Windows":
+                subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                # Linux does not have CREATE_NEW_CONSOLE creation flag but shell=True is pretty close
+                subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
         else:
             raise ValueError(f"Invalid restaring: {self.restarting}")
 
