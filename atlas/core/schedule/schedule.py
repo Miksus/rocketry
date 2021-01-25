@@ -67,6 +67,7 @@ class Scheduler:
     parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
     def __init__(self, tasks, maintainer_tasks=None, 
+                startup_tasks=None, shutdown_tasks=None, 
                 shut_condition=None, 
                 min_sleep=0.1, max_sleep=600, 
                 parameters=None, logger=None, name=None,
@@ -82,6 +83,9 @@ class Scheduler:
         """
         self.tasks = tasks
         self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
+        self.startup_tasks = startup_tasks
+        self.shutdown_tasks = shutdown_tasks
+
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
         set_statement_defaults(self.shut_condition, _scheduler_=self)
@@ -142,6 +146,7 @@ class Scheduler:
         self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         self.n_cycles = 0
         self.startup_time = datetime.datetime.now()
+        self._run_tasks(self.startup_tasks)
 
     def hibernate(self):
         "Go to sleep and wake up when next task can be executed"
@@ -157,15 +162,7 @@ class Scheduler:
             - Update the packages
         """
         self.logger.debug(f"Maintaining the scheduler...", extra={"action": "maintain"})
-        tasks = self.maintainer_tasks
-        if tasks:
-            self.logger.debug(f"Beginning maintaining cycle. Has {len(tasks)} tasks", extra={"action": "run"})
-            for task in tasks:
-                if bool(task):
-                    self.run_task(task, scheduler=True)
-                    if task.force_state is True:
-                        # Reset force_state as a run has forced
-                        task.force_state = None
+        self._run_tasks(self.maintainer_tasks)
     
     def restart(self):
         """Restart the scheduler by creating a new process
@@ -203,24 +200,27 @@ class Scheduler:
         Also responsible of restarting the scheduler if
         ordered.
         """
+        self._run_tasks(self.shutdown_tasks, {"exception": exception, "traceback": traceback})
         if isinstance(exception, SchedulerRestart):
             self.restart()
 
+    def _run_tasks(self, tasks):
+        if tasks:
+            self.logger.debug(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
+            for task in tasks:
+                if bool(task):
+                    self.run_task(task)
+                    if task.force_state is True:
+                        # Reset force_state as a run has forced
+                        task.force_state = None
 
     def run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.task_list
-        self.logger.debug(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
-        for task in tasks:
-            if bool(task):
-                self.run_task(task)
-                if task.force_state is True:
-                    # Reset force_state as a run has forced
-                    # TODO: This to run_task maybe?
-                    task.force_state = None
+        self._run_tasks(tasks)
         self.n_cycles += 1
 
-    def run_task(self, task, scheduler=False):
+    def run_task(self, task, extra_params=None):
         "Run/execute one task"
         self.logger.debug(f"Running task {task}")
         
