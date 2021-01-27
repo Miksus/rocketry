@@ -2,6 +2,8 @@
 from atlas.config import parse_dict
 
 from atlas.core import Scheduler, MultiScheduler
+from atlas.core.task import get_task
+from atlas.parse import parse_condition_clause
 
 from atlas.conditions import AlwaysFalse
 from atlas.parse import parse_condition_clause
@@ -10,6 +12,17 @@ from textwrap import dedent
 from atlas import session
 
 import sys
+import pytest
+
+@pytest.fixture(autouse=True)
+def set_sys_path(tmpdir):
+    # Code that will run before your test, for example:
+    sys.path.append(str(tmpdir))
+    print(sys.path)
+    # A test function will be run at this point
+    yield
+    # Code that will run after your test, for example:
+    sys.path.remove(str(tmpdir))
 
 def test_minimal():
     scheduler = parse_dict(
@@ -17,11 +30,149 @@ def test_minimal():
     )
     assert isinstance(scheduler, Scheduler)
 
-def test_basic_scheduler(tmpdir):
+def test_full_featured(tmpdir):
     session.reset()
     with tmpdir.as_cwd() as old_dir:
-        sys.path.append(str(tmpdir))
+
+        # A throw-away file to link all pre-set tasks
         tmpdir.join("funcs.py").write(dedent("""
+        def do_a_task():
+            pass
+        """))
+
+        project_dir = tmpdir.mkdir("projects")
+
+        task_1 = project_dir.mkdir("annuals")
+        task_1.join("main.py").write(dedent("""
+        def main():
+            pass
+        """))
+        task_1.join("config.yaml").write(dedent("""
+        start_cond: daily starting 10:00
+        """))
+
+        # Task 2 will miss config file and should never run (automatically)
+        project_dir.mkdir("quarterly").join("main.py").write(dedent("""
+        def main():
+            pass
+        """))
+
+        scheduler = parse_dict(
+            {
+                "parameters": {
+                    "mode": "test"
+                },
+                "tasks": {
+                    "maintain.notify-1": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.notify-start-up": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task"},
+
+                    "fetch.stock-prices": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "fetch.fundamentals": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "calculate.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "report.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
+
+                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                },
+                "sequences": {
+                    "sequence.signals-1": {
+                        "start_cond": "daily starting 19:00", # Start condition for the first task of the sequence
+                        "tasks": [
+                            "fetch.stock-prices",
+                            "calculate.signals",
+                            "report.signals",
+                        ],
+                    },
+                    "sequence.signals-2": {
+                        "tasks": [
+                            "fetch.fundamentals",
+                            "calculate.signals",
+                            "report.signals",
+                        ]
+                    },
+                    "sequence.maintain": {
+                        "tasks": [
+                            "maintain.fetch",
+                            "maintain.pull",
+                            "maintain.status",
+                        ]
+                    },
+                },
+                "strategies": {
+                    "strategy.find-tasks": {"class": "ProjectFinder", "path": "projects", "config": {"class": "FileConfig"}}
+                },
+                "scheduler": {
+                    "name": "my_scheduler",
+                    "restarting": "relaunch",
+                    "tasks": [
+                        "fetch.stock-prices",
+                        "fetch.fundamentals",
+                        "calculate.signals",
+                        "report.signals",
+                        "strategy.find-tasks"
+                    ],
+                    "maintainer_tasks": [
+                        "maintain.notify-1",
+                        "sequence.maintain"
+                    ],
+                    "startup_tasks": ["maintain.notify-start-up"],
+                    "shutdown_tasks": ["maintain.notify-shut-down"],
+                    "parameters": {"maintainers": ["myself"]}
+                }
+            }
+        )
+        
+        assert isinstance(scheduler, Scheduler)
+
+        # Assert found tasks
+        tasks = {task.name for task in scheduler.tasks}
+        maintainers = {task.name for task in scheduler.maintainer_tasks}
+
+        startups = {task.name for task in scheduler.startup_tasks}
+        shutdowns = {task.name for task in scheduler.shutdown_tasks}
+        assert {
+            "fetch.stock-prices", 
+            "fetch.fundamentals", 
+            "calculate.signals",
+            "report.signals",
+
+            # From ProjectFinder
+            "annuals",
+            "quarterly",
+        } == tasks
+
+        assert {
+            "maintain.notify-1", 
+            "maintain.fetch",
+            "maintain.pull",
+            "maintain.status",
+        } == maintainers
+
+        assert {
+            "maintain.notify-start-up",
+        } == startups
+
+        assert {
+            "maintain.notify-shut-down"
+        } == shutdowns
+
+        assert {
+            # Globals
+            "mode": "test",
+            # Locals
+            "maintainers": ["myself"],
+        } == dict(**scheduler.parameters)
+
+        # Test sequences
+        assert get_task("fetch.stock-prices").start_cond == parse_condition_clause("daily starting 19:00")
+
+
+def test_scheduler_tasks_set(tmpdir):
+    session.reset()
+    with tmpdir.as_cwd() as old_dir:
+        tmpdir.join("some_funcs.py").write(dedent("""
         def do_task_1():
             pass
         def do_task_2():
@@ -36,11 +187,11 @@ def test_basic_scheduler(tmpdir):
                     "name": "my_scheduler",
                     "restarting": "relaunch",
                     "tasks": {
-                        "task_1": {"class": "FuncTask", "func": "funcs.do_task_1"},
-                        "task_2": {"class": "FuncTask", "func": "funcs.do_task_2"},
+                        "task_1": {"class": "FuncTask", "func": "some_funcs.do_task_1"},
+                        "task_2": {"class": "FuncTask", "func": "some_funcs.do_task_2"},
                     },
                     "maintainer_tasks": {
-                        "maintain.task_1": {"class": "FuncTask", "func": "funcs.do_maintain"}
+                        "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain"}
                     },
                     "parameters": {"param_a": 1, "param_b": 2}
                 }
@@ -54,11 +205,11 @@ def test_basic_scheduler(tmpdir):
         assert ["do_maintain"] == [task.func.__name__ for task in scheduler.maintainer_tasks]
 
         assert {"param_a": 1, "param_b": 2} == dict(**scheduler.parameters)
-        sys.path.remove(str(tmpdir))
+
 
 def test_strategy_project_finder(tmpdir):
+    session.reset()
     with tmpdir.as_cwd() as old_dir:
-        sys.path.append(str(tmpdir))
         project_dir = tmpdir.mkdir("projects")
 
         task_1 = project_dir.mkdir("task_1")
@@ -78,16 +229,16 @@ def test_strategy_project_finder(tmpdir):
 
         scheduler = parse_dict(
             {
+                "strategies": {
+                    "find-projects": {"class": "ProjectFinder", "path": "projects"},
+                },
                 "scheduler": {
                     "name": "my_scheduler",
                     "restarting": "relaunch",
-                },
-                "strategy": {
-                    "auto_refresh": False,
                     "tasks": [
-                        {"class": "ProjectFinder", "path": "projects"}
+                        "find-projects"
                     ]
-                }
+                },
             }
         )
         assert isinstance(scheduler, Scheduler)
@@ -101,4 +252,3 @@ def test_strategy_project_finder(tmpdir):
         #assert ["maintain.task_1"] == [task.name for task in scheduler.maintainer_tasks]
         #assert ["do_maintain"] == [task.func.__name__ for task in scheduler.maintainer_tasks]
     
-        sys.path.remove(str(tmpdir))

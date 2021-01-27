@@ -1,7 +1,7 @@
 
 from atlas.task import ScriptTask
 
-from .task_configs import TaskConfigFile
+from .task_configs import FileConfig
 from pathlib import Path
 
 
@@ -64,7 +64,7 @@ class ProjectFinder(TaskFinderBase):
 
         ProjectFinder(
             path="path/to/my_tasks",
-            config=TaskConfigFile(path="config.yaml")
+            config=FileConfig(path="config.yaml")
         )()
         >>> [
             ScriptTask(name="task_1", path="my_tasks/task_1/main.py", **config),
@@ -75,7 +75,7 @@ class ProjectFinder(TaskFinderBase):
     Returns: 
         List[Task] : Tasks (maintainer or normal) for a scheduler
     """
-    default_configs = TaskConfigFile("config.yaml")
+    default_configs = FileConfig("config.yaml")
 
     def __init__(self, path, main_func=None, **kwargs):
         self.path = Path(path)

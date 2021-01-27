@@ -27,7 +27,35 @@ def _parse_task(**conf):
 
     return cls(**conf)
 
-def parse_tasks(conf):
+
+def parse_tasks_from_dict(conf:dict, **kwargs):
+    """[summary]
+    Example:
+    --------
+        {
+            "task 1": {"class": "FuncTask", ...},
+
+        }
+    """
+    return [
+        _parse_task(**task_conf, name=name)
+        for name, task_conf in conf.items()
+    ]
+
+def parse_tasks_from_list(conf:list, **kwargs):
+    """[summary]
+    Example:
+    --------
+        [
+            {"class": "FuncTask", "name": "task 1", ...},
+        ]
+    """
+    return [
+        _parse_task(**task_conf)
+        for task_conf in conf
+    ]
+
+def parse_tasks(conf:dict, **kwargs):
     """Parse a task section of a scheduler
 
     Example:
@@ -45,7 +73,9 @@ def parse_tasks(conf):
     if conf is None:
         return []
 
-    return [
-        _parse_task(**setup, name=name)
-        for name, setup in conf.items()
-    ]
+    if isinstance(conf, dict):
+        return parse_tasks_from_dict(conf)
+    elif isinstance(conf, list):
+        return parse_tasks_from_list(conf)
+    else:
+        raise TypeError(type(conf))

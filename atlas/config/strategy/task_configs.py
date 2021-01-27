@@ -26,7 +26,7 @@ class TaskConfigBase(metaclass=_TaskConfigMeta):
             "priority": d.get("priority", 1),
         }
 
-class TaskConfigFile(TaskConfigBase):
+class FileConfig(TaskConfigBase):
 
     """Find arguments for Task from a config file
 
@@ -45,7 +45,7 @@ class TaskConfigFile(TaskConfigBase):
     def __init__(self, filename="config.yaml", if_missing="ignore"):
         self.filename = Path(filename)
         if self.filename.suffix not in self.readers:
-            raise NotImplementedError(f"TaskConfigFile not implemented for config files: {self.filename.suffix}")
+            raise NotImplementedError(f"FileConfig not implemented for config files: {self.filename.suffix}")
         self.if_missing = if_missing
 
     def __call__(self, path, root=None):

@@ -2,7 +2,7 @@
 from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas.core.parameters import Parameters
 
-def parse_params(conf:dict, scheduler) -> None:
+def parse_session_params(conf:dict, **kwargs) -> None:
     """Parse the parameters section of a config
     """
     if not conf:
