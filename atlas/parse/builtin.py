@@ -81,7 +81,7 @@ for regex, func in [
     (r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) after (?P<start>.+)",                   lambda **kwargs: TaskExecutable(period=get_after(**kwargs))),
     (r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) before (?P<end>.+)",                    lambda **kwargs: TaskExecutable(period=get_before(**kwargs))),
     (r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)",                                       lambda **kwargs: TaskExecutable(period=get_full_cycle(**kwargs))),
-    (r"(run )?every (?P<value>.+)",                                                                   lambda **kwargs: TaskExecutable(period=TimeDelta(**kwargs))),
+    (r"(run )?every (?P<past>.+)",                                                                   lambda **kwargs: TaskExecutable(period=TimeDelta(**kwargs))),
 
     # Time is as specified (TODO)
     (r"time of (?P<type_>month|week|day|hour|minute) between (?P<start>.+) and (?P<end>.+)", lambda **kwargs: IsPeriod(period=get_between(**kwargs))),

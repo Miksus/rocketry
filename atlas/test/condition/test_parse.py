@@ -66,6 +66,9 @@ import pytest
         pytest.param("weekly before Tuesday",  TaskExecutable(period=TimeOfWeek(None, "Tue")), id="weekly before"),
         #pytest.param("monthly before 1.",  TaskExecutable(period=TimeOfMonth(None, 1)), id="monthly before"),
 
+        # Time delta
+        pytest.param("every 1 hours",  TaskExecutable(period=TimeDelta("1 hours")), id="every hour"),
+        pytest.param("every 1 days 1 hours 30 minutes 30 seconds",  TaskExecutable(period=TimeDelta("1 days 1 hours 30 minutes 30 seconds")), id="every hour 30 mins 30 seconds"),
 
         # IsTimeOf...
         pytest.param("time of hour between 45:00 and 50:00",  IsPeriod(period=TimeOfHour("45:00", "50:00")), id="time of hour between"),
