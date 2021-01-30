@@ -384,10 +384,10 @@ class MultiScheduler(Scheduler):
     """Multiprocessing scheduler
     """
 
-    def __init__(self, *args, max_processes=None, timeout="30 minutes", **kwargs):
+    def __init__(self, *args, max_processes=None, tasks_as_daemon=True, timeout="30 minutes", **kwargs):
         super().__init__(*args, **kwargs)
         self.max_processes = cpu_count() if max_processes is None else max_processes
-
+        self.tasks_as_daemon = tasks_as_daemon
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
     def run_cycle(self):
@@ -439,8 +439,9 @@ class MultiScheduler(Scheduler):
         proc_task = copy(task)
         params = GLOBAL_PARAMETERS | self.task_returns
 
-        # TODO: set daemon attribute of Process using 1. Task.daemon 2. Scheduler.daemon 3. None
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self._return_queue, params)) 
+        # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
+        daemon = task.daemon if task.daemon is not None else self.tasks_as_daemon
+        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self._return_queue, params), daemon=daemon) 
         # TODO: Pass self._ret_queue to Process (to get the return value of the task)
 
         task._process.start()

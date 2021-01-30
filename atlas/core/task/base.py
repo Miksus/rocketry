@@ -104,9 +104,9 @@ class Task:
     _logger_basename = "atlas.task"
     on_exists = "raise"
 
+    # For multiprocessing (if None, uses scheduler's default)
+    daemon = None
     # TODO:
-    #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
-    #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
     #   remove "run_cond"
 
     def __init__(self, parameters=None,

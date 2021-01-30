@@ -17,8 +17,9 @@ import re
 class FuncTask(Task):
     """Function Task, task that executes a function
     """
-    def __init__(self, func, **kwargs):
+    def __init__(self, func, daemon=None, **kwargs):
         self.func = func
+        self.daemon = daemon # Whether the task is run on daemon process or not (if multiprocess)
         super().__init__(**kwargs)
 
     def execute_action(self, **kwargs):
