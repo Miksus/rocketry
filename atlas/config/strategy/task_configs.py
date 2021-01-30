@@ -3,7 +3,7 @@ from pathlib import Path
 from pybox.io import read_yaml
 
 
-TASK_CONFIG_STRATEGIES = {}
+CLS_STRATEGY_CONFIGS = {}
 
 
 class _TaskConfigMeta(type):
@@ -13,7 +13,7 @@ class _TaskConfigMeta(type):
         if name == "TaskConfigBase":
             return cls
         else:
-            TASK_CONFIG_STRATEGIES[cls.__name__] = cls
+            CLS_STRATEGY_CONFIGS[cls.__name__] = cls
         return cls
 
 class TaskConfigBase(metaclass=_TaskConfigMeta):

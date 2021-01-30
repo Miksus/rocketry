@@ -5,22 +5,16 @@ clear_existing: True
 # Global parameters
 parameters:
   mode: 'test'
-#  repo: '../../'
+#  root: '../../'
 
 scheduler:
-  type: 'multi'
+  class: 'multi'
   restarting: 'relaunch'
 
-strategy:
-  auto_refresh: True
-  tasks: 
-    - class: ProjectFinder
-      path: projects
-  maintainers:
-    - class: AutoUpdate
-      start_cond: "every 20 seconds"
-    - class: ProjectFinder
-      path: maintainers
+strategies:
+  strategy.find-projects:
+    class: ProjectFinder
+    path: synergy/projects/personal
 
 
 # Loggers, handlers, formatters

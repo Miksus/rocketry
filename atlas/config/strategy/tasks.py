@@ -11,7 +11,7 @@ from atlas.conditions import IsGitBehind, DependSuccess
 # This dictionary is used by parse strategy to
 # get the correct finder class from string 
 # (name of the finder class)
-TASK_STRATEGIES = {} 
+CLS_STRATEGIES = {} 
 
 class _TaskStrategyMeta(type):
     def __new__(mcs, name, bases, class_dict):
@@ -20,7 +20,7 @@ class _TaskStrategyMeta(type):
         if name == "TaskFinderBase":
             # Don't register base class
             return cls
-        TASK_STRATEGIES[cls.__name__] = cls
+        CLS_STRATEGIES[cls.__name__] = cls
         return cls
 
 class TaskFinderBase(metaclass=_TaskStrategyMeta):
