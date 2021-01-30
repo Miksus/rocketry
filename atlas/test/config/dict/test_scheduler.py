@@ -24,7 +24,13 @@ def set_sys_path(tmpdir):
     # Code that will run after your test, for example:
     sys.path.remove(str(tmpdir))
 
-def test_minimal():
+def test_no_config():
+    scheduler = parse_dict(
+        {}
+    )
+    assert scheduler is None
+
+def test_minimal_scheduler():
     scheduler = parse_dict(
         {"scheduler": {}}
     )
@@ -68,11 +74,11 @@ def test_full_featured(tmpdir):
                     "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task"},
 
                     "fetch.stock-prices": {"class": "FuncTask", "func": "funcs.do_a_task"},
-                    "fetch.fundamentals": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "fetch.fundamentals": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": "daily"},
                     "calculate.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "report.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
 
-                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}},
                     "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task"},
                 },
@@ -86,6 +92,7 @@ def test_full_featured(tmpdir):
                         ],
                     },
                     "sequence.signals-2": {
+                        "start_cond": "daily starting 19:00", # Start condition for the first task of the sequence
                         "tasks": [
                             "fetch.fundamentals",
                             "calculate.signals",
@@ -166,7 +173,15 @@ def test_full_featured(tmpdir):
         } == dict(**scheduler.parameters)
 
         # Test sequences
-        assert get_task("fetch.stock-prices").start_cond == parse_condition_clause("daily starting 19:00")
+        cond = parse_condition_clause("daily starting 19:00")
+        cond.kwargs["task"] = get_task("fetch.stock-prices")
+        assert get_task("fetch.stock-prices").start_cond == cond
+
+        
+        cond = parse_condition_clause("daily") & parse_condition_clause("daily starting 19:00")
+        cond[0].kwargs["task"] = get_task("fetch.fundamentals")
+        cond[1].kwargs["task"] = get_task("fetch.fundamentals")
+        assert get_task("fetch.fundamentals").start_cond == cond
 
 
 def test_scheduler_tasks_set(tmpdir):
