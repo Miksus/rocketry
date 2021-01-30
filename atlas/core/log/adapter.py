@@ -73,7 +73,7 @@ class TaskAdapter(logging.LoggerAdapter):
                     df = df[df["asctime"] <= end]
                 return df
         else:
-            raise AttributeError("No handlers that could read the logs (missing methods 'read' or 'query')")
+            raise AttributeError(f"No handlers that could read the logs on {self.logger.name} (missing methods 'read' or 'query')")
 
     def get_latest(self, action=None) -> dict:
         "Get latest log record"
