@@ -12,6 +12,7 @@ import logging
 import sys
 import time
 import os
+import multiprocessing
 
 # TODO:
 #   Test maintainer task 
@@ -26,7 +27,10 @@ def run_succeeding():
     pass
 
 def run_slow():
-    time.sleep(30)
+    time.sleep(2)
+    with open("work.txt", "a") as file:
+        file.write("line created\n")
+
 
 def create_line_to_file():
     with open("work.txt", "a") as file:
@@ -42,6 +46,11 @@ def run_maintainer_with_params(_scheduler_, _task_):
 
 def run_maintainer():
     pass
+
+def run_creating_child():
+
+    proc = multiprocessing.Process(target=run_succeeding, daemon=True)
+    proc.start()
 
 def test_task_execution(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -167,6 +176,8 @@ def test_task_timeout(tmpdir):
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
+
+        assert not os.path.exists("work.txt")
 
 
 def test_priority(tmpdir):
@@ -314,3 +325,24 @@ def test_maintainer_task_with_params(tmpdir):
         assert 0 == (history["action"] == "fail").sum()
 
         assert scheduler.name == "maintained scheduler"
+
+def test_creating_child(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        # To be confident the scheduler won't lie to us
+        # we test the task execution with a job that has
+        # actual measurable impact outside atlas
+        scheduler = MultiScheduler(
+            tasks=[
+                FuncTask(run_creating_child, name="task_1", start_cond=AlwaysTrue()),
+            ], 
+            shut_condition=TaskStarted(task="task_1") >= 1,
+            tasks_as_daemon=False
+        )
+
+        scheduler()
+
+        history = get_task("task_1").get_history()
+        assert 1 == (history["action"] == "run").sum()
+        assert 1 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
