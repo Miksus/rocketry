@@ -10,7 +10,7 @@ def test_init_maintain(tmpdir):
         scheduler = parse_dict(
             {
                 "tasks": {
-                    "git-.fetch": {"class": "GitFetch"},
+                    "git-fetch": {"class": "GitFetch"},
                     "git-pull": {"class": "GitPull"},
                     "pip-install": {"class": "PipInstall"},
                     "restart": {"class": "Restart"}
