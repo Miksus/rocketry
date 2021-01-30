@@ -4,7 +4,21 @@ from abc import abstractmethod
 
 from atlas.core import time
 
-class BaseCondition:
+CLS_CONDITIONS = {}
+
+class _ConditionMeta(type):
+    def __new__(mcs, name, bases, class_dict):
+
+        cls = type.__new__(mcs, name, bases, class_dict)
+
+        # Store the name and class for configurations
+        is_private = name.startswith("_")
+        is_base = name == "BaseCondition"
+        if not is_private and not is_base:
+            CLS_CONDITIONS[cls.__name__] = cls
+        return cls
+
+class BaseCondition(metaclass=_ConditionMeta):
     """Condition is a thing/occurence that should happen in order to something happen
 
     In scheduler's point of view the occurence/thing could be:
