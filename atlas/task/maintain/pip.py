@@ -10,7 +10,7 @@ class PipInstall(Task):
 
     # Note: __init__ contains task specific params and execute_action session specific
     def __init__(self, requirements=None, package=None, options=None, **kwargs):
-        self.requirement = requirements
+        self.requirements = requirements
         self.packages = [package] if isinstance(package, str) else package
         self.options = options
         super().__init__(**kwargs)
@@ -19,10 +19,10 @@ class PipInstall(Task):
                         
         if interpreter is None:
             interpreter = sys.executable
-
-        if self.requirements is None and self.packages is None:
+        requirements = self.requirements
+        if requirements is None and self.packages is None:
             # Use default requirements.txt from root
-            requirement_txt = str(Path(root) / "requirements.txt")
+            requirements = str(Path(root) / "requirements.txt")
 
         pip_install = [interpreter, "-m", "pip", "install"]
         options = [] if self.options is None else self.options
@@ -33,4 +33,5 @@ class PipInstall(Task):
             subprocess.check_call(pip_install + options + self.package)
         else: 
             # Install from requirements file
-            subprocess.check_call(pip_install + options + ["-r", requirement_txt])
+            requirements_txt = requirements
+            subprocess.check_call(pip_install + options + ["-r", requirements_txt])
