@@ -52,11 +52,31 @@ class _Session:
             for name, logger in logging.root.manager.loggerDict.items() 
             if name.startswith(Task._logger_basename) 
             and not isinstance(logger, logging.PlaceHolder)
+            and not name.startswith("_") # No private
+        }
+
+    @staticmethod
+    def get_scheduler_loggers(with_adapters=True) -> dict:
+        return {
+            # The adapter should not be used to log (but to read) thus task_name = None
+            name: TaskAdapter(logger, None) if with_adapters else logger  
+            for name, logger in logging.root.manager.loggerDict.items() 
+            if name.startswith(Scheduler._logger_basename) 
+            and not isinstance(logger, logging.PlaceHolder)
+            and not name.startswith("_") # No private
         }
 
 # Log data
     def get_task_log(self, **kwargs):
         loggers = self.get_task_loggers(with_adapters=True)
+        dfs = [
+            logger.get_records(**kwargs)
+            for logger in loggers.values()
+        ]
+        return pd.concat(dfs, axis=0)
+
+    def get_scheduler_log(self, **kwargs):
+        loggers = self.get_scheduler_loggers(with_adapters=True)
         dfs = [
             logger.get_records(**kwargs)
             for logger in loggers.values()
