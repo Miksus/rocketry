@@ -24,7 +24,7 @@ from atlas.core.log import FilterAll, read_logger
 from .exceptions import SchedulerRestart
 
 from atlas.core.utils import is_pickleable
-from atlas.core.conditions import set_statement_defaults
+from atlas.core.conditions import set_statement_defaults, AlwaysFalse
 from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
 
 # TODO: Controlled crashing
@@ -87,8 +87,8 @@ class Scheduler:
         # TODO: Accept tasks, maintainer_tasks etc. also as strings (names of the tasks)
         self.tasks = [] if tasks is None else tasks
         self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
-        self.startup_tasks = startup_tasks
-        self.shutdown_tasks = shutdown_tasks
+        self.startup_tasks = [] if startup_tasks is None else startup_tasks
+        self.shutdown_tasks = [] if shutdown_tasks is None else shutdown_tasks
 
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
@@ -150,6 +150,11 @@ class Scheduler:
         self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         self.n_cycles = 0
         self.startup_time = datetime.datetime.now()
+
+        # Make sure the tasks run if start_cond not set
+        for task in self.startup_tasks:
+            if isinstance(task.start_cond, AlwaysFalse): 
+                task.force_state = True
         self._run_tasks(self.startup_tasks)
 
     def hibernate(self):
@@ -204,16 +209,20 @@ class Scheduler:
         Also responsible of restarting the scheduler if
         ordered.
         """
+        # Make sure the tasks run if start_cond not set
+        for task in self.shutdown_tasks:
+            if isinstance(task.start_cond, AlwaysFalse): 
+                task.force_state = True
         self._run_tasks(self.shutdown_tasks, {"exception": exception, "traceback": traceback})
         if isinstance(exception, SchedulerRestart):
             self.restart()
 
-    def _run_tasks(self, tasks):
+    def _run_tasks(self, tasks, extra=None):
         if tasks:
             self.logger.debug(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
             for task in tasks:
                 if bool(task):
-                    self.run_task(task)
+                    self.run_task(task, extra)
                     if task.force_state is True:
                         # Reset force_state as a run has forced
                         task.force_state = None
@@ -229,6 +238,8 @@ class Scheduler:
         self.logger.debug(f"Running task {task}")
         
         params = self.parameters | self.task_returns
+        if extra_params:
+            params = params | Parameters(**extra_params)
         start_time = datetime.datetime.now()
         try:
             output = task(**params)
@@ -299,18 +310,55 @@ class Scheduler:
                 key=lambda task: task.priority
             )
 
+    def _set_maintainer_defaults(self, tasks):
+        for task in tasks:
+            task.parameters["_scheduler_"] = self
+            task.parameters["_task_"] = task # If the task takes itself as a parameter
+            set_statement_defaults(task.start_cond, _scheduler_=self)
+
     @property
     def maintainer_tasks(self):
         return self._maintainer_tasks
 
     @maintainer_tasks.setter
     def maintainer_tasks(self, tasks:list):
-        for task in tasks:
-            task.parameters["_scheduler_"] = self
-            task.parameters["_task_"] = task # If the task takes itself as a parameter
-            set_statement_defaults(task.start_cond, _scheduler_=self)
-            
+        self._set_maintainer_defaults(tasks)
         self._maintainer_tasks = tasks
+
+    @property
+    def shutdown_tasks(self):
+        return self._shutdown_tasks
+
+    @shutdown_tasks.setter
+    def shutdown_tasks(self, tasks:list):
+        self._set_maintainer_defaults(tasks)
+        self._shutdown_tasks = tasks
+
+    @property
+    def startup_tasks(self):
+        return self._startup_tasks
+
+    @startup_tasks.setter
+    def startup_tasks(self, tasks:list):
+        self._set_maintainer_defaults(tasks)
+        self._startup_tasks = tasks
+
+# Logging
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        if logger is None:
+            # Get class logger (default logger)
+            logger = logging.getLogger(self._logger_basename)
+
+        if not logger.name.startswith(self._logger_basename):
+            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+
+        # TODO: Use TaskAdapter to relay the scheduler name?
+        self._logger = logger
 
 
 def _run_task_as_process(task, queue, return_queue, params):
@@ -669,20 +717,3 @@ class MultiScheduler(Scheduler):
             # Clean up finished, restart is finally
             # possible
             self.restart()
-
-# Logging
-    @property
-    def logger(self):
-        return self._logger
-
-    @logger.setter
-    def logger(self, logger):
-        if logger is None:
-            # Get class logger (default logger)
-            logger = logging.getLogger(self._logger_basename)
-
-        if not logger.name.startswith(self._logger_basename):
-            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
-
-        # TODO: Use TaskAdapter to relay the scheduler name?
-        self._logger = logger
