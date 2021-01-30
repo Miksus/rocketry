@@ -29,7 +29,7 @@ class PipInstall(Task):
         # https://pip.pypa.io/en/stable/reference/pip_install/#install-requirement
 
         # TODO: https://stackoverflow.com/a/27254355/13696660
-        if packages is not None:
+        if self.packages is not None:
             subprocess.check_call(pip_install + options + self.package)
         else: 
             # Install from requirements file
