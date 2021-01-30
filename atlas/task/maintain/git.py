@@ -19,9 +19,14 @@ class GitFetch(Task):
 
 @register_task_cls
 class GitPull(Task):
-    # Tested (manually)
-    def execute_action(self, root=None, branch="master", **kwargs):
+
+    def __init__(self, branch="master", **kwargs):
+        self.branch = branch
+
+    def execute_action(self, root=None, **kwargs):
         # Requires gitpython
+        branch = self.branch
+        
         repo = Repo(root)
         origin = repo.remotes.origin
         origin.pull(branch)

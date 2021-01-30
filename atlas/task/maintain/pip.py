@@ -7,26 +7,30 @@ import subprocess
 
 @register_task_cls
 class PipInstall(Task):
-    def execute_action(self, 
-                        interpreter=None, 
-                        root=None,
-                        requirements=None, 
-                        packages=None, 
-                        options=None,
-                        **kwargs):
+
+    # Note: __init__ contains task specific params and execute_action session specific
+    def __init__(self, requirements=None, package=None, options=None, **kwargs):
+        self.requirement = requirements
+        self.packages = [package] if isinstance(package, str) else package
+        self.options = options
+        super().__init__(**kwargs)
+
+    def execute_action(self, interpreter=None, root=None, **kwargs):
                         
         if interpreter is None:
             interpreter = sys.executable
-        if requirements is None and packages is None:
+
+        if self.requirements is None and self.packages is None:
+            # Use default requirements.txt from root
             requirement_txt = str(Path(root) / "requirements.txt")
 
         pip_install = [interpreter, "-m", "pip", "install"]
-        options = [] if options is None else options
+        options = [] if self.options is None else self.options
         # https://pip.pypa.io/en/stable/reference/pip_install/#install-requirement
 
         # TODO: https://stackoverflow.com/a/27254355/13696660
         if packages is not None:
-            subprocess.check_call(pip_install + options + packages)
+            subprocess.check_call(pip_install + options + self.package)
         else: 
             # Install from requirements file
             subprocess.check_call(pip_install + options + ["-r", requirement_txt])
