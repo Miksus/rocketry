@@ -52,7 +52,7 @@ class _Session:
             for name, logger in logging.root.manager.loggerDict.items() 
             if name.startswith(Task._logger_basename) 
             and not isinstance(logger, logging.PlaceHolder)
-            and not name.startswith("_") # No private
+            and not name.endswith("_process") # No private
         }
 
     @staticmethod
