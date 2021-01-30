@@ -26,7 +26,7 @@ class CsvFormatter(Formatter):
 
     def format(self, record):
         # Copied from: https://github.com/python/cpython/blob/master/Lib/logging/__init__.py#L674
-        super().format(record)
+        record.message = super().format(record)
         self.add_extra(record)
         row = self.get_row(record)
         self._rec = record
