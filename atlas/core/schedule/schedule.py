@@ -66,7 +66,7 @@ class Scheduler:
     _logger_basename = "atlas.scheduler"
     parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
-    def __init__(self, tasks, maintainer_tasks=None, 
+    def __init__(self, tasks=None, maintainer_tasks=None, 
                 startup_tasks=None, shutdown_tasks=None, 
                 shut_condition=None, 
                 min_sleep=0.1, max_sleep=600, 
@@ -75,13 +75,17 @@ class Scheduler:
         """[summary]
 
         Arguments:
-            tasks {[type]} -- [description]
+            tasks {List[Task|str]} -- List of tasks (or task names) that are run on normal sequence
+            maintainer_tasks {List[Task|str]} -- List of tasks (or task names) that are run as maintainers
+            startup_tasks {List[Task|str]} -- List of tasks (or task names) that are run on start up
+            shutdown_tasks {List[Task|str]} -- List of tasks (or task names) that are run on shut down
 
         Keyword Arguments:
             maintain_cond {Condition} -- Condition to kick maintaining on (default: {None})
             shut_cond {[type]} -- Condition to shut down scheduler (default: {None})
         """
-        self.tasks = tasks
+        # TODO: Accept tasks, maintainer_tasks etc. also as strings (names of the tasks)
+        self.tasks = [] if tasks is None else tasks
         self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
         self.startup_tasks = startup_tasks
         self.shutdown_tasks = shutdown_tasks
