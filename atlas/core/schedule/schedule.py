@@ -214,7 +214,10 @@ class Scheduler:
             if isinstance(task.start_cond, AlwaysFalse): 
                 task.force_state = True
         self._run_tasks(self.shutdown_tasks, {"exception": exception, "traceback": traceback})
+        
         if isinstance(exception, SchedulerRestart):
+            # Clean up finished, restart is finally
+            # possible
             self.restart()
 
     def _run_tasks(self, tasks, extra=None):
@@ -707,13 +710,12 @@ class MultiScheduler(Scheduler):
             except Exception as exc:
                 # Fuck it, terminate all
                 self.shut_down(exception=exc)
+                return
             else:
                 self.handle_logs()
                 self.handle_return()
         else:
             self.terminate_all(reason="shutdown")
 
-        if isinstance(exception, SchedulerRestart):
-            # Clean up finished, restart is finally
-            # possible
-            self.restart()
+        super().shut_down(traceback, exception)
+
