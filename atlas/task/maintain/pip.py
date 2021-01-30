@@ -30,7 +30,7 @@ class PipInstall(Task):
 
         # TODO: https://stackoverflow.com/a/27254355/13696660
         if self.packages is not None:
-            subprocess.check_call(pip_install + options + self.package)
+            subprocess.check_call(pip_install + options + self.packages)
         else: 
             # Install from requirements file
             requirements_txt = requirements
