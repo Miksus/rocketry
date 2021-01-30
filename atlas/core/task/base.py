@@ -1,7 +1,7 @@
 
 from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
-from atlas.core.conditions import set_statement_defaults
+from atlas.core.conditions import set_statement_defaults, BaseCondition
 from atlas.core.utils import is_pickleable
 
 from .utils import get_execution, get_dependencies
@@ -21,7 +21,7 @@ from itertools import count
 import pandas as pd
 
 _TASKS = {}
-TASK_CLASSES = {}
+CLS_TASKS = {}
 
 def get_all_tasks():
     return _TASKS
@@ -45,9 +45,8 @@ def register_task_cls(cls):
     """Add Task class to registered
     Task dict in order to initiate
     it from configuration"""
-    TASK_CLASSES[cls.__name__] = cls
+    CLS_TASKS[cls.__name__] = cls
     return cls
-
 
 class Task:
     """Executable task 
@@ -108,6 +107,7 @@ class Task:
     # TODO:
     #   The force_state will not work with multiprocessing. The signal must be reseted with logging probably
     #   start_cond is a mess. Maybe different method to check the actual status of the Task? __bool__? Or add the depencency & execution conditions to the actual start_cond?
+    #   remove "run_cond"
 
     def __init__(self, parameters=None,
                 start_cond=None, run_cond=None, end_cond=None, 
@@ -168,15 +168,23 @@ class Task:
     
     @start_cond.setter
     def start_cond(self, cond):
-        self._start_cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        self._validate_cond(cond)
 
+        set_statement_defaults(cond, task=self)
+        self._start_cond = cond
+        
     @property
     def end_cond(self):
         return self._end_cond
     
     @end_cond.setter
     def end_cond(self, cond):
-        self._end_cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        self._validate_cond(cond)
+
+        set_statement_defaults(cond, task=self)
+        self._end_cond = cond
 
     @property
     def dependent(self):
@@ -201,6 +209,10 @@ class Task:
             self._parameters = Parameters()
         else:
             self._parameters = Parameters(**val)
+
+    def _validate_cond(self, cond):
+        if not isinstance(cond, (BaseCondition, bool)):
+            raise TypeError(f"Condition must be bool or inherited from {BaseCondition}. Given: {type(cond)}")
 
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
