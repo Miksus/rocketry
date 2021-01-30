@@ -346,3 +346,33 @@ def test_creating_child(tmpdir):
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
+
+
+# Only needed for testing start up and shutdown
+def create_line_to_startup_file():
+    with open("start.txt", "w") as file:
+        file.write("line created\n")
+
+def create_line_to_shutdown():
+    with open("shut.txt", "w") as file:
+        file.write("line created\n")
+
+def test_startup_shutdown(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        scheduler = MultiScheduler(
+            tasks=[],
+            startup_tasks=[
+                FuncTask(create_line_to_startup_file, name="startup"),
+            ],
+            shutdown_tasks=[
+                FuncTask(create_line_to_shutdown, name="shutdown"),
+            ],
+            shut_condition=AlwaysTrue()
+        )
+
+        scheduler()
+        
+        assert os.path.exists("start.txt")
+        assert os.path.exists("shut.txt")
