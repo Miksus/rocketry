@@ -25,6 +25,8 @@ class CsvFormatter(Formatter):
         self.fields = fields if fields is not None else self.fields
 
     def format(self, record):
+        # Copied from: https://github.com/python/cpython/blob/master/Lib/logging/__init__.py#L674
+        super().format(record)
         self.add_extra(record)
         row = self.get_row(record)
         self._rec = record
