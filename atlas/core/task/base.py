@@ -53,7 +53,14 @@ class Task:
 
     This class is meant to be container
     for all the information needed to run
-    the task
+    the task.
+
+    To subclass:
+    ------------
+        - Put task specific parameters to __init__ 
+          and session/scheduler specific to 
+          execute_action. 
+          Remember to call super().__init__.
 
     Public attributes:
     ------------------
