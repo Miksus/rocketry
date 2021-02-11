@@ -154,7 +154,7 @@ class Scheduler:
         # Make sure the tasks run if start_cond not set
         for task in self.startup_tasks:
             if isinstance(task.start_cond, AlwaysFalse): 
-                task.force_state = True
+                task.force_run = True
         self._run_tasks(self.startup_tasks)
 
     def hibernate(self):
@@ -212,7 +212,7 @@ class Scheduler:
         # Make sure the tasks run if start_cond not set
         for task in self.shutdown_tasks:
             if isinstance(task.start_cond, AlwaysFalse): 
-                task.force_state = True
+                task.force_run = True
         self._run_tasks(self.shutdown_tasks, {"exception": exception, "traceback": traceback})
         
         if isinstance(exception, SchedulerRestart):
@@ -226,9 +226,9 @@ class Scheduler:
             for task in tasks:
                 if bool(task):
                     self.run_task(task, extra)
-                    if task.force_state is True:
-                        # Reset force_state as a run has forced
-                        task.force_state = None
+                    if task.force_run:
+                        # Reset force_run as a run has forced
+                        task.force_run = False
 
     def run_cycle(self):
         "Run a cycle of tasks"
@@ -451,9 +451,9 @@ class MultiScheduler(Scheduler):
             if self.is_task_runnable(task):
                 # Run the actual task
                 self.run_task_as_process(task)
-                if task.force_state is True:
-                    # Reset force_state as a run has forced
-                    task.force_state = None
+                if task.force_run:
+                    # Reset force_run as a run has forced
+                    task.force_run = False
             elif self.is_timeouted(task):
                 # Terminate the task
                 self.terminate_task(task, reason="timeout")

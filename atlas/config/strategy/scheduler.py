@@ -15,7 +15,7 @@ class SchedulerRefresher:
             # Refresher starts when there is no task running
             start_cond=self.start_cond
         )
-        refresh.force_state = True
+        refresh.force_run = True
         scheduler.maintainer_tasks = [refresh]
         scheduler.tasks = []
 
