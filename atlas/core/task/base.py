@@ -112,7 +112,12 @@ class Task:
     on_exists = "raise"
 
     # For multiprocessing (if None, uses scheduler's default)
-    daemon = None
+    daemon: bool = None
+
+    force_state: bool
+    name: str
+    priority: int
+
     # TODO:
     #   remove "run_cond"
 
