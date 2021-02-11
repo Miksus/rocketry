@@ -72,7 +72,7 @@ def test_force_run(tmpdir):
         task = FuncTask(
             run_successful_func, 
             name="task",
-            start_cond=AlwaysFalse() if state else AlwaysTrue()
+            start_cond=AlwaysFalse()
         )
         task.force_run = True
 
@@ -80,7 +80,7 @@ def test_force_run(tmpdir):
         assert bool(task)
 
         task()
-        assert task.force_run
+        assert not task.force_run
 
 
 def test_dependency(tmpdir):
