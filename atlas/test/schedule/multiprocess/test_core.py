@@ -180,6 +180,34 @@ def test_task_timeout(tmpdir):
         assert not os.path.exists("work.txt")
 
 
+def test_task_terminate(tmpdir):
+    def terminate_task(_scheduler_):
+        _scheduler_.tasks[0].force_termination = True
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
+
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], 
+            maintainer_tasks=[FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"))],
+            shut_condition=TaskStarted(task="slow task") >= 2,
+        )
+        scheduler()
+
+        history = task.get_history()
+        assert 2 == (history["action"] == "run").sum()
+        assert 2 == (history["action"] == "terminate").sum()
+        assert 0 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+        assert not os.path.exists("work.txt")
+        
+        # Attr force_termination should be reseted every time the task has been terminated
+        assert not task.force_termination
+
+
 def test_priority(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()

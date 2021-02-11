@@ -527,17 +527,18 @@ class MultiScheduler(Scheduler):
         task._process.join() 
         task.log_termination(reason=reason)
 
+        # Resetting attr force_termination
+        task.force_termination = False
+
     def is_timeouted(self, task):
         if not self.is_alive(task):
             return False
 
-        timeout_task = task.timeout
-        timeout_sched = self.timeout
         timeout = (
-            min(timeout_task, timeout_sched) 
-            if timeout_task is not None and timeout_sched is not None
-            else timeout_task or timeout_sched
+            task.timeout if task.timeout is not None
+            else self.timeout
         )
+        
         if timeout is None:
             return False
         run_duration = datetime.datetime.now() - task._start_time
@@ -559,6 +560,9 @@ class MultiScheduler(Scheduler):
         is_alive = self.is_alive(task)
         if not is_alive:
             return False
+        
+        if task.force_termination:
+            return True
         return bool(task.end_cond) or not bool(task.run_cond)
 
     def handle_status(self, task):

@@ -125,7 +125,7 @@ class Task:
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None):
+                name=None, inputs=None, logger=None, force_state=None):
         """[summary]
 
         Arguments:
@@ -150,7 +150,8 @@ class Task:
 
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
         self.priority = priority
-        self.force_state = None
+        self.force_state = force_state
+        self.force_termination = False
 
         self.on_failure = on_failure
         self.on_success = on_success
@@ -337,8 +338,6 @@ class Task:
         if name == old_name:
             return
         
-        
-
         if name in _TASKS:
             if self.on_exists == "replace":
                 _TASKS[name] = self
