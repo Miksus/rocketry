@@ -84,7 +84,8 @@ class Task:
         name {str, tuple} : Name of the task. Must be unique
         groups {tuple} : Name of the group the task is part of. Different groups use different loggers
 
-        force_state {bool} : Force the task to be run once (if True) or prevent task running at all (if False)
+        force_run {bool} : Force the task to be run once (if True)
+        disabled {bool} : Force the task to not to be run (force_run overrides disabling)
 
     Readonly Properties:
     -----------
@@ -114,7 +115,8 @@ class Task:
     # For multiprocessing (if None, uses scheduler's default)
     daemon: bool = None
 
-    force_state: bool
+    disabled: bool
+    force_run: bool
     name: str
     priority: int
 
@@ -125,7 +127,7 @@ class Task:
                 start_cond=None, run_cond=None, end_cond=None, 
                 execution=None, dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None, force_state=None):
+                name=None, inputs=None, logger=None, disabled=False, force_run=False):
         """[summary]
 
         Arguments:
@@ -150,7 +152,8 @@ class Task:
 
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
         self.priority = priority
-        self.force_state = force_state
+        self.disabled = disabled
+        self.force_run = force_run
         self.force_termination = False
 
         self.on_failure = on_failure
@@ -263,7 +266,7 @@ class Task:
 
         finally:
             self.process_finish(status=status)
-            self.force_state = None
+            self.force_run = None
 
     def __bool__(self):
         "Check whether the task can be run or not"
@@ -273,14 +276,13 @@ class Task:
         #    resume() : Reset forced_state to None
         #    set_running() : Set forced_state to True
 
-        if isinstance(self.force_state, bool):
-            return self.force_state
+        if self.force_run:
+            return True
+        elif self.disabled:
+            return False
 
         cond = bool(self.start_cond)
 
-        # There may be condition that set force_state True
-        if isinstance(self.force_state, bool):
-            return self.force_state
         return cond
 
     def filter_params(self, params):
