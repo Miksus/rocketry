@@ -125,17 +125,16 @@ def test_task_fail_traceback(tmpdir):
             assert "RuntimeError: Task failed" in tb
 
 
-@pytest.mark.parametrize("state", [True, False])
-def test_task_force_state(tmpdir, state):
+def test_task_force_run(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
         task = FuncTask(
             run_succeeding, 
-            start_cond=AlwaysFalse() if state else AlwaysTrue(), 
+            start_cond=AlwaysFalse(), 
             name="task"
         )
-        task.force_state = state
+        task.force_run = True
 
         scheduler = MultiScheduler(
             [
@@ -144,18 +143,66 @@ def test_task_force_state(tmpdir, state):
         )
         scheduler()
 
-        run_times = 1 if state else 0 
+        history = task.get_history()
+        assert 1 == (history["action"] == "run").sum()
+
+        # The force_run should have reseted as it should have run once
+        assert not task.force_run
+
+
+def test_task_disabled(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        task = FuncTask(
+            run_succeeding, 
+            start_cond=AlwaysFalse(), 
+            name="task"
+        )
+        task.disabled = True
+
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+        )
+        scheduler()
 
         history = task.get_history()
-        assert run_times == (history["action"] == "run").sum()
+        assert 0 == (history["action"] == "run").sum()
 
-        if state:
-            # The force_state should have reseted as it should have run once
-            assert task.force_state is None 
-        else:
-            # The force_state should still be False and the task should still not run
-            assert task.force_state is False 
+        assert task.disabled
 
+
+def test_task_force_disabled(tmpdir):
+    # NOTE: force_run overrides disabled
+    # as it is more practical to keep 
+    # a task disabled and force it running
+    # manually than prevent force run with
+    # disabling
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        task = FuncTask(
+            run_succeeding, 
+            start_cond=AlwaysFalse(), 
+            name="task"
+        )
+        task.disabled = True
+        task.force_run = True
+
+        scheduler = MultiScheduler(
+            [
+                task,
+            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+        )
+        scheduler()
+
+        history = task.get_history()
+        assert 1 == (history["action"] == "run").sum()
+
+        assert task.disabled
+        assert not task.force_run # This should be reseted
 
 def test_task_timeout(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -203,7 +250,7 @@ def test_task_terminate(tmpdir):
         assert 0 == (history["action"] == "fail").sum()
 
         assert not os.path.exists("work.txt")
-        
+
         # Attr force_termination should be reseted every time the task has been terminated
         assert not task.force_termination
 
