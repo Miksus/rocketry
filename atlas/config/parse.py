@@ -172,11 +172,12 @@ def parse_strategies(conf, resources):
     for name, strat_conf in conf.items():
         resources["strategies"][name] = STRATEGY_PARSER(strat_conf)
 
+CLS_TASKS["FuncTask"] = _parse_func_task # TODO: Rename this as "Function"
 # Parse one task
 TASK_PARSER = ParserPicker(
     {
         dict:DictInstanceParser(
-            classes={**CLS_TASKS, **{"FuncTask": _parse_func_task}}, 
+            classes=CLS_TASKS, 
             subparsers={
                 "start_cond": COND_PARSER,
                 "end_cond": COND_PARSER,
