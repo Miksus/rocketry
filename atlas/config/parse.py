@@ -14,7 +14,7 @@ from atlas.core.task import clear_tasks, get_task
 from atlas.core.schedule import clear_schedulers
 from atlas.core.parameters import clear_parameters, Parameters
 
-from atlas.core import MultiScheduler, Scheduler
+from atlas.core import Scheduler
 from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas.core.parameters import Parameters
 
@@ -188,15 +188,12 @@ TASK_PARSER = ParserPicker(
 )
 
 SCHED_PARSER = DictInstanceParser(
-    classes={"multi": MultiScheduler, "single": Scheduler},
+    classes={},
     subparsers={
         "tasks": parse_tasks,
-        "maintainer_tasks": parse_tasks,
-        "shutdown_tasks": parse_tasks,
-        "startup_tasks": parse_tasks,
         "parameters": lambda d, resources: Parameters(**d),
     },
-    default=MultiScheduler
+    default=Scheduler
 )
 
 STRATEGY_PARSER = DictInstanceParser(

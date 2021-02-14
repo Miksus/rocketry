@@ -1,7 +1,7 @@
 
 from atlas.config import get_default
 
-from atlas.core import Scheduler, MultiScheduler
+from atlas.core import Scheduler
 from atlas.conditions import AlwaysFalse
 from atlas.log import CsvHandler
 

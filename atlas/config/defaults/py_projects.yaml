@@ -8,7 +8,6 @@ parameters:
 #  root: '../../'
 
 scheduler:
-  class: 'multi'
   restarting: 'relaunch'
 
 strategies:

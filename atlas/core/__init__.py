@@ -1,4 +1,4 @@
-from .schedule import Scheduler, MultiScheduler
+from .schedule import Scheduler
 #from .task import FuncTask, JupyterTask, CommandTask, ScriptTask
 from . import task
 

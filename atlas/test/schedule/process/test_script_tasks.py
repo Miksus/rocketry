@@ -1,6 +1,6 @@
 
 
-from atlas.core import MultiScheduler
+from atlas.core import Scheduler
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess, AlwaysTrue
 
 from atlas.task import ScriptTask
@@ -35,7 +35,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
             start_cond=AlwaysTrue()
         )
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="a task") >= 3

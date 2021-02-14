@@ -1,5 +1,5 @@
 
-from atlas.core import MultiScheduler
+from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.core.task.base import Task, clear_tasks
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
@@ -50,7 +50,7 @@ def test_dependent(tmpdir):
             start_cond=DependSuccess(depend_task="After A") & DependSuccess(depend_task="After B")
         )
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task_after_all,
                 task_a,

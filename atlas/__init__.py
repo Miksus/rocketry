@@ -6,6 +6,6 @@ from . import (
     parameters,
     time
 )
-from .core import Scheduler, MultiScheduler
+from .core import Scheduler
 from ._session import session
 from .config import *

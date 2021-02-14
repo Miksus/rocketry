@@ -1,4 +1,4 @@
 from .schedule import (
-    MultiScheduler, Scheduler, 
+    Scheduler, 
     clear_schedulers,
 )
