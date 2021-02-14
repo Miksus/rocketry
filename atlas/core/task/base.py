@@ -406,6 +406,8 @@ class Task:
         if logger is None:
             # Get class logger (default logger)
             logger = logging.getLogger(self._logger_basename)
+        if isinstance(logger, str):
+            logger = logging.getLogger(logger)
 
         if not logger.name.startswith(self._logger_basename):
             raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
