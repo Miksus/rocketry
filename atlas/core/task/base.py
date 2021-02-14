@@ -3,6 +3,7 @@ from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
 from atlas.core.conditions import set_statement_defaults, BaseCondition
 from atlas.core.utils import is_pickleable
+from atlas.core.schedule.exceptions import SchedulerRestart
 
 from .utils import get_execution, get_dependencies
 
@@ -11,6 +12,7 @@ from atlas.parse import parse_condition_clause
 from atlas.conditions import DependSuccess
 from atlas.core.parameters import Parameters
 
+import os
 import logging
 import inspect
 
@@ -87,6 +89,8 @@ class Task:
         force_run {bool} : Force the task to be run once (if True)
         disabled {bool} : Force the task to not to be run (force_run overrides disabling)
 
+        execution {str} : How to execute the task. Options: {single, process, thread}
+
     Readonly Properties:
     -----------
         is_running -> bool : Check whether the task is currently running or not
@@ -125,9 +129,11 @@ class Task:
 
     def __init__(self, parameters=None,
                 start_cond=None, run_cond=None, end_cond=None, 
-                execution=None, dependent=None, timeout=None, priority=1, 
+                dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None, disabled=False, force_run=False):
+                name=None, inputs=None, logger=None, 
+                execution="process", disabled=False, force_run=False,
+                on_startup=False, on_shutdown=False):
         """[summary]
 
         Arguments:
@@ -152,6 +158,11 @@ class Task:
 
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
         self.priority = priority
+
+        self.execution = execution
+        self.on_startup = on_startup
+        self.on_shutdown = on_shutdown
+
         self.disabled = disabled
         self.force_run = force_run
         self.force_termination = False
@@ -240,12 +251,24 @@ class Task:
         self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
+        #old_cwd = os.getcwd()
+        #if cwd is not None:
+        #    os.chdir(cwd)
+
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
         try:
             params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
             output = self.execute_action(**params)
+
+        except SchedulerRestart:
+            # SchedulerRestart is considered as successfull task
+            self.log_success()
+            #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
+            status = "succeeded"
+            self.process_success(output)
+            return output
 
         except Exception as exception:
             status = "failed"
@@ -267,6 +290,8 @@ class Task:
         finally:
             self.process_finish(status=status)
             self.force_run = None
+            #if cwd is not None:
+            #    os.chdir(old_cwd)
 
     def __bool__(self):
         "Check whether the task can be run or not"

@@ -27,8 +27,12 @@ from atlas.core.utils import is_pickleable
 from atlas.core.conditions import set_statement_defaults, AlwaysFalse
 from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
 
-# TODO: Controlled crashing
-#   Wrap __call__ with a decor that has try except
+# TODO:
+#   Allow using return values as parameters to other tasks (new Argument class: Return)
+#   Support for Task execution="thread"
+#   Unify the supply of parameters
+#   New automatically passed parameters:
+#       _last_start_, _last_success_, _last_failure_, _task_name_
 
 _SCHEDULERS = {} # Probably will be only one but why not support multiple?
 
@@ -44,326 +48,7 @@ def clear_schedulers():
     global _SCHEDULERS
     _SCHEDULERS = {}
     
-
-class Scheduler:
-    """
-    One treaded Scheduler 
-
-    Flow of action:
-    ---------------
-        __call__() : Start and run the scheduler
-            setup() : Set up the scheduler (set up scheduler logger etc.)
-            Check and possibly run runnable tasks until shut_condition is not met
-                hibernate() : Put scheduler to sleep (to throttle down the scheduler)
-                run_cycle() : Iterate tasks once through and run tasks that can be run 
-                    Check if task's start_cond is met. If it is:
-                        run_task() : Executes the actual task
-                            Task.__call__() : Handles logging and how the task is run
-                maintain() : Run maintanance tasks that may operate on the scheduler
-
-    """
-
-    _logger_basename = "atlas.scheduler"
-    parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
-
-    def __init__(self, tasks=None, maintainer_tasks=None, 
-                startup_tasks=None, shutdown_tasks=None, 
-                shut_condition=None, 
-                min_sleep=0.1, max_sleep=600, 
-                parameters=None, logger=None, name=None,
-                restarting="replace"):
-        """[summary]
-
-        Arguments:
-            tasks {List[Task|str]} -- List of tasks (or task names) that are run on normal sequence
-            maintainer_tasks {List[Task|str]} -- List of tasks (or task names) that are run as maintainers
-            startup_tasks {List[Task|str]} -- List of tasks (or task names) that are run on start up
-            shutdown_tasks {List[Task|str]} -- List of tasks (or task names) that are run on shut down
-
-        Keyword Arguments:
-            maintain_cond {Condition} -- Condition to kick maintaining on (default: {None})
-            shut_cond {[type]} -- Condition to shut down scheduler (default: {None})
-        """
-        # TODO: Accept tasks, maintainer_tasks etc. also as strings (names of the tasks)
-        self.tasks = [] if tasks is None else tasks
-        self.maintainer_tasks = [] if maintainer_tasks is None else maintainer_tasks
-        self.startup_tasks = [] if startup_tasks is None else startup_tasks
-        self.shutdown_tasks = [] if shutdown_tasks is None else shutdown_tasks
-
-        self.shut_condition = False if shut_condition is None else copy(shut_condition)
-
-        set_statement_defaults(self.shut_condition, _scheduler_=self)
-
-        self.min_sleep = min_sleep
-        self.max_sleep = max_sleep
-
-        self.task_returns = Parameters() # TODO
-        if parameters is not None:
-            self.parameters.update(parameters)
-
-        self.name = name if name is not None else id(self)
-        self._register_instance()
-        self.logger = logger
-
-        self.restarting = restarting
-        
-    def _register_instance(self):
-        if self.name in _SCHEDULERS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_SCHEDULERS.keys())}")
-        _SCHEDULERS[self.name] = self
-
-    def __call__(self):
-        "Start and run the scheduler"
-        exception = None
-        try:
-            self.setup()
-
-            while not bool(self.shut_condition):
-
-                self.hibernate()
-                self.run_cycle()
-
-                self.maintain()
-        except SystemExit as exc:
-            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
-            exception = exc
-
-        except SchedulerRestart as exc:
-            self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
-            exception = exc
-
-        except KeyboardInterrupt as exc:
-            self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
-            exception = exc
-
-        except Exception as exc:
-            self.logger.critical('Scheduler encountered fatal error. Shut down imminent.', exc_info=True, extra={"action": "crash"})
-            exception = exc
-            raise
-        else:
-            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
-        finally:
-            self.shut_down(exception=exception)
-# Core
-    def setup(self):
-        "Set up the scheduler"
-        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
-        self.n_cycles = 0
-        self.startup_time = datetime.datetime.now()
-
-        # Make sure the tasks run if start_cond not set
-        for task in self.startup_tasks:
-            if isinstance(task.start_cond, AlwaysFalse): 
-                task.force_run = True
-        self._run_tasks(self.startup_tasks)
-
-    def hibernate(self):
-        "Go to sleep and wake up when next task can be executed"
-        delay = self.delay
-        self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
-        time.sleep(delay)
-
-    def maintain(self):
-        """Do maintain work for the scheduler itself
-        This could be:
-            - Update the task list (ie. if tasks are in a folder and there are new ones)
-            - Clean up the log files
-            - Update the packages
-        """
-        self.logger.debug(f"Maintaining the scheduler...", extra={"action": "maintain"})
-        self._run_tasks(self.maintainer_tasks)
     
-    def restart(self):
-        """Restart the scheduler by creating a new process
-        on the temporary run script where the scheduler's is
-        process is started.
-        """
-        # TODO
-        # https://stackoverflow.com/a/35874988
-        self.logger.debug(f"Restarting the scheduler...", extra={"action": "restart"})
-        python = sys.executable
-
-        if self.restarting == "replace":
-            os.execl(python, python, *sys.argv)
-            # After here no code will be run
-        elif self.restarting == "relaunch":
-            # Relaunch the process
-            subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
-        elif self.restarting == "fresh":
-            # Relaunch the process in new window
-            if platform.system() == "Windows":
-                subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
-            else:
-                # Linux does not have CREATE_NEW_CONSOLE creation flag but shell=True is pretty close
-                subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
-        else:
-            raise ValueError(f"Invalid restaring: {self.restarting}")
-
-    def shut_down(self, traceback=None, exception=None):
-        """Shut down the scheduler
-        This method is meant to controllably close the
-        scheduler in case the scheduler crashed (with 
-        Python exception) to properly inform the maintainer
-        and log the event.
-
-        Also responsible of restarting the scheduler if
-        ordered.
-        """
-        # Make sure the tasks run if start_cond not set
-        for task in self.shutdown_tasks:
-            if isinstance(task.start_cond, AlwaysFalse): 
-                task.force_run = True
-        self._run_tasks(self.shutdown_tasks, {"exception": exception, "traceback": traceback})
-        
-        if isinstance(exception, SchedulerRestart):
-            # Clean up finished, restart is finally
-            # possible
-            self.restart()
-
-    def _run_tasks(self, tasks, extra=None):
-        if tasks:
-            self.logger.debug(f"Beginning cycle. Has {len(tasks)} tasks", extra={"action": "run"})
-            for task in tasks:
-                if bool(task):
-                    self.run_task(task, extra)
-                    if task.force_run:
-                        # Reset force_run as a run has forced
-                        task.force_run = False
-
-    def run_cycle(self):
-        "Run a cycle of tasks"
-        tasks = self.task_list
-        self._run_tasks(tasks)
-        self.n_cycles += 1
-
-    def run_task(self, task, extra_params=None):
-        "Run/execute one task"
-        self.logger.debug(f"Running task {task}")
-        
-        params = self.parameters | self.task_returns
-        if extra_params:
-            params = params | Parameters(**extra_params)
-        start_time = datetime.datetime.now()
-        try:
-            output = task(**params)
-        except SchedulerRestart as exc:
-            # Allow these to flow up
-            raise
-        except Exception as exc:
-            exception = exc
-            status = "fail"
-        else:
-            exception = None
-            status = "success"
-            # Set output to other task to use
-            self.task_returns[task.name] = output
-        end_time = datetime.datetime.now()
-
-        # TODO: Is there double logging? Task may do it already
-        self.log_status(
-            task, status, 
-            start_time=start_time, end_time=end_time,
-            exception=exception
-        )
-
-
-# Logging
-    def log_status(self, task, status, **kwargs):
-        "Log a run task"
-
-        # Log it to strout/files/email/whatever
-        if status == "success":
-            self.log_success(task, **kwargs)
-        elif status == "fail":
-            self.log_failure(task, **kwargs)
-
-    def log_success(self, task, **kwargs):
-        "Log a succeeded task"
-        self.logger.debug(f"Task {task} succeeded.")
-
-    def log_failure(self, task, exception, **kwargs):
-        "Log a failed task"
-        tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
-        tb_string = ''.join(tb)
-        self.logger.debug(f"Task {task} failed: \n{tb_string}")
-
-# Core properties
-    @property
-    def delay(self):
-        "Number of seconds that needs to be wait for next executable task"
-        now = datetime.datetime.now()
-        try:
-            delay = min(
-                task.next_start - now
-                for task in self.tasks
-            )
-        except (AttributeError, ValueError): # Raises ValueError if min() is empty
-            delay = 0
-        else:
-            delay = delay.total_seconds()
-        delay = min(max(delay, self.min_sleep), self.max_sleep)
-        self.logger.debug(f"Next run cycle at {delay} seconds.")
-        return delay
-
-    @property
-    def task_list(self):
-        now = datetime.datetime.now()
-        return sorted(
-                self.tasks, 
-                key=lambda task: task.priority
-            )
-
-    def _set_maintainer_defaults(self, tasks):
-        for task in tasks:
-            task.parameters["_scheduler_"] = self
-            task.parameters["_task_"] = task # If the task takes itself as a parameter
-            set_statement_defaults(task.start_cond, _scheduler_=self)
-
-    @property
-    def maintainer_tasks(self):
-        return self._maintainer_tasks
-
-    @maintainer_tasks.setter
-    def maintainer_tasks(self, tasks:list):
-        self._set_maintainer_defaults(tasks)
-        self._maintainer_tasks = tasks
-
-    @property
-    def shutdown_tasks(self):
-        return self._shutdown_tasks
-
-    @shutdown_tasks.setter
-    def shutdown_tasks(self, tasks:list):
-        self._set_maintainer_defaults(tasks)
-        self._shutdown_tasks = tasks
-
-    @property
-    def startup_tasks(self):
-        return self._startup_tasks
-
-    @startup_tasks.setter
-    def startup_tasks(self, tasks:list):
-        self._set_maintainer_defaults(tasks)
-        self._startup_tasks = tasks
-
-# Logging
-    @property
-    def logger(self):
-        return self._logger
-
-    @logger.setter
-    def logger(self, logger):
-        if logger is None:
-            # Get class logger (default logger)
-            logger = logging.getLogger(self._logger_basename)
-
-        if not logger.name.startswith(self._logger_basename):
-            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
-
-        # TODO: Use TaskAdapter to relay the scheduler name?
-        self._logger = logger
-
-
 def _run_task_as_process(task, queue, return_queue, params):
     """Run a task in a separate process (has own memory)"""
 
@@ -431,29 +116,112 @@ def _listen_task_status(handlers, queue):
             traceback.print_exc(file=sys.stderr)
 
 
-class MultiScheduler(Scheduler):
+class Scheduler:
     """Multiprocessing scheduler
+
+    Flow of action:
+    ---------------
+        __call__() : Start and run the scheduler
+            setup() : Set up the scheduler (set up scheduler logger etc.)
+            Check and possibly run runnable tasks until shut_condition is not met
+                hibernate() : Put scheduler to sleep (to throttle down the scheduler)
+                run_cycle() : Iterate tasks once through and run tasks that can be run 
+                    Check if task's start_cond is met. If it is:
+                        run_task() : Executes the actual task
+                            Task.__call__() : Handles logging and how the task is run
+                maintain() : Run maintanance tasks that may operate on the scheduler
     """
 
-    def __init__(self, *args, max_processes=None, tasks_as_daemon=True, timeout="30 minutes", **kwargs):
-        super().__init__(*args, **kwargs)
+    _logger_basename = "atlas.scheduler"
+    parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
+
+
+    def __init__(self, tasks=None, max_processes=None, tasks_as_daemon=True, timeout="30 minutes",
+                shut_condition=None, parameters=None,
+                min_sleep=0.1, max_sleep=600, 
+                logger=None, name=None,
+                restarting="replace"):
+
+        # MultiProcessing stuff
         self.max_processes = cpu_count() if max_processes is None else max_processes
         self.tasks_as_daemon = tasks_as_daemon
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
+        # Other
+        self.tasks = [] if tasks is None else sorted(tasks, key=lambda task: task.priority)
+
+        self.shut_condition = False if shut_condition is None else copy(shut_condition)
+
+        set_statement_defaults(self.shut_condition, _scheduler_=self)
+
+        self.min_sleep = min_sleep
+        self.max_sleep = max_sleep
+
+        # self.task_returns = Parameters() # TODO
+
+        self.name = name if name is not None else id(self)
+        self._register_instance()
+        self.logger = logger
+
+        self.restarting = restarting
+
+        if parameters:
+            GLOBAL_PARAMETERS.update(parameters)
+
+    def _register_instance(self):
+        if self.name in _SCHEDULERS:
+            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_SCHEDULERS.keys())}")
+        _SCHEDULERS[self.name] = self
+
+    def __call__(self):
+        "Start and run the scheduler"
+        exception = None
+        try:
+            self.setup()
+
+            while not bool(self.shut_condition):
+
+                self.hibernate()
+                self.run_cycle()
+
+                # self.maintain()
+        except SystemExit as exc:
+            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
+            exception = exc
+
+        except SchedulerRestart as exc:
+            self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
+            exception = exc
+
+        except KeyboardInterrupt as exc:
+            self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
+            exception = exc
+
+        except Exception as exc:
+            self.logger.critical('Scheduler encountered fatal error. Shut down imminent.', exc_info=True, extra={"action": "crash"})
+            exception = exc
+            raise
+        else:
+            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
+        finally:
+            self.shut_down(exception=exception)
+
     def run_cycle(self):
         "Run a cycle of tasks"
-        tasks = self.task_list
+        tasks = self.tasks
         self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
         for task in tasks:
+            if task.on_startup or task.on_shutdown:
+                # Startup or shutdown tasks are not run in main sequence
+                continue
+
             self.handle_logs()
             self.handle_return()
             if self.is_task_runnable(task):
                 # Run the actual task
-                self.run_task_as_process(task)
-                if task.force_run:
-                    # Reset force_run as a run has forced
-                    task.force_run = False
+                self.run_task(task)
+                # Reset force_run as a run has forced
+                task.force_run = False
             elif self.is_timeouted(task):
                 # Terminate the task
                 self.terminate_task(task, reason="timeout")
@@ -464,7 +232,45 @@ class MultiScheduler(Scheduler):
         self.n_cycles += 1
         #self.handle_zombie_tasks()
 
-    def run_task_as_process(self, task):
+    def run_task(self, task, *args, **kwargs):
+        if task.execution == "single":
+            self.run_task_as_single(task, *args, **kwargs)
+        elif task.execution == "process":
+            self.run_task_as_process(task, *args, **kwargs)
+        elif task.execution == "thread":
+            raise NotImplementedError("Threading not yet implemented")
+
+    def run_task_as_single(self, task, extra_params=None):
+        self.logger.debug(f"Running task {task}")
+        
+        params = GLOBAL_PARAMETERS | Parameters(_scheduler_=self, _task_=task)
+        if extra_params:
+            params = params | Parameters(**extra_params)
+
+        start_time = datetime.datetime.now()
+        try:
+            output = task(**params)
+        except SchedulerRestart as exc:
+            # Allow these to flow up
+            raise
+        except Exception as exc:
+            exception = exc
+            status = "fail"
+        else:
+            exception = None
+            status = "success"
+            # Set output to other task to use
+            # self.task_returns[task.name] = output
+        end_time = datetime.datetime.now()
+
+        # NOTE: This only logs to the scheduler (task logger already handled). Probably remove this.
+        self.log_status(
+            task, status, 
+            start_time=start_time, end_time=end_time,
+            exception=exception
+        )
+
+    def run_task_as_process(self, task, extra_params=None):
         # TODO: Log that the task is running here as it will take a moment for the task itself to do it
         # (There is a high risk that the task is running twice as the condition did not get the info in time)
         self.logger.debug(f"Running task {task.name}")
@@ -488,7 +294,9 @@ class MultiScheduler(Scheduler):
         # at the same time, issues may arise.
 
         proc_task = copy(task)
-        params = GLOBAL_PARAMETERS | self.task_returns
+        params = GLOBAL_PARAMETERS
+        if extra_params:
+            params = params | Parameters(**extra_params)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         daemon = task.daemon if task.daemon is not None else self.tasks_as_daemon
@@ -511,13 +319,11 @@ class MultiScheduler(Scheduler):
         self.handle_logs()
         self.handle_return()
     
-
     def terminate_all(self, reason=None):
         "Terminate all running tasks"
         for task in self.tasks:
             if self.is_alive(task):
                 self.terminate_task(task, reason=reason)
-
 
     def terminate_task(self, task, reason=None):
         self.logger.debug(f"Terminating task '{task.name}'")
@@ -531,6 +337,10 @@ class MultiScheduler(Scheduler):
         task.force_termination = False
 
     def is_timeouted(self, task):
+        if task.execution == "single":
+            # Tasks running on the main thread & process
+            # cannot be "left" running
+            return False
         if not self.is_alive(task):
             return False
 
@@ -550,13 +360,24 @@ class MultiScheduler(Scheduler):
 
     def is_task_runnable(self, task):
         "Whether the task should be run"
-        is_not_running = not self.is_alive(task)
-        has_free_processors = self.has_free_processors()
-        is_condition = bool(task)
-        return is_not_running and has_free_processors and is_condition
+        if task.execution == "process":
+            is_not_running = not self.is_alive(task)
+            has_free_processors = self.has_free_processors()
+            is_condition = bool(task)
+            return is_not_running and has_free_processors and is_condition
+        elif task.execution == "single":
+            is_condition = bool(task)
+            return is_condition
+        elif task.execution == "thread":
+            raise NotImplementedError("Support for threads not yet implemented.")
 
     def is_out_of_condition(self, task):
         "Whether the task should be terminated"
+        if task.execution == "single":
+            # Task running on the main process & thread
+            # cannot be left running
+            return False
+
         is_alive = self.is_alive(task)
         if not is_alive:
             return False
@@ -579,7 +400,6 @@ class MultiScheduler(Scheduler):
             try:
                 record = queue.get(block=False)
             except Empty:
-                #self.logger.debug(f"Task log queue empty.")
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
@@ -622,7 +442,7 @@ class MultiScheduler(Scheduler):
                 pass
                 # If the return values are to put as GLOBAL_PARAMETERS
                 # there should be a maintainer task to take them there
-                self.task_returns[task_name] = return_value
+                #self.task_returns[task_name] = return_value
 
     def _handle_next_run_log(self, task):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
@@ -647,13 +467,30 @@ class MultiScheduler(Scheduler):
 
                 action = record.action
 
+    def hibernate(self):
+        "Go to sleep and wake up when next task can be executed"
+        delay = self.delay
+        self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
+        time.sleep(delay)
 
     def setup(self):
         "Set up the scheduler"
         #self.setup_listener()
-        super().setup()
+        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
         self._log_queue = multiprocessing.Queue(-1)
         self._return_queue = multiprocessing.Queue(-1)
+
+        self.n_cycles = 0
+        self.startup_time = datetime.datetime.now()
+
+        for task in self.tasks:
+            if task.on_startup:
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                    # Make sure the tasks run if start_cond not set
+                    task.force_run = True
+
+                if self.is_task_runnable(task):
+                    self.run_task(task)
 
     def setup_listener(self):
         # TODO
@@ -686,16 +523,7 @@ class MultiScheduler(Scheduler):
     def n_alive(self):
         return sum(self.is_alive(task) for task in self.tasks)
 
-    def shut_down(self, traceback=None, exception=None):
-        """Shut down the scheduler
-        This method is meant to controllably close the
-        scheduler in case the scheduler crashed (with 
-        Python exception) to properly inform the maintainer
-        and log the event.
-
-        Also responsible of restarting the scheduler if
-        ordered.
-        """
+    def shut_down_processes(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         if exception is None or isinstance(exception, non_fatal_excs):
             try:
@@ -713,7 +541,7 @@ class MultiScheduler(Scheduler):
                             self.terminate_task(task)
             except Exception as exc:
                 # Fuck it, terminate all
-                self.shut_down(exception=exc)
+                self.shut_down_processes(exception=exc)
                 return
             else:
                 self.handle_logs()
@@ -721,5 +549,111 @@ class MultiScheduler(Scheduler):
         else:
             self.terminate_all(reason="shutdown")
 
-        super().shut_down(traceback, exception)
+    def shut_down(self, traceback=None, exception=None):
+        """Shut down the scheduler
+        This method is meant to controllably close the
+        scheduler in case the scheduler crashed (with 
+        Python exception) to properly inform the maintainer
+        and log the event.
 
+        Also responsible of restarting the scheduler if
+        ordered.
+        """
+        self.shut_down_processes(traceback, exception)
+
+        # Make sure the tasks run if start_cond not set
+        for task in self.tasks:
+            if task.on_shutdown:
+
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                    # Make sure the tasks run if start_cond not set
+                    task.force_run = True
+
+                if self.is_task_runnable(task):
+                    self.run_task(task)
+
+        if isinstance(exception, SchedulerRestart):
+            # Clean up finished, restart is finally
+            # possible
+            self.restart()
+
+    def restart(self):
+        """Restart the scheduler by creating a new process
+        on the temporary run script where the scheduler's is
+        process is started.
+        """
+        # TODO
+        # https://stackoverflow.com/a/35874988
+        self.logger.debug(f"Restarting the scheduler...", extra={"action": "restart"})
+        python = sys.executable
+
+        if self.restarting == "replace":
+            os.execl(python, python, *sys.argv)
+            # After here no code will be run
+        elif self.restarting == "relaunch":
+            # Relaunch the process
+            subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
+        elif self.restarting == "fresh":
+            # Relaunch the process in new window
+            if platform.system() == "Windows":
+                subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                # Linux does not have CREATE_NEW_CONSOLE creation flag but shell=True is pretty close
+                subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
+        else:
+            raise ValueError(f"Invalid restaring: {self.restarting}")
+
+    @property
+    def delay(self):
+        # TODO: Delete
+        "Number of seconds that needs to be wait for next executable task"
+        now = datetime.datetime.now()
+        try:
+            delay = min(
+                task.next_start - now
+                for task in self.tasks
+            )
+        except (AttributeError, ValueError): # Raises ValueError if min() is empty
+            delay = 0
+        else:
+            delay = delay.total_seconds()
+        delay = min(max(delay, self.min_sleep), self.max_sleep)
+        self.logger.debug(f"Next run cycle at {delay} seconds.")
+        return delay
+
+
+# Logging
+    @property
+    def logger(self):
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        if logger is None:
+            # Get class logger (default logger)
+            logger = logging.getLogger(self._logger_basename)
+
+        if not logger.name.startswith(self._logger_basename):
+            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+
+        # TODO: Use TaskAdapter to relay the scheduler name?
+        self._logger = logger
+
+    def log_status(self, task, status, **kwargs):
+        "Log a run task"
+
+        # Log it to strout/files/email/whatever
+        if status == "success":
+            self.log_success(task, **kwargs)
+        elif status == "fail":
+            self.log_failure(task, **kwargs)
+
+    def log_success(self, task, **kwargs):
+        "Log a succeeded task"
+        self.logger.debug(f"Task {task} succeeded.")
+
+    def log_failure(self, task, exception, **kwargs):
+        "Log a failed task"
+        tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
+        tb_string = ''.join(tb)
+        self.logger.debug(f"Task {task} failed: \n{tb_string}")
