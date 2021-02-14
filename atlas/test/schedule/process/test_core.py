@@ -26,11 +26,6 @@ def run_failing():
 def run_succeeding():
     pass
 
-def run_slow():
-    time.sleep(2)
-    with open("work.txt", "a") as file:
-        file.write("line created\n")
-
 def create_line_to_file():
     with open("work.txt", "a") as file:
         file.write("line created\n")
@@ -195,57 +190,6 @@ def test_task_force_disabled(tmpdir):
 
         assert task.disabled
         assert not task.force_run # This should be reseted
-
-def test_task_timeout(tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        session.reset()
-        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
-
-        scheduler = Scheduler(
-            [
-                task,
-            ], 
-            shut_condition=TaskStarted(task="slow task") >= 2,
-            timeout="1 seconds"
-        )
-        scheduler()
-
-        history = task.get_history()
-        assert 2 == (history["action"] == "run").sum()
-        assert 2 == (history["action"] == "terminate").sum()
-        assert 0 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
-
-        assert not os.path.exists("work.txt")
-
-
-def test_task_terminate(tmpdir):
-    def terminate_task(_scheduler_):
-        _scheduler_.tasks[0].force_termination = True
-    with tmpdir.as_cwd() as old_dir:
-        session.reset()
-        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
-
-        scheduler = Scheduler(
-            [
-                task,
-                FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
-            ], 
-            shut_condition=TaskStarted(task="slow task") >= 2,
-        )
-        scheduler()
-
-        history = task.get_history()
-        assert 2 == (history["action"] == "run").sum()
-        assert 2 == (history["action"] == "terminate").sum()
-        assert 0 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
-
-        assert not os.path.exists("work.txt")
-
-        # Attr force_termination should be reseted every time the task has been terminated
-        assert not task.force_termination
-
 
 def test_priority(tmpdir):
     with tmpdir.as_cwd() as old_dir:
