@@ -72,7 +72,8 @@ class TaskAdapter(logging.LoggerAdapter):
                     df = df[df["asctime"] <= end]
                 return df
         else:
-            raise AttributeError(f"No handlers that could read the logs on {self.logger.name} (missing methods 'read' or 'query')")
+            warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
+            return pd.DataFrame()
 
     def get_latest(self, action=None) -> dict:
         "Get latest log record"
