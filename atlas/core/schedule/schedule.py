@@ -233,14 +233,14 @@ class Scheduler:
         #self.handle_zombie_tasks()
 
     def run_task(self, task, *args, **kwargs):
-        if task.execution == "single":
-            self.run_task_as_single(task, *args, **kwargs)
+        if task.execution == "main":
+            self.run_task_as_main(task, *args, **kwargs)
         elif task.execution == "process":
             self.run_task_as_process(task, *args, **kwargs)
         elif task.execution == "thread":
             raise NotImplementedError("Threading not yet implemented")
 
-    def run_task_as_single(self, task, extra_params=None):
+    def run_task_as_main(self, task, extra_params=None):
         self.logger.debug(f"Running task {task}")
         
         params = GLOBAL_PARAMETERS | Parameters(_scheduler_=self, _task_=task)
@@ -337,7 +337,7 @@ class Scheduler:
         task.force_termination = False
 
     def is_timeouted(self, task):
-        if task.execution == "single":
+        if task.execution == "main":
             # Tasks running on the main thread & process
             # cannot be "left" running
             return False
@@ -365,7 +365,7 @@ class Scheduler:
             has_free_processors = self.has_free_processors()
             is_condition = bool(task)
             return is_not_running and has_free_processors and is_condition
-        elif task.execution == "single":
+        elif task.execution == "main":
             is_condition = bool(task)
             return is_condition
         elif task.execution == "thread":
@@ -373,7 +373,7 @@ class Scheduler:
 
     def is_out_of_condition(self, task):
         "Whether the task should be terminated"
-        if task.execution == "single":
+        if task.execution == "main":
             # Task running on the main process & thread
             # cannot be left running
             return False

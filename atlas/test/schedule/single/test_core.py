@@ -36,7 +36,7 @@ def test_task_execution(tmpdir):
         # actual measurable impact outside atlas
         scheduler = Scheduler(
             [
-                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution="single"),
+                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution="main"),
             ], 
             shut_condition=TaskStarted(task="add line to file") >= 3,
         )
@@ -54,7 +54,7 @@ def test_task_with_params(tmpdir):
         # actual measurable impact outside atlas
         scheduler = Scheduler(
             tasks=[
-                FuncTask(run_maintainer_with_params, name="maintainer", start_cond=AlwaysTrue(), execution="single"),
+                FuncTask(run_maintainer_with_params, name="maintainer", start_cond=AlwaysTrue(), execution="main"),
             ],
             shut_condition=TaskStarted(task="maintainer") >= 1,
             name="unmaintained scheduler"
@@ -76,8 +76,8 @@ def test_tasks_startup_shutdown(tmpdir):
 
         scheduler = Scheduler(
             tasks=[
-                FuncTask(create_line_to_startup_file, name="startup", execution="single", on_startup=True),
-                FuncTask(create_line_to_shutdown, name="shutdown", execution="single", on_shutdown=True),
+                FuncTask(create_line_to_startup_file, name="startup", execution="main", on_startup=True),
+                FuncTask(create_line_to_shutdown, name="shutdown", execution="main", on_shutdown=True),
             ],
             shut_condition=AlwaysTrue()
         )

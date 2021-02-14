@@ -69,18 +69,18 @@ def test_full_featured(tmpdir):
                     "mode": "test"
                 },
                 "tasks": {
-                    "maintain.notify-1": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
-                    "maintain.notify-start-up": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single", "on_startup": True},
-                    "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single", "on_shutdown": True},
+                    "maintain.notify-1": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
+                    "maintain.notify-start-up": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main", "on_startup": True},
+                    "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main", "on_shutdown": True},
 
                     "fetch.stock-prices": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "fetch.fundamentals": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": "daily"},
                     "calculate.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "report.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
 
-                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}, "execution": "single"},
-                    "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
-                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
+                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}, "execution": "main"},
+                    "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
+                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
                 },
                 "sequences": {
                     "sequence.signals-1": {
@@ -193,7 +193,7 @@ def test_scheduler_tasks_set(tmpdir):
                     "tasks": {
                         "task_1": {"class": "FuncTask", "func": "some_funcs.do_task_1"},
                         "task_2": {"class": "FuncTask", "func": "some_funcs.do_task_2"},
-                        "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain", "execution": "single"}
+                        "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain", "execution": "main"}
                     },
                     "parameters": {"param_a": 1, "param_b": 2}
                 }

@@ -229,7 +229,7 @@ def test_task_terminate(tmpdir):
         scheduler = Scheduler(
             [
                 task,
-                FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="single"),
+                FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
             ], 
             shut_condition=TaskStarted(task="slow task") >= 2,
         )
