@@ -414,8 +414,10 @@ class Scheduler:
                     # This means we have to rely that message really contains
                     # the full traceback
 
-                    record.exc_info = record.message
-                    record.exc_text = record.message
+                    record.exc_info = record.exc_text
+                    record.exc_text = record.exc_text
+                    if record.exc_text is not None and record.exc_text not in record.message:
+                        record.message = record.message + "\n" + record.message
 
                 
                 task = get_task(record.task_name)
