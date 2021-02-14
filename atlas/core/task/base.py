@@ -156,7 +156,13 @@ class Task:
         self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
         self.end_cond = AlwaysFalse() if end_cond is None else copy(end_cond)
 
-        self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
+        self.timeout = (
+            pd.Timedelta.max # "never" is 292 years
+            if timeout == "never"
+            else pd.Timedelta(timeout)
+            if timeout is not None 
+            else timeout
+        )
         self.priority = priority
 
         self.execution = execution
