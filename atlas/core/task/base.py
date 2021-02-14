@@ -15,6 +15,7 @@ from atlas.core.parameters import Parameters
 import os
 import logging
 import inspect
+import warnings
 
 from functools import wraps
 from copy import copy
@@ -435,7 +436,11 @@ class Task:
 
     @property
     def status(self):
-        record = self.logger.get_latest()
+        try:
+            record = self.logger.get_latest()
+        except AttributeError:
+            warnings.warn(f"Task '{self.name}' logger is not readable. Status unknown.")
+            record = None
         if not record:
             # No previous status
             return None

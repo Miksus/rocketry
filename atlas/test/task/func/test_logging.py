@@ -1,4 +1,4 @@
-
+import logging
 import pytest
 
 from atlas.core import Scheduler
@@ -40,3 +40,19 @@ def test_fail(tmpdir):
         task.log_failure()
         assert "fail" == task.status
         assert not task.is_running
+
+def test_without_handlers(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+
+        logger = logging.getLogger("atlas.task.test")
+        logger.handlers = []
+        logger.propagate = False
+
+        task = FuncTask(
+            lambda : None, 
+            name="task",
+            start_cond="always true",
+            logger="atlas.task.test"
+        )
+        task()
+        assert task.status is None
