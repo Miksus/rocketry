@@ -21,12 +21,9 @@ def test_tasks_startup_shutdown(tmpdir):
         session.reset()
 
         scheduler = Scheduler(
-            tasks=[],
-            startup_tasks=[
-                FuncTask(create_line_to_startup_file, name="startup"),
-            ],
-            shutdown_tasks=[
-                FuncTask(create_line_to_shutdown, name="shutdown"),
+            tasks=[
+                FuncTask(create_line_to_startup_file, name="startup", on_startup=True),
+                FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True),
             ],
             shut_condition=AlwaysTrue()
         )

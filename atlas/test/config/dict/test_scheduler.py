@@ -1,7 +1,7 @@
 
 from atlas.config import parse_dict
 
-from atlas.core import Scheduler, MultiScheduler
+from atlas.core import Scheduler, Scheduler
 from atlas.core.task import get_task
 from atlas.parse import parse_condition_clause
 
@@ -69,18 +69,18 @@ def test_full_featured(tmpdir):
                     "mode": "test"
                 },
                 "tasks": {
-                    "maintain.notify-1": {"class": "FuncTask", "func": "funcs.do_a_task"},
-                    "maintain.notify-start-up": {"class": "FuncTask", "func": "funcs.do_a_task"},
-                    "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.notify-1": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
+                    "maintain.notify-start-up": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single", "on_startup": True},
+                    "maintain.notify-shut-down": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single", "on_shutdown": True},
 
                     "fetch.stock-prices": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "fetch.fundamentals": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": "daily"},
                     "calculate.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "report.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
 
-                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}},
-                    "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task"},
-                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task"},
+                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}, "execution": "single"},
+                    "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
+                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "single"},
                 },
                 "sequences": {
                     "sequence.signals-1": {
@@ -118,14 +118,14 @@ def test_full_featured(tmpdir):
                         "fetch.fundamentals",
                         "calculate.signals",
                         "report.signals",
-                        "strategy.find-tasks"
-                    ],
-                    "maintainer_tasks": [
+                        "strategy.find-tasks",
+
                         "maintain.notify-1",
-                        "sequence.maintain"
+                        "sequence.maintain",
+
+                        "maintain.notify-start-up",
+                        "maintain.notify-shut-down"
                     ],
-                    "startup_tasks": ["maintain.notify-start-up"],
-                    "shutdown_tasks": ["maintain.notify-shut-down"],
                     "parameters": {"maintainers": ["myself"]}
                 }
             }
@@ -135,10 +135,6 @@ def test_full_featured(tmpdir):
 
         # Assert found tasks
         tasks = {task.name for task in scheduler.tasks}
-        maintainers = {task.name for task in scheduler.maintainer_tasks}
-
-        startups = {task.name for task in scheduler.startup_tasks}
-        shutdowns = {task.name for task in scheduler.shutdown_tasks}
         assert {
             "fetch.stock-prices", 
             "fetch.fundamentals", 
@@ -148,22 +144,15 @@ def test_full_featured(tmpdir):
             # From ProjectFinder
             "annuals",
             "quarterly",
-        } == tasks
 
-        assert {
             "maintain.notify-1", 
             "maintain.fetch",
             "maintain.pull",
             "maintain.status",
-        } == maintainers
 
-        assert {
             "maintain.notify-start-up",
-        } == startups
-
-        assert {
             "maintain.notify-shut-down"
-        } == shutdowns
+        } == tasks
 
         assert {
             # Globals
@@ -204,20 +193,15 @@ def test_scheduler_tasks_set(tmpdir):
                     "tasks": {
                         "task_1": {"class": "FuncTask", "func": "some_funcs.do_task_1"},
                         "task_2": {"class": "FuncTask", "func": "some_funcs.do_task_2"},
-                    },
-                    "maintainer_tasks": {
-                        "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain"}
+                        "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain", "execution": "single"}
                     },
                     "parameters": {"param_a": 1, "param_b": 2}
                 }
             }
         )
         assert isinstance(scheduler, Scheduler)
-        assert ["task_1", "task_2"] == [task.name for task in scheduler.tasks]
-        assert ["do_task_1", "do_task_2"] == [task.func.__name__ for task in scheduler.tasks]
-
-        assert ["maintain.task_1"] == [task.name for task in scheduler.maintainer_tasks]
-        assert ["do_maintain"] == [task.func.__name__ for task in scheduler.maintainer_tasks]
+        assert ["task_1", "task_2", "maintain.task_1"] == [task.name for task in scheduler.tasks]
+        assert ["do_task_1", "do_task_2", "do_maintain"] == [task.func.__name__ for task in scheduler.tasks]
 
         assert {"param_a": 1, "param_b": 2} == dict(**scheduler.parameters)
 

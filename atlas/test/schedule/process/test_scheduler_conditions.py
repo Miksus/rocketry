@@ -1,5 +1,5 @@
 
-from atlas.core import MultiScheduler
+from atlas.core import Scheduler
 from atlas.time import TimeDelta
 from atlas.conditions import SchedulerCycles, SchedulerStarted
 from atlas import session
@@ -11,7 +11,7 @@ def test_scheduler_started(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
@@ -22,7 +22,7 @@ def test_scheduler_cycles(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [], shut_condition=SchedulerCycles() >= 4
         )
         scheduler()

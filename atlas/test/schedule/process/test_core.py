@@ -1,5 +1,5 @@
 
-from atlas.core import MultiScheduler
+from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
 from atlas.core.task.base import Task, clear_tasks, get_task
@@ -31,7 +31,6 @@ def run_slow():
     with open("work.txt", "a") as file:
         file.write("line created\n")
 
-
 def create_line_to_file():
     with open("work.txt", "a") as file:
         file.write("line created\n")
@@ -39,18 +38,11 @@ def create_line_to_file():
 def run_with_param(int_5):
     assert int_5 == 5
 
-def run_maintainer_with_params(_scheduler_, _task_):
-    assert isinstance(_scheduler_, MultiScheduler)
-    _scheduler_.name = "maintained scheduler"
-    assert _task_.name == "maintainer"
-
-def run_maintainer():
-    pass
-
 def run_creating_child():
 
     proc = multiprocessing.Process(target=run_succeeding, daemon=True)
     proc.start()
+
 
 def test_task_execution(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -58,7 +50,7 @@ def test_task_execution(tmpdir):
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside atlas
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue()),
             ], 
@@ -90,7 +82,7 @@ def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
         session.reset()
         task = FuncTask(task_func, name="task", start_cond=AlwaysTrue())
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="task") >= run_count
@@ -110,7 +102,7 @@ def test_task_fail_traceback(tmpdir):
         session.reset()
         task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue())
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="task") >= 3
@@ -136,7 +128,7 @@ def test_task_force_run(tmpdir):
         )
         task.force_run = True
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
@@ -161,7 +153,7 @@ def test_task_disabled(tmpdir):
         )
         task.disabled = True
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
@@ -191,7 +183,7 @@ def test_task_force_disabled(tmpdir):
         task.disabled = True
         task.force_run = True
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
@@ -209,7 +201,7 @@ def test_task_timeout(tmpdir):
         session.reset()
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], 
@@ -234,11 +226,11 @@ def test_task_terminate(tmpdir):
         session.reset()
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
 
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
+                FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="single"),
             ], 
-            maintainer_tasks=[FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"))],
             shut_condition=TaskStarted(task="slow task") >= 2,
         )
         scheduler()
@@ -262,7 +254,7 @@ def test_priority(tmpdir):
         task_1 = FuncTask(run_succeeding, priority=1, name="first", start_cond=AlwaysTrue())
         task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue())
         task_3 = FuncTask(run_failing, priority=5, name="second", start_cond=AlwaysTrue())
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task_1,
                 task_2,
@@ -286,7 +278,7 @@ def test_pass_params_as_global(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue())
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="parametrized") >= 1
@@ -313,7 +305,7 @@ def test_pass_params_as_local(tmpdir):
             parameters={"int_5": 5, "extra_param": "something"},
             start_cond=AlwaysTrue()
         )
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="parametrized") >= 1
@@ -336,7 +328,7 @@ def test_pass_params_as_local_and_global(tmpdir):
             parameters={"int_5": 5},
             start_cond=AlwaysTrue()
         )
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             [
                 task,
             ], shut_condition=TaskStarted(task="parametrized") >= 1
@@ -353,53 +345,8 @@ def test_pass_params_as_local_and_global(tmpdir):
         assert 0 == (history["action"] == "fail").sum()
 
 
-def test_maintainer_task(tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        session.reset()
-        # To be confident the scheduler won't lie to us
-        # we test the task execution with a job that has
-        # actual measurable impact outside atlas
-        scheduler = MultiScheduler(
-            tasks=[],
-            maintainer_tasks=[
-                FuncTask(run_maintainer, name="maintainer", start_cond=AlwaysTrue()),
-            ], 
-            shut_condition=TaskStarted(task="maintainer") >= 1,
-            name="unmaintained scheduler"
-        )
-
-        scheduler()
-
-        history = get_task("maintainer").get_history()
-        assert 1 == (history["action"] == "run").sum()
-        assert 1 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
-
-
 # Maintainer
-def test_maintainer_task_with_params(tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        session.reset()
-        # To be confident the scheduler won't lie to us
-        # we test the task execution with a job that has
-        # actual measurable impact outside atlas
-        scheduler = MultiScheduler(
-            tasks=[],
-            maintainer_tasks=[
-                FuncTask(run_maintainer_with_params, name="maintainer", start_cond=AlwaysTrue()),
-            ], 
-            shut_condition=TaskStarted(task="maintainer") >= 1,
-            name="unmaintained scheduler"
-        )
 
-        scheduler()
-
-        history = get_task("maintainer").get_history()
-        assert 1 == (history["action"] == "run").sum()
-        assert 1 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
-
-        assert scheduler.name == "maintained scheduler"
 
 def test_creating_child(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -407,7 +354,7 @@ def test_creating_child(tmpdir):
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside atlas
-        scheduler = MultiScheduler(
+        scheduler = Scheduler(
             tasks=[
                 FuncTask(run_creating_child, name="task_1", start_cond=AlwaysTrue()),
             ], 
@@ -436,13 +383,10 @@ def test_startup_shutdown(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
-        scheduler = MultiScheduler(
-            tasks=[],
-            startup_tasks=[
-                FuncTask(create_line_to_startup_file, name="startup"),
-            ],
-            shutdown_tasks=[
-                FuncTask(create_line_to_shutdown, name="shutdown"),
+        scheduler = Scheduler(
+            tasks=[
+                FuncTask(create_line_to_startup_file, name="startup", on_startup=True),
+                FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True),
             ],
             shut_condition=AlwaysTrue()
         )
