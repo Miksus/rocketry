@@ -2,7 +2,7 @@
 # TODO
 #import pytest
 #
-from atlas.task import ScriptTask
+from atlas.task import PyScript
 #from atlas.core.task.base import Task
 #
 #
@@ -30,7 +30,7 @@ import pytest
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = ScriptTask(
+        task = PyScript(
             script_path, 
             name="a task"
         )
@@ -57,7 +57,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
 def test_parametrization_runtime(tmpdir, script_files):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = ScriptTask(
+        task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
         )
@@ -74,7 +74,7 @@ def test_parametrization_runtime(tmpdir, script_files):
 def test_parametrization_local(tmpdir, script_files):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = ScriptTask(
+        task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1}

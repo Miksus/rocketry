@@ -3,7 +3,7 @@
 from atlas.core import Scheduler
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess, AlwaysTrue
 
-from atlas.task import ScriptTask
+from atlas.task import PyScript
 #from atlas.core.task.base import Task
 #
 #
@@ -29,7 +29,7 @@ import pytest
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = ScriptTask(
+        task = PyScript(
             script_path, 
             name="a task",
             start_cond=AlwaysTrue()

@@ -9,11 +9,11 @@ import re
 
 
 @register_task_cls
-class ScriptTask(Task):
+class PyScript(Task):
     """Task that executes a Python script
 
-    ScriptTask("folder/subfolder/main.py")
-    ScriptTask("folder/subfolder/mytask.py")
+    PyScript("folder/subfolder/main.py")
+    PyScript("folder/subfolder/mytask.py")
     """
 
     def __init__(self, path, main_func=None, **kwargs):
