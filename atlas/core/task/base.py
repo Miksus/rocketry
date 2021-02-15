@@ -7,8 +7,6 @@ from atlas.core.schedule.exceptions import SchedulerRestart
 
 from .utils import get_execution, get_dependencies
 
-# Rare exception: We need something from builtins (outside core) to be user friendly
-from atlas.parse import parse_condition_clause
 from atlas.conditions import DependSuccess
 from atlas.core.parameters import Parameters
 
@@ -202,7 +200,9 @@ class Task:
     
     @start_cond.setter
     def start_cond(self, cond):
-        cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        # Rare exception: We need something from builtins (outside core) to be user friendly
+        from atlas.parse.condition import parse_condition
+        cond = parse_condition(cond) if isinstance(cond, str) else cond
         self._validate_cond(cond)
 
         set_statement_defaults(cond, task=self)
@@ -214,7 +214,9 @@ class Task:
     
     @end_cond.setter
     def end_cond(self, cond):
-        cond = parse_condition_clause(cond) if isinstance(cond, str) else cond
+        # Rare exception: We need something from builtins (outside core) to be user friendly
+        from atlas.parse.condition import parse_condition
+        cond = parse_condition(cond) if isinstance(cond, str) else cond
         self._validate_cond(cond)
 
         set_statement_defaults(cond, task=self)

@@ -1,5 +1,5 @@
 
-from atlas.parse import parse_condition_clause
+from atlas.parse import parse_condition
 from atlas.conditions import (
     AlwaysTrue, AlwaysFalse, 
     All, Any, Not,
@@ -70,7 +70,7 @@ import pytest
     ],
 )
 def test_string(cond_str, expected):
-    cond = parse_condition_clause(cond_str)
+    cond = parse_condition(cond_str)
     assert cond == expected
 
 
@@ -83,4 +83,4 @@ def test_string(cond_str, expected):
     ],
 )
 def test_string_matching(cond_str):
-    cond = parse_condition_clause(cond_str)
+    cond = parse_condition(cond_str)

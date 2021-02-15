@@ -1,4 +1,4 @@
-from .parse import parse_dict
+from atlas.parse import parse_session
 from pathlib import Path
 from pybox.io import read_yaml
 
@@ -11,3 +11,6 @@ def get_default(name):
     root = Path(__file__).parent / "defaults"
     path = root / (name + ".yaml")
     return parse_yaml(path)
+
+def parse_dict(conf:dict):
+    return parse_session(conf)

@@ -1,5 +1,5 @@
 
-from .condition import add_condition_parser
+from .condition_item import add_condition_parser
 
 from atlas.conditions import (
     TaskFinished, 
@@ -92,6 +92,10 @@ for regex, func in [
     (r"always false", lambda: AlwaysFalse()),
     (r"true",         lambda: AlwaysTrue()),
     (r"false",        lambda: AlwaysFalse()),
+
+    # Parameters
+    # (r"parameter '(?P<key>.+)' is '(?P<value>.+)'", lambda: ParamExists())
+    # (r"parameter '(?P<key>.+)' exists", lambda: ParamExists())
 ]:
     add_condition_parser(regex, func, regex=True)
 

@@ -1,5 +1,5 @@
 
-from .condition import parse_condition
+from .condition_item import parse_condition_item
 
 from pybox.string.parse import ClosureParser
 from pybox.container.visitor import Visitor
@@ -8,7 +8,7 @@ from atlas.core.conditions.base import All, Any, Not
 
 import re
 
-def parse_condition_clause(s:str):
+def parse_condition_string(s:str):
     p = ClosureParser()
     v = Visitor(visit_types=(list,))
 
@@ -56,7 +56,7 @@ def _parse(s:tuple):
         if s in ("&", "|", "~"):
             return s
         else:
-            return parse_condition(s)
+            return parse_condition_item(s)
 
     if isinstance(s, str):
         return parse_string(s)

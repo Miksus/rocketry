@@ -3,10 +3,9 @@ from atlas.config import parse_dict
 
 from atlas.core import Scheduler, Scheduler
 from atlas.core.task import get_task
-from atlas.parse import parse_condition_clause
+from atlas.parse import parse_condition
 
 from atlas.conditions import AlwaysFalse
-from atlas.parse import parse_condition_clause
 
 from textwrap import dedent
 from atlas import session
@@ -162,12 +161,12 @@ def test_full_featured(tmpdir):
         } == dict(**scheduler.parameters)
 
         # Test sequences
-        cond = parse_condition_clause("daily starting 19:00")
+        cond = parse_condition("daily starting 19:00")
         cond.kwargs["task"] = get_task("fetch.stock-prices")
         assert get_task("fetch.stock-prices").start_cond == cond
 
         
-        cond = parse_condition_clause("daily") & parse_condition_clause("daily starting 19:00")
+        cond = parse_condition("daily") & parse_condition("daily starting 19:00")
         cond[0].kwargs["task"] = get_task("fetch.fundamentals")
         cond[1].kwargs["task"] = get_task("fetch.fundamentals")
         assert get_task("fetch.fundamentals").start_cond == cond
@@ -244,7 +243,7 @@ def test_strategy_project_finder(tmpdir):
         assert ["task_1", "task_2"] == [task.name for task in scheduler.tasks]
         assert [r"projects\task_1\main.py", r"projects\task_2\main.py"] == [str(task.path) for task in scheduler.tasks]
 
-        cond_task_1 = parse_condition_clause("daily starting 10:00")
+        cond_task_1 = parse_condition("daily starting 10:00")
         cond_task_1.kwargs["task"] = scheduler.tasks[0]
         assert [cond_task_1, AlwaysFalse()] == [task.start_cond for task in scheduler.tasks]
 

@@ -1,5 +1,5 @@
 
-from atlas.task import ScriptTask
+from atlas.task import PyScript
 
 from .task_configs import FileConfig
 from pathlib import Path
@@ -67,8 +67,8 @@ class ProjectFinder(TaskFinderBase):
             config=FileConfig(path="config.yaml")
         )()
         >>> [
-            ScriptTask(name="task_1", path="my_tasks/task_1/main.py", **config),
-            ScriptTask(name="task_2.sub_task_1", path="my_tasks/task_2/sub_task_1/main.py", **config),
+            PyScript(name="task_1", path="my_tasks/task_1/main.py", **config),
+            PyScript(name="task_2.sub_task_1", path="my_tasks/task_2/sub_task_1/main.py", **config),
         ]
 
 
@@ -95,7 +95,7 @@ class ProjectFinder(TaskFinderBase):
                 config["name"] = '.'.join(script_path.parts[len(root.parts):-1])
 
             tasks.append(
-                ScriptTask(script_path, main_func=self.main_func, **config)
+                PyScript(script_path, main_func=self.main_func, **config)
             )
 
         return tasks
