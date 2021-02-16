@@ -16,9 +16,9 @@ class PyScript(Task):
     PyScript("folder/subfolder/mytask.py")
     """
 
-    def __init__(self, path, main_func=None, **kwargs):
+    def __init__(self, path, func=None, **kwargs):
         self.path = path
-        self.main_func = "main" if main_func is None else main_func
+        self.func = "main" if func is None else func
         super().__init__(**kwargs)
 
     def execute_action(self, **params):
@@ -45,7 +45,7 @@ class PyScript(Task):
         if not hasattr(self, "_task_func"):
             # _task_func is cached to faster performance
             task_module = self.get_module(self.path)
-            task_func = getattr(task_module, self.main_func)
+            task_func = getattr(task_module, self.func)
             self._task_func = task_func
         return self._task_func
 

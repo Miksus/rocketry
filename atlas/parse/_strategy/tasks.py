@@ -95,7 +95,7 @@ class ProjectFinder(TaskFinderBase):
                 config["name"] = '.'.join(script_path.parts[len(root.parts):-1])
 
             tasks.append(
-                PyScript(script_path, main_func=self.main_func, **config)
+                PyScript(script_path, func=self.main_func, **config)
             )
 
         return tasks
