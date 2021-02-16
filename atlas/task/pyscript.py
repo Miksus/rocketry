@@ -23,12 +23,13 @@ class PyScript(Task):
 
     def execute_action(self, **params):
         root = str(Path(self.path).parent)
-        task_func = self.get_task_func()
-
         sys.path.append(root)
+
+        task_func = self.get_task_func()
         output = task_func(**params)
-        sys.path.remove(root)
         
+        sys.path.remove(root)
+
         return output
 
     def filter_params(self, params):
