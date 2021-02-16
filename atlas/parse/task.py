@@ -30,15 +30,3 @@ parse_task = ParserPicker(
         str: get_task
     }
 )
-
-def parse_script(conf:dict):
-    if "class" not in d and "path" in d:
-        path = Path(d["path"])
-        if path.suffix == ".py":
-            cls = PyScript
-        elif path.suffix == ".tex":
-            cls = TexScript
-        elif path.suffix == ".ipynb":
-            cls = JupyterTask
-        d["class"] = cls
-    return parse_task(d)
