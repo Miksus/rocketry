@@ -9,6 +9,7 @@ from atlas.task import PyScript
 #Task.use_instance_naming = True
 from atlas import session
 import pytest
+from textwrap import dedent
 
 
 
@@ -46,10 +47,62 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
         assert task.status == expected_outcome
 
         df = session.get_task_log()
-        records = df[["task_name", "action"]].to_dict(orient="record")
+        records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": expected_outcome},
+        ] == records
+
+
+def test_run_specified_func(tmpdir):
+    task_dir = tmpdir.mkdir("mytasks")
+    task_dir.join("myfile.py").write(dedent("""
+    def myfunc():
+        pass
+    """))
+
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = PyScript(
+            "mytasks/myfile.py", 
+            func="myfunc",
+            name="a task"
+        )
+        task()
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
+
+def test_import_relative(tmpdir):
+    task_dir = tmpdir.mkdir("mytasks")
+    task_dir.join("myfile.py").write(dedent("""
+    from utils import value
+    def main():
+        assert value == 5
+    """))
+
+    task_dir.join("utils.py").write(dedent("""
+    value = 5
+    """))
+
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = PyScript(
+            "mytasks/myfile.py", 
+            name="a task"
+        )
+        task()
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
         ] == records
 
 
@@ -65,7 +118,7 @@ def test_parametrization_runtime(tmpdir, script_files):
         task(integer=1, string="X", optional_float=1.1, extra_parameter="Should not be passed")
 
         df = session.get_task_log()
-        records = df[["task_name", "action"]].to_dict(orient="record")
+        records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -83,7 +136,7 @@ def test_parametrization_local(tmpdir, script_files):
         task()
 
         df = session.get_task_log()
-        records = df[["task_name", "action"]].to_dict(orient="record")
+        records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
