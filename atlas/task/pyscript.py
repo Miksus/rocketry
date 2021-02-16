@@ -22,12 +22,14 @@ class PyScript(Task):
         super().__init__(**kwargs)
 
     def execute_action(self, **params):
+
+        # Add dir of self.path to sys.path so importing from that dir works
         root = str(Path(self.path).parent)
-        sys.path.append(root)
+        sys.path.insert(0, root)
 
         task_func = self.get_task_func()
         output = task_func(**params)
-        
+
         sys.path.remove(root)
 
         return output
@@ -49,11 +51,19 @@ class PyScript(Task):
 
 
     def get_task_func(self):
+        
+        
         if not hasattr(self, "_task_func"):
+            # Add dir of self.path to sys.path so importing from that dir works
+            root = str(Path(self.path).parent)
+            sys.path.insert(0, root)
+
             # _task_func is cached to faster performance
             task_module = self.get_module(self.path)
             task_func = getattr(task_module, self.func)
             self._task_func = task_func
+
+            sys.path.remove(root)
         return self._task_func
 
     @staticmethod
