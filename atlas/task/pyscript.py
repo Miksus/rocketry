@@ -6,7 +6,7 @@ import inspect
 import importlib
 import subprocess
 import re
-
+import sys
 
 @register_task_cls
 class PyScript(Task):
@@ -22,8 +22,14 @@ class PyScript(Task):
         super().__init__(**kwargs)
 
     def execute_action(self, **params):
+        root = str(Path(self.path).parent)
         task_func = self.get_task_func()
-        return task_func(**params)
+
+        sys.path.append(root)
+        output = task_func(**params)
+        sys.path.remove(root)
+        
+        return output
 
     def filter_params(self, params):
         return {
