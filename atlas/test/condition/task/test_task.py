@@ -229,7 +229,7 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2020-01-01 07:30",
             False,
-            id="Do not run (already succeeded)"),
+            id="Don't run (already succeeded)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
@@ -249,7 +249,7 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2020-01-01 08:30",
             False,
-            id="Do not run (already ran and out of time)"),
+            id="Don't run (already ran and out of time)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
@@ -259,7 +259,7 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2021-12-31 08:30",
             False,
-            id="Do not run (missed)"),
+            id="Don't run (missed)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
@@ -269,14 +269,14 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2021-12-31 06:00",
             False,
-            id="Do not run (not yet time)"),
+            id="Don't run (not yet time)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
             [],
             "2020-01-01 08:30",
             False,
-            id="Do not run (out of time and not run at all)"),
+            id="Don't run (out of time and not run at all)"),
 
         # Do run
         pytest.param(
