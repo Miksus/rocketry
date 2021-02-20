@@ -3,7 +3,7 @@ from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
 from atlas.core.conditions import set_statement_defaults, BaseCondition
 from atlas.core.utils import is_pickleable
-from atlas.core.schedule.exceptions import SchedulerRestart
+from atlas.core.exceptions import SchedulerRestart, TaskInactionException
 
 from .utils import get_execution, get_dependencies
 

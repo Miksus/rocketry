@@ -21,7 +21,7 @@ import pandas as pd
 from atlas.core.task.base import Task, get_task
 from atlas.core.log import FilterAll, read_logger
 
-from .exceptions import SchedulerRestart
+from atlas.core.exceptions import SchedulerRestart
 
 from atlas.core.utils import is_pickleable
 from atlas.core.conditions import set_statement_defaults, AlwaysFalse

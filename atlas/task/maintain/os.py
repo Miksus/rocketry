@@ -1,6 +1,6 @@
 
 from atlas.core.task import Task, register_task_cls
-from atlas.core.schedule.exceptions import SchedulerRestart
+from atlas.core.exceptions import SchedulerRestart
 
 import os, sys, subprocess
 
