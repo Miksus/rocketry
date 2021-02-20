@@ -14,6 +14,7 @@ import os
 import logging
 import inspect
 import warnings
+from typing import List
 
 from functools import wraps
 from copy import copy
@@ -41,6 +42,9 @@ def clear_tasks(exclude=None):
     
     _TASKS = preserve
 
+def remove_tasks(tasks:List[str]):
+    for task in tasks:
+        _TASKS.pop(task)
 
 def register_task_cls(cls):
     """Add Task class to registered
