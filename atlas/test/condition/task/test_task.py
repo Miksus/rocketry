@@ -239,7 +239,30 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2020-01-01 07:30",
             False,
-            id="Do not run (already failed)"),
+            id="Don't run (already failed)"),
+    
+        pytest.param(
+            lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "terminate"),
+            ],
+            "2020-01-01 07:30",
+            False,
+            id="Don't run (terminated)"),
+    
+        pytest.param(
+            # Termination is kind of failing but retry is not applicable as termination is often
+            # indication that the task is not desired to be run anymore (as it has already taken
+            # enough system resources)
+            lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00"), retries=1), 
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "terminate"),
+            ],
+            "2020-01-01 07:30",
+            False,
+            id="Don't run (terminated with retries)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
