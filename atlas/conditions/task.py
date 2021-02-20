@@ -87,6 +87,9 @@ class TaskExecutable(Historical):
         # is to be implemented, there should be one more condition:
         # self._is_not_running
 
+        # TODO: How to consider termination? Probably should be considered as failures without retries
+        # NOTE: inaction is not considered at all
+
     def __bool__(self):
         period = self.period
         retries = self.kwargs["retries"]
@@ -98,6 +101,7 @@ class TaskExecutable(Historical):
 
         isin_period = (
             # TimeDelta has no __contains__. One cannot say whether now is "past 2 hours".
+            #   And please tell why this does not raise an exception then? - Future me
             True  
             if isinstance(period, TimeDelta) 
             else IsPeriod(period=period)
