@@ -5,6 +5,7 @@ import time
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.core.task.base import Task, get_task
+from atlas.core.exceptions import TaskInactionException
 from atlas.core.conditions import AlwaysFalse, AlwaysTrue, Any
 from atlas import session
 
@@ -17,6 +18,9 @@ def run_successful_func():
 def run_failing_func():
     print("Running func")
     raise RuntimeError("Task failed")
+
+def run_inaction():
+    raise TaskInactionException()
 
 def run_parametrized(integer, string, optional_float=None):
     assert isinstance(integer, int)
@@ -36,6 +40,11 @@ def run_parametrized(integer, string, optional_float=None):
             "fail", 
             RuntimeError,
             id="Failure"),
+        pytest.param(
+            run_inaction, 
+            "inaction", 
+            None,
+            id="Inaction"),
     ],
 )
 def test_run(tmpdir, task_func, expected_outcome, exc_cls):

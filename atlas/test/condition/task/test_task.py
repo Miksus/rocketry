@@ -294,6 +294,16 @@ def test_task_depend_success(tmpdir, cls, expected):
             "2020-01-01 07:30",
             True,
             id="Do run (has retries)"),
+
+        pytest.param(
+            lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "inaction"),
+            ],
+            "2020-01-01 07:30",
+            True,
+            id="Do run (has inacted)"),
     ],
 )
 def test_task_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):

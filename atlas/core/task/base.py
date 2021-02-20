@@ -281,7 +281,15 @@ class Task:
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(output)
+            # TODO: Probably should raise and not silently return?
             return output
+
+        except TaskInactionException:
+            # Task did not fail, it did not succeed:
+            #   The task started but quickly determined was not needed to be run
+            #   and therefore the purpose of the task was not executed.
+            self.log_inaction()
+            status = "inaction"
 
         except Exception as exception:
             status = "failed"
@@ -435,6 +443,9 @@ class Task:
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
         self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate"})
+
+    def log_inaction(self):
+        self.logger.info(f"", extra={"action": "inaction"})
 
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"

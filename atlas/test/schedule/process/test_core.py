@@ -3,6 +3,7 @@ from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
 from atlas.core.task.base import Task, clear_tasks, get_task
+from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas import session
@@ -25,6 +26,9 @@ def run_failing():
 
 def run_succeeding():
     pass
+
+def run_inacting():
+    raise TaskInactionException()
 
 def create_line_to_file():
     with open("work.txt", "a") as file:
@@ -70,6 +74,10 @@ def test_task_execution(tmpdir):
             run_failing, 
             3, 3, 0,
             id="Failing task"),
+        pytest.param(
+            run_inacting, 
+            3, 0, 0,
+            id="Inacting task"),
     ],
 )
 def test_task_log(tmpdir, task_func, run_count, fail_count, success_count):
