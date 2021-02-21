@@ -39,6 +39,7 @@ import pytest
         pytest.param("after 'other' failed",    DependFailure(depend_task="other"), id="after failed"),
         pytest.param("after 'other' finished",  DependFinish(depend_task="other"), id="after finished"),
 
+        pytest.param("after 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
 
         # Task scheduling
         pytest.param("hourly",  TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),

@@ -9,6 +9,19 @@ from atlas.core.conditions.base import All, Any, Not
 import re
 
 def parse_condition_string(s:str):
+    """Parse a string to condition. Allows logical operators.
+
+    Reserved keywords:
+        "&" : and operator
+        "|" : or operator
+        "~" : not operator
+        "(" : opening closure
+        ")" : closing closure
+
+    These characters cannot be found in
+    individual condition parsing (ie. 
+    in the names of tasks).
+    """
     p = ClosureParser()
     v = Visitor(visit_types=(list,))
 
@@ -27,7 +40,11 @@ def parse_condition_string(s:str):
     return e
 
 def _split_operations(s):
-    regex = r'([&|\-+~])'
+    # The following are considered as reserved operators
+    #   "&" : and operator
+    #   "|" : or operator
+    #   "~" : not operator
+    regex = r'([&|~])'
     s = s.strip()
     if bool(re.search(regex, s)):
         l = re.split(regex, s)
