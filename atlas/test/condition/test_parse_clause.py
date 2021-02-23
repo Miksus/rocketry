@@ -54,14 +54,18 @@ import pytest
             id="Any in Not"),
 
         pytest.param(
-            "~always true | ~always true", 
-            ~AlwaysTrue() | ~AlwaysTrue(),
+            "~always true | ~always true & ~always true", 
+            ~AlwaysTrue() | ~AlwaysTrue() & ~AlwaysTrue(),
             id="Multiple Not"),
 
         pytest.param(
             "always true & (always true | always true & (always true | always true))", 
             AlwaysTrue() & (AlwaysTrue() | AlwaysTrue() & (AlwaysTrue() | AlwaysTrue())),
-            id="Nested"),
+            id="Deeply nested"),
+        pytest.param(
+            "~always true & ~~(always true | ~always true & ~(~~always true | ~always true))", 
+            ~AlwaysTrue() & ~~(AlwaysTrue() | ~AlwaysTrue() & ~(~~AlwaysTrue() | ~AlwaysTrue())),
+            id="Deeply nested Not"),
 
         pytest.param(
             "", 
