@@ -14,7 +14,11 @@ import os
 import logging
 import inspect
 import warnings
+import datetime
 from typing import List
+import multiprocessing
+import threading
+from queue import Empty
 
 from functools import wraps
 from copy import copy
@@ -82,8 +86,6 @@ class Task:
         on_success {function} : Function to execute if the action succeessed
         on_finish {function} : Function to execute when the function finished (failed or success)
 
-        execution {str, TimePeriod} : Time period when the task is allowed to run once and only once
-            examples: "daily", "past 2 hours", "between 11:00 and 12:00"
         dependent {List[str]} : List of task names to must run before this task (in their execution cycle)
 
         name {str, tuple} : Name of the task. Must be unique
@@ -105,13 +107,11 @@ class Task:
         __bool__() : Whether the task can be run now or not
         filter_params(params:Dict) : Filter the passed parameters needed by the action
 
-        between(*args, **kwargs) : Add execution condition of running the task between specified times
-        past(*args, **kwargs) : Add execution condition of running the task in specified interval
-        in_(*args, **kwargs) :
-
         log_running() : Log that the task is running
         log_failure() : Log that the task has failed
         log_success() : Log that the task has succeeded
+        log_termination() : Log that the task has been terminated
+        log_inaction() : Log that the task has not really done anything
 
 
     """
@@ -134,7 +134,7 @@ class Task:
                 start_cond=None, run_cond=None, end_cond=None, 
                 dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, inputs=None, logger=None, 
+                name=None, logger=None, 
                 execution="process", disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False):
         """[summary]
@@ -192,9 +192,6 @@ class Task:
 
         # Whether the task is maintenance task
         self.is_maintenance = False
-
-        # Input task
-        self.inputs = [] if inputs is None else inputs
 
         self._set_default_task()
 
@@ -260,8 +257,36 @@ class Task:
         set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
-    def __call__(self, **params):
-        self.log_running()
+    def __call__(self, **kwargs):
+        if self.execution == "main":
+            self.run_as_main(**kwargs)
+        elif self.execution == "process":
+            self.run_as_process(**kwargs)
+        elif self.execution == "thread":
+            self.run_as_thread(**kwargs)
+        else:
+            raise ValueError(f"Invalid execution: {self.execution}")
+
+    def __bool__(self):
+        "Check whether the task can be run or not"
+        # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
+        # Also add methods: 
+        #    set_pending() : Set forced_state to False
+        #    resume() : Reset forced_state to None
+        #    set_running() : Set forced_state to True
+
+        if self.force_run:
+            return True
+        elif self.disabled:
+            return False
+
+        cond = bool(self.start_cond)
+
+        return cond
+
+    def run_as_main(self, params=None, _log_running=True, **kwargs):
+        if _log_running:
+            self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
         #old_cwd = os.getcwd()
@@ -270,6 +295,7 @@ class Task:
 
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
+        params = {} if params is None else params
         try:
             params = self.parameters | params # Union setup params with call params
             params = self.filter_params(params)
@@ -314,22 +340,84 @@ class Task:
             #if cwd is not None:
             #    os.chdir(old_cwd)
 
-    def __bool__(self):
-        "Check whether the task can be run or not"
-        # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
-        # Also add methods: 
-        #    set_pending() : Set forced_state to False
-        #    resume() : Reset forced_state to None
-        #    set_running() : Set forced_state to True
+    def run_as_thread(self, params=None, **kwargs):
+        "Create thread and run the task in it"
+        event_is_running = threading.Event()
+        self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
+        self.start_time = datetime.datetime.now()
+        self._thread.start()
+        event_is_running.wait() # Wait until the task is confirmed to run 
+ 
 
-        if self.force_run:
-            return True
-        elif self.disabled:
-            return False
+    def _run_as_thread(self, params=None, event=None):
+        "Run the task in the thread itself"
+        self.log_running()
+        event.set()
+        self.run_as_main(params=params, _log_running=False)
 
-        cond = bool(self.start_cond)
+    def run_as_process(self, params=None, log_queue=None, return_queue=None, daemon=None):
+        # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
+        if not log_queue:
+            log_queue = multiprocessing.Queue(1)
+        daemon = self.daemon if self.daemon is not None else daemon
+        self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
+        self.start_time = datetime.datetime.now()
+        self._process.start()
+        
+        self._lock_to_run_log(log_queue)
 
-        return cond
+    def _run_as_process(self, queue, return_queue, params):
+        """Run a task in a separate process (has own memory)"""
+
+        # NOTE: This is in the process and other info in the application
+        # cannot be accessed here. Self is a copy of the original
+        # and cannot affect main processes' attributes!
+        
+        # The task's logger has been removed by MultiScheduler.run_task_as_process
+        # (see the method for more info) and we need to recreate the logger now
+        # in the actual multiprocessing's process. We only add QueueHandler to the
+        # logger (with multiprocessing.Queue as queue) so that all the logging
+        # records end up in the main process to be logged properly. 
+
+        # Set the process logger
+        
+        logger = logging.getLogger(self._logger_basename + "._process") # task._logger_basename
+        logger.setLevel(logging.INFO)
+        logger.addHandler(
+            logging.handlers.QueueHandler(queue)
+        )
+        try:
+            with warnings.catch_warnings():
+                # task.set_logger will warn that 
+                # we do not use two-way logger here 
+                # but that is not needed as running 
+                # the task itself does not require
+                # knowing the status of the task
+                # or other tasks
+                warnings.simplefilter("ignore")
+                self.logger = logger
+            #task.logger.addHandler(
+            #    logging.StreamHandler(sys.stdout)
+            #)
+            #task.logger.addHandler(
+            #    QueueHandler(queue)
+            #)
+        except:
+            logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
+            raise
+
+        try:
+            # NOTE: The parameters are "materialized" 
+            # here in the actual process that runs the task
+            output = self.run_as_main(params=params)
+        except Exception as exc:
+            # Just catching all exceptions.
+            # There is nothing to raise it
+            # to :(
+            pass
+        else:
+            if return_queue:
+                return_queue.put((self.name, output))
 
     def filter_params(self, params):
         "By default, filter keyword arguments required by self.execute_action"
@@ -410,8 +498,35 @@ class Task:
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
+    def is_alive(self):
+        return (
+            (hasattr(self, "_process") and self._process.is_alive())
+            or 
+            (hasattr(self, "_thread") and self._thread.is_alive())
+        )
 
 # Logging
+    def _lock_to_run_log(self, log_queue):
+        "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
+        action = None
+        timeout = 10 # Seconds allowed the setup to take before declaring setup to crash
+        #record = log_queue.get(block=True, timeout=None)
+        while action != "run":
+            try:
+                record = log_queue.get(block=True, timeout=timeout)
+            except Empty:
+                if not self.is_alive():
+                    # There will be no "run" log record thus ending the task gracefully
+                    self.logger.critical(f"Task '{self.name}' crashed in setup", extra={"action": "fail"})
+                    return
+            else:
+                
+                self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
+                task = get_task(record.task_name)
+                task.log_record(record)
+
+                action = record.action
+
     @property
     def logger(self):
         return self._logger
@@ -477,7 +592,8 @@ class Task:
         state['_logger'] = None
         state['_start_cond'] = None
         state['_end_cond'] = None
-        state["_process"] = None # If MultiScheduler
+        state["_process"] = None # If If execution == "process"
+        state["_thread"] = None # If execution == "thread"
 
         # what we return here will be stored in the pickle
         return state

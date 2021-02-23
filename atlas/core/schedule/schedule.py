@@ -48,57 +48,6 @@ def clear_schedulers():
     global _SCHEDULERS
     _SCHEDULERS = {}
     
-    
-def _run_task_as_process(task, queue, return_queue, params):
-    """Run a task in a separate process (has own memory)"""
-
-    # NOTE: This is in the process and other info in the application
-    # cannot be accessed here.
-    
-    # The task's logger has been removed by MultiScheduler.run_task_as_process
-    # (see the method for more info) and we need to recreate the logger now
-    # in the actual multiprocessing's process. We only add QueueHandler to the
-    # logger (with multiprocessing.Queue as queue) so that all the logging
-    # records end up in the main process to be logged properly. 
-
-    # Set the process logger
-    
-    logger = logging.getLogger(task._logger_basename + "._process") # task._logger_basename
-    logger.setLevel(logging.INFO)
-    logger.addHandler(
-        QueueHandler(queue)
-    )
-    try:
-        with warnings.catch_warnings():
-            # task.set_logger will warn that 
-            # we do not use two-way logger here 
-            # but that is not needed as running 
-            # the task itself does not require
-            # knowing the status of the task
-            # or other tasks
-            warnings.simplefilter("ignore")
-            task.logger = logger
-        #task.logger.addHandler(
-        #    logging.StreamHandler(sys.stdout)
-        #)
-        #task.logger.addHandler(
-        #    QueueHandler(queue)
-        #)
-    except:
-        logger.critical(f"Task '{task.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": task.name})
-        raise
-
-    try:
-        # NOTE: The parameters are "materialized" 
-        # here in the actual process that runs the task
-        output = task(**params)
-    except Exception as exc:
-        # Just catching all exceptions.
-        # There is nothing to raise it
-        # to :(
-        pass
-    else:
-        return_queue.put((task.name, output))
 
 def _listen_task_status(handlers, queue):
     # TODO: Probably remove
@@ -232,27 +181,21 @@ class Scheduler:
         self.n_cycles += 1
         #self.handle_zombie_tasks()
 
-    def run_task(self, task, *args, **kwargs):
-        if task.execution == "main":
-            self.run_task_as_main(task, *args, **kwargs)
-        elif task.execution == "process":
-            self.run_task_as_process(task, *args, **kwargs)
-        elif task.execution == "thread":
-            raise NotImplementedError("Threading not yet implemented")
-
-    def run_task_as_main(self, task, extra_params=None):
-        self.logger.debug(f"Running task {task}")
-        
-        params = GLOBAL_PARAMETERS | Parameters(_scheduler_=self, _task_=task)
-        if extra_params:
-            params = params | Parameters(**extra_params)
-
+    def run_task(self, task, *args, extra_params=None, **kwargs):
+        params = GLOBAL_PARAMETERS
+        extra_params = {} if extra_params is None else extra_params
+        params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
         start_time = datetime.datetime.now()
         try:
-            output = task(**params)
+            task(
+                params=params, 
+                # Additional arguments if multiprocessing
+                log_queue=self._log_queue, 
+                return_queue=self._return_queue, 
+                daemon=self.tasks_as_daemon
+            )
         except SchedulerRestart as exc:
-            # Allow these to flow up
-            raise
+            raise 
         except Exception as exc:
             exception = exc
             status = "fail"
@@ -270,59 +213,10 @@ class Scheduler:
             exception=exception
         )
 
-    def run_task_as_process(self, task, extra_params=None):
-        # TODO: Log that the task is running here as it will take a moment for the task itself to do it
-        # (There is a high risk that the task is running twice as the condition did not get the info in time)
-        self.logger.debug(f"Running task {task.name}")
-
-        # Multiprocessing's process has its own memory that cause
-        # sone issues. Because of this, multiprocessing need to 
-        # pickle the parameters passed to the process' function.
-        # Issue arises when the logger of a task cannot be pickled
-        # due to locks, file buffers etc. in the handlers.
-        # To fix this, we need to mirror the task: the task running
-        # in the process has its logger removed and the logger
-        # is formed in the process function itself (so not passed).
-
-        # The mirror logger just creates and sends all the log records 
-        # to the main process (this scheduler) via multiprocessing.Queue
-        # and the log records are handled (logged) by the original version 
-        # of the task using task.logger.handle(record).
-
-        # Also, the logging records may be best to be handled in the main
-        # process anyways: if multiple tasks are writing same log file
-        # at the same time, issues may arise.
-
-        proc_task = copy(task)
-        params = GLOBAL_PARAMETERS
-        if extra_params:
-            params = params | Parameters(**extra_params)
-
-        # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
-        daemon = task.daemon if task.daemon is not None else self.tasks_as_daemon
-        task._process = Process(target=_run_task_as_process, args=(proc_task, self._log_queue, self._return_queue, params), daemon=daemon) 
-        # TODO: Pass self._ret_queue to Process (to get the return value of the task)
-
-        task._process.start()
-        task._start_time = datetime.datetime.now()
-
-        # There is one more issue to handle: the task must be logged as
-        # running before exiting this method (otherwise there is 
-        # risk for the task being run multiple times in the same instant
-        # as the log about that the task is already running has not yet 
-        # arrived). To fix this, we wait till we get approval that the
-        # log about that the task is running has arrived and is logged.
-
-        self._handle_next_run_log(task)
-
-        # In case there are others waiting
-        self.handle_logs()
-        self.handle_return()
-    
     def terminate_all(self, reason=None):
         "Terminate all running tasks"
         for task in self.tasks:
-            if self.is_alive(task):
+            if task.is_alive():
                 self.terminate_task(task, reason=reason)
 
     def terminate_task(self, task, reason=None):
@@ -337,11 +231,14 @@ class Scheduler:
         task.force_termination = False
 
     def is_timeouted(self, task):
-        if task.execution == "main":
-            # Tasks running on the main thread & process
-            # cannot be "left" running
+        if task.execution == "main" or task.execution == "thread":
+            # Task running on the main process
+            # cannot be left running
+
+            # Task running on a thread cannot
+            # be terminated (unlike processes)
             return False
-        if not self.is_alive(task):
+        elif not task.is_alive():
             return False
 
         timeout = (
@@ -351,17 +248,13 @@ class Scheduler:
         
         if timeout is None:
             return False
-        run_duration = datetime.datetime.now() - task._start_time
+        run_duration = datetime.datetime.now() - task.start_time
         return run_duration > timeout
-
-    @staticmethod
-    def is_alive(task):
-        return hasattr(task, "_process") and task._process.is_alive()
 
     def is_task_runnable(self, task):
         "Whether the task should be run"
         if task.execution == "process":
-            is_not_running = not self.is_alive(task)
+            is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
             is_condition = bool(task)
             return is_not_running and has_free_processors and is_condition
@@ -369,32 +262,34 @@ class Scheduler:
             is_condition = bool(task)
             return is_condition
         elif task.execution == "thread":
-            raise NotImplementedError("Support for threads not yet implemented.")
+            is_not_running = not task.is_alive()
+            is_condition = bool(task)
+            return is_not_running and is_condition
+        else:
+            raise NotImplementedError(task.execution)
 
     def is_out_of_condition(self, task):
         "Whether the task should be terminated"
-        if task.execution == "main":
-            # Task running on the main process & thread
+        if task.execution == "main" or task.execution == "thread":
+            # Task running on the main process
             # cannot be left running
+
+            # Task running on a thread cannot
+            # be terminated (unlike processes)
             return False
 
-        is_alive = self.is_alive(task)
-        if not is_alive:
+        elif not task.is_alive():
             return False
-        
-        if task.force_termination:
+
+        elif task.force_termination:
             return True
-        return bool(task.end_cond) or not bool(task.run_cond)
 
-    def handle_status(self, task):
-        "Update task status"
-        # TODO: Delete when queue handling is done
-        if task._conn.pull(0.01):
-            data = task._conn.recv()
-            self.log_status(task, **data)
+        else:
+            return bool(task.end_cond) or not bool(task.run_cond)
             
     def handle_logs(self, timeout=0.01):
         "Handle the status queue and carries the logging on their behalf"
+        # TODO: This could be maybe done in the tasks
         queue = self._log_queue
         while True:
             try:
@@ -429,7 +324,7 @@ class Scheduler:
     def handle_zombie_tasks(self):
         "If there are tasks that has been crashed during setting up the task loggers, this method finds those out and logs them"
         for task in self.tasks:
-            if task.status == "run" and not self.is_alive(task):
+            if task.status == "run" and not task.is_alive():
                 task.logger.critical(f"Task '{task.name}' crashed in process setup", extra={"action": "crash"})
 
     def handle_return(self):
@@ -445,29 +340,6 @@ class Scheduler:
                 # If the return values are to put as GLOBAL_PARAMETERS
                 # there should be a maintainer task to take them there
                 #self.task_returns[task_name] = return_value
-
-    def _handle_next_run_log(self, task):
-        "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
-        action = None
-        timeout = 10 # Seconds allowed the setup to take before declaring setup to crash
-
-        queue = self._log_queue
-        #record = queue.get(block=True, timeout=None)
-        while action != "run":
-            try:
-                record = queue.get(block=True, timeout=timeout)
-            except Empty:
-                if not self.is_alive(task):
-                    # There will be no "run" log record thus ending the task gracefully
-                    task.logger.critical(f"Task '{task.name}' crashed in setup", extra={"action": "fail"})
-                    return
-            else:
-                
-                self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = get_task(record.task_name)
-                task.log_record(record)
-
-                action = record.action
 
     def hibernate(self):
         "Go to sleep and wake up when next task can be executed"
@@ -523,7 +395,7 @@ class Scheduler:
 
     @property
     def n_alive(self):
-        return sum(self.is_alive(task) for task in self.tasks)
+        return sum(task.is_alive() for task in self.tasks)
 
     def shut_down_processes(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
