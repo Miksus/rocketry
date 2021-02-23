@@ -76,7 +76,8 @@ def test_task_status(tmpdir, cls, succeeding, expected):
 
         task = FuncTask(
             run_task, 
-            name="runned task"
+            name="runned task",
+            execution="main"
         )
 
         # Has not yet ran
@@ -84,7 +85,7 @@ def test_task_status(tmpdir, cls, succeeding, expected):
 
         # Now has
         try:
-            task(fail=not succeeding)
+            task(params={"fail": not succeeding})
         except: 
             pass
         assert bool(condition) if expected else not bool(condition)
@@ -117,12 +118,14 @@ def test_task_depend_fail(tmpdir, cls, expected):
 
         depend_task = FuncTask(
             run_task, 
-            name="prerequisite task"
+            name="prerequisite task",
+            execution="main"
         )
 
         task = FuncTask(
             run_task, 
-            name="runned task"
+            name="runned task",
+            execution="main"
         )
 
         # ------------------------ t0
@@ -131,7 +134,7 @@ def test_task_depend_fail(tmpdir, cls, expected):
 
         # depend_task
         # -----|------------------- t0
-        try: depend_task(fail=True)
+        try: depend_task(params={"fail": True})
         except: pass
         assert bool(condition) if expected else not bool(condition)
 
@@ -144,7 +147,7 @@ def test_task_depend_fail(tmpdir, cls, expected):
 
         # depend_task     task     depend_task
         # -----|-----------|-----------|----------- t0
-        try: depend_task(fail=True)
+        try: depend_task(params={"fail": True})
         except: pass
         assert bool(condition) if expected else not bool(condition)
 
@@ -182,12 +185,14 @@ def test_task_depend_success(tmpdir, cls, expected):
 
         depend_task = FuncTask(
             run_task, 
-            name="prerequisite task"
+            name="prerequisite task",
+            execution="main"
         )
 
         task = FuncTask(
             run_task, 
-            name="runned task"
+            name="runned task",
+            execution="main"
         )
 
         # ------------------------ t0
@@ -196,7 +201,7 @@ def test_task_depend_success(tmpdir, cls, expected):
 
         # depend_task
         # -----|------------------- t0
-        depend_task(fail=False)
+        depend_task(params={"fail": False})
         assert bool(condition) if expected else not bool(condition)
 
 
@@ -208,7 +213,7 @@ def test_task_depend_success(tmpdir, cls, expected):
 
         # depend_task     task     depend_task
         # -----|-----------|-----------|----------- t0
-        depend_task(fail=False)
+        depend_task(params={"fail": False})
         assert bool(condition) if expected else not bool(condition)
 
 
@@ -343,7 +348,8 @@ def test_task_executable(tmpdir, mock_datetime_now, logs, time_after, get_condit
         
         task = FuncTask(
             run_task, 
-            name="the task"
+            name="the task",
+            execution="main"
         )
 
         condition = get_condition()

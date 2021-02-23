@@ -1,6 +1,7 @@
 
 # TODO
 #import pytest
+import multiprocessing
 #
 from atlas.task import PyScript
 #from atlas.core.task.base import Task
@@ -12,7 +13,7 @@ import pytest
 from textwrap import dedent
 
 
-
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "script_path,expected_outcome,exc_cls",
     [
@@ -28,21 +29,31 @@ from textwrap import dedent
             id="Failure"),
     ],
 )
-def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
+def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution):
+    kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = PyScript(
             script_path, 
-            name="a task"
+            name="a task",
+            execution=execution
         )
 
-        if exc_cls:
-            # Failing task
-            with pytest.raises(exc_cls):
-                task()
-        else:
-            # Succeeding task
-            task()
+        try:
+            task(**kwargs)
+        except:
+            # failing execution="main"
+            pass
+
+        # Wait for finish
+        if execution == "thread":
+            while task.status == "run":
+                pass
+        elif execution == "process":
+            # Do the logging manually
+            que = kwargs["log_queue"]
+            record = que.get(block=True, timeout=30)
+            task.log_record(record)
 
         assert task.status == expected_outcome
 
@@ -66,7 +77,8 @@ def test_run_specified_func(tmpdir):
         task = PyScript(
             "mytasks/myfile.py", 
             func="myfunc",
-            name="a task"
+            name="a task",
+            execution="main"
         )
         task()
 
@@ -94,7 +106,8 @@ def test_import_relative(tmpdir):
         session.reset()
         task = PyScript(
             "mytasks/myfile.py", 
-            name="a task"
+            name="a task",
+            execution="main"
         )
         task()
 
@@ -122,9 +135,10 @@ def test_import_relative_with_params(tmpdir):
         session.reset()
         task = PyScript(
             "mytasks/myfile.py", 
-            name="a task"
+            name="a task",
+            execution="main"
         )
-        task(val_5=5)
+        task(params={"val_5":5})
 
         df = session.get_task_log()
         records = df[["task_name", "action"]].to_dict(orient="records")
@@ -140,9 +154,10 @@ def test_parametrization_runtime(tmpdir, script_files):
         task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
+            execution="main"
         )
 
-        task(integer=1, string="X", optional_float=1.1, extra_parameter="Should not be passed")
+        task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
         df = session.get_task_log()
         records = df[["task_name", "action"]].to_dict(orient="records")
@@ -157,7 +172,8 @@ def test_parametrization_local(tmpdir, script_files):
         task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
-            parameters={"integer": 1, "string": "X", "optional_float": 1.1}
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+            execution="main"
         )
 
         task()

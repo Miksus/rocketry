@@ -1,6 +1,7 @@
 
 import pytest
 import time
+import multiprocessing
 
 from atlas.core import Scheduler
 from atlas.task import FuncTask
@@ -27,6 +28,7 @@ def run_parametrized(integer, string, optional_float=None):
     assert isinstance(string, str)
     assert isinstance(optional_float, float)
 
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "task_func,expected_outcome,exc_cls",
     [
@@ -47,21 +49,32 @@ def run_parametrized(integer, string, optional_float=None):
             id="Inaction"),
     ],
 )
-def test_run(tmpdir, task_func, expected_outcome, exc_cls):
+def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
+
+    kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = FuncTask(
             task_func, 
-            name="a task"
+            name="a task",
+            execution=execution
         )
 
-        if exc_cls:
-            # Failing task
-            with pytest.raises(exc_cls):
-                task()
-        else:
-            # Succeeding task
-            task()
+        try:
+            task(**kwargs)
+        except:
+            # failing execution="main"
+            pass
+
+        # Wait for finish
+        if execution == "thread":
+            while task.status == "run":
+                pass
+        elif execution == "process":
+            # Do the logging manually
+            que = kwargs["log_queue"]
+            record = que.get(block=True, timeout=30)
+            task.log_record(record)
 
         assert task.status == expected_outcome
 
@@ -81,7 +94,8 @@ def test_force_run(tmpdir):
         task = FuncTask(
             run_successful_func, 
             name="task",
-            start_cond=AlwaysFalse()
+            start_cond=AlwaysFalse(),
+            execution="main"
         )
         task.force_run = True
 
@@ -100,18 +114,21 @@ def test_dependency(tmpdir):
         task_a = FuncTask(
             run_successful_func, 
             name="task_a", 
-            start_cond=AlwaysTrue()
+            start_cond=AlwaysTrue(),
+            execution="main"
         )
         task_b = FuncTask(
             run_successful_func, 
             name="task_b", 
-            start_cond=AlwaysTrue()
+            start_cond=AlwaysTrue(),
+            execution="main"
         )
         task_dependent = FuncTask(
             run_successful_func, 
             dependent=["task_a", "task_b"],
             name="task_dependent", 
-            start_cond=AlwaysTrue()
+            start_cond=AlwaysTrue(),
+            execution="main"
         )
         assert not bool(task_dependent)
         task_a()
@@ -127,9 +144,10 @@ def test_parametrization_runtime(tmpdir):
         task = FuncTask(
             run_parametrized, 
             name="a task",
+            execution="main"
         )
 
-        task(integer=1, string="X", optional_float=1.1, extra_parameter="Should not be passed")
+        task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
         df = session.get_task_log()
         records = df[["task_name", "action"]].to_dict(orient="record")
@@ -144,7 +162,8 @@ def test_parametrization_local(tmpdir):
         task = FuncTask(
             run_parametrized, 
             name="a task",
-            parameters={"integer": 1, "string": "X", "optional_float": 1.1}
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+            execution="main"
         )
 
         task()

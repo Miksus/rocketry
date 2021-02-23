@@ -51,7 +51,7 @@ def test_task_execution(tmpdir):
         # actual measurable impact outside atlas
         scheduler = Scheduler(
             [
-                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue()),
+                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution="process"),
             ], 
             shut_condition=TaskStarted(task="add line to file") >= 3,
         )

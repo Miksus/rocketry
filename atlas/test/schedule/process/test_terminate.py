@@ -45,7 +45,7 @@ def test_without_timeout(tmpdir):
 def test_task_timeout(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
+        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
 
         scheduler = Scheduler(
             [
@@ -69,7 +69,7 @@ def test_task_terminate(tmpdir):
         _scheduler_.tasks[0].force_termination = True
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue())
+        task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
 
         scheduler = Scheduler(
             [
