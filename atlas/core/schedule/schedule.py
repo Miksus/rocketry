@@ -221,22 +221,30 @@ class Scheduler:
 
     def terminate_task(self, task, reason=None):
         self.logger.debug(f"Terminating task '{task.name}'")
-        task._process.terminate()
-        # Waiting till the termination is finished. 
-        # Otherwise may try to terminate it many times as the process is alive for a brief moment
-        task._process.join() 
-        task.log_termination(reason=reason)
+        is_threaded = hasattr(task, "_thread")
+        is_multiprocessed = hasattr(task, "_process")
+        if task.is_alive_as_thread():
+            # We can only kindly ask the thread to...
+            # get the fuck out please.
+            task.thread_terminate.set()
 
-        # Resetting attr force_termination
-        task.force_termination = False
+        elif task.is_alive_as_process():
+            task._process.terminate()
+            # Waiting till the termination is finished. 
+            # Otherwise may try to terminate it many times as the process is alive for a brief moment
+            task._process.join() 
+            task.log_termination(reason=reason)
+
+            # Resetting attr force_termination
+            task.force_termination = False
+        else:
+            # The process/thread probably just died after the check
+            pass
 
     def is_timeouted(self, task):
-        if task.execution == "main" or task.execution == "thread":
+        if not hasattr(task, "_thread") and not hasattr(task, "_process"):
             # Task running on the main process
             # cannot be left running
-
-            # Task running on a thread cannot
-            # be terminated (unlike processes)
             return False
         elif not task.is_alive():
             return False
@@ -270,15 +278,10 @@ class Scheduler:
 
     def is_out_of_condition(self, task):
         "Whether the task should be terminated"
-        if task.execution == "main" or task.execution == "thread":
+        if not task.is_alive():
+            # NOTE:
             # Task running on the main process
             # cannot be left running
-
-            # Task running on a thread cannot
-            # be terminated (unlike processes)
-            return False
-
-        elif not task.is_alive():
             return False
 
         elif task.force_termination:

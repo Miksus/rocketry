@@ -13,3 +13,10 @@ class TaskInactionException(Exception):
 
 class TaskDisableException(Exception):
     "Disable the task. Considered as failure."
+
+class TaskTerminationException(Exception):
+    """Task was terminated.
+    This should only be raised by threaded
+    tasks to signal that they did indeed
+    listen the thread_please_terminate event
+    and ended as a result of that"""

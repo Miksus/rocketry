@@ -3,7 +3,7 @@ from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
 from atlas.core.conditions import set_statement_defaults, BaseCondition
 from atlas.core.utils import is_pickleable
-from atlas.core.exceptions import SchedulerRestart, TaskInactionException
+from atlas.core.exceptions import SchedulerRestart, TaskInactionException, TaskTerminationException
 
 from .utils import get_execution, get_dependencies
 
@@ -183,6 +183,8 @@ class Task:
         self.dependent = dependent
         self.parameters = parameters
 
+        # Thread specific
+        self._thread_terminate = threading.Event()
 
         if self.status == "run":
             # Previously crashed unexpectedly during running
@@ -258,6 +260,14 @@ class Task:
         set_statement_defaults(self.end_cond, task=self)
 
     def __call__(self, **kwargs):
+        # Remove old threads/processes
+        # (using _process and _threads are most robust way to check if running as process or thread)
+        if hasattr(self, "_process"):
+            del self._process
+        if hasattr(self, "_thread"):
+            del self._thread
+
+        # Run the actual task
         if self.execution == "main":
             self.run_as_main(**kwargs)
         elif self.execution == "process":
@@ -316,10 +326,17 @@ class Task:
             #   and therefore the purpose of the task was not executed.
             self.log_inaction()
             status = "inaction"
+            
+        except TaskTerminationException:
+            # Task was terminated and the task's function
+            # did listen to that.
+            self.log_termination()
+            status = "termination"
 
         except Exception as exception:
-            status = "failed"
+            # All the other exceptions (failures)
             self.log_failure()
+            status = "failed"
             self.process_failure(exception=exception)
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
@@ -342,6 +359,8 @@ class Task:
 
     def run_as_thread(self, params=None, **kwargs):
         "Create thread and run the task in it"
+        self.thread_terminate.clear()
+
         event_is_running = threading.Event()
         self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
         self.start_time = datetime.datetime.now()
@@ -353,6 +372,10 @@ class Task:
         "Run the task in the thread itself"
         self.log_running()
         event.set()
+        # Adding the _thread_terminate as param so the task can
+        # get the signal for termination
+        params = Parameters() if params is None else params
+        params = params | {"_thread_terminate_": self._thread_terminate}
         self.run_as_main(params=params, _log_running=False)
 
     def run_as_process(self, params=None, log_queue=None, return_queue=None, daemon=None):
@@ -499,12 +522,14 @@ class Task:
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
     def is_alive(self):
-        return (
-            (hasattr(self, "_process") and self._process.is_alive())
-            or 
-            (hasattr(self, "_thread") and self._thread.is_alive())
-        )
+        return self.is_alive_as_thread() or self.is_alive_as_process()
 
+    def is_alive_as_thread(self):
+        return hasattr(self, "_thread") and self._thread.is_alive()
+
+    def is_alive_as_process(self):
+        return hasattr(self, "_process") and self._process.is_alive()
+        
 # Logging
     def _lock_to_run_log(self, log_queue):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
@@ -558,6 +583,9 @@ class Task:
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
         self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate"})
+        # Reset event and force_termination (for threads)
+        self.thread_terminate.clear()
+        self.force_termination = False
 
     def log_inaction(self):
         self.logger.info(f"", extra={"action": "inaction"})
@@ -595,10 +623,18 @@ class Task:
         state["_process"] = None # If If execution == "process"
         state["_thread"] = None # If execution == "thread"
 
+        state["_thread_terminate"] = None # Event only for threads
+
         # what we return here will be stored in the pickle
         return state
 
+    @property
+    def thread_terminate(self):
+        "Event to signal terminating the threaded task"
+        # Readonly "attribute"
+        return self._thread_terminate
 
+# Other
     @property
     def period(self):
         "Determine Time object for the interval (maximum possible if time independent as 'or')"
