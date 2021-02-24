@@ -68,8 +68,11 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
 
         # Wait for finish
         if execution == "thread":
-            while task.status == "run":
-                pass
+            times = 0
+            timeout = 2
+            while task.status != expected_outcome and times < timeout / 0.2:
+                time.sleep(0.2)
+                times += 1
         elif execution == "process":
             # Do the logging manually
             que = kwargs["log_queue"]

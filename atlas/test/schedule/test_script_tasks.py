@@ -11,6 +11,8 @@ from atlas.task import PyScript
 from atlas import session
 import pytest
 
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "script_path,expected_outcome,exc_cls",
     [
@@ -26,13 +28,14 @@ import pytest
             id="Failure"),
     ],
 )
-def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls):
+def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = PyScript(
             script_path, 
             name="a task",
-            start_cond=AlwaysTrue()
+            start_cond=AlwaysTrue(),
+            execution=execution
         )
 
         scheduler = Scheduler(

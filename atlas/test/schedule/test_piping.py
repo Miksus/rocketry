@@ -26,28 +26,32 @@ def create_line_to_file():
     with open("work.txt", "a") as file:
         file.write("line created\n")
 
-def test_dependent(tmpdir):
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_dependent(tmpdir, execution):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
 
         # Running the master tasks only once
-        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(task="A"))
-        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(task="B"))
+        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(task="A"), execution=execution)
+        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(task="B"), execution=execution)
 
         task_after_a = FuncTask(
             run_succeeding, 
             name="After A", 
-            start_cond=DependSuccess(depend_task="A")
+            start_cond=DependSuccess(depend_task="A"),
+            execution=execution
         )
         task_after_b = FuncTask(
             run_succeeding, 
             name="After B", 
-            start_cond=DependSuccess(depend_task="B")
+            start_cond=DependSuccess(depend_task="B"),
+            execution=execution
         )
         task_after_all = FuncTask(
             run_succeeding, 
             name="After all", 
-            start_cond=DependSuccess(depend_task="After A") & DependSuccess(depend_task="After B")
+            start_cond=DependSuccess(depend_task="After A") & DependSuccess(depend_task="After B"),
+            execution=execution
         )
 
         scheduler = Scheduler(

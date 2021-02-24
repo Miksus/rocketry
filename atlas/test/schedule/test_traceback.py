@@ -18,12 +18,13 @@ import multiprocessing
 def run_failing():
     raise RuntimeError("Task failed")
 
-def test_task_fail_traceback(tmpdir):
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_task_fail_traceback(tmpdir, execution):
     # There is a speciality in tracebacks in multiprocessing
     # See: https://bugs.python.org/issue34334
     with tmpdir.as_cwd() as old_dir:
         session.reset()
-        task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution="main")
+        task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
             [
