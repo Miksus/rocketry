@@ -36,8 +36,9 @@ def test_minimal_scheduler():
     assert isinstance(scheduler, Scheduler)
 
 def test_full_featured(tmpdir):
-    session.reset()
+    
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
 
         # A throw-away file to link all pre-set tasks
         tmpdir.join("funcs.py").write(dedent("""
@@ -173,8 +174,8 @@ def test_full_featured(tmpdir):
 
 
 def test_scheduler_tasks_set(tmpdir):
-    session.reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         tmpdir.join("some_funcs.py").write(dedent("""
         def do_task_1():
             pass
@@ -206,8 +207,8 @@ def test_scheduler_tasks_set(tmpdir):
 
 
 def test_strategy_project_finder(tmpdir):
-    session.reset()
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         project_dir = tmpdir.mkdir("projects")
 
         task_1 = project_dir.mkdir("task_1")

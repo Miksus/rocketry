@@ -7,9 +7,10 @@ from atlas.core.task.base import Task, get_task
 from atlas import session
 
 def test_running(tmpdir):
-    session.reset()
+    
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -19,9 +20,10 @@ def test_running(tmpdir):
         assert task.is_running
 
 def test_success(tmpdir):
-    session.reset()
+    
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -32,9 +34,9 @@ def test_success(tmpdir):
         assert not task.is_running
 
 def test_fail(tmpdir):
-    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(
             lambda : None,
             execution="main"

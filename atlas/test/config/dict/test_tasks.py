@@ -4,9 +4,8 @@ from atlas import session
 from atlas.core.task.base import get_all_tasks, get_task
 
 def test_init_maintain(tmpdir):
-    session.reset()
     with tmpdir.as_cwd() as old_dir:
-
+        session.reset()
         scheduler = parse_dict(
             {
                 "tasks": {

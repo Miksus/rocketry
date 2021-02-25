@@ -26,9 +26,9 @@ def test_get_task(tmpdir):
         assert t is task
 
 def test_clear_task(tmpdir):
-    session.reset()
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
+        session.reset()
         task = FuncTask(
             run_successful_func, 
             name="example"
