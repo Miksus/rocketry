@@ -135,30 +135,30 @@ class Scheduler:
 
                 # self.maintain()
         except SystemExit as exc:
-            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
+            self.logger.info('Shutting down...', extra={"action": "shutdown"})
             exception = exc
 
         except SchedulerRestart as exc:
-            self.logger.info('Restart called.', exc_info=True, extra={"action": "shutdown"})
+            self.logger.info('Restart called. Shutting down...', exc_info=True, extra={"action": "shutdown"})
             exception = exc
 
         except KeyboardInterrupt as exc:
-            self.logger.info('Scheduler interupted. Shutting down scheduler.', exc_info=True, extra={"action": "shutdown"})
+            self.logger.info('Interupted. Shutting down...', exc_info=True, extra={"action": "shutdown"})
             exception = exc
 
         except Exception as exc:
-            self.logger.critical('Scheduler encountered fatal error. Shut down imminent.', exc_info=True, extra={"action": "crash"})
+            self.logger.critical('Fatal error encountered. Shutting down...', exc_info=True, extra={"action": "crash"})
             exception = exc
             raise
         else:
-            self.logger.info('Shutting down scheduler.', extra={"action": "shutdown"})
+            self.logger.info('Purpose completed. Shutting down...', extra={"action": "shutdown"})
         finally:
             self.shut_down(exception=exception)
 
     def run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.tasks
-        self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks", extra={"action": "run"})
+        self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
         for task in tasks:
             if task.on_startup or task.on_shutdown:
                 # Startup or shutdown tasks are not run in main sequence
@@ -353,13 +353,15 @@ class Scheduler:
     def setup(self):
         "Set up the scheduler"
         #self.setup_listener()
-        self.logger.info(f"Setting up the scheduler...", extra={"action": "setup"})
+        self.logger.info(f"Setting up...", extra={"action": "setup"})
+
         self._log_queue = multiprocessing.Queue(-1)
         self._return_queue = multiprocessing.Queue(-1)
 
         self.n_cycles = 0
         self.startup_time = datetime.datetime.now()
 
+        self.logger.info(f"Beginning startup sequence...")
         for task in self.tasks:
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
@@ -368,6 +370,8 @@ class Scheduler:
 
                 if self.is_task_runnable(task):
                     self.run_task(task)
+
+        self.logger.info(f"Setup complete.")
 
     def setup_listener(self):
         # TODO
@@ -436,8 +440,8 @@ class Scheduler:
         Also responsible of restarting the scheduler if
         ordered.
         """
-        self.shut_down_processes(traceback, exception)
-
+        
+        self.logger.info(f"Beginning shutdown sequence...")
         # Make sure the tasks run if start_cond not set
         for task in self.tasks:
             if task.on_shutdown:
@@ -449,6 +453,10 @@ class Scheduler:
                 if self.is_task_runnable(task):
                     self.run_task(task)
 
+        self.logger.info(f"Shutting down tasks...")
+        self.shut_down_processes(traceback, exception)
+
+        self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
@@ -461,7 +469,7 @@ class Scheduler:
         """
         # TODO
         # https://stackoverflow.com/a/35874988
-        self.logger.debug(f"Restarting the scheduler...", extra={"action": "restart"})
+        self.logger.debug(f"Restarting...", extra={"action": "restart"})
         python = sys.executable
 
         if self.restarting == "replace":
