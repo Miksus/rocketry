@@ -254,7 +254,7 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2020-01-01 07:30",
             False,
-            id="Don't run (terminated)", marks=pytest.mark.xfail(reason="BUG: termination should correspond to failure")),
+            id="Don't run (terminated)"),
     
         pytest.param(
             # Termination is kind of failing but retry is not applicable as termination is often
@@ -267,7 +267,7 @@ def test_task_depend_success(tmpdir, cls, expected):
             ],
             "2020-01-01 07:30",
             False,
-            id="Don't run (terminated with retries)", marks=pytest.mark.xfail(reason="BUG: termination should correspond to failure")),
+            id="Don't run (terminated with retries)"),
 
         pytest.param(
             lambda:TaskExecutable(task="the task", period=TimeOfDay("07:00", "08:00")), 
@@ -330,8 +330,8 @@ def test_task_depend_success(tmpdir, cls, expected):
                 ("2020-01-01 07:20", "inaction"),
             ],
             "2020-01-01 07:30",
-            True,
-            id="Do run (has inacted)"),
+            False,
+            id="Do not run (has inacted)"), # One would not want the task to try to run every millisecond if inacted.
     ],
 )
 def test_task_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
