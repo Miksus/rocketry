@@ -58,6 +58,9 @@ class TaskAdapter(logging.LoggerAdapter):
                 return df
             elif hasattr(handler, "read"):
                 df = pd.DataFrame(handler.read())
+                if "task_name" in df.columns:
+                    # Pandas may interpret numeric name as integer
+                    df = df.astype({"task_name": str})
 
                 if task_name is not None:
                     df = df[df["task_name"] == task_name]
