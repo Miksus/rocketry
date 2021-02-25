@@ -363,7 +363,7 @@ class Task:
 
         event_is_running = threading.Event()
         self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
-        self.start_time = datetime.datetime.now()
+        self.start_time = datetime.datetime.now() # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
@@ -384,7 +384,7 @@ class Task:
             log_queue = multiprocessing.Queue(1)
         daemon = self.daemon if self.daemon is not None else daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
-        self.start_time = datetime.datetime.now()
+        self.start_time = datetime.datetime.now() # Needed for termination
         self._process.start()
         
         self._lock_to_run_log(log_queue)
@@ -573,22 +573,23 @@ class Task:
 
     def log_running(self):
         self.logger.info(f"", extra={"action": "run"})
+        self.start_time = datetime.datetime.now()
 
     def log_failure(self):
-        self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail"})
+        self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail", "action_start": self.start_time})
 
     def log_success(self):
-        self.logger.info(f"", extra={"action": "success"})
+        self.logger.info(f"", extra={"action": "success", "start_time": self.start_time})
 
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
-        self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate"})
+        self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate", "action_start": self.start_time})
         # Reset event and force_termination (for threads)
         self.thread_terminate.clear()
         self.force_termination = False
 
     def log_inaction(self):
-        self.logger.info(f"", extra={"action": "inaction"})
+        self.logger.info(f"", extra={"action": "inaction", "action_start": self.start_time})
 
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
