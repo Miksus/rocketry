@@ -36,6 +36,19 @@ def TaskFailed(task, _start_=None, _end_=None, **kwargs):
     return records["asctime"].tolist()
 
 @Statement.from_func(historical=True, quantitative=True)
+def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
+
+    task = base.get_task(task)
+    if _start_ is None and _end_ is None:
+        # If no period, start and end are the ones from the task
+        now = datetime.datetime.now()
+        interv = task.period.rollback(now)
+        _start_, _end_ = interv.left, interv.right
+    
+    records = task.logger.get_records(start=_start_, end=_end_, action="terminate")
+    return records["asctime"].tolist()
+
+@Statement.from_func(historical=True, quantitative=True)
 def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
 
     task = base.get_task(task)
@@ -70,6 +83,19 @@ def TaskRunning(task, **kwargs):
     return record["action"] == "run"
 
 
+@Statement.from_func(historical=True, quantitative=True)
+def TaskInacted(task, _start_=None, _end_=None, **kwargs):
+
+    task = base.get_task(task)
+    if _start_ is None and _end_ is None:
+        # If no period, start and end are the ones from the task
+        now = datetime.datetime.now()
+        interv = task.period.rollback(now)
+        _start_, _end_ = interv.left, interv.right
+    
+    records = task.logger.get_records(start=_start_, end=_end_, action="inaction")
+    return records["asctime"].tolist()
+
 class TaskExecutable(Historical):
     """[summary]
 
@@ -97,7 +123,9 @@ class TaskExecutable(Historical):
 
         # Form the sub statements
         has_not_succeeded = TaskSucceeded(period=period, task=task) == 0
+        has_not_inacted = TaskInacted(period=period, task=task) == 0
         has_not_failed = TaskFailed(period=period, task=task) <= retries
+        has_not_terminated = TaskTerminated(period=period, task=task) == 0
 
         isin_period = (
             # TimeDelta has no __contains__. One cannot say whether now is "past 2 hours".
@@ -109,8 +137,10 @@ class TaskExecutable(Historical):
 
         return (
             bool(isin_period)
+            and bool(has_not_inacted)
             and bool(has_not_succeeded)
             and bool(has_not_failed)
+            and bool(has_not_terminated)
         )
 
 
