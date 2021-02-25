@@ -579,7 +579,7 @@ class Task:
         self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail", "action_start": self.start_time})
 
     def log_success(self):
-        self.logger.info(f"", extra={"action": "success", "start_time": self.start_time})
+        self.logger.info(f"", extra={"action": "success", "action_start": self.start_time})
 
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
