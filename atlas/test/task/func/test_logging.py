@@ -6,6 +6,7 @@ from queue import Empty
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.core.task.base import Task, get_task
+from atlas.log import CsvHandler
 from atlas import session
 
 import pandas as pd
@@ -104,7 +105,6 @@ def test_process_no_double_logging(tmpdir):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
     # while this is not occuring on Windows. This tests the bug.
 
-
     expected_actions = ["run", "success"]
     with tmpdir.as_cwd() as old_dir:
         session.reset()
@@ -130,16 +130,36 @@ def test_process_no_double_logging(tmpdir):
             except Empty:
                 break
             else:
-                print("asd")
                 task.log_record(record)
                 actual_actions.append(record.action)
 
         # Tests
-        assert expected_actions == actual_actions
+        n_run = actual_actions.count("run")
+        n_success = actual_actions.count("success")
 
+        # If fails here, logs not formed (not double logging)
+        assert n_run > 0 and n_success > 0, "No log records created/sent by the child process."
+
+        # If fails here, double logging caused by creating too many records
+        assert (
+            n_run == 1 and n_success == 1
+        ), "Double logging. Caused by creating multiple records (Task.log_running & Task.log_success)."
+
+        # If fails here, double logging caused by multiple handlers
+        handlers = task.logger.logger.handlers
+        handlers[0] # Checking it has atleast 2
+        handlers[1] # Checking it has atleast 2
+        assert (
+            isinstance(handlers[0], logging.StreamHandler)
+            and isinstance(handlers[1], CsvHandler)
+            and len(handlers) == 2
+        ), f"Double logging. Too many handlers: {handlers}"
+
+        # If fails here, double logging caused by Task.log_record
         df = session.get_task_log()
-        records = df[["task_name", "action"]].to_dict(orient="record")
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": "success"},
-        ] == records
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        n_run = records.count({"task_name": "a task", "action": "run"})
+        n_success = records.count({"task_name": "a task", "action": "run"})
+        assert n_run > 0 and n_success > 0, "No log records formed to log."
+
+        assert n_run == 1 and n_success == 1, "Double logging. Bug in Task.log_record probably."
