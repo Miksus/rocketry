@@ -168,6 +168,11 @@ def test_process_no_double_logging(tmpdir):
         # Start the process
         proc = multiprocessing.Process(target=task._run_as_process, args=(log_queue, return_queue, None), daemon=None) 
         proc.start()
+
+        # Testing there is no log records yet in the log
+        # (as the records should not been handled yet)
+        df = session.get_task_log()
+        assert [] == df["action"].tolist(), "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
         
         # Do the logging manually (copied from the method)
         actual_actions = []
