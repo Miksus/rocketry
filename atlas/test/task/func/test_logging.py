@@ -169,33 +169,33 @@ def test_process_no_double_logging(tmpdir):
         proc = multiprocessing.Process(target=task._run_as_process, args=(log_queue, return_queue, None), daemon=None) 
         proc.start()
 
-        # Testing there is no log records yet in the log
-        # (as the records should not been handled yet)
-        df = session.get_task_log()
-        assert [] == df["action"].tolist(), "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
-        
+
         # Do the logging manually (copied from the method)
         actual_actions = []
+        records = []
         while True:
             try:
                 record = log_queue.get(block=True, timeout=2)
             except Empty:
                 break
             else:
-                task.log_record(record)
+                records.append(record)
+                # task.log_record(record)
                 actual_actions.append(record.action)
 
-        # Tests
-        n_run = actual_actions.count("run")
-        n_success = actual_actions.count("success")
-
-        # If fails here, logs not formed (not double logging)
-        assert n_run > 0 and n_success > 0, "No log records created/sent by the child process."
-
         # If fails here, double logging caused by creating too many records
+        assert len(records) >= 2 # Testing not too few records (else not double logging bug)
         assert (
-            n_run == 1 and n_success == 1
-        ), "Double logging. Caused by creating multiple records (Task.log_running & Task.log_success)."
+            ["run", "success"] == [rec.action for rec in records]
+        ), "Double logging. Caused by creating multiple records (Task.log_running & Task.log_success) to the queue."
+
+        # Testing there is no log records yet in the log
+        # (as the records should not been handled yet)
+        df = session.get_task_log()
+        assert [] == df["action"].tolist(), "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
+        
+        for record in records:
+            task.log_record(record)
 
         # If fails here, double logging caused by multiple handlers
         handlers = task.logger.logger.handlers
