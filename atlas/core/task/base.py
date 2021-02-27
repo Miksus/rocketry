@@ -406,6 +406,7 @@ class Task:
         
         logger = logging.getLogger(self._logger_basename + "._process") # task._logger_basename
         logger.setLevel(logging.INFO)
+        logger.handlers = []
         logger.addHandler(
             logging.handlers.QueueHandler(queue)
         )
