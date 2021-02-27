@@ -54,6 +54,53 @@ def test_fail(tmpdir):
         assert "fail" == task.status
         assert not task.is_running
 
+def test_handle(tmpdir):
+
+    def create_record(action, task_name):
+        # Util func to create a LogRecord
+        record = logging.LogRecord(
+            level=logging.INFO,
+            exc_info=None,
+            # These should not matter:
+            name="atlas.task._process",
+            pathname=__file__,
+            lineno=1,
+            msg="",
+            args=None,
+        )
+        record.action = action
+        record.task_name = task_name
+        return record
+
+    # Tests Task.handle (used in process tasks)
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            lambda : None,
+            execution="main",
+            name="a task"
+        )
+        # Creating the run log
+        record_run = create_record("run", task_name="a task")
+
+        # Creating the outcome log
+        record_finish = create_record("success", task_name="a task")
+        
+        task.log_record(record_run)
+        assert "run" == task.status
+        assert task.is_running
+
+        task.log_record(record_finish)
+        assert "success" == task.status
+        assert not task.is_running
+
+        df = session.get_task_log()
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
 def test_without_handlers(tmpdir):
     with tmpdir.as_cwd() as old_dir:
 
