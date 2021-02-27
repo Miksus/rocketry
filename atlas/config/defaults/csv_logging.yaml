@@ -74,6 +74,11 @@ logging:
        handlers: ['stderr', 'csv_task']
        level: 'INFO'
        propagate: False
+    atlas.task._process:
+      # Preventing the logger of a 
+      # process task to use parent
+      # logger
+      propagate: False
     atlas.task.maintainer: 
        handlers: ['csv_task_maintain']
        level: 'INFO'

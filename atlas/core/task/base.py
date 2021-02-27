@@ -388,6 +388,7 @@ class Task:
         self._process.start()
         
         self._lock_to_run_log(log_queue)
+        return log_queue
 
     def _run_as_process(self, queue, return_queue, params):
         """Run a task in a separate process (has own memory)"""
@@ -406,6 +407,8 @@ class Task:
         
         logger = logging.getLogger(self._logger_basename + "._process") # task._logger_basename
         logger.setLevel(logging.INFO)
+        logger.propagate = False
+        logger.handlers = []
         logger.addHandler(
             logging.handlers.QueueHandler(queue)
         )
