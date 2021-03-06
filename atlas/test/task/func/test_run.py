@@ -64,7 +64,8 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
             task(**kwargs)
         except:
             # failing execution="main"
-            pass
+            if expected_outcome != "fail":
+                raise
 
         # Wait for finish
         if execution == "thread":
