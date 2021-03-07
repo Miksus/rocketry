@@ -72,6 +72,7 @@ for regex, func in [
     (r"after '(?P<depend_task>.+)'",           DependSuccess),
     
     (r"while '(?P<task>.+)' is running",       TaskRunning), 
+    (r"'(?P<task>.+)' is running",             TaskRunning), 
     (r"after '(?P<task>.+)' started",          TaskStarted),
 
     # Run the task itself during specified 
@@ -96,6 +97,11 @@ for regex, func in [
     # Parameters
     # (r"parameter '(?P<key>.+)' is '(?P<value>.+)'", lambda: ParamExists())
     # (r"parameter '(?P<key>.+)' exists", lambda: ParamExists())
+
+    # (r"(run )? weekend", lambda **kwargs: TaskExecutable(period=TimeOfWeek("Saturday", "Sunday"))),
+    # TODO: 
+        # "after 'depend_task' terminated"
+        # ""
 ]:
     add_condition_parser(regex, func, regex=True)
 
