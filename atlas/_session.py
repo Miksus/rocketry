@@ -94,9 +94,15 @@ class _Session:
 
     def reset(self):
         "Set Pypipe ecosystem to default settings (clearing tasks etc)"
-        get_default("csv_logging")
+        
+        
+        # Clear stuff
         self.tasks = {}
         self.parameters = Parameters()
+
+        # Set default settings
+        Task.use_instance_naming = False
+        get_default("csv_logging")
         
     def clear(self):
         "Clear tasks, parameters etc. of the session"
