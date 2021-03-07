@@ -5,7 +5,7 @@ import multiprocessing
 
 from atlas.core import Scheduler
 from atlas.task import FuncTask
-from atlas.core.task.base import Task, get_task
+from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.core.conditions import AlwaysFalse, AlwaysTrue, Any
 from atlas import session

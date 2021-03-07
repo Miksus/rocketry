@@ -7,7 +7,7 @@ import datetime
 
 import numpy as np
 
-from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
+from atlas.core.parameters import Parameters
 
 # TODO: convert Observation to a "statement" when comparison?
 from .base import BaseCondition
@@ -163,7 +163,7 @@ class Statement(BaseCondition):
     def get_kwargs(self):
         # TODO: Get session parameters
         if self._use_global_params:
-            return GLOBAL_PARAMETERS | self.kwargs
+            return self.session.parameters | self.kwargs
         else:
             return self.kwargs
 

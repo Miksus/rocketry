@@ -1,4 +1,1 @@
-from .schedule import (
-    Scheduler, 
-    clear_schedulers,
-)
+from .schedule import Scheduler

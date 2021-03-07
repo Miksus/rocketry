@@ -1,7 +1,6 @@
 
-from atlas.core import Scheduler
 from atlas.task import FuncTask
-from atlas.core.task.base import Task, clear_tasks
+from atlas.core import Task, Scheduler
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
 
 from atlas import session
@@ -55,13 +54,7 @@ def test_dependent(tmpdir, execution):
         )
 
         scheduler = Scheduler(
-            [
-                task_after_all,
-                task_a,
-                task_after_a,
-                task_b,
-                task_after_b
-            ], shut_condition=TaskStarted(task="After all") >= 1
+            shut_condition=TaskStarted(task="After all") >= 1
         )
 
         scheduler()

@@ -1,6 +1,5 @@
 
-from atlas.core.task import Task, clear_tasks, register_task_cls
-from atlas.core.parameters import GLOBAL_PARAMETERS
+from atlas.core.task import Task, register_task_cls
 
 
 @register_task_cls
@@ -20,7 +19,8 @@ class Refresher(Task):
     def execute_action(self, _scheduler_, **kwargs):
         "Update tasks in the _scheduler_"
         if self.clear:
-            clear_tasks(exclude=[self.name])
+            # TODO
+            self.session.clear_tasks(exclude=[self.name])
 
         _scheduler_.tasks = self.get_tasks()
         _scheduler_.maintainer_tasks = self.get_maintainers()
@@ -53,10 +53,10 @@ class ParamRefresher(Task):
         if self.scheduler:
             param_sets.append(_scheduler_.parameters)
         if self.session:
-            param_sets.append(GLOBAL_PARAMETERS)
+            param_sets.append(self.session.parameters)
         if self.tasks:
             for task in self.tasks:
-                param_sets.append(get_task(task).parameters)
+                param_sets.append(self.session.get_task(task).parameters)
 
         for param_set in param_sets:
             if self.clear:

@@ -1,12 +1,16 @@
 
 from .utils import ParserPicker, DictInstanceParser
 from .condition import parse_condition
+from .utils import _get_session
 
-from atlas.core.task.base import get_task
 from atlas.core.task.base import CLS_TASKS
 from atlas.task import FuncTask
 
 import importlib
+
+def _get_task(*args, **kwargs):
+    "Wrapper of session.get_task to overcome circular import"
+    return _get_session().get_task(*args, **kwargs)
 
 def _parse_func_task(**kwargs):
 
@@ -27,6 +31,6 @@ parse_task = ParserPicker(
                 "end_cond": parse_condition,
             },
         ),
-        str: get_task
+        str: _get_task
     }
 )

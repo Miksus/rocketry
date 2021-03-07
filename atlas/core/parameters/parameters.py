@@ -20,6 +20,8 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         Parameters({"mode": "test"}) | Parameters.from_yaml("conf.yaml") | Parameters.from_json("conf.json")
     """
 
+    _params: dict
+
     def __init__(self, **params):
         self._params = params
     
@@ -49,6 +51,19 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         
         params = {**left, **right}
         return type(self)(**params)
+
+    def __eq__(self, other):
+        "Whether parameters are equal"
+        if isinstance(other, Parameters):
+            return self._params == other._params
+        else:
+            return False
+    def __ne__(self, other):
+        "Whether parameters are equal"
+        if isinstance(other, Parameters):
+            return self._params != other._params
+        else:
+            return True
 
 # Pickling
     def __getstate__(self):

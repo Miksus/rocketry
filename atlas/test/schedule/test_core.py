@@ -2,10 +2,9 @@
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
-from atlas.core.task.base import Task, clear_tasks, get_task
+from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas import session
 
 import pytest
@@ -50,10 +49,8 @@ def test_task_execution(tmpdir, execution):
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside atlas
+        FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
         scheduler = Scheduler(
-            [
-                FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
-            ], 
             shut_condition=TaskStarted(task="add line to file") >= 3,
         )
 
@@ -87,9 +84,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         task = FuncTask(task_func, name="task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=TaskStarted(task="task") >= run_count
+            shut_condition=TaskStarted(task="task") >= run_count
         )
         scheduler()
 
@@ -113,9 +108,7 @@ def test_task_force_run(tmpdir, execution):
         task.force_run = True
 
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -140,9 +133,7 @@ def test_task_disabled(tmpdir, execution):
         task.disabled = True
 
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -172,9 +163,7 @@ def test_task_force_disabled(tmpdir, execution):
         task.force_run = True
 
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -193,11 +182,7 @@ def test_priority(tmpdir, execution):
         task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue(), execution=execution)
         task_3 = FuncTask(run_failing, priority=5, name="second", start_cond=AlwaysTrue(), execution=execution)
         scheduler = Scheduler(
-            [
-                task_1,
-                task_2,
-                task_3
-            ], shut_condition=TaskStarted(task="last") >= 1
+            shut_condition=(TaskStarted(task="last") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         scheduler()
@@ -218,9 +203,7 @@ def test_pass_params_as_global(tmpdir, execution):
         session.reset()
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution)
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=TaskStarted(task="parametrized") >= 1
+            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         # Passing global parameters
@@ -246,9 +229,7 @@ def test_pass_params_as_local(tmpdir, execution):
             execution=execution
         )
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=TaskStarted(task="parametrized") >= 1
+            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         scheduler()
@@ -270,9 +251,7 @@ def test_pass_params_as_local_and_global(tmpdir, execution):
             execution=execution
         )
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=TaskStarted(task="parametrized") >= 1
+            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         # Additional parameters
@@ -302,12 +281,11 @@ def create_line_to_shutdown():
 def test_startup_shutdown(tmpdir, execution):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
+        
+        FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution)
+        FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution)
 
         scheduler = Scheduler(
-            tasks=[
-                FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution),
-                FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution),
-            ],
             shut_condition=AlwaysTrue()
         )
 

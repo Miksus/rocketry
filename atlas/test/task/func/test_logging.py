@@ -5,7 +5,7 @@ from queue import Empty
 
 from atlas.core import Scheduler
 from atlas.task import FuncTask
-from atlas.core.task.base import Task, get_task
+from atlas.core.task.base import Task
 from atlas.log import CsvHandler
 from atlas import session
 

@@ -1,7 +1,5 @@
 
-from atlas.core.task import clear_tasks, get_task, Task
-from atlas.core.schedule import clear_schedulers
-from atlas.core.parameters import clear_parameters
+from atlas.core import Task
 
 from ._strategy import CLS_STRATEGIES, CLS_STRATEGY_CONFIGS
 from .condition import parse_condition
@@ -42,8 +40,9 @@ def parse_tasks(conf, resources=None, **kwargs) -> list:
         raise TypeError
 
 def _create_sequence(tasks, start_cond=None):
+    session = Task.session # TODO: Get somewhere else the session
     for i, task in enumerate(tasks):
-        task = get_task(task)
+        task = session.get_task(task)
         is_not_start_cond_set = task.start_cond == AlwaysFalse()
         if i == 0:
             # Father (Mother) of the sequence
@@ -56,7 +55,7 @@ def _create_sequence(tasks, start_cond=None):
                     task.start_cond &= start_cond
             continue
 
-        parent_task = get_task(tasks[i-1])
+        parent_task = session.get_task(tasks[i-1])
 
         if is_not_start_cond_set:
             task.start_cond = DependSuccess(task=task, depend_task=parent_task)
@@ -65,9 +64,8 @@ def _create_sequence(tasks, start_cond=None):
 
 def parse_clear_existing(clear, **kwargs):
     if clear:
-        clear_tasks()
-        clear_schedulers()
-        clear_parameters()
+        # TODO: Get somewhere else the session
+        Task.session.clear()
 
 def parse_logging(conf, **kwargs):
     dictConfig(conf)

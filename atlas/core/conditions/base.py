@@ -32,6 +32,8 @@ class BaseCondition(metaclass=_ConditionMeta):
         - Scheduler is maintained
 
     """
+    # The session (set in atlas.session)
+    session = None
 
     @abstractmethod
     def __bool__(self):

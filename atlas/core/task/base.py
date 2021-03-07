@@ -26,29 +26,7 @@ from itertools import count
 
 import pandas as pd
 
-_TASKS = {}
 CLS_TASKS = {}
-
-def get_all_tasks():
-    return _TASKS
-
-def get_task(task):
-    if isinstance(task, Task):
-        return task
-    return _TASKS[task]
-
-def clear_tasks(exclude=None):
-    global _TASKS
-    if exclude is not None:
-        preserve = {task: _TASKS[task] for task in exclude}
-    else:
-        preserve = {}
-    
-    _TASKS = preserve
-
-def remove_tasks(tasks:List[str]):
-    for task in tasks:
-        _TASKS.pop(task)
 
 def register_task_cls(cls):
     """Add Task class to registered
@@ -127,10 +105,11 @@ class Task:
     name: str
     priority: int
 
+    session = None
     # TODO:
     #   remove "run_cond"
 
-    def __init__(self, parameters=None,
+    def __init__(self, parameters=None, session=None,
                 start_cond=None, run_cond=None, end_cond=None, 
                 dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
@@ -154,6 +133,7 @@ class Task:
 
         self.name = name
         self.logger = logger
+        self.session = self.session or session
 
         self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
         self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
@@ -381,7 +361,7 @@ class Task:
     def run_as_process(self, params=None, log_queue=None, return_queue=None, daemon=None):
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         if not log_queue:
-            log_queue = multiprocessing.Queue(1)
+            log_queue = multiprocessing.Queue(-1)
         daemon = self.daemon if self.daemon is not None else daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
         self.start_time = datetime.datetime.now() # Needed for termination
@@ -500,26 +480,26 @@ class Task:
         if name == old_name:
             return
         
-        if name in _TASKS:
+        if name in self.session.tasks:
             if self.on_exists == "replace":
-                _TASKS[name] = self
+                self.session.tasks[name] = self
             elif self.on_exists == "raise":
-                raise KeyError(f"Task {name} already exists. (All tasks: {_TASKS})")
+                raise KeyError(f"Task {name} already exists. (All tasks: {self.session.tasks})")
             elif self.on_exists == "ignore":
                 pass
             elif self.on_exists == "rename":
                 for i in count():
                     new_name = name + str(i)
-                    if new_name not in _TASKS:
+                    if new_name not in self.session.tasks:
                         self.name = new_name
                         return
         else:
-            _TASKS[name] = self
+            self.session.tasks[name] = self
         
         self._name = str(name)
 
         if old_name is not None:
-            del _TASKS[old_name]
+            del self.session.tasks[old_name]
 
     def get_default_name(self):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
@@ -550,7 +530,7 @@ class Task:
             else:
                 
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = get_task(record.task_name)
+                task = self.session.get_task(record.task_name)
                 task.log_record(record)
 
                 action = record.action

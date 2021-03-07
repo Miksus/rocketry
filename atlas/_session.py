@@ -10,11 +10,8 @@ from pathlib import Path
 import pandas as pd
 
 from atlas.core.log import TaskAdapter
-from atlas.core.task.base import Task, clear_tasks, get_task, get_all_tasks
-from atlas.core.schedule.schedule import Scheduler, clear_schedulers, get_all_schedulers
+from atlas.core import Scheduler, Task, BaseCondition, Parameters
 
-
-from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
 from atlas.log import CsvHandler, CsvFormatter
 from atlas.config import get_default
 
@@ -29,20 +26,17 @@ class _Session:
     #   .reset() Put logger to default, clear Parameters, Schedulers and Tasks
     #   .
     
-    # Global parameters
-    _global_parameters = GLOBAL_PARAMETERS
+    def __init__(self):
+        self.tasks = {}
+        self.parameters = Parameters()
+        self.scheduler = None
 
-    @staticmethod
-    def get_tasks():
-        return get_all_tasks()
 
-    @staticmethod
-    def get_task(task):
-        return get_task(task)
+    def get_tasks(self) -> list:
+        return self.tasks.values()
 
-    @staticmethod
-    def get_schedulers():
-        return get_all_schedulers()
+    def get_task(self, task):
+        return self.tasks[task] if not isinstance(task, Task) else task
 
     @staticmethod
     def get_task_loggers(with_adapters=True) -> dict:
@@ -101,75 +95,26 @@ class _Session:
     def reset(self):
         "Set Pypipe ecosystem to default settings (clearing tasks etc)"
         get_default("csv_logging")
-        return
+        self.tasks = {}
+        self.parameters = Parameters()
         
-    @property
-    def parameters(self):
-        "Readonly attribute"
-        return self._global_parameters
+    def clear(self):
+        "Clear tasks, parameters etc. of the session"
+        self.tasks = {}
+        self.parameters = Parameters()
+        self.scheduler = None
 
-
-def _set_run_id(df):
-    # Set run_id for run actions
-    if df.empty:
-        df["run_id"] = None
-        return df
-    
-    df = df.sort_values(["asctime"]) # , ascending=False
-    
-    mask = df["action"] == "run"
-    n_runs = mask.sum()
-    df.loc[mask, "run_id"] = pd.RangeIndex(n_runs)
-
-    df_runs = df[df["action"] == "run"].set_index("run_id")
-    
-    def find_start(ser):
-        # Take all run ids of the task before success/failure time
-        task_run_ids = df_runs[
-            (df_runs["task_name"] == ser["task_name"])
-            & (df_runs["asctime"] <= ser["asctime"])
-        ]
-        if task_run_ids.empty:
-            return None
-
-        # FIFO: take earliest unconsumed run id
-        run_id = task_run_ids.index.min()
-        
-        # Consume the task_run_id
-        df_runs.drop(run_id, inplace=True, axis=0)
-        
-        return run_id
-    
-    df = df.sort_values("asctime")
-    task_ends = df.run_id.isna()
-    df.loc[task_ends, "run_id"] = df.loc[task_ends].apply(find_start, axis=1)
-    return df
-
-def get_run_info(df):
-    "Task logging dataframe to run info dataframe"
-    df["asctime"] = pd.to_datetime(df["asctime"])
-    
-    df = _set_run_id(df)
-
-    # Join start of runs to finish of runs (works even if missing start or end)
-    df = pd.merge(
-        df[df["action"] == "run"],
-        df[df["action"] != "run"],
-        how="left",
-        left_on="run_id", right_on="run_id",
-        suffixes=("_start", "_end"),
-    )
-    # Rename and format
-    df = df.rename(
-        {
-            "task_name_start": "task_name",
-            "action_end": "status",
-            "asctime_start": "start",
-            "asctime_end": "end",
-        }, axis=1
-    )
-    df["run_time"] = df["end"] - df["start"]
-    return df[["run_id", "task_name", "start", "end", "status", "run_time"]]
-
+    def __getstate__(self):
+        # NOTE: When a process task is executed, it will pickle
+        # the task.session. Therefore removing unpicklable here.
+        state = self.__dict__.copy()
+        state["tasks"] = {}
+        state["scheduler"] = None
+        return state
 
 session = _Session()
+
+# Set default sessions
+Scheduler.session = session
+Task.session = session
+BaseCondition.session = session

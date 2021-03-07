@@ -8,11 +8,12 @@ import os
 import datetime
 import numpy as np
 
+# TODO: instead of "Statement.session.get_task", use self.session
 
 @Statement.from_func(historical=True, quantitative=True)
 def TaskStarted(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         now = datetime.datetime.now()
         interv = task.period.rollback(now)
@@ -25,7 +26,7 @@ def TaskStarted(task, _start_=None, _end_=None, **kwargs):
 @Statement.from_func(historical=True, quantitative=True)
 def TaskFailed(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         # If no period, start and end are the ones from the task
         now = datetime.datetime.now()
@@ -38,7 +39,7 @@ def TaskFailed(task, _start_=None, _end_=None, **kwargs):
 @Statement.from_func(historical=True, quantitative=True)
 def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         # If no period, start and end are the ones from the task
         now = datetime.datetime.now()
@@ -51,7 +52,7 @@ def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
 @Statement.from_func(historical=True, quantitative=True)
 def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         now = datetime.datetime.now()
         interv = task.period.rollback(now)
@@ -63,7 +64,7 @@ def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
 @Statement.from_func(historical=True, quantitative=True)
 def TaskFinished(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         now = datetime.datetime.now()
         interv = task.period.rollback(now)
@@ -75,7 +76,7 @@ def TaskFinished(task, _start_=None, _end_=None, **kwargs):
 @Statement.from_func(historical=False, quantitative=False)
 def TaskRunning(task, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
 
     record = task.logger.get_latest()
     if not record:
@@ -86,7 +87,7 @@ def TaskRunning(task, **kwargs):
 @Statement.from_func(historical=True, quantitative=True)
 def TaskInacted(task, _start_=None, _end_=None, **kwargs):
 
-    task = base.get_task(task)
+    task = Statement.session.get_task(task)
     if _start_ is None and _end_ is None:
         # If no period, start and end are the ones from the task
         now = datetime.datetime.now()
@@ -165,8 +166,8 @@ def DependFinish(task, depend_task, **kwargs):
     # Name ideas: TaskNotRanAfterFinish, NotRanAfterFinish, DependFinish
     # HasRunAfterTaskFinished, RanAfterTask, RanAfterTaskFinished, AfterTaskFinished
     # TaskRanAfterFinish
-    actual_task = base.get_task(task)
-    depend_task = base.get_task(depend_task)
+    actual_task = Statement.session.get_task(task)
+    depend_task = Statement.session.get_task(depend_task)
 
     last_depend_finish = depend_task.logger.get_latest(action=["success", "fail"])
     last_actual_start = actual_task.logger.get_latest(action=["run"])
@@ -198,8 +199,8 @@ def DependSuccess(task, depend_task, **kwargs):
             -------------------------------
             >>> False
     """
-    actual_task = base.get_task(task)
-    depend_task = base.get_task(depend_task)
+    actual_task = Statement.session.get_task(task)
+    depend_task = Statement.session.get_task(depend_task)
 
     last_depend_finish = depend_task.logger.get_latest(action=["success"])
     last_actual_start = actual_task.logger.get_latest(action=["run"])
@@ -231,8 +232,8 @@ def DependFailure(task, depend_task, **kwargs):
             -------------------------------
             >>> False
     """
-    actual_task = base.get_task(task)
-    depend_task = base.get_task(depend_task)
+    actual_task = Statement.session.get_task(task)
+    depend_task = Statement.session.get_task(depend_task)
 
     last_depend_finish = depend_task.logger.get_latest(action=["fail"])
     last_actual_start = actual_task.logger.get_latest(action=["run"])

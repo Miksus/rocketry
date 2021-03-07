@@ -1,6 +1,5 @@
 
 from atlas.core.conditions import Statement, Historical, Comparable
-from atlas.core.parameters import GLOBAL_PARAMETERS
 
 
 @Statement.from_func(use_globals=False)
@@ -15,7 +14,7 @@ def ParamExists(**kwargs):
     """
     for key, val in kwargs.items():
         try:
-            found_val = GLOBAL_PARAMETERS[key]
+            found_val = Statement.session.parameters[key]
         except KeyError:
             return False
         else:

@@ -2,9 +2,8 @@
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
-from atlas.core.task.base import Task, clear_tasks, get_task
+from atlas.core.task.base import Task
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas import session
 
 import pytest
@@ -26,9 +25,6 @@ def test_without_timeout(tmpdir):
         task = FuncTask(run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never")
 
         scheduler = Scheduler(
-            [
-                task,
-            ], 
             shut_condition=TaskFinished(task="slow task but passing") >= 2,
             timeout="0.1 seconds"
         )
@@ -48,9 +44,6 @@ def test_task_timeout(tmpdir):
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
 
         scheduler = Scheduler(
-            [
-                task,
-            ], 
             shut_condition=TaskStarted(task="slow task") >= 2,
             timeout="0.1 seconds"
         )
@@ -70,12 +63,8 @@ def test_task_terminate(tmpdir):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
-
+        FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
         scheduler = Scheduler(
-            [
-                task,
-                FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
-            ], 
             shut_condition=TaskStarted(task="slow task") >= 2,
         )
         scheduler()

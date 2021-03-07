@@ -3,7 +3,7 @@ import pytest
 
 from atlas.core import Scheduler
 from atlas.task import FuncTask
-from atlas.core.task.base import Task, get_task
+from atlas.core.task.base import Task
 from atlas.conditions import AlwaysFalse, AlwaysTrue, DependSuccess, Any
 from atlas import session
 

@@ -2,9 +2,8 @@
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
-from atlas.core.task.base import Task, clear_tasks, get_task
+from atlas.core.task.base import Task
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas.core.parameters import GLOBAL_PARAMETERS
 from atlas import session
 
 import pytest
@@ -27,9 +26,7 @@ def test_task_fail_traceback(tmpdir, execution):
         task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            [
-                task,
-            ], shut_condition=TaskStarted(task="task") >= 3
+            shut_condition=TaskStarted(task="task") >= 3
         )
         scheduler()
         history = task.get_history()

@@ -1,5 +1,6 @@
 
-from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
+from atlas.core.parameters import Parameters
+from .utils import _get_session
 
 def parse_session_params(conf:dict, **kwargs) -> None:
     """Parse the parameters section of a config
@@ -7,4 +8,4 @@ def parse_session_params(conf:dict, **kwargs) -> None:
     if not conf:
         return
     params = Parameters(**conf)
-    GLOBAL_PARAMETERS.update(params)
+    _get_session().parameters.update(params)

@@ -18,14 +18,14 @@ from queue import Empty
 
 import pandas as pd
 
-from atlas.core.task.base import Task, get_task
+from atlas.core.task import Task
 from atlas.core.log import FilterAll, read_logger
 
 from atlas.core.exceptions import SchedulerRestart
 
 from atlas.core.utils import is_pickleable
 from atlas.core.conditions import set_statement_defaults, AlwaysFalse
-from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
+from atlas.core.parameters import Parameters
 
 # TODO:
 #   Allow using return values as parameters to other tasks (new Argument class: Return)
@@ -34,20 +34,6 @@ from atlas.core.parameters import Parameters, GLOBAL_PARAMETERS
 #   New automatically passed parameters:
 #       _last_start_, _last_success_, _last_failure_, _task_name_
 
-_SCHEDULERS = {} # Probably will be only one but why not support multiple?
-
-def get_all_schedulers():
-    return _SCHEDULERS
-
-def get_scheduler(sched):
-    if isinstance(sched, Scheduler):
-        return sched
-    return _SCHEDULERS[sched]
-
-def clear_schedulers():
-    global _SCHEDULERS
-    _SCHEDULERS = {}
-    
 
 def _listen_task_status(handlers, queue):
     # TODO: Probably remove
@@ -82,10 +68,10 @@ class Scheduler:
     """
 
     _logger_basename = "atlas.scheduler"
-    parameters = GLOBAL_PARAMETERS # interfacing the global parameters. TODO: Support for multiple schedulers
 
+    session = None # This is set as atlas.session
 
-    def __init__(self, tasks=None, max_processes=None, tasks_as_daemon=True, timeout="30 minutes",
+    def __init__(self, session=None, max_processes=None, tasks_as_daemon=True, timeout="30 minutes",
                 shut_condition=None, parameters=None,
                 min_sleep=0.1, max_sleep=600, 
                 logger=None, name=None,
@@ -97,7 +83,7 @@ class Scheduler:
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
         # Other
-        self.tasks = [] if tasks is None else sorted(tasks, key=lambda task: task.priority)
+        self.session = session or self.session
 
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
 
@@ -115,12 +101,15 @@ class Scheduler:
         self.restarting = restarting
 
         if parameters:
-            GLOBAL_PARAMETERS.update(parameters)
+            self.session.parameters.update(parameters)
 
     def _register_instance(self):
-        if self.name in _SCHEDULERS:
-            raise KeyError(f"All tasks must have unique names. Given: {self.name}. Already specified: {list(_SCHEDULERS.keys())}")
-        _SCHEDULERS[self.name] = self
+        self.session.scheduler = self
+
+    @property
+    def tasks(self):
+        tasks = self.session.get_tasks()
+        return sorted(tasks, key=lambda task: task.priority)
 
     def __call__(self):
         "Start and run the scheduler"
@@ -182,7 +171,7 @@ class Scheduler:
         #self.handle_zombie_tasks()
 
     def run_task(self, task, *args, extra_params=None, **kwargs):
-        params = GLOBAL_PARAMETERS
+        params = self.session.parameters
         extra_params = {} if extra_params is None else extra_params
         params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
         start_time = datetime.datetime.now()
@@ -318,9 +307,8 @@ class Scheduler:
                         record.message = record.message + "\n" + record.message
 
                 
-                task = get_task(record.task_name)
+                task = self.session.get_task(record.task_name)
                 task.log_record(record)
-        # self.parameters.listen()
         # return_values = self._param_queue.get(block=False)
         # self.returns[return_values[0]] = return_values[1]
 
@@ -340,7 +328,7 @@ class Scheduler:
                 break
             else:
                 pass
-                # If the return values are to put as GLOBAL_PARAMETERS
+                # If the return values are to put as
                 # there should be a maintainer task to take them there
                 #self.task_returns[task_name] = return_value
 

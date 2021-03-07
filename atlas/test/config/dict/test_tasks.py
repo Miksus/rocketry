@@ -1,7 +1,6 @@
 
 from atlas.config import parse_dict
 from atlas import session
-from atlas.core.task.base import get_all_tasks, get_task
 
 def test_init_maintain(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -16,10 +15,10 @@ def test_init_maintain(tmpdir):
                 },
             }
         )
-        tasks = get_all_tasks()
+        tasks = session.tasks
         assert [
             "git-fetch",
             "git-pull",
             "pip-install",
             "restart"
-        ] == [get_task(task).name for task in tasks]
+        ] == [session.get_task(task).name for task in tasks]
