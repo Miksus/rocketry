@@ -200,11 +200,14 @@ class CsvHandler(FileHandler):
 
             if isinstance(value, str):
                 include = d[col] == value
-            elif isinstance(value, tuple):
+            elif isinstance(value, tuple) and len(value) == 2:
                 # Considered as range
                 start = value[0]
                 end = value[1]
-                include = (d[col] >= start) and (d[col] <= end)
+                if start is not None:
+                    include &= (d[col] >= start) 
+                if end is not None:
+                    include &= (d[col] <= end)
             elif isinstance(value, list):
                 include = d[col] in value
 
