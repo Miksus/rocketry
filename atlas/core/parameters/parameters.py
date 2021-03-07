@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from .arguments import Argument
 from atlas.core.utils import is_pickleable
+from pybox.io import read_yaml
 
 class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
 
@@ -22,7 +23,15 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
 
     _params: dict
 
-    def __init__(self, **params):
+    def __init__(self, _param:dict=None, type_=None, **params):
+        if _param is not None:
+            params.update(_param)
+
+        if type_ is not None:
+            params = {
+                name: type_(value) 
+                for name, value in params.items()
+            }
         self._params = params
     
 # For mapping interface
@@ -33,9 +42,34 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         return len(self._params)
 
     def __getitem__(self, item):
-        "Materializes the parameters"
+        "Materializes the parameters and hide private"
         value = self._params[item]
-        return value if not isinstance(value, Argument) else value.get_value()
+        return value if not isinstance(value, Argument) else value.get_repr()
+
+    def materialize(self):
+        """Materialize the parameters and include private
+        Should only be used when absolute necessary (by 
+        the task)
+        """
+        
+        return {
+            key: 
+                value 
+                if not isinstance(value, Argument) 
+                else value.get_value()
+            for key, value in self._params.items()
+        }
+
+    def represent(self):
+        """Materialize the parameters but hide private
+        """
+        return {
+            key: 
+                value 
+                if not isinstance(value, Argument) 
+                else value.get_repr()
+            for key, value in self._params.items()
+        }
 
     def __setitem__(self, key, item):
         "Set parameter value"
@@ -87,3 +121,7 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def clear(self):
         "Empty the parameters"
         self._params = {}
+
+    @classmethod
+    def from_yaml(cls, path, type_=None):
+        return cls(read_yaml(path), type_=type_)

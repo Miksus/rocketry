@@ -288,7 +288,10 @@ class Task:
         params = {} if params is None else params
         try:
             params = self.parameters | params # Union setup params with call params
-            params = self.filter_params(params)
+
+            exposed_params = params.materialize() # Now even Private arguments are plain text
+            params = self.filter_params(exposed_params)
+            
             output = self.execute_action(**params)
 
         except SchedulerRestart:
