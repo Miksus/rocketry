@@ -16,6 +16,9 @@ class PyScript(Task):
     PyScript("folder/subfolder/mytask.py")
     """
 
+    # TODO: support to run the file by only importing it
+    # ie PyScript(path="mytask.py", as_main=True)
+
     def __init__(self, path, func=None, **kwargs):
         self.path = path
         self.func = "main" if func is None else func
@@ -42,7 +45,7 @@ class PyScript(Task):
 
     def get_default_name(self):
         file = self.path
-        return '.'.join(file.parts).replace(r'/main.py', '')
+        return '.'.join(file.parts).replace(".py", "") + f":{self.func}"
 
     def process_finish(self, *args, **kwargs):
         if hasattr(self, "_task_func"):
@@ -100,3 +103,11 @@ class PyScript(Task):
             )
         ]
         return kw_args
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, val):
+        self._path = Path(val)
