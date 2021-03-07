@@ -1,7 +1,6 @@
 
 from atlas.core import Task
 
-from ._strategy import CLS_STRATEGIES, CLS_STRATEGY_CONFIGS
 from .condition import parse_condition
 from .task import parse_task
 from atlas.conditions import AlwaysFalse, DependSuccess
@@ -90,10 +89,3 @@ def parse_strategies(conf, resources):
     resources["strategies"] = {}
     for name, strat_conf in conf.items():
         resources["strategies"][name] = parse_strategy(strat_conf)
-
-parse_strategy = DictInstanceParser(
-    classes=CLS_STRATEGIES,
-    subparsers={
-        "config": DictInstanceParser(classes=CLS_STRATEGY_CONFIGS),
-    }
-)

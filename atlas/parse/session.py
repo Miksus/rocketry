@@ -11,7 +11,6 @@ parse_session = StaticParser(
     Field("parameters",     parse_session_params, if_missing="ignore", types=(dict,)),
     Field("tasks",          parse_tasks,          if_missing="ignore", types=(dict,)),
     Field("sequences",      parse_sequences,      if_missing="ignore"),
-    Field("strategies",     parse_strategies,     if_missing="ignore"),
     Field("scheduler",      parse_scheduler,      if_missing="ignore"),
     on_extra="ignore", 
     #resources={"strategies": []}
