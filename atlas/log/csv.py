@@ -5,6 +5,9 @@ import io
 import os
 from logging import Formatter, FileHandler
 from pathlib import Path
+from typing import List, Dict
+from dateutil.parser import parse as parse_datetime
+
 
 class CsvFormatter(Formatter):
     # https://stackoverflow.com/a/19766056
@@ -156,18 +159,62 @@ class CsvHandler(FileHandler):
         del self.formatter._writer
                 
 # Extras
-    def read(self, **kwargs):
-        "Read the log file as pandas dataframe"
-        import pandas as pd
-        dt_cols = (
-            [self.formatter.fields.index("asctime")]
-            if "asctime" in self.formatter.fields 
-            else None
-        )
-        parse_dates = kwargs.pop("parse_dates", dt_cols)
+    def query(self, **kwargs):
         if not Path(self.baseFilename).exists():
-            return pd.DataFrame(columns=self.headers)
-        return pd.read_csv(self.baseFilename, parse_dates=parse_dates, dialect=self.formatter.writer.dialect, **kwargs)
+            return []
+        data = []
+        columns = self.formatter.fields 
+        with open(self.baseFilename, "r") as file:
+            reader = csv.reader(file, dialect=self.formatter.writer.dialect)
+            # headers
+            columns = next(reader, None)
+            for row in reader:
+                row_dict = dict(zip(columns, row))
+                self.set_types(row_dict)
+                if self.include_row(row_dict, **kwargs):
+                    data.append(row_dict)
+        return data
+
+    def read(self, **kwargs) -> List[Dict]:
+        "Read the log file as pandas dataframe"
+        if not Path(self.baseFilename).exists():
+            return []
+        data = []
+        columns = self.formatter.fields 
+        with open(self.baseFilename, "r") as file:
+            reader = csv.reader(file, dialect=self.formatter.writer.dialect)
+
+            # headers
+            columns = next(reader, None)
+            for row in reader:
+                row_dict = dict(zip(columns, row))
+                self.set_types(row_dict)
+                data.append(row_dict)
+        return data
+
+    def include_row(self, d:dict, **kwargs):
+        include = True
+        for col, value in kwargs.items():
+            if col not in d:
+                return False
+
+            if isinstance(value, str):
+                include = d[col] == value
+            elif isinstance(value, tuple):
+                # Considered as range
+                start = value[0]
+                end = value[1]
+                include = (d[col] >= start) and (d[col] <= end)
+            elif isinstance(value, list):
+                include = d[col] in value
+
+            if not include:
+                return False
+        return include
+
+    def set_types(self, d:dict):
+        if "asctime" in d:
+            d["asctime"] = parse_datetime(d["asctime"])
 
     def clear_log(self):
         "Empty the logging file"

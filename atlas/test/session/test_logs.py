@@ -3,6 +3,8 @@ from atlas.task import FuncTask
 from atlas.conditions import AlwaysTrue
 from atlas import session
 
+import pandas as pd
+
 import os
 
 def create_line_to_startup_file():
@@ -25,5 +27,5 @@ def test_tasks_startup_shutdown(tmpdir):
 
         scheduler()
         
-        assert not session.get_task_log().empty
-        assert not session.get_scheduler_log().empty
+        assert not pd.DataFrame(session.get_task_log()).empty
+        assert not pd.DataFrame(session.get_scheduler_log()).empty

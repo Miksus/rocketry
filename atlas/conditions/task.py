@@ -20,7 +20,7 @@ def TaskStarted(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
 
     records = task.logger.get_records(start=_start_, end=_end_, action="run")
-    run_times = records["asctime"].tolist()
+    run_times = [record["asctime"] for record in records]
     return run_times
 
 @Statement.from_func(historical=True, quantitative=True)
@@ -34,7 +34,7 @@ def TaskFailed(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
     
     records = task.logger.get_records(start=_start_, end=_end_, action="fail")
-    return records["asctime"].tolist()
+    return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
 def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
@@ -47,7 +47,7 @@ def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
     
     records = task.logger.get_records(start=_start_, end=_end_, action="terminate")
-    return records["asctime"].tolist()
+    return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
 def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
@@ -59,7 +59,7 @@ def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
     
     records = task.logger.get_records(start=_start_, end=_end_, action="success")
-    return records["asctime"].tolist()
+    return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
 def TaskFinished(task, _start_=None, _end_=None, **kwargs):
@@ -71,7 +71,7 @@ def TaskFinished(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
 
     records = task.logger.get_records(start=_start_, end=_end_, action=["success", "fail"])
-    return records["asctime"].tolist()
+    return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=False, quantitative=False)
 def TaskRunning(task, **kwargs):
@@ -95,7 +95,7 @@ def TaskInacted(task, _start_=None, _end_=None, **kwargs):
         _start_, _end_ = interv.left, interv.right
     
     records = task.logger.get_records(start=_start_, end=_end_, action="inaction")
-    return records["asctime"].tolist()
+    return [record["asctime"] for record in records]
 
 class TaskExecutable(Historical):
     """[summary]

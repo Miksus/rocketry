@@ -6,6 +6,7 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
+from typing import List, Dict
 from pathlib import Path
 import pandas as pd
 
@@ -61,21 +62,19 @@ class _Session:
         }
 
 # Log data
-    def get_task_log(self, **kwargs):
+    def get_task_log(self, **kwargs) -> List[Dict]:
         loggers = self.get_task_loggers(with_adapters=True)
-        dfs = [
-            logger.get_records(**kwargs)
-            for logger in loggers.values()
-        ]
-        return pd.concat(dfs, axis=0)
+        data = []
+        for logger in loggers.values():
+            data += logger.get_records(**kwargs)
+        return data
 
-    def get_scheduler_log(self, **kwargs):
+    def get_scheduler_log(self, **kwargs) -> List[Dict]:
         loggers = self.get_scheduler_loggers(with_adapters=True)
-        dfs = [
-            logger.get_records(**kwargs)
-            for logger in loggers.values()
-        ]
-        return pd.concat(dfs, axis=0)
+        data = []
+        for logger in loggers.values():
+            data += logger.get_records(**kwargs)
+        return data
 
     def get_task_run_info(self, **kwargs):
         df = self.get_task_log(**kwargs)

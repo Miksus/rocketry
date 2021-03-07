@@ -10,6 +10,7 @@ from atlas.task import PyScript
 #Task.use_instance_naming = True
 from atlas import session
 import pytest
+import pandas as pd
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
@@ -43,7 +44,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         
         if expected_outcome == "fail":
             failures = history[history["action"] == "fail"]

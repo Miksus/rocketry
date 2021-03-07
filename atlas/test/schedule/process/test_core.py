@@ -7,7 +7,9 @@ from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas import session
 
+import pandas as pd
 import pytest
+
 import logging
 import sys
 import time
@@ -30,13 +32,13 @@ def test_creating_child(tmpdir):
         # actual measurable impact outside atlas
         FuncTask(run_creating_child, name="task_1", start_cond=AlwaysTrue())
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="task_1") >= 1,
+            shut_condition=(TaskStarted(task="task_1") >= 1) | ~SchedulerStarted(period=TimeDelta("1 second")),
             tasks_as_daemon=False
         )
 
         scheduler()
 
-        history = session.get_task("task_1").get_history()
+        history = pd.DataFrame(session.get_task("task_1").get_history())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()

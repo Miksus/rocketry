@@ -3,6 +3,7 @@ import logging
 import warnings
 
 import pandas as pd
+from typing import List, Dict
 
 class TaskAdapter(logging.LoggerAdapter):
     """
@@ -36,7 +37,7 @@ class TaskAdapter(logging.LoggerAdapter):
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
-    def get_records(self, start=None, end=None, action=None, **kwargs):
+    def get_records(self, start=None, end=None, **kwargs) -> List[Dict]:
         """This method is needed for the events to 
         get the run records to determine if the task
         is finished/still running/failed etc. in 
@@ -45,18 +46,18 @@ class TaskAdapter(logging.LoggerAdapter):
         handlers = self.logger.handlers
         for handler in handlers:
             if hasattr(handler, "query"):
-                
-                kwds = {"asctime": (start, end), "action": action}
+                qry_kwds = {}
                 if task_name is not None:
-                    kwds["task_name"] = task_name
-                    # If task_name is None, then adapter is not task specific (used for readonly)
-
-                cont = handler.query(**kwds)
-                df = pd.DataFrame(cont)
-                df["task_name"] = df["task_name"].astype(str)
-                
-                return df
+                    qry_kwds["task_name"] = task_name
+                if start is not None or end is not None:
+                    qry_kwds["asctime"] = (start, end)
+                qry_kwds.update(kwargs)
+                data = handler.query(
+                    **qry_kwds
+                )
+                return data
             elif hasattr(handler, "read"):
+                action = kwargs.pop("action", None)
                 df = pd.DataFrame(handler.read())
                 if "task_name" in df.columns:
                     # Pandas may interpret numeric name as integer
@@ -73,17 +74,15 @@ class TaskAdapter(logging.LoggerAdapter):
                     df = df[df["asctime"] >= start]
                 if end is not None:
                     df = df[df["asctime"] <= end]
-                return df
+                return df.to_dict(orient="records")
         else:
             warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
-            return pd.DataFrame()
+            return []
 
     def get_latest(self, action=None) -> dict:
         "Get latest log record"
-        df = self.get_records(action=action)
-        if df.empty:
-            return {}
-        return df.iloc[-1, :].to_dict()
+        data = self.get_records(action=action)
+        return {} if not data else data[-1]
 
 # For some reason the logging.Adapter is missing some
 # methods that are on logging.Logger

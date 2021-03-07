@@ -6,6 +6,8 @@ from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependS
 from atlas import session
 
 import pytest
+import pandas as pd
+
 import logging
 import sys
 import time
@@ -59,7 +61,7 @@ def test_dependent(tmpdir, execution):
 
         scheduler()
 
-        history = session.get_task_log()
+        history = pd.DataFrame(session.get_task_log())
         history = history.set_index("action")
 
         a_start = history[(history["task_name"] == "A")].loc["run", "asctime"]

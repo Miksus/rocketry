@@ -7,6 +7,8 @@ from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, Ta
 from atlas import session
 
 import pytest
+import pandas as pd
+
 import logging
 import sys
 import time
@@ -29,7 +31,7 @@ def test_task_fail_traceback(tmpdir, execution):
             shut_condition=TaskStarted(task="task") >= 3
         )
         scheduler()
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         failures = history[history["action"] == "fail"]
         assert 3 == len(failures)
 

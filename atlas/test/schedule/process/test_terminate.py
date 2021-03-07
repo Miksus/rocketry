@@ -6,7 +6,9 @@ from atlas.core.task.base import Task
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas import session
 
+import pandas as pd
 import pytest
+
 import logging
 import sys
 import time
@@ -25,12 +27,12 @@ def test_without_timeout(tmpdir):
         task = FuncTask(run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never")
 
         scheduler = Scheduler(
-            shut_condition=TaskFinished(task="slow task but passing") >= 2,
+            shut_condition=(TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 second")),
             timeout="0.1 seconds"
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 2 == (history["action"] == "run").sum()
         assert 0 == (history["action"] == "terminate").sum()
         assert 2 == (history["action"] == "success").sum()
@@ -44,12 +46,12 @@ def test_task_timeout(tmpdir):
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="slow task") >= 2,
+            shut_condition=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 second")),
             timeout="0.1 seconds"
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()
@@ -65,11 +67,11 @@ def test_task_terminate(tmpdir):
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="slow task") >= 2,
+            shut_condition=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 second")),
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()

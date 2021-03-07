@@ -8,6 +8,8 @@ from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, Ta
 from atlas import session
 
 import pytest
+import pandas as pd
+
 import logging
 import sys
 import time
@@ -88,7 +90,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert run_count == (history["action"] == "run").sum()
         assert success_count == (history["action"] == "success").sum()
         assert fail_count == (history["action"] == "fail").sum()
@@ -112,7 +114,7 @@ def test_task_force_run(tmpdir, execution):
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 1 == (history["action"] == "run").sum()
 
         # The force_run should have reseted as it should have run once
@@ -138,7 +140,7 @@ def test_task_disabled(tmpdir, execution):
         scheduler()
 
         history = task.get_history()
-        assert 0 == (history["action"] == "run").sum()
+        assert 0 == sum([record for record in history if record["action"] == "run"])
 
         assert task.disabled
 
@@ -167,7 +169,7 @@ def test_task_force_disabled(tmpdir, execution):
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 1 == (history["action"] == "run").sum()
 
         assert task.disabled
@@ -188,7 +190,7 @@ def test_priority(tmpdir, execution):
         scheduler()
         assert scheduler.n_cycles == 1
 
-        history = session.get_task_log()
+        history = pd.DataFrame(session.get_task_log())
         history = history.set_index("action")
 
         task_1_start = history[(history["task_name"] == "first")].loc["run", "asctime"]
@@ -212,7 +214,7 @@ def test_pass_params_as_global(tmpdir, execution):
 
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
@@ -234,7 +236,7 @@ def test_pass_params_as_local(tmpdir, execution):
 
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
@@ -259,7 +261,7 @@ def test_pass_params_as_local_and_global(tmpdir, execution):
 
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()

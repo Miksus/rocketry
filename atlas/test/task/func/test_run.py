@@ -10,6 +10,8 @@ from atlas.core.exceptions import TaskInactionException
 from atlas.core.conditions import AlwaysFalse, AlwaysTrue, Any
 from atlas import session
 
+import pandas as pd
+
 Task.use_instance_naming = True
 
 
@@ -82,7 +84,7 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
 
         assert task.status == expected_outcome
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="record")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -153,7 +155,7 @@ def test_parametrization_runtime(tmpdir):
 
         task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="record")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -172,7 +174,7 @@ def test_parametrization_local(tmpdir):
 
         task()
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="record")
         assert [
             {"task_name": "a task", "action": "run"},

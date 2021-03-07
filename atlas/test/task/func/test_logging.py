@@ -94,7 +94,7 @@ def test_handle(tmpdir):
         assert "success" == task.status
         assert not task.is_running
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -138,13 +138,13 @@ def test_action_start(tmpdir, method):
         task.log_running()
         getattr(task, method)()
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
 
-        # First should not have action_start
-        assert pd.isna(df["action_start"].tolist()[0])
+        # First should not have "action_start"
+        assert not df["action_start"].tolist()[0]
 
         # Second should and that should be datetime
-        assert "nan" != str(df["action_start"].tolist()[1])
+        assert str(df["action_start"].tolist()[1]) not in ("nan", "", None)
         assert "2000-01-01" <= str(df["action_start"].tolist()[1])
 
 
@@ -191,8 +191,8 @@ def test_process_no_double_logging(tmpdir):
 
         # Testing there is no log records yet in the log
         # (as the records should not been handled yet)
-        df = session.get_task_log()
-        assert [] == df["action"].tolist(), "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
+        df = pd.DataFrame(session.get_task_log())
+        assert df.empty, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
         
         for record in records:
             task.log_record(record)
@@ -208,7 +208,7 @@ def test_process_no_double_logging(tmpdir):
         ), f"Double logging. Too many handlers: {handlers}"
 
         # If fails here, double logging caused by Task.log_record
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         n_run = records.count({"task_name": "a task", "action": "run"})
         n_success = records.count({"task_name": "a task", "action": "run"})

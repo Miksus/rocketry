@@ -8,6 +8,8 @@ from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, Ta
 from atlas import session
 
 import pytest
+import pandas as pd
+
 import logging
 import sys
 import time
@@ -41,7 +43,7 @@ def test_without_timeout(tmpdir, execution):
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         # If Scheduler is quick, it may launch the task 3 times 
         # but there still should not be any terminations
         assert 2 <= (history["action"] == "run").sum()
@@ -64,7 +66,7 @@ def test_task_timeout(tmpdir, execution):
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()
@@ -89,7 +91,7 @@ def test_task_terminate(tmpdir, execution):
         )
         scheduler()
 
-        history = task.get_history()
+        history = pd.DataFrame(task.get_history())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()

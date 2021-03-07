@@ -15,7 +15,7 @@ import logging
 import inspect
 import warnings
 import datetime
-from typing import List
+from typing import List, Dict
 import multiprocessing
 import threading
 from queue import Empty
@@ -590,7 +590,7 @@ class Task:
             return None
         return record["action"]
 
-    def get_history(self):
+    def get_history(self) -> List[Dict]:
         records = self.logger.get_records()
         return records
 
