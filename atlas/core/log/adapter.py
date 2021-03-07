@@ -42,6 +42,9 @@ class TaskAdapter(logging.LoggerAdapter):
         get the run records to determine if the task
         is finished/still running/failed etc. in 
         multiprocessing for example"""
+        start = pd.Timestamp(start) if start is not None else start
+        end = pd.Timestamp(end) if end is not None else end
+
         task_name = self.extra["task_name"]
         handlers = self.logger.handlers
         for handler in handlers:
