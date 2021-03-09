@@ -8,6 +8,7 @@ about the scehuler/task/parameters etc.
 import logging
 from typing import List, Dict
 from pathlib import Path
+from itertools import chain
 import pandas as pd
 
 from atlas.core.log import TaskAdapter
@@ -64,16 +65,16 @@ class _Session:
 # Log data
     def get_task_log(self, **kwargs) -> List[Dict]:
         loggers = self.get_task_loggers(with_adapters=True)
-        data = []
+        data = iter(())
         for logger in loggers.values():
-            data += logger.get_records(**kwargs)
+            data = chain(data, logger.get_records(**kwargs))
         return data
 
     def get_scheduler_log(self, **kwargs) -> List[Dict]:
         loggers = self.get_scheduler_loggers(with_adapters=True)
-        data = []
+        data = iter(())
         for logger in loggers.values():
-            data += logger.get_records(**kwargs)
+            data = chain(data, logger.get_records(**kwargs))
         return data
 
     def get_task_run_info(self, **kwargs):

@@ -6,7 +6,7 @@ import multiprocessing
 from atlas.task import PyScript
 #from atlas.core.task.base import Task
 #
-#
+import pandas as pd
 #Task.use_instance_naming = True
 from atlas import session
 import pytest
@@ -57,7 +57,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
 
         assert task.status == expected_outcome
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -82,7 +82,7 @@ def test_run_specified_func(tmpdir):
         )
         task()
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -111,7 +111,7 @@ def test_import_relative(tmpdir):
         )
         task()
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -140,7 +140,7 @@ def test_import_relative_with_params(tmpdir):
         )
         task(params={"val_5":5})
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -159,7 +159,7 @@ def test_parametrization_runtime(tmpdir, script_files):
 
         task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},
@@ -178,7 +178,7 @@ def test_parametrization_local(tmpdir, script_files):
 
         task()
 
-        df = session.get_task_log()
+        df = pd.DataFrame(session.get_task_log())
         records = df[["task_name", "action"]].to_dict(orient="records")
         assert [
             {"task_name": "a task", "action": "run"},

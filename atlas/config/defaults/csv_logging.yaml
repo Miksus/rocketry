@@ -20,11 +20,12 @@ logging:
     csv_task_formatter:
       (): atlas.log.CsvFormatter
       fields: [
-        action_start, # Represents the start time of the task (for failure/success/etc.)
-        asctime,
-        levelname,
-        action,
         task_name,
+        asctime,
+        action,
+        start, # Represents the start time of the task (for failure/success/etc.)
+        end,
+        runtime,
         message
       ]
 

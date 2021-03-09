@@ -138,15 +138,22 @@ def test_action_start(tmpdir, method):
         task.log_running()
         getattr(task, method)()
 
-        df = pd.DataFrame(session.get_task_log())
+        records = session.get_task_log()
 
-        # First should not have "action_start"
-        assert not df["action_start"].tolist()[0]
+        # First should not have "end"
+        first = next(records)
+        assert not first["end"]
+        assert "2000-01-01" <= str(first["start"])
+        assert str(first["start"]) <= "2200-01-01"
 
         # Second should and that should be datetime
-        assert str(df["action_start"].tolist()[1]) not in ("nan", "", None)
-        assert "2000-01-01" <= str(df["action_start"].tolist()[1])
+        last = next(records)
+        assert last["start"]
+        assert "2000-01-01" <= str(last["start"])
+        assert str(last["start"]) <= "2200-01-01"
 
+        assert "2000-01-01" <= str(last["end"])
+        assert str(last["end"]) <= "2200-01-01"
 
 def test_process_no_double_logging(tmpdir):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice

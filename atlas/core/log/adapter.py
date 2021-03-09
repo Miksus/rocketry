@@ -4,6 +4,7 @@ import warnings
 
 import pandas as pd
 from typing import List, Dict
+from dateutil.parser import parse as parse_datetime
 
 class TaskAdapter(logging.LoggerAdapter):
     """
@@ -37,55 +38,45 @@ class TaskAdapter(logging.LoggerAdapter):
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
-    def get_records(self, start=None, end=None, **kwargs) -> List[Dict]:
+    def get_records(self, **kwargs) -> List[Dict]:
         """This method is needed for the events to 
         get the run records to determine if the task
         is finished/still running/failed etc. in 
         multiprocessing for example"""
-        start = pd.Timestamp(start) if start is not None else start
-        end = pd.Timestamp(end) if end is not None else end
 
         task_name = self.extra["task_name"]
         handlers = self.logger.handlers
+
+        if task_name is not None:
+            kwargs["task_name"] = task_name
+
         for handler in handlers:
             if hasattr(handler, "query"):
-                qry_kwds = {}
-                if task_name is not None:
-                    qry_kwds["task_name"] = task_name
-                if start is not None or end is not None:
-                    qry_kwds["asctime"] = (start, end)
-                qry_kwds.update(kwargs)
                 data = handler.query(
-                    **qry_kwds
+                    **kwargs
                 )
                 return data
             elif hasattr(handler, "read"):
-                action = kwargs.pop("action", None)
-                df = pd.DataFrame(handler.read())
-                if "task_name" in df.columns:
-                    # Pandas may interpret numeric name as integer
-                    df = df.astype({"task_name": str})
 
-                if task_name is not None:
-                    df = df[df["task_name"] == task_name]
-                    # If task_name is None, then adapter is not task specific (used for readonly)
+                filter = RecordFilter(kwargs)
 
-                if action is not None:
-                    action = [action] if isinstance(action, str) else action 
-                    df = df[df["action"].isin(action)]
-                if start is not None:
-                    df = df[df["asctime"] >= start]
-                if end is not None:
-                    df = df[df["asctime"] <= end]
-                return df.to_dict(orient="records")
+                records = filter(handler.read())
+                for record in records:
+                    # TODO 
+                    for dt_key in ("start", "end", "asctime"):
+                        if dt_key in record and record[dt_key]:
+                            record[dt_key] = parse_datetime(record[dt_key])
+                    yield record
         else:
             warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
-            return []
+            return
 
     def get_latest(self, action=None) -> dict:
         "Get latest log record"
-        data = self.get_records(action=action)
-        return {} if not data else data[-1]
+        record = {}
+        for record in self.get_records(action=action):
+            pass # Iterating the generator till the end
+        return record
 
 # For some reason the logging.Adapter is missing some
 # methods that are on logging.Logger
@@ -107,3 +98,45 @@ class TaskFilter(logging.Filter):
             return hasattr(record, "task")
         else:
             return not hasattr(record, "task")
+
+# Utils
+class RecordFilter:
+    def __init__(self, query:dict):
+        self.query = query
+
+    def __call__(self, data:List[Dict]):
+        for record in data:
+            if self.include_record(record):
+                yield record
+
+    def include_record(self, record:dict):
+        for key, value in self.query.items():
+            if key not in record:
+                break
+            record_value = record[key]
+
+            is_equal = isinstance(value, str)
+            is_range = isinstance(value, tuple) and len(value) == 2
+            is_in = isinstance(value, list)
+            if is_equal:
+                if record_value != value:
+                    break
+            elif is_range:
+                # Considered as range
+                start, end = value[0], value[1]
+
+                if start is not None and record_value < start:
+                    # Outside of start
+                    break
+                if end is not None and record_value > end:
+                    # Outside of end
+                    break
+            elif is_in:
+                if record_value not in value:
+                    # Outside of items
+                    break
+        else:
+            # Loop did not break (no condition violated)
+            return True
+        # Loop did break, 
+        return False

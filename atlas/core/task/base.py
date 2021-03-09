@@ -558,24 +558,41 @@ class Task:
         self._logger = logger
 
     def log_running(self):
-        self.logger.info(f"", extra={"action": "run"})
+        now = datetime.datetime.now()
+        self.logger.info(f"", extra={"action": "run", "start": now})
         self.start_time = datetime.datetime.now()
 
     def log_failure(self):
-        self.logger.exception(f"Task '{self.name}' failed", extra={"action": "fail", "action_start": self.start_time})
+        now = datetime.datetime.now()
+        self.logger.exception(
+            f"Task '{self.name}' failed",
+            extra={"action": "fail", "start": self.start_time, "end": now, "runtime": now - self.start_time}
+        )
 
     def log_success(self):
-        self.logger.info(f"", extra={"action": "success", "action_start": self.start_time})
+        now = datetime.datetime.now()
+        self.logger.info(
+            f"", 
+            extra={"action": "success", "start": self.start_time, "end": now, "runtime": now - self.start_time}
+        )
 
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
-        self.logger.info(f"Task '{self.name}' terminated due to: {reason}", extra={"action": "terminate", "action_start": self.start_time})
+        now = datetime.datetime.now()
+        self.logger.info(
+            f"Task '{self.name}' terminated due to: {reason}", 
+            extra={"action": "terminate", "start": self.start_time, "end": now, "runtime": now - self.start_time}
+        )
         # Reset event and force_termination (for threads)
         self.thread_terminate.clear()
         self.force_termination = False
 
     def log_inaction(self):
-        self.logger.info(f"", extra={"action": "inaction", "action_start": self.start_time})
+        now = datetime.datetime.now()
+        self.logger.info(
+            f"", 
+            extra={"action": "inaction", "start": self.start_time, "end": now, "runtime": now - self.start_time}
+        )
 
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
