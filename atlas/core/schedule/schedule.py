@@ -75,7 +75,8 @@ class Scheduler:
                 shut_condition=None, parameters=None,
                 min_sleep=0.1, max_sleep=600, 
                 logger=None, name=None,
-                restarting="replace"):
+                restarting="replace", 
+                instant_shutdown=False):
 
         # MultiProcessing stuff
         self.max_processes = cpu_count() if max_processes is None else max_processes
@@ -86,6 +87,7 @@ class Scheduler:
         self.session = session or self.session
 
         self.shut_condition = False if shut_condition is None else copy(shut_condition)
+        self.instant_shutdown = instant_shutdown
 
         set_statement_defaults(self.shut_condition, _scheduler_=self)
 
@@ -394,7 +396,8 @@ class Scheduler:
 
     def shut_down_processes(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
-        if exception is None or isinstance(exception, non_fatal_excs):
+        wait_for_finish = not self.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
+        if wait_for_finish:
             try:
                 # Gracefully shut down (allow remaining tasks to finish)
                 while self.n_alive:
@@ -402,7 +405,10 @@ class Scheduler:
                     self.handle_logs()
                     self.handle_return()
                     for task in self.tasks:
-                        if self.is_timeouted(task):
+                        if task.permanent_task:
+                            # Would never "finish" anyways
+                            self.terminate_task(task)
+                        elif self.is_timeouted(task):
                             # Terminate the task
                             self.terminate_task(task, reason="timeout")
                         elif self.is_out_of_condition(task):

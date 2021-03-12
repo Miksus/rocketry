@@ -96,6 +96,7 @@ class Task:
     use_instance_naming = False
     _logger_basename = "atlas.task"
     on_exists = "raise"
+    permanent_task = False # Whether the task is not meant to finish (Ie. RestAPI)
 
     # For multiprocessing (if None, uses scheduler's default)
     daemon: bool = None
