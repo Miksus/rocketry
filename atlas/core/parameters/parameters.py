@@ -76,6 +76,7 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         self._params[key] = item
 
     def update(self, params):
+        params = params._params if isinstance(params, Parameters) else params
         self._params.update(params)
 
     def __or__(self, other):

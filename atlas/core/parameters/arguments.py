@@ -12,6 +12,12 @@ class Argument:
         "Get representation of the value"
         return self._value
 
+    def __eq__(self, other):
+        if isinstance(other, Argument):
+            return self._value == other._value
+        else:
+            return self._value == other
+
 class Private(Argument):
     "Argument that is not meant to be shown outside usage"
 
