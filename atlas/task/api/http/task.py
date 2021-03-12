@@ -12,10 +12,9 @@ from atlas.core.task import register_task_cls
 from .routes import rest_api
 from .models import AtlasJSONEncoder
 
-
-
 from threading import Thread
 import time
+import pandas as pd
 
 
 @register_task_cls
@@ -26,11 +25,12 @@ class HTTPConnection(Task):
     # The listener should be running constantly as long as the scheduler is up
     permanent_task = True
 
-    def __init__(self, host='127.0.0.1', port=5000, **kwargs):
+    def __init__(self, host='127.0.0.1', port=5000, delay="1 second", **kwargs):
         self.host = host
         self.port = port
         super().__init__(**kwargs)
         self.execution = "thread"
+        self.delay = pd.Timedelta(delay).total_seconds()
 
     # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
     def execute_action(self):
@@ -46,7 +46,7 @@ class HTTPConnection(Task):
 
         # Wait till termination
         while not self.thread_terminate.is_set():
-            time.sleep(5)
+            time.sleep(self.delay)
         # Note, this may take like 10 seconds
         server.shutdown()
         

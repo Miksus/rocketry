@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from atlas.task.api import HTTPConnection
+from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
 from atlas import Scheduler, session
 from atlas.core import Parameters
