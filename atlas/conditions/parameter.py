@@ -1,6 +1,19 @@
 
-from atlas.core.conditions import Statement, Historical, Comparable
+from atlas.core.conditions import Statement, Historical, Comparable, BaseCondition
 
+
+class IsParameter(BaseCondition):
+
+    def __init__(self, **params):
+        self.params = params
+    
+    def __bool__(self):
+        return all(
+            self.session.parameters[key] == val
+            if key in self.session.parameters
+            else False
+            for key, val in self.params.items()
+        ) 
 
 @Statement.from_func(use_globals=False)
 def ParamExists(**kwargs):
