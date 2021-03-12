@@ -36,9 +36,9 @@ def test_without_timeout(tmpdir):
         # (in case: runs == 1 --> no shutdown, continue --> check logs --> runs now 2 --> run task --> shutdown --> runs now 3)
         # thus we accept more than two runs  
         history = pd.DataFrame(task.get_history())
-        assert 2 >= (history["action"] == "run").sum()
+        assert 2 <= (history["action"] == "run").sum()
         assert 0 == (history["action"] == "terminate").sum()
-        assert 2 >= (history["action"] == "success").sum()
+        assert 2 <= (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
 
         assert os.path.exists("work.txt")
