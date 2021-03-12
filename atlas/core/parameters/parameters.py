@@ -92,6 +92,7 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
             return self._params == other._params
         else:
             return False
+
     def __ne__(self, other):
         "Whether parameters are equal"
         if isinstance(other, Parameters):
@@ -121,6 +122,9 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def clear(self):
         "Empty the parameters"
         self._params = {}
+
+    def to_dict(self):
+        return self._params
 
     @classmethod
     def from_yaml(cls, path, type_=None):
