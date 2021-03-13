@@ -52,10 +52,12 @@ class TaskAdapter(logging.LoggerAdapter):
 
         for handler in handlers:
             if hasattr(handler, "query"):
-                data = handler.query(
+                records = handler.query(
                     **kwargs
                 )
-                return data
+                for record in records:
+                    yield record
+                break
             elif hasattr(handler, "read"):
 
                 filter = RecordFilter(kwargs)
@@ -67,6 +69,7 @@ class TaskAdapter(logging.LoggerAdapter):
                         if dt_key in record and record[dt_key]:
                             record[dt_key] = parse_datetime(record[dt_key])
                     yield record
+                break
         else:
             warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
             return
