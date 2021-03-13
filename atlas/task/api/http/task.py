@@ -56,6 +56,7 @@ class HTTPConnection(Task):
         app.register_blueprint(rest_api)
         app.json_encoder = AtlasJSONEncoder
         app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+        app.logger.name = "atlas.api.http" # We don't want it to pollute task logs (would be named as "atlas.task.api.http.task" otherwise)
         
         return app
 
