@@ -19,7 +19,7 @@ def TaskStarted(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
 
-    records = task.logger.get_records(start=_start_, end=_end_, action="run")
+    records = task.logger.get_records(asctime=(_start_, _end_), action="run")
     run_times = [record["asctime"] for record in records]
     return run_times
 
@@ -33,7 +33,7 @@ def TaskFailed(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
     
-    records = task.logger.get_records(start=_start_, end=_end_, action="fail")
+    records = task.logger.get_records(asctime=(_start_, _end_), action="fail")
     return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
@@ -46,7 +46,7 @@ def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
     
-    records = task.logger.get_records(start=_start_, end=_end_, action="terminate")
+    records = task.logger.get_records(asctime=(_start_, _end_), action="terminate")
     return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
@@ -58,7 +58,7 @@ def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
     
-    records = task.logger.get_records(start=_start_, end=_end_, action="success")
+    records = task.logger.get_records(asctime=(_start_, _end_), action="success")
     return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=True, quantitative=True)
@@ -70,7 +70,7 @@ def TaskFinished(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
 
-    records = task.logger.get_records(start=_start_, end=_end_, action=["success", "fail"])
+    records = task.logger.get_records(asctime=(_start_, _end_), action=["success", "fail", "terminate"])
     return [record["asctime"] for record in records]
 
 @Statement.from_func(historical=False, quantitative=False)
@@ -94,7 +94,7 @@ def TaskInacted(task, _start_=None, _end_=None, **kwargs):
         interv = task.period.rollback(now)
         _start_, _end_ = interv.left, interv.right
     
-    records = task.logger.get_records(start=_start_, end=_end_, action="inaction")
+    records = task.logger.get_records(asctime=(_start_, _end_), action="inaction")
     return [record["asctime"] for record in records]
 
 class TaskExecutable(Historical):

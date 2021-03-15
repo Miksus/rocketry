@@ -122,16 +122,16 @@ class RecordFilter:
             is_range = isinstance(value, tuple) and len(value) == 2
             is_in = isinstance(value, list)
             if is_equal:
-                if record_value != value:
+                if type(value)(record_value) != value:
                     break
             elif is_range:
                 # Considered as range
                 start, end = value[0], value[1]
 
-                if start is not None and record_value < start:
+                if start is not None and type(start)(record_value) < start:
                     # Outside of start
                     break
-                if end is not None and record_value > end:
+                if end is not None and type(end)(record_value) > end:
                     # Outside of end
                     break
             elif is_in:
