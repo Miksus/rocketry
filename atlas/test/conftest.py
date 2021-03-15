@@ -16,6 +16,14 @@ import logging
 from importlib import reload
 
 
+def pytest_sessionstart(session):
+    """
+    Called after the Session object has been created and
+    before performing collection and entering the run test loop.
+    """
+    atlas.session.debug = True
+
+
 def copy_file_to_tmpdir(tmpdir, source_file, target_path):
     target_path = Path(target_path)
     source_path = Path(os.path.dirname(__file__)) / "test_files" / source_file

@@ -145,7 +145,11 @@ class Statement(BaseCondition):
             raise
         except Exception as exc:
             logger.exception(f"Statement '{self}' is False due to an Exception.")
-            # Exceptions are considered that the statement is false
+            if self.session.debug:
+                # Typically error is not good but we don't want to crash the whole production
+                # due to a random error in one task's initiation. 
+                # However, we do want to crash tests because of it.
+                raise
             return False
 
         #logger.debug(f"Statement {str(self)} status: {status}")
