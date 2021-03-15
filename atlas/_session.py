@@ -27,7 +27,8 @@ class _Session:
     # TODO:
     #   .reset() Put logger to default, clear Parameters, Schedulers and Tasks
     #   .
-    
+    debug = False
+
     def __init__(self):
         self.tasks = {}
         self.parameters = Parameters()
