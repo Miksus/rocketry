@@ -111,7 +111,9 @@ class Scheduler:
     @property
     def tasks(self):
         tasks = self.session.get_tasks()
-        return sorted(tasks, key=lambda task: task.priority)
+        # There may be extra rare situation that priority is not in the task
+        # for short period if it is being modified thus we use getattr
+        return sorted(tasks, key=lambda task: getattr(task, "priority", 0))
 
     def __call__(self):
         "Start and run the scheduler"
@@ -151,26 +153,27 @@ class Scheduler:
         tasks = self.tasks
         self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
         for task in tasks:
-            if task.on_startup or task.on_shutdown:
-                # Startup or shutdown tasks are not run in main sequence
-                continue
+            with task.lock:
+                self.handle_logs()
+                self.handle_return()
+                if task.on_startup or task.on_shutdown:
+                    # Startup or shutdown tasks are not run in main sequence
+                    pass
+                elif self.is_task_runnable(task):
+                    # Run the actual task
+                    self.run_task(task)
+                    # Reset force_run as a run has forced
+                    task.force_run = False
+                elif self.is_timeouted(task):
+                    # Terminate the task
+                    self.terminate_task(task, reason="timeout")
+                elif self.is_out_of_condition(task):
+                    # Terminate the task
+                    self.terminate_task(task)
 
-            self.handle_logs()
-            self.handle_return()
-            if self.is_task_runnable(task):
-                # Run the actual task
-                self.run_task(task)
-                # Reset force_run as a run has forced
-                task.force_run = False
-            elif self.is_timeouted(task):
-                # Terminate the task
-                self.terminate_task(task, reason="timeout")
-            elif self.is_out_of_condition(task):
-                # Terminate the task
-                self.terminate_task(task)
-            pass
         self.n_cycles += 1
         #self.handle_zombie_tasks()
+        
 
     def run_task(self, task, *args, extra_params=None, **kwargs):
         params = self.session.parameters

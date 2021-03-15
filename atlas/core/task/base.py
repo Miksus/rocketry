@@ -164,8 +164,9 @@ class Task:
         self.dependent = dependent
         self.parameters = parameters
 
-        # Thread specific
+        # Thread specific (readonly properties)
         self._thread_terminate = threading.Event()
+        self._lock = threading.Lock() # So that multiple threaded tasks/scheduler won't simultaneusly use the task
 
         if self.status == "run":
             # Previously crashed unexpectedly during running
@@ -630,6 +631,8 @@ class Task:
 
         state["_thread_terminate"] = None # Event only for threads
 
+        state["_lock"] = None # Process task cannot lock anything anyways
+
         # what we return here will be stored in the pickle
         return state
 
@@ -638,6 +641,10 @@ class Task:
         "Event to signal terminating the threaded task"
         # Readonly "attribute"
         return self._thread_terminate
+
+    @property
+    def lock(self):
+        return self._lock
 
 # Other
     @property

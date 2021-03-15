@@ -62,11 +62,12 @@ def tasks(name=None):
         if name not in session.tasks:
             abort(409, "Task does not exist.")
         task = session.get_task(name)
+        with task.lock:
 
-        # Update/Modify
-        data = request.get_json()
-        for attr, value in data.items():
-            setattr(task, attr, value)
+            # Update/Modify
+            data = request.get_json()
+            for attr, value in data.items():
+                setattr(task, attr, value)
     elif request.method == "DELETE":
         del session.tasks[name]
         # TODO: Delete the task file if user defined PyScript
