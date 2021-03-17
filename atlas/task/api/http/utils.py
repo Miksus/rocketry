@@ -1,4 +1,6 @@
 
+from flask import request
+
 def parse_url_parameters(request):
     params = request.args
     filter_params = {}
@@ -20,3 +22,21 @@ def parse_url_parameters(request):
             filter_params[param] = value
 
     return filter_params
+
+
+def public_route(decorated_function):
+    "Decorator to allow all users an access"
+    decorated_function.is_public = True
+    return decorated_function
+
+def check_route_access(app):
+    def wrapper():
+        access_token = app.config["HOST_TASK"].access_token
+
+        token = request.headers.get("Authorization")
+        is_public = getattr(app.view_functions.get(request.endpoint, None), 'is_public', False)
+        if is_public:
+            return
+
+        if token != access_token:
+            abort(401)

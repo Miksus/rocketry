@@ -103,3 +103,10 @@ def logs(type_="tasks", logger=None):
 
         return jsonify(data)
     return ""
+
+
+# System
+@rest_api.route('/system/shutdown', methods=['PUT'])
+def shutdown(): 
+    "Shutdown scheduler system"
+    raise NotImplementedError
