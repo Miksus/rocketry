@@ -15,7 +15,7 @@ import logging
 import inspect
 import warnings
 import datetime
-from typing import List, Dict
+from typing import List, Dict, Union, Tuple
 import multiprocessing
 import threading
 from queue import Empty
@@ -97,6 +97,8 @@ class Task:
     _logger_basename = "atlas.task"
     on_exists = "raise"
     permanent_task = False # Whether the task is not meant to finish (Ie. RestAPI)
+    status_from_logs = False # Force to check status from logs every time (slow but robust)
+    _actions = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
 
     # For multiprocessing (if None, uses scheduler's default)
     daemon: bool = None
@@ -135,6 +137,7 @@ class Task:
         self.name = name
         self.logger = logger
         self.session = self.session or session
+        self.status = None
 
         self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
         self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
@@ -167,12 +170,6 @@ class Task:
         # Thread specific (readonly properties)
         self._thread_terminate = threading.Event()
         self._lock = threading.Lock() # So that multiple threaded tasks/scheduler won't simultaneusly use the task
-
-        if self.status == "run":
-            # Previously crashed unexpectedly during running
-            # a new logging record is made to prevent leaving to
-            # run status and releasing the task
-            self.logger.warning(f'Task {self.name} previously crashed unexpectedly.', extra={"action": "crash_release"})
 
         # Whether the task is maintenance task
         self.is_maintenance = False
@@ -560,41 +557,24 @@ class Task:
         self._logger = logger
 
     def log_running(self):
-        now = datetime.datetime.now()
-        self.logger.info(f"", extra={"action": "run", "start": now})
-        self.start_time = datetime.datetime.now()
+        self.status = "run"
 
     def log_failure(self):
-        now = datetime.datetime.now()
-        self.logger.exception(
-            f"Task '{self.name}' failed",
-            extra={"action": "fail", "start": self.start_time, "end": now, "runtime": now - self.start_time}
-        )
+        self.status = "fail", f"Task '{self.name}' failed"
 
     def log_success(self):
-        now = datetime.datetime.now()
-        self.logger.info(
-            f"", 
-            extra={"action": "success", "start": self.start_time, "end": now, "runtime": now - self.start_time}
-        )
+        self.status = "success"
 
     def log_termination(self, reason=None):
         reason = reason or "unknown reason"
-        now = datetime.datetime.now()
-        self.logger.info(
-            f"Task '{self.name}' terminated due to: {reason}", 
-            extra={"action": "terminate", "start": self.start_time, "end": now, "runtime": now - self.start_time}
-        )
+        self.status = "terminate", reason
+
         # Reset event and force_termination (for threads)
         self.thread_terminate.clear()
         self.force_termination = False
 
     def log_inaction(self):
-        now = datetime.datetime.now()
-        self.logger.info(
-            f"", 
-            extra={"action": "inaction", "start": self.start_time, "end": now, "runtime": now - self.start_time}
-        )
+        self.status = "inaction"
 
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
@@ -602,15 +582,44 @@ class Task:
 
     @property
     def status(self):
-        try:
-            record = self.logger.get_latest()
-        except AttributeError:
-            warnings.warn(f"Task '{self.name}' logger is not readable. Status unknown.")
-            record = None
-        if not record:
-            # No previous status
-            return None
-        return record["action"]
+        if self.status_from_logs:
+            try:
+                record = self.logger.get_latest()
+            except AttributeError:
+                warnings.warn(f"Task '{self.name}' logger is not readable. Status unknown.")
+                record = None
+            if not record:
+                # No previous status
+                return None
+            return record["action"]
+        else:
+            # This is way faster
+            return self._status
+
+    @status.setter
+    def status(self, value:Union[str, Tuple[str, str]]):
+        "Set status (and log the status) of the scheduler"
+        if isinstance(value, tuple):
+            action = value[0]
+            message = value[1]
+        else:
+            action = value
+            message = ""
+        if action not in self._actions:
+            raise KeyError(f"Invalid action: {action}")
+        self._status = value
+
+        if action is not None:
+            now = datetime.datetime.now()
+            if value == "run":
+                extra = {"action": "run", "start": now}
+            else:
+                extra = {"action": value, "start": self.start_time, "end": now, "runtime": now - self.start_time}
+            self.logger.info(
+                f"", 
+                extra=extra
+            )
+            
 
     def get_history(self) -> List[Dict]:
         records = self.logger.get_records()
