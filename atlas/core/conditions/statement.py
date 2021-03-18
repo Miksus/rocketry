@@ -86,7 +86,7 @@ class Statement(BaseCondition):
     _use_global_params = False
 
     @classmethod
-    def from_func(cls, func=None, *, historical=False, quantitative=False, use_globals=False):
+    def from_func(cls, func=None, *, historical=False, quantitative=False, str_repr=None, use_globals=False):
         """Create statement from function (returns new class)
         
         Arguments:

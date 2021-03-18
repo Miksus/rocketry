@@ -10,92 +10,132 @@ import numpy as np
 
 # TODO: instead of "Statement.session.get_task", use self.session
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskStarted(task, _start_=None, _end_=None, **kwargs):
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' stared {period}")
+class TaskStarted(Historical, Comparable):
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
 
-    records = task.logger.get_records(asctime=(_start_, _end_), action="run")
-    run_times = [record["asctime"] for record in records]
-    return run_times
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskFailed(task, _start_=None, _end_=None, **kwargs):
+        records = task.logger.get_records(asctime=(_start_, _end_), action="run")
+        run_times = [record["asctime"] for record in records]
+        return run_times
+        
+    def __str__(self):
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task '{task}' started {period}"
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        # If no period, start and end are the ones from the task
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
-    
-    records = task.logger.get_records(asctime=(_start_, _end_), action="fail")
-    return [record["asctime"] for record in records]
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' failed {period}")
+class TaskFailed(Historical, Comparable):
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskTerminated(task, _start_=None, _end_=None, **kwargs):
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            # If no period, start and end are the ones from the task
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
+        
+        records = task.logger.get_records(asctime=(_start_, _end_), action="fail")
+        return [record["asctime"] for record in records]
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        # If no period, start and end are the ones from the task
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
-    
-    records = task.logger.get_records(asctime=(_start_, _end_), action="terminate")
-    return [record["asctime"] for record in records]
+    def __str__(self):
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task '{task}' failed {period}"
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskSucceeded(task, _start_=None, _end_=None, **kwargs):
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' terminated {period}")
+class TaskTerminated(Historical, Comparable):
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
-    
-    records = task.logger.get_records(asctime=(_start_, _end_), action="success")
-    return [record["asctime"] for record in records]
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            # If no period, start and end are the ones from the task
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
+        
+        records = task.logger.get_records(asctime=(_start_, _end_), action="terminate")
+        return [record["asctime"] for record in records]
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskFinished(task, _start_=None, _end_=None, **kwargs):
+    def __str__(self):
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task '{task}' terminated {period}"
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' succeeded {period}")
+class TaskSucceeded(Historical, Comparable):
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
 
-    records = task.logger.get_records(asctime=(_start_, _end_), action=["success", "fail", "terminate"])
-    return [record["asctime"] for record in records]
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
+        
+        records = task.logger.get_records(asctime=(_start_, _end_), action="success")
+        return [record["asctime"] for record in records]
 
-@Statement.from_func(historical=False, quantitative=False)
-def TaskRunning(task, **kwargs):
+    def __str__(self):
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task 'task '{task}' succeeded {period}"
 
-    task = Statement.session.get_task(task)
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' finished {period}")
+class TaskFinished(Historical, Comparable):
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
 
-    record = task.logger.get_latest()
-    if not record:
-        return False
-    return record["action"] == "run"
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
 
+        records = task.logger.get_records(asctime=(_start_, _end_), action=["success", "fail", "terminate"])
+        return [record["asctime"] for record in records]
 
-@Statement.from_func(historical=True, quantitative=True)
-def TaskInacted(task, _start_=None, _end_=None, **kwargs):
+    def __str__(self):
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task '{task}' finished {period}"
 
-    task = Statement.session.get_task(task)
-    if _start_ is None and _end_ is None:
-        # If no period, start and end are the ones from the task
-        now = datetime.datetime.now()
-        interv = task.period.rollback(now)
-        _start_, _end_ = interv.left, interv.right
-    
-    records = task.logger.get_records(asctime=(_start_, _end_), action="inaction")
-    return [record["asctime"] for record in records]
+#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{task}' is running")
+class TaskRunning(Historical):
+    def observe(self, task, **kwargs):
+
+        task = Statement.session.get_task(task)
+
+        record = task.logger.get_latest()
+        if not record:
+            return False
+        return record["action"] == "run"
+
+    def __str__(self):
+        task = self.kwargs["task"]
+        return f"task '{task}' is running"
+
+#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' inacted")
+class TaskInacted(Historical, Comparable):
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
+
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            # If no period, start and end are the ones from the task
+            now = datetime.datetime.now()
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
+        
+        records = task.logger.get_records(asctime=(_start_, _end_), action="inaction")
+        return [record["asctime"] for record in records]
+
+    def __str__(self):
+        task = self.kwargs["task"]
+        return f"task '{task}' inacted"
 
 class TaskExecutable(Historical):
     """[summary]
@@ -144,105 +184,128 @@ class TaskExecutable(Historical):
             and bool(has_not_terminated)
         )
 
+    def __str__(self):
+        task = self.kwargs["task"]
+        period = self.period
+        return f"task '{task}' {self.period} "
 
-@Statement.from_func(historical=False, quantitative=False)
-def DependFinish(task, depend_task, **kwargs):
-    """True when the "depend_task" has finished and "task" has not yet ran after it.
-    Useful for start cond for task that should be run after finish of another task.
-    
-    Illustration:
-           task          depend_task      t0
-            | -------------- | ------------
-            >>> True
-
-        depend_task         task          t0
-            | -------------- | ------------
-            >>> False
-
-                                          t0
-            -------------------------------
-            >>> False
-    """
-    # Name ideas: TaskNotRanAfterFinish, NotRanAfterFinish, DependFinish
-    # HasRunAfterTaskFinished, RanAfterTask, RanAfterTaskFinished, AfterTaskFinished
-    # TaskRanAfterFinish
-    actual_task = Statement.session.get_task(task)
-    depend_task = Statement.session.get_task(depend_task)
-
-    last_depend_finish = depend_task.logger.get_latest(action=["success", "fail"])
-    last_actual_start = actual_task.logger.get_latest(action=["run"])
-
-    if not last_depend_finish:
-        # Depend has not run at all
-        return False
-    elif not last_actual_start:
-        # Depend has finished but the actual task has not
-        return True
-
-    return last_depend_finish["asctime"] > last_actual_start["asctime"]
-
-@Statement.from_func(historical=False, quantitative=False)
-def DependSuccess(task, depend_task, **kwargs):
-    """True when the "depend_task" has succeeded and "task" has not yet ran after it.
-    Useful for start cond for task that should be run after success of another task.
-    
-    Illustration:
-           task          depend_task      t0
-            | -------------- | ------------
-            >>> True
-
-        depend_task         task          t0
-            | -------------- | ------------
-            >>> False
-
-                                          t0
-            -------------------------------
-            >>> False
-    """
-    actual_task = Statement.session.get_task(task)
-    depend_task = Statement.session.get_task(depend_task)
-
-    last_depend_finish = depend_task.logger.get_latest(action=["success"])
-    last_actual_start = actual_task.logger.get_latest(action=["run"])
-
-    if not last_depend_finish:
-        # Depend has not run at all
-        return False
-    elif not last_actual_start:
-        # Depend has succeeded but the actual task has not
-        return True
+#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' finished before {task} started")
+class DependFinish(Historical):
+    def observe(self, task, depend_task, **kwargs):
+        """True when the "depend_task" has finished and "task" has not yet ran after it.
+        Useful for start cond for task that should be run after finish of another task.
         
-    return last_depend_finish["asctime"] > last_actual_start["asctime"]
+        Illustration:
+            task          depend_task      t0
+                | -------------- | ------------
+                >>> True
 
-@Statement.from_func(historical=False, quantitative=False)
-def DependFailure(task, depend_task, **kwargs):
-    """True when the "depend_task" has failed and "task" has not yet ran after it.
-    Useful for start cond for task that should be run after failure of another task.
-    
-    Illustration:
-           task          depend_task      t0
-            | -------------- | ------------
-            >>> True
+            depend_task         task          t0
+                | -------------- | ------------
+                >>> False
 
-        depend_task         task          t0
-            | -------------- | ------------
-            >>> False
+                                            t0
+                -------------------------------
+                >>> False
+        """
+        # Name ideas: TaskNotRanAfterFinish, NotRanAfterFinish, DependFinish
+        # HasRunAfterTaskFinished, RanAfterTask, RanAfterTaskFinished, AfterTaskFinished
+        # TaskRanAfterFinish
+        actual_task = Statement.session.get_task(task)
+        depend_task = Statement.session.get_task(depend_task)
 
-                                          t0
-            -------------------------------
-            >>> False
-    """
-    actual_task = Statement.session.get_task(task)
-    depend_task = Statement.session.get_task(depend_task)
+        last_depend_finish = depend_task.logger.get_latest(action=["success", "fail"])
+        last_actual_start = actual_task.logger.get_latest(action=["run"])
 
-    last_depend_finish = depend_task.logger.get_latest(action=["fail"])
-    last_actual_start = actual_task.logger.get_latest(action=["run"])
+        if not last_depend_finish:
+            # Depend has not run at all
+            return False
+        elif not last_actual_start:
+            # Depend has finished but the actual task has not
+            return True
 
-    if not last_depend_finish:
-        # Depend has not run at all
-        return False
-    elif not last_actual_start:
-        # Depend has failed but the actual task has not
-        return True
+        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+
+    def __str__(self):
+        task = self.kwargs["task"]
+        depend_task = self.kwargs["depend_task"]
+        return f"task '{depend_task}' finished before {task} started"
+
+
+#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' succeeded before {task} started")
+class DependSuccess(Historical):
+    def observe(self, task, depend_task, **kwargs):
+        """True when the "depend_task" has succeeded and "task" has not yet ran after it.
+        Useful for start cond for task that should be run after success of another task.
         
-    return last_depend_finish["asctime"] > last_actual_start["asctime"]
+        Illustration:
+            task          depend_task      t0
+                | -------------- | ------------
+                >>> True
+
+            depend_task         task          t0
+                | -------------- | ------------
+                >>> False
+
+                                            t0
+                -------------------------------
+                >>> False
+        """
+        actual_task = Statement.session.get_task(task)
+        depend_task = Statement.session.get_task(depend_task)
+
+        last_depend_finish = depend_task.logger.get_latest(action=["success"])
+        last_actual_start = actual_task.logger.get_latest(action=["run"])
+
+        if not last_depend_finish:
+            # Depend has not run at all
+            return False
+        elif not last_actual_start:
+            # Depend has succeeded but the actual task has not
+            return True
+            
+        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+
+    def __str__(self):
+        task = self.kwargs["task"]
+        depend_task = self.kwargs["depend_task"]
+        return f"task '{depend_task}' finished before {task} started"
+
+#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' failed before {task} started")
+class DependFailure(Historical):
+    def observe(self, task, depend_task, **kwargs):
+        """True when the "depend_task" has failed and "task" has not yet ran after it.
+        Useful for start cond for task that should be run after failure of another task.
+        
+        Illustration:
+            task          depend_task      t0
+                | -------------- | ------------
+                >>> True
+
+            depend_task         task          t0
+                | -------------- | ------------
+                >>> False
+
+                                            t0
+                -------------------------------
+                >>> False
+        """
+        actual_task = Statement.session.get_task(task)
+        depend_task = Statement.session.get_task(depend_task)
+
+        last_depend_finish = depend_task.logger.get_latest(action=["fail"])
+        last_actual_start = actual_task.logger.get_latest(action=["run"])
+
+        if not last_depend_finish:
+            # Depend has not run at all
+            return False
+        elif not last_actual_start:
+            # Depend has failed but the actual task has not
+            return True
+            
+        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+
+    def __str__(self):
+        task = self.kwargs["task"]
+        depend_task = self.kwargs["depend_task"]
+        return f"task '{depend_task}' finished before {task} started"

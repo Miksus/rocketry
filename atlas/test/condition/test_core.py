@@ -2,6 +2,9 @@ from atlas.conditions import (
     true, false, ParamExists, IsParameter
 )
 from atlas import session
+from atlas.core.conditions import Statement, Comparable, Historical
+
+import pytest
 
 def test_true():
     assert bool(true)
@@ -36,3 +39,9 @@ def test_is_parameter():
 
     session.parameters["y"] = "no"
     assert not bool(cond)
+
+
+# Test no unexpected errors in all
+@pytest.mark.parametrize("cls", set(Statement.__subclasses__() + Comparable.__subclasses__() + Historical.__subclasses__()))
+def test_magic_noerror(cls):
+    str(cls())
