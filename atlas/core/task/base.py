@@ -79,6 +79,17 @@ class Task:
         is_running -> bool : Check whether the task is currently running or not
         status -> str : Latest status of the task
 
+    Class attributes:
+    -----------------
+        use_instance_naming {bool} : if task instance has specified no name, use id(task) as the name
+        permanent_task {bool} : Whether the task is meant to be run indefinitely. Use in subclassing.
+        status_from_logs {bool} : Whether to check the task.status from the logs (True) or store to memory (False)
+        on_exists {str} : If task already exists, 
+            raise an exception (on_exists="raise")
+            or replace the old task (on_exists="replace")
+            or generate new name for the new task (on_exists="rename")
+            or don't overwrite the existing task (on_exists="ignore")
+
     Methods:
     --------
         __call__(*args, **kwargs) : Execute the task
@@ -579,6 +590,7 @@ class Task:
     def log_record(self, record):
         "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
         self.logger.handle(record)
+        self._status = record.action
 
     @property
     def status(self):
@@ -607,18 +619,22 @@ class Task:
             message = ""
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
-        self._status = value
-
+        
         if action is not None:
             now = datetime.datetime.now()
-            if value == "run":
+            if action == "run":
                 extra = {"action": "run", "start": now}
+                self.start_time = now
             else:
-                extra = {"action": value, "start": self.start_time, "end": now, "runtime": now - self.start_time}
-            self.logger.info(
-                f"", 
+                start_time = self.start_time if hasattr(self, "start_time") else None
+                extra = {"action": action, "start": start_time, "end": now, "runtime": now - self.start_time}
+            
+            log_method = self.logger.exception if action == "fail" else self.logger.info
+            log_method(
+                message, 
                 extra=extra
             )
+        self._status = action
             
 
     def get_history(self) -> List[Dict]:
