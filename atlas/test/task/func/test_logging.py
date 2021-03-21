@@ -102,22 +102,40 @@ def test_handle(tmpdir):
         ] == records
 
 def test_without_handlers(tmpdir):
-    with tmpdir.as_cwd() as old_dir:
+    orig_value = Task.status_from_logs
+    try:
+        with tmpdir.as_cwd() as old_dir:
+            
 
-        logger = logging.getLogger("atlas.task.test")
-        logger.handlers = []
-        logger.propagate = False
+            logger = logging.getLogger("atlas.task.test")
+            logger.handlers = []
+            logger.propagate = False
 
-        task = FuncTask(
-            lambda : None, 
-            name="task",
-            start_cond="always true",
-            logger="atlas.task.test",
-            execution="main",
-        )
-        task()
-        assert task.status is None
+            Task.status_from_logs = True
+            task = FuncTask(
+                lambda : None, 
+                name="task 1",
+                start_cond="always true",
+                logger="atlas.task.test",
+                execution="main",
+            )
+            task()
+            # Cannot know the task.status as there is no log about it
+            assert task.status is None
 
+            Task.status_from_logs = False
+            task = FuncTask(
+                lambda : None, 
+                name="task 2",
+                start_cond="always true",
+                logger="atlas.task.test",
+                execution="main",
+            )
+            task()
+            # Can know the task.status as stored in a variable
+            assert task.status == "success"
+    finally:
+        Task.status_from_logs = orig_value
 
 @pytest.mark.parametrize("method",
     [
