@@ -83,8 +83,8 @@ class HTTPConnection(Task):
     def get_default_name(self):
         return "HTTP-API"
 
-
-class AddressPinger(Task):
+@register_task_cls
+class IPAddressPinger(Task):
     
     """Task for pushing the connection information
     to a target host.
@@ -98,8 +98,13 @@ class AddressPinger(Task):
     # TODO: Test
     __status__ = "test"
 
-    def __init__(self, target_url, delay="5 minutes", connection_timeout=5, **kwargs):
+    def __init__(self, target_url, ip=None, port=None, delay="5 minutes", connection_timeout=5, **kwargs):
         super().__init__(**kwargs)
+
+        # Info about where the API is
+        self.ip = ip
+        self.port = port
+        
         self.target_host = target_url
         self.execution = "thread"
         self.delay = pd.Timedelta(delay).total_seconds()
@@ -107,10 +112,17 @@ class AddressPinger(Task):
 
     def execute_action(self):
         while not self.thread_terminate.is_set():
-            ip = get_ip()
+            ip = self.ip if self.ip is not None else get_ip()
+            port = self.port
+            data = {
+                "node": platform.node(),
+                "application": "Atlas",
+                "ip": ip,
+                "port": port,
+                "url": f"http://{ip}:{port}"
+            }
             try:
-                requests.post(self.target_host, data={"node": platform.node(), "application": "Atlas Scheduler"}, timeout=self.connection_timeout)
+                requests.post(self.target_host, data=data, timeout=self.connection_timeout)
             except requests.ConnectionError:
                 pass
             time.sleep(self.delay)
-

@@ -1,1 +1,1 @@
-from .task import HTTPConnection, AddressPinger
+from .task import HTTPConnection, IPAddressPinger
