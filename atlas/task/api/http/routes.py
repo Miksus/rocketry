@@ -3,6 +3,11 @@ from flask import Blueprint, render_template, abort, request, jsonify, abort
 from atlas import session
 from .utils import parse_url_parameters
 
+# For system info
+import pkg_resources
+import platform
+import sys
+
 rest_api = Blueprint(
     'api', 
     __name__,
@@ -101,5 +106,60 @@ def logs(type_="tasks", logger=None):
             if logger_name is None or name == logger_name:
                 data += logger.get_records(**params)
 
+        return jsonify(data)
+    return ""
+
+# Informatics
+@rest_api.route('/info', methods=['GET'])
+@rest_api.route('/info/<name>', methods=['GET'])
+def info(name=None): 
+    "Get system info"
+
+    # Util funcs (TODO: put to a module)
+    def get_python_info():
+        return {
+            "info": sys.version,
+            "version": platform.python_version(),
+            "implementation": platform.python_implementation(),
+        }
+
+    def get_os_info():
+        info = platform.uname()
+        return {
+            "info": platform.platform(),
+            "system": info.system,
+            "machine": info.machine,
+            "release": info.release,
+            "processor": info.processor,
+        }
+
+    def get_scheduler_info():
+        return {
+            "version": pkg_resources.get_distribution("atlas").version,
+            "n_tasks": len(session.tasks),
+        }
+
+    if request.method == "GET":
+        if name is None:
+            data = {
+                "os": get_os_info(), 
+                "python": get_python_info(), 
+                "node": platform.node(),
+                "scheduler": get_scheduler_info()
+            }
+
+        elif name == "os":
+            data = get_os_info()
+
+        elif name == "python":
+            data = get_python_info()
+
+        elif name == "node":
+            data = {"node": platform.node()}
+
+        elif name == "scheduler":
+            data = get_scheduler_info()
+        else:
+            abort(404)
         return jsonify(data)
     return ""
