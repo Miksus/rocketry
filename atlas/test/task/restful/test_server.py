@@ -48,6 +48,20 @@ def test_get(scheduler, port):
     assert data[1]["action"] == "success"
     assert data[1]["task_name"] == "test-task"
 
+def test_access_tokens(scheduler, port):
+    # Test HTTP GET on scheduler running on another thread with a port open
+    HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)
+    session.parameters["access_token"] = "my-password"
+
+    # Unauthorized access
+    page = requests.get(f"http://127.0.0.1:{port}/ping", timeout=1)
+    assert page.status_code == 401
+    #assert not page.data
+
+    # Authorized access
+    page = requests.get(f"http://127.0.0.1:{port}/ping", timeout=1, headers={"Authorization": "my-password"})
+    assert page.status_code == 200
+
 
 def test_interact(scheduler, port):
     HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)

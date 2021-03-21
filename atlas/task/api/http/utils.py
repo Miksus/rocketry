@@ -1,5 +1,5 @@
 
-from flask import request
+from flask import request, abort
 
 def parse_url_parameters(request):
     params = request.args
@@ -31,7 +31,7 @@ def public_route(decorated_function):
 
 def check_route_access(app):
     def wrapper():
-        access_token = app.config["HOST_TASK"].access_token
+        access_token = app.config["ACCESS_TOKEN"]
 
         token = request.headers.get("Authorization")
         is_public = getattr(app.view_functions.get(request.endpoint, None), 'is_public', False)
@@ -40,3 +40,5 @@ def check_route_access(app):
 
         if token != access_token:
             abort(401)
+        return
+    return wrapper

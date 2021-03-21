@@ -42,8 +42,7 @@ class HTTPConnection(Task):
     # The listener should be running constantly as long as the scheduler is up
     permanent_task = True
 
-    def __init__(self, access_token=None, host='127.0.0.1', port=5000, delay="1 second", **kwargs):
-        self.access_token = access_token
+    def __init__(self, host='127.0.0.1', port=5000, delay="1 second", **kwargs):
         self.host = host
         self.port = port
         super().__init__(**kwargs)
@@ -51,9 +50,9 @@ class HTTPConnection(Task):
         self.delay = pd.Timedelta(delay).total_seconds()
 
     # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
-    def execute_action(self):
+    def execute_action(self, access_token=None):
         
-        self.app = self.create_app()
+        self.app = self.create_app(access_token=access_token)
         server = self.create_server(self.app)
         context = self.app.app_context()
         context.push()
@@ -68,15 +67,14 @@ class HTTPConnection(Task):
         # Note, this may take like 10 seconds
         server.shutdown()
         
-    def create_app(self):
+    def create_app(self, **kwargs):
         # https://stackoverflow.com/a/45017691/13696660
         app = Flask(__name__)
         app.register_blueprint(rest_api)
         app.json_encoder = AtlasJSONEncoder
 
-        check_route_access.access_token = self.access_token
         app.before_request(check_route_access(app))
-        self._set_config(app)
+        self._set_config(app, **kwargs)
         return app
 
     def create_server(self, app):
@@ -85,10 +83,11 @@ class HTTPConnection(Task):
     def get_default_name(self):
         return "HTTP-API"
 
-    def _set_config(self, app):
+    def _set_config(self, app, access_token=None):
         app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
         app.logger.name = "atlas.api.http" # We don't want it to pollute task logs (would be named as "atlas.task.api.http.task" otherwise)
         app.config["HOST_TASK"] = self
+        app.config["ACCESS_TOKEN"] = access_token
 
 
 @register_task_cls
@@ -106,13 +105,13 @@ class IPAddressPinger(Task):
     # TODO: Test
     __status__ = "test"
 
-    def __init__(self, target_url, name=None, ip=None, port=5000, delay="5 minutes", connection_timeout=5, **kwargs):
+    def __init__(self, target_url, app_name=None, ip=None, port=5000, delay="5 minutes", connection_timeout=5, **kwargs):
         super().__init__(**kwargs)
 
         # Info about where the API is
         self.ip = ip
         self.port = port
-        self.name = name
+        self.app_name = app_name
         
         # info about who to send this info to
         self.target_host = target_url
@@ -122,17 +121,18 @@ class IPAddressPinger(Task):
         self.delay = pd.Timedelta(delay).total_seconds()
         self.connection_timeout = connection_timeout
 
-    def execute_action(self, secret_key):
+    def execute_action(self, secret_key, access_token=None):
         while not self.thread_terminate.is_set():
             ip = self.ip if self.ip is not None else get_ip()
             port = self.port
             payload = {
-                "name": self.name,
+                "name": self.app_name,
                 "node": platform.node(),
                 "application": "Atlas",
                 "ip": ip,
                 "port": port,
-                "url": f"http://{ip}:{port}"
+                "url": f"http://{ip}:{port}",
+                "token": access_token
             }
             data = jwt.encode(
                 payload,
