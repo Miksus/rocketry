@@ -35,22 +35,6 @@ from atlas.core.parameters import Parameters
 #       _last_start_, _last_success_, _last_failure_, _task_name_
 
 
-def _listen_task_status(handlers, queue):
-    # TODO: Probably remove
-    # https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
-    logger = logging.getLogger(__name__)
-    logger.handlers = handlers
-    while True:
-        try:
-            record = queue.get()
-            if record is None:  # We send this as a sentinel to tell the listener to quit.
-                break
-            logger.handle(record)  # No level or filter logic applied - just do it!
-        except Exception:
-            import sys, traceback
-            traceback.print_exc(file=sys.stderr)
-
-
 class Scheduler:
     """Multiprocessing scheduler
 
@@ -365,30 +349,6 @@ class Scheduler:
                     self.run_task(task)
 
         self.logger.info(f"Setup complete.")
-
-    def setup_listener(self):
-        # TODO
-        handlers = deepcopy(Task.logger.handlers)
-
-        # Set the Task sending the logs to queue instead
-        for handler in Task.logger.handlers:
-            # All handlers are disabled
-            # as they are used in the
-            # mirror logger in the listener
-            # We cannot remove them because the 2-way logging
-            handler.addFilter(FilterAll())
-
-        # Add queue handler which cumulates the records
-        # for the listener to consume centrally
-        queue = multiprocessing.Queue(-1)
-        handler = logging.handlers.QueueHandler(queue)
-        Task.logger.addHandler(handler)
-
-        self._task_listener = multiprocessing.Process(
-            target=_listen_task_status,
-            args=(handlers, queue)
-        )
-        self._task_listener.start()
 
     def has_free_processors(self):
         return self.n_alive <= self.max_processes
