@@ -103,12 +103,12 @@ class Scheduler:
         "Start and run the scheduler"
         exception = None
         try:
-            self.setup()
+            self._setup()
 
             while not bool(self.shut_condition):
 
-                self.hibernate()
-                self.run_cycle()
+                self._hibernate()
+                self._run_cycle()
 
                 # self.maintain()
         except SystemExit as exc:
@@ -130,9 +130,9 @@ class Scheduler:
         else:
             self.logger.info('Purpose completed. Shutting down...', extra={"action": "shutdown"})
         finally:
-            self.shut_down(exception=exception)
+            self._shut_down(exception=exception)
 
-    def run_cycle(self):
+    def _run_cycle(self):
         "Run a cycle of tasks"
         tasks = self.tasks
         self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
@@ -321,13 +321,13 @@ class Scheduler:
                 # there should be a maintainer task to take them there
                 #self.task_returns[task_name] = return_value
 
-    def hibernate(self):
+    def _hibernate(self):
         "Go to sleep and wake up when next task can be executed"
         delay = self.delay
         self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
         time.sleep(delay)
 
-    def setup(self):
+    def _setup(self):
         "Set up the scheduler"
         #self.setup_listener()
         self.logger.info(f"Setting up...", extra={"action": "setup"})
@@ -357,7 +357,7 @@ class Scheduler:
     def n_alive(self):
         return sum(task.is_alive() for task in self.tasks)
 
-    def shut_down_processes(self, traceback=None, exception=None):
+    def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         wait_for_finish = not self.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
         if wait_for_finish:
@@ -379,7 +379,7 @@ class Scheduler:
                             self.terminate_task(task)
             except Exception as exc:
                 # Fuck it, terminate all
-                self.shut_down_processes(exception=exc)
+                self._shut_down_tasks(exception=exc)
                 return
             else:
                 self.handle_logs()
@@ -387,7 +387,7 @@ class Scheduler:
         else:
             self.terminate_all(reason="shutdown")
 
-    def shut_down(self, traceback=None, exception=None):
+    def _shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler
         This method is meant to controllably close the
         scheduler in case the scheduler crashed (with 
@@ -411,15 +411,15 @@ class Scheduler:
                     self.run_task(task)
 
         self.logger.info(f"Shutting down tasks...")
-        self.shut_down_processes(traceback, exception)
+        self._shut_down_tasks(traceback, exception)
 
         self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
-            self.restart()
+            self._restart()
 
-    def restart(self):
+    def _restart(self):
         """Restart the scheduler by creating a new process
         on the temporary run script where the scheduler's is
         process is started.
