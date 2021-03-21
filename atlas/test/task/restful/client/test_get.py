@@ -243,6 +243,9 @@ def test_logs(client, logs, query_url, expected_logs):
     ]
     assert expected_logs == actual_logs
 
+def test_ping(client):
+    response = client.get("/ping")
+    assert response.status_code == 200
 
 @pytest.mark.parametrize(
     "name,keys",
