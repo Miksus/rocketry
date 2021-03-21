@@ -25,12 +25,14 @@ def test_create_api(scheduler):
 
 def test_get(scheduler, port):
     # Test HTTP GET on scheduler running on another thread with a port open
-    HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)
+    HTTPConnection(name="http-api", force_run=True)
+    session.parameters["http_api"] = {"host": "127.0.0.1", "port": port}
 
     task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
 
     # Test tasks
     page = requests.get(f"http://127.0.0.1:{port}/tasks", timeout=1)
+    assert page.status_code == 200
     data = page.json()
     assert {"http-api", "test-task"} == set(data.keys())
 
@@ -38,6 +40,7 @@ def test_get(scheduler, port):
     task.log_running()
     task.log_success()
     page = requests.get(f"http://127.0.0.1:{port}/logs/tasks?task_name=test-task", timeout=1)
+    assert page.status_code == 200
     data = page.json()
 
     assert 2 == len(data)
@@ -50,8 +53,8 @@ def test_get(scheduler, port):
 
 def test_access_tokens(scheduler, port):
     # Test HTTP GET on scheduler running on another thread with a port open
-    HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)
-    session.parameters["access_token"] = "my-password"
+    HTTPConnection(name="http-api", force_run=True)
+    session.parameters["http_api"] = {"access_token": "my-password", "host": "127.0.0.1", "port": port}
 
     # Unauthorized access
     page = requests.get(f"http://127.0.0.1:{port}/ping", timeout=1)
@@ -64,7 +67,8 @@ def test_access_tokens(scheduler, port):
 
 
 def test_interact(scheduler, port):
-    HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)
+    HTTPConnection(name="http-api", force_run=True)
+    session.parameters["http_api"] = {"host": "127.0.0.1", "port": port}
 
     task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
 
@@ -74,6 +78,7 @@ def test_interact(scheduler, port):
 
     data = json.dumps({"force_run": True})
     page = requests.patch(f"http://127.0.0.1:{port}/tasks/test-task", data=data, headers={"content-type": "application/json"}, timeout=1)
+    assert page.status_code == 200
 
     time.sleep(1)
     # Probably should have been run
@@ -84,6 +89,7 @@ def test_interact(scheduler, port):
 
     data = json.dumps({"disabled": False})
     page = requests.patch(f"http://127.0.0.1:{port}/tasks/test-task", data=data, headers={"content-type": "application/json"}, timeout=1)
+    assert page.status_code == 200
 
     time.sleep(1)
     # Probably should have been run
@@ -92,7 +98,8 @@ def test_interact(scheduler, port):
 
 
 def test_wrong_type(scheduler, port):
-    HTTPConnection(host="127.0.0.1", port=port, name="http-api", force_run=True)
+    HTTPConnection(name="http-api", force_run=True)
+    session.parameters["http_api"] = {"access_token": "my-password", "host": "127.0.0.1", "port": port}
 
     task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
 

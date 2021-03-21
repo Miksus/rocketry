@@ -38,7 +38,7 @@ def check_route_access(app):
         if is_public:
             return
 
-        if token != access_token:
+        if access_token is not None and token != access_token:
             abort(401)
         return
     return wrapper

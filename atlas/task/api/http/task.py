@@ -3,6 +3,7 @@ from werkzeug.serving import make_server
 
 from flask import Blueprint, render_template, abort, request, jsonify, Flask
 from flask.json import JSONEncoder
+import jwt
 
 from atlas import session
 from atlas.parse import parse_task
@@ -42,18 +43,20 @@ class HTTPConnection(Task):
     # The listener should be running constantly as long as the scheduler is up
     permanent_task = True
 
-    def __init__(self, host='127.0.0.1', port=5000, delay="1 second", **kwargs):
-        self.host = host
-        self.port = port
+    def __init__(self, delay="1 second", **kwargs):
         super().__init__(**kwargs)
         self.execution = "thread"
         self.delay = pd.Timedelta(delay).total_seconds()
 
     # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
-    def execute_action(self, access_token=None):
+    def execute_action(self, http_api:dict):
+
+        host = http_api["host"]
+        port = http_api["port"]
+        access_token = http_api.get("access_token", None)
         
         self.app = self.create_app(access_token=access_token)
-        server = self.create_server(self.app)
+        server = self.create_server(self.app, host, port)
         context = self.app.app_context()
         context.push()
 
@@ -77,8 +80,8 @@ class HTTPConnection(Task):
         self._set_config(app, **kwargs)
         return app
 
-    def create_server(self, app):
-        return make_server(self.host, self.port, app)
+    def create_server(self, app, host, port):
+        return make_server(host, port, app)
 
     def get_default_name(self):
         return "HTTP-API"
@@ -105,12 +108,10 @@ class IPAddressPinger(Task):
     # TODO: Test
     __status__ = "test"
 
-    def __init__(self, target_url, app_name=None, ip=None, port=5000, delay="5 minutes", connection_timeout=5, **kwargs):
+    def __init__(self, target_url, app_name=None, delay="5 minutes", connection_timeout=5, **kwargs):
         super().__init__(**kwargs)
 
         # Info about where the API is
-        self.ip = ip
-        self.port = port
         self.app_name = app_name
         
         # info about who to send this info to
@@ -121,17 +122,24 @@ class IPAddressPinger(Task):
         self.delay = pd.Timedelta(delay).total_seconds()
         self.connection_timeout = connection_timeout
 
-    def execute_action(self, secret_key, access_token=None):
+    def execute_action(self, secret_key, http_api:dict):
+        api_info = http_api
+
+        host = api_info["host"]
+        port = api_info["port"]
+        secret_key = api_info["api_secret"]
+        access_token = api_info.get("access_token", None)
+
         while not self.thread_terminate.is_set():
-            ip = self.ip if self.ip is not None else get_ip()
-            port = self.port
+            host = get_ip() if host is None or host == "0.0.0.0" else host
+
             payload = {
                 "name": self.app_name,
                 "node": platform.node(),
                 "application": "Atlas",
-                "ip": ip,
+                "host": host,
                 "port": port,
-                "url": f"http://{ip}:{port}",
+                "url": f"http://{host}:{port}",
                 "token": access_token
             }
             data = jwt.encode(
