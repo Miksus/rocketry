@@ -3,6 +3,7 @@
 
 from multiprocessing import Process, cpu_count
 import multiprocessing
+import threading
 
 import traceback
 import warnings
@@ -89,6 +90,11 @@ class Scheduler:
         if parameters:
             self.session.parameters.update(parameters)
 
+        # Controlling runtime (used by scheduler.disabled)
+        self._flag_enabled = threading.Event()
+        self._flag_shutdown = threading.Event()
+        self._flag_enabled.set() # Not on hold by default
+
     def _register_instance(self):
         self.session.scheduler = self
 
@@ -106,6 +112,8 @@ class Scheduler:
             self._setup()
 
             while not bool(self.shut_condition):
+                if self._flag_shutdown.is_set():
+                    break
 
                 self._hibernate()
                 self._run_cycle()
@@ -143,7 +151,7 @@ class Scheduler:
                 if task.on_startup or task.on_shutdown:
                     # Startup or shutdown tasks are not run in main sequence
                     pass
-                elif self.is_task_runnable(task):
+                elif self._flag_enabled.is_set() and self.is_task_runnable(task):
                     # Run the actual task
                     self.run_task(task)
                     # Reset force_run as a run has forced
@@ -387,6 +395,11 @@ class Scheduler:
         else:
             self.terminate_all(reason="shutdown")
 
+    def _wait_task_shutdown(self):
+        "Wait till all, especially threading tasks, are finished"
+        while self.n_alive > 0:
+            time.sleep(0.005)
+
     def _shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler
         This method is meant to controllably close the
@@ -412,6 +425,7 @@ class Scheduler:
 
         self.logger.info(f"Shutting down tasks...")
         self._shut_down_tasks(traceback, exception)
+        self._wait_task_shutdown()
 
         self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
@@ -463,6 +477,21 @@ class Scheduler:
         self.logger.debug(f"Next run cycle at {delay} seconds.")
         return delay
 
+# System control
+    @property
+    def on_hold(self):
+        return not self._flag_enabled.is_set()
+
+    @on_hold.setter
+    def on_hold(self, value):
+        if value:
+            self._flag_enabled.clear()
+        else:
+            self._flag_enabled.set()
+
+    def shut_down(self):
+        self.on_hold = False # In case was set to wait
+        self._flag_shutdown.set()
 
 # Logging
     @property
