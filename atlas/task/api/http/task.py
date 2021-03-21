@@ -51,6 +51,7 @@ class HTTPConnection(Task):
     # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
     def execute_action(self, http_api:dict):
 
+        # TODO: refetch the http_api parameters in while loop
         host = http_api["host"]
         port = http_api["port"]
         access_token = http_api.get("access_token", None)
@@ -122,7 +123,8 @@ class IPAddressPinger(Task):
         self.delay = pd.Timedelta(delay).total_seconds()
         self.connection_timeout = connection_timeout
 
-    def execute_action(self, secret_key, http_api:dict):
+    def execute_action(self, http_api:dict):
+        # TODO: refetch the http_api parameters in while loop
         api_info = http_api
 
         host = api_info["host"]
