@@ -95,6 +95,10 @@ class Scheduler:
         self._flag_shutdown = threading.Event()
         self._flag_enabled.set() # Not on hold by default
 
+        # is_alive is used by testing whether the scheduler is 
+        # still running or not
+        self.is_alive = None
+
     def _register_instance(self):
         self.session.scheduler = self
 
@@ -107,6 +111,7 @@ class Scheduler:
 
     def __call__(self):
         "Start and run the scheduler"
+        self.is_alive = True
         exception = None
         try:
             self._setup()
@@ -427,6 +432,7 @@ class Scheduler:
         self._shut_down_tasks(traceback, exception)
         self._wait_task_shutdown()
 
+        self.is_alive = False
         self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
