@@ -64,3 +64,18 @@ def test_parameters(client, existing, query_url, content, expected):
     assert 200 == response.status_code
 
     assert Parameters(expected).to_dict() == session.parameters.to_dict()
+
+
+def test_scheduler_shutdown(client, scheduler):
+    assert session.scheduler.is_alive
+
+    response = client.put("scheduler/shutdown")
+    assert response.status_code == 200
+
+    # Wait a bit for the scheduler to shut down
+    n_sleeps = 0
+    while session.scheduler.is_alive or n_sleeps > 1000:
+        time.sleep(0.0001)
+        n_sleeps += 1
+
+    assert not session.scheduler.is_alive
