@@ -134,15 +134,16 @@ class IPAddressPinger(Task):
 
         while not self.thread_terminate.is_set():
             host = get_ip() if host is None or host == "0.0.0.0" else host
+            name = self.app_name if self.app_name is not None else platform.node()
 
             payload = {
-                "name": self.app_name,
+                "name": name,
                 "node": platform.node(),
                 "application": "Atlas",
                 "host": host,
                 "port": port,
                 "url": f"http://{host}:{port}",
-                "token": access_token
+                "token": access_token,
             }
             data = jwt.encode(
                 payload,
