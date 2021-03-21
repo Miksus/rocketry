@@ -98,31 +98,41 @@ class IPAddressPinger(Task):
     # TODO: Test
     __status__ = "test"
 
-    def __init__(self, target_url, ip=None, port=None, delay="5 minutes", connection_timeout=5, **kwargs):
+    def __init__(self, target_url, name=None, ip=None, port=5000, delay="5 minutes", connection_timeout=5, **kwargs):
         super().__init__(**kwargs)
 
         # Info about where the API is
         self.ip = ip
         self.port = port
+        self.name = name
         
+        # info about who to send this info to
         self.target_host = target_url
+
+        # Other
         self.execution = "thread"
         self.delay = pd.Timedelta(delay).total_seconds()
         self.connection_timeout = connection_timeout
 
-    def execute_action(self):
+    def execute_action(self, secret_key):
         while not self.thread_terminate.is_set():
             ip = self.ip if self.ip is not None else get_ip()
             port = self.port
-            data = {
+            payload = {
+                "name": self.name,
                 "node": platform.node(),
                 "application": "Atlas",
                 "ip": ip,
                 "port": port,
                 "url": f"http://{ip}:{port}"
             }
+            data = jwt.encode(
+                payload,
+                secret_key,
+                algorithm='HS256'
+            )
             try:
-                requests.post(self.target_host, json=data, timeout=self.connection_timeout)
+                requests.post(self.target_host, data=data, timeout=self.connection_timeout)
             except requests.ConnectionError:
                 pass
             time.sleep(self.delay)
