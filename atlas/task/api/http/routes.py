@@ -109,6 +109,22 @@ def logs(type_="tasks", logger=None):
         return jsonify(data)
     return ""
 
+
+@rest_api.route('/ping', methods=['GET'])
+def ping(): 
+    "Minimally consuming way to check the server"
+    return ""
+
+
+# Scheduler routes
+@rest_api.route('/scheduler/shutdown', methods=['PUT'])
+def shut_down(): 
+    "Shutdown scheduler"
+    # TODO: Test
+    session.scheduler.shut_down()
+    return ""
+
+
 # Informatics
 @rest_api.route('/info', methods=['GET'])
 @rest_api.route('/info/<name>', methods=['GET'])
