@@ -122,7 +122,7 @@ class IPAddressPinger(Task):
                 "url": f"http://{ip}:{port}"
             }
             try:
-                requests.post(self.target_host, data=data, timeout=self.connection_timeout)
+                requests.post(self.target_host, json=data, timeout=self.connection_timeout)
             except requests.ConnectionError:
                 pass
             time.sleep(self.delay)
