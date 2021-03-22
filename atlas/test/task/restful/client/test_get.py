@@ -242,3 +242,26 @@ def test_logs(client, logs, query_url, expected_logs):
         for rec in data
     ]
     assert expected_logs == actual_logs
+
+def test_ping(client):
+    response = client.get("/ping")
+    assert response.status_code == 200
+
+@pytest.mark.parametrize(
+    "name,keys",
+    [
+        pytest.param(None, {"python", "node", "os", "scheduler"}, id="Full info"),
+        pytest.param("os", {"info", "system", "machine", "release", "processor"}, id="OS info"),
+        pytest.param("python", {"info", "version", "implementation"}, id="Python info"),
+        pytest.param("scheduler", {"version", "n_tasks"}, id="Scheduler info"),
+    ],
+)
+def test_info(client, name, keys):
+    url = "/info"
+    url = f"/info/{name}" if name is not None else "/info"
+    
+    response = client.get(url)
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert set(data.keys()) == keys
