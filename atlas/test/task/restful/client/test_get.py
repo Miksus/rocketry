@@ -250,15 +250,15 @@ def test_ping(client):
 @pytest.mark.parametrize(
     "name,keys",
     [
-        pytest.param(None, {"python", "node", "os", "scheduler"}, id="Full info"),
-        pytest.param("os", {"info", "system", "machine", "release", "processor"}, id="OS info"),
-        pytest.param("python", {"info", "version", "implementation"}, id="Python info"),
-        pytest.param("scheduler", {"version", "n_tasks"}, id="Scheduler info"),
+        pytest.param("", {"python", "node", "os", "scheduler"}, id="Full info"),
+        pytest.param("?metric=python&metric=os", {"python", "os"}, id="Selected info"),
+        pytest.param("/os", {"info", "system", "machine", "release", "processor", "processor_count", "boot_time"}, id="OS info"),
+        pytest.param("/python", {"info", "version", "implementation"}, id="Python info"),
+        pytest.param("/scheduler", {"version", "n_tasks"}, id="Scheduler info"),
     ],
 )
 def test_info(client, name, keys):
-    url = "/info"
-    url = f"/info/{name}" if name is not None else "/info"
+    url = f"/info{name}"
     
     response = client.get(url)
     assert response.status_code == 200

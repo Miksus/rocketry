@@ -6,6 +6,7 @@ from .utils import parse_url_parameters
 # For system info
 import pkg_resources
 import platform
+import psutil
 import sys
 
 rest_api = Blueprint(
@@ -131,6 +132,8 @@ def shut_down():
 def info(name=None): 
     "Get system info"
 
+    # Ideas to include: RAM usage, CPU usage, disk usage, disk free
+
     # Util funcs (TODO: put to a module)
     def get_python_info():
         return {
@@ -147,6 +150,8 @@ def info(name=None):
             "machine": info.machine,
             "release": info.release,
             "processor": info.processor,
+            "processor_count": psutil.cpu_count(),
+            "boot_time": psutil.boot_time(),
         }
 
     def get_scheduler_info():
@@ -154,28 +159,30 @@ def info(name=None):
             "version": pkg_resources.get_distribution("atlas").version,
             "n_tasks": len(session.tasks),
         }
+    
+    def get_performance_info():
+        "Get CPU, RAM & disk usage percent"
+        return {
+            "cpu": psutil.cpu_percent() / 100,
+            "ram": psutil.virtual_memory().percent / 100,
+            "disk": psutil.disk_usage("/").percent / 100,
+        }
+
+    metrics = {
+        "os": get_os_info,
+        "python": get_python_info,
+        "scheduler": get_scheduler_info,
+        "node": platform.node,
+    }
 
     if request.method == "GET":
-        if name is None:
-            data = {
-                "os": get_os_info(), 
-                "python": get_python_info(), 
-                "node": platform.node(),
-                "scheduler": get_scheduler_info()
-            }
-
-        elif name == "os":
-            data = get_os_info()
-
-        elif name == "python":
-            data = get_python_info()
-
-        elif name == "node":
-            data = {"node": platform.node()}
-
-        elif name == "scheduler":
-            data = get_scheduler_info()
+        if name is not None:
+            data = metrics[name]()
         else:
-            abort(404)
+            names = request.args.getlist("metric")
+            data = {}
+            for metric, func in metrics.items():
+                if metric in names or not names:
+                    data[metric] = func()
         return jsonify(data)
     return ""
