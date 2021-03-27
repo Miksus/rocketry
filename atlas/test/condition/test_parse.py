@@ -24,9 +24,7 @@ from atlas.time import (
 
 import pytest
 
-@pytest.mark.parametrize(
-    "cond_str,expected",
-    [
+cases = [
         # Constant
         pytest.param("always true", AlwaysTrue(), id="AlwaysTrue"),
         pytest.param("always false", AlwaysFalse(), id="AlwaysTrue"),
@@ -86,8 +84,21 @@ import pytest
         pytest.param("time of day before 10:00",    IsPeriod(period=TimeOfDay(None, "10:00")), id="time of day before"),
         pytest.param("time of week before Tuesday", IsPeriod(period=TimeOfWeek(None, "Tue")), id="time of week before"),
         #pytest.param("time of month before 1.",  IsPeriod(period=TimeOfMonth(None, 1)), id="time of month before"),
-    ],
+    ]
+
+@pytest.mark.parametrize(
+    "cond_str,expected", cases
 )
 def test_string(cond_str, expected):
     cond = parse_condition(cond_str)
     assert cond == expected
+
+@pytest.mark.parametrize(
+    "cond_str,expected", cases
+)
+def test_back_to_string(cond_str, expected):
+    cond = parse_condition(cond_str)
+    cond_as_str = str(cond)
+    cond_2 = parse_condition(cond_as_str)
+    assert cond == cond_2
+    #assert cond_str == cond_as_str

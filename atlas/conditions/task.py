@@ -26,6 +26,8 @@ class TaskStarted(Historical, Comparable):
         return run_times
         
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         period = self.period
         task = self.kwargs["task"]
         return f"task '{task}' started {period}"
@@ -45,6 +47,8 @@ class TaskFailed(Historical, Comparable):
         return [record["asctime"] for record in records]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         period = self.period
         task = self.kwargs["task"]
         return f"task '{task}' failed {period}"
@@ -64,6 +68,8 @@ class TaskTerminated(Historical, Comparable):
         return [record["asctime"] for record in records]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         period = self.period
         task = self.kwargs["task"]
         return f"task '{task}' terminated {period}"
@@ -82,6 +88,8 @@ class TaskSucceeded(Historical, Comparable):
         return [record["asctime"] for record in records]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         period = self.period
         task = self.kwargs["task"]
         return f"task 'task '{task}' succeeded {period}"
@@ -100,6 +108,8 @@ class TaskFinished(Historical, Comparable):
         return [record["asctime"] for record in records]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         period = self.period
         task = self.kwargs["task"]
         return f"task '{task}' finished {period}"
@@ -116,6 +126,8 @@ class TaskRunning(Historical):
         return record["action"] == "run"
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         return f"task '{task}' is running"
 
@@ -134,6 +146,8 @@ class TaskInacted(Historical, Comparable):
         return [record["asctime"] for record in records]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         return f"task '{task}' inacted"
 
@@ -185,6 +199,8 @@ class TaskExecutable(Historical):
         )
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         period = self.period
         return f"task '{task}' {self.period} "
@@ -227,6 +243,8 @@ class DependFinish(Historical):
         return last_depend_finish["asctime"] > last_actual_start["asctime"]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
         return f"task '{depend_task}' finished before {task} started"
@@ -267,6 +285,8 @@ class DependSuccess(Historical):
         return last_depend_finish["asctime"] > last_actual_start["asctime"]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
         return f"task '{depend_task}' finished before {task} started"
@@ -306,6 +326,8 @@ class DependFailure(Historical):
         return last_depend_finish["asctime"] > last_actual_start["asctime"]
 
     def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
         return f"task '{depend_task}' finished before {task} started"

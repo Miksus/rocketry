@@ -68,6 +68,11 @@ class BaseCondition(metaclass=_ConditionMeta):
         is_same_class = isinstance(other, type(self))
         return is_same_class
 
+    def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
+        else:
+            raise AttributeError
 
 class _ConditionContainer:
     "Wraps another condition"
@@ -129,6 +134,10 @@ class Any(_ConditionContainer, BaseCondition):
         string = ' | '.join(map(repr, self.subconditions))
         return f'({string})'
 
+    def __str__(self):
+        string = ' | '.join(map(str, self.subconditions))
+        return f'({string})'
+
     @property
     def cycle(self):
         "Aggregate the TimePeriods the condition has"
@@ -160,6 +169,10 @@ class All(_ConditionContainer, BaseCondition):
         string = ' & '.join(map(repr, self.subconditions))
         return f'({string})'
 
+    def __str__(self):
+        string = ' & '.join(map(str, self.subconditions))
+        return f'({string})'
+
     def __getitem__(self, val):
         return self.subconditions[val]
 
@@ -181,6 +194,10 @@ class Not(_ConditionContainer, BaseCondition):
 
     def __repr__(self):
         string = repr(self.condition)
+        return f'~{string}'
+
+    def __str__(self):
+        string = str(self.condition)
         return f'~{string}'
 
     @property
@@ -226,6 +243,9 @@ class AlwaysTrue(BaseCondition):
     def __repr__(self):
         return 'AlwaysTrue'
 
+    def __str__(self):
+        return 'true'
+
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
     def __bool__(self):
@@ -234,6 +254,8 @@ class AlwaysFalse(BaseCondition):
     def __repr__(self):
         return 'AlwaysFalse'
 
+    def __str__(self):
+        return 'false'
 
 class IsPeriod(BaseCondition):
     def __init__(self, period):
@@ -243,6 +265,14 @@ class IsPeriod(BaseCondition):
 
     def __bool__(self):
         return datetime.datetime.now() in self.period
+
+    def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
+        elif hasattr(self, "period"):
+            return f'is {str(self.period)}'
+        else:
+            return type(self).__name__
 
 
 class TimeCondition(BaseCondition):
