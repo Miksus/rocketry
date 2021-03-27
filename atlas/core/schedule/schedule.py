@@ -233,7 +233,10 @@ class Scheduler:
             pass
 
     def is_timeouted(self, task):
-        if not hasattr(task, "_thread") and not hasattr(task, "_process"):
+        if task.permanent_task:
+            # Task is meant to be on all the time thus no reason to terminate due to timeout
+            return False
+        elif not hasattr(task, "_thread") and not hasattr(task, "_process"):
             # Task running on the main process
             # cannot be left running
             return False
