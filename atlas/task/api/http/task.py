@@ -73,7 +73,7 @@ class HTTPConnection(Task):
         
     def create_app(self, **kwargs):
         # https://stackoverflow.com/a/45017691/13696660
-        app = Flask(__name__)
+        app = Flask("atlas.api")
         app.register_blueprint(rest_api)
         app.json_encoder = AtlasJSONEncoder
 
