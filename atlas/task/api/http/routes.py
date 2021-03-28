@@ -168,11 +168,33 @@ def info(name=None):
             "disk": psutil.disk_usage("/").percent / 100,
         }
 
+    def _byte_to_gigabyte(val:int):
+        return f"{val / (1024.0 ** 3)} GB"
+
+    def get_ram():
+        info = psutil.virtual_memory()
+        return {
+            "free": _byte_to_gigabyte(info.free),
+            "total": _byte_to_gigabyte(info.total),
+            "used": _byte_to_gigabyte(info.used)
+        }
+
+    def get_disk(partition="/"):
+        info = psutil.disk_usage(partition)
+        return {
+            "free": _byte_to_gigabyte(info.free),
+            "total": _byte_to_gigabyte(info.total),
+            "used": _byte_to_gigabyte(info.used)
+        }
+
     metrics = {
         "os": get_os_info,
         "python": get_python_info,
         "scheduler": get_scheduler_info,
         "node": platform.node,
+        "performance": get_performance_info,
+        "disk": get_disk,
+        "ram": get_ram,
     }
 
     if request.method == "GET":
