@@ -84,6 +84,11 @@ cases = [
         pytest.param("time of day before 10:00",    IsPeriod(period=TimeOfDay(None, "10:00")), id="time of day before"),
         pytest.param("time of week before Tuesday", IsPeriod(period=TimeOfWeek(None, "Tue")), id="time of week before"),
         #pytest.param("time of month before 1.",  IsPeriod(period=TimeOfMonth(None, 1)), id="time of month before"),
+    
+        # Logical operations
+        pytest.param("always true & always false", All(AlwaysTrue(), AlwaysFalse()), id="Logical AND"),
+        pytest.param("always true | always false", Any(AlwaysTrue(), AlwaysFalse()), id="Logical OR"),
+        pytest.param("~ always false", Not(AlwaysFalse()), id="Logical NOT"),
     ]
 
 @pytest.mark.parametrize(
