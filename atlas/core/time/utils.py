@@ -1,4 +1,6 @@
 
+import datetime
+
 def string_to_datetime(string, formats, ceil=False):
     for fmt in formats:
         try:
@@ -20,8 +22,6 @@ def string_to_datetime(string, formats, ceil=False):
             if format_key not in fmt:
                 datelike = datelike.replace(**method) if isinstance(method, dict) else method(datelike)
     return datelike
-
-import datetime
 
 def ceil_time(dt):
     time_max = datetime.time.max
@@ -156,16 +156,21 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
 
     return components
 
-def timedelta_to_str(dt, days_in_year=360, days_in_month=30, sep=", ", mapping=None, units=None):
+def timedelta_to_str(dt, 
+                     days_in_year=360, days_in_month=30, 
+                     sep=", ", mapping=None, units=None,
+                     default_scope="nanoseconds"):
 
     
     components = timedelta_to_dict(dt, days_in_year=days_in_year, days_in_month=days_in_month, units=units)
     
     # Min and max units (components must be ordered from biggest to smallest units)
+    min_unit = default_scope
     for unit, value in components.items():
         if value != 0:
             min_unit = unit
             
+    max_unit = default_scope
     for unit, value in components.items():
         if value != 0:
             # Max currently found non zero
