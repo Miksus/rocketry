@@ -162,6 +162,7 @@ class TimeOfMonth(AnchoredInterval):
     #   rollforward/rollback/contains would need slight changes 
 
     _scope = "year"
+    _scope_max = to_nanoseconds(day=1) * 31 # Note, this is only absolute maximum but not applicable for every month
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 

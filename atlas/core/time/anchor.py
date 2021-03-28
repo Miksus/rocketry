@@ -40,9 +40,9 @@ class AnchoredInterval(TimeInterval):
     -----------------
         _scope [str] : 
     """
-    components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
+    components = ("year", "month", "week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
-    _fixed_components = ("year", "month", "day", "hour", "minute", "second", "microsecond", "nanosecond")
+    _fixed_components = ("week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
     _scope = None # ie. day, hour, second, microsecond
     _scope_max = None
@@ -89,7 +89,8 @@ class AnchoredInterval(TimeInterval):
     @property
     def start(self):
         delta = pd.Timedelta(self._start, unit="ns")
-        return timedelta_to_str(delta)
+        repr_scope = self.components[self.components.index(self._scope) + 1]
+        return timedelta_to_str(delta, default_scope=repr_scope)
 
     @start.setter
     def start(self, val):
@@ -102,7 +103,8 @@ class AnchoredInterval(TimeInterval):
     @property
     def end(self):
         delta = pd.Timedelta(self._end, unit="ns")
-        return timedelta_to_str(delta)
+        repr_scope = self.components[self.components.index(self._scope) + 1]
+        return timedelta_to_str(delta, default_scope=repr_scope)
 
     @end.setter
     def end(self, val):
@@ -337,8 +339,24 @@ class AnchoredInterval(TimeInterval):
         return dt + offset
 
     def __repr__(self):
-        return f'{self._scope}({self.start}, {self.end})'
+        return f'{self._scope}({self._start}, {self._end})'
 
+    def __str__(self):
+        # Hour: '15:'
+        start_ns = self._start
+        end_ns = self._end
+
+        scope = self._scope
+        repr_scope = self.components[self.components.index(self._scope) + 1]
+
+        to_start = pd.Timedelta(start_ns, unit="ns")
+        to_end = pd.Timedelta(end_ns, unit="ns")
+
+        start_str = timedelta_to_str(to_start, default_scope=repr_scope)
+        end_str = timedelta_to_str(to_end, default_scope=repr_scope)
+
+        start_str = f"0 {repr_scope}s" if not start_str else start_str
+        return f"{start_str} - {end_str}"
 
 class MinuteMixin:
 
