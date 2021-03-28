@@ -135,8 +135,11 @@ class Any(_ConditionContainer, BaseCondition):
         return f'({string})'
 
     def __str__(self):
-        string = ' | '.join(map(str, self.subconditions))
-        return f'({string})'
+        try:
+            return super().__str__()
+        except AttributeError:
+            string = ' | '.join(map(str, self.subconditions))
+            return f'({string})'
 
     @property
     def cycle(self):
@@ -170,8 +173,11 @@ class All(_ConditionContainer, BaseCondition):
         return f'({string})'
 
     def __str__(self):
-        string = ' & '.join(map(str, self.subconditions))
-        return f'({string})'
+        try:
+            return super().__str__()
+        except AttributeError:
+            string = ' & '.join(map(str, self.subconditions))
+            return f'({string})'
 
     def __getitem__(self, val):
         return self.subconditions[val]
@@ -197,8 +203,11 @@ class Not(_ConditionContainer, BaseCondition):
         return f'~{string}'
 
     def __str__(self):
-        string = str(self.condition)
-        return f'~{string}'
+        try:
+            return super().__str__()
+        except AttributeError:
+            string = str(self.condition)
+            return f'~{string}'
 
     @property
     def subconditions(self):
@@ -244,7 +253,10 @@ class AlwaysTrue(BaseCondition):
         return 'AlwaysTrue'
 
     def __str__(self):
-        return 'true'
+        try:
+            return super().__str__()
+        except AttributeError:
+            return 'true'
 
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
@@ -255,7 +267,10 @@ class AlwaysFalse(BaseCondition):
         return 'AlwaysFalse'
 
     def __str__(self):
-        return 'false'
+        try:
+            return super().__str__()
+        except AttributeError:
+            return 'false'
 
 class IsPeriod(BaseCondition):
     def __init__(self, period):
