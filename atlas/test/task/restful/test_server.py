@@ -95,30 +95,3 @@ def test_interact(scheduler, port):
     # Probably should have been run
     assert not task.disabled
 
-
-
-def test_wrong_type(scheduler, port):
-    HTTPConnection(name="http-api", force_run=True)
-    session.parameters["http_api"] = {"access_token": "my-password", "host": "127.0.0.1", "port": port}
-
-    task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
-
-    # Patch force_run
-    assert not task.force_run
-    assert task.status is None
-
-    page = requests.patch(f"http://127.0.0.1:{port}/tasks/test-task", data="non-json", headers={"content-type": "application/json"}, timeout=1)
-
-    time.sleep(1)
-    # Probably should have been run
-    assert "success" == task.status 
-
-    # Patch disabled
-    assert task.disabled
-
-    data = json.dumps({"disabled": False})
-    page = requests.patch(f"http://127.0.0.1:{port}/tasks/test-task", data=data, headers={"content-type": "application/json"}, timeout=1)
-
-    time.sleep(1)
-    # Probably should have been run
-    assert not task.disabled
