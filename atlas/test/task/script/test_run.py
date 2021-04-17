@@ -147,6 +147,38 @@ def test_import_relative_with_params(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
+def test_additional_sys_paths(tmpdir):
+    task_dir = tmpdir.mkdir("mytasks")
+    task_dir.join("myfile.py").write(dedent("""
+    from utils import value
+    # "utils" is in subfolder/utils.py but it is put to sys.path
+
+    def main(val_5, optional=None):
+        assert val_5 == 5
+        assert optional is None
+    """))
+
+    task_dir.mkdir("subfolder").mkdir("another").join("utils.py").write(dedent("""
+    value = 5
+    """))
+
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = PyScript(
+            "mytasks/myfile.py", 
+            name="a task",
+            execution="main",
+            sys_paths=["mytasks/subfolder/another"]
+        )
+        task(params={"val_5":5})
+
+        df = pd.DataFrame(session.get_task_log())
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
 # Parametrization
 def test_parametrization_runtime(tmpdir, script_files):
     with tmpdir.as_cwd() as old_dir:

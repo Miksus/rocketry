@@ -19,23 +19,37 @@ class PyScript(Task):
     # TODO: support to run the file by only importing it
     # ie PyScript(path="mytask.py", as_main=True)
 
-    def __init__(self, path, func=None, **kwargs):
+    def __init__(self, path, func=None, sys_paths=None, **kwargs):
         self.path = path
         self.func = "main" if func is None else func
+        self.sys_paths = sys_paths
         super().__init__(**kwargs)
 
     def execute_action(self, **params):
 
-        # Add dir of self.path to sys.path so importing from that dir works
-        root = str(Path(self.path).parent)
-        sys.path.insert(0, root)
-
         task_func = self.get_task_func()
         output = task_func(**params)
 
-        sys.path.remove(root)
-
         return output
+
+    def _set_paths(self, root, sys_paths):
+
+        # Set the name of the file as first path
+        sys.path.insert(0, root)
+
+        # Add extra sys paths
+        if sys_paths is not None:
+            for path in sys_paths:
+                sys.path.append(path)
+
+    def _reset_paths(self, root, sys_paths):
+        paths = [] + (sys_paths if sys_paths else [])
+        for path in paths:
+            try:
+                sys.path.remove(path)
+            except ValueError:
+                # Path has been removed already
+                pass
 
     def filter_params(self, params):
         return {
@@ -59,14 +73,15 @@ class PyScript(Task):
         if not hasattr(self, "_task_func"):
             # Add dir of self.path to sys.path so importing from that dir works
             root = str(Path(self.path).parent)
-            sys.path.insert(0, root)
+            sys_paths = self.sys_paths
+            self._set_paths(root, sys_paths)
 
             # _task_func is cached to faster performance
             task_module = self.get_module(self.path)
             task_func = getattr(task_module, self.func)
             self._task_func = task_func
 
-            sys.path.remove(root)
+            self._reset_paths(root, sys_paths)
         return self._task_func
 
     @staticmethod
