@@ -297,14 +297,16 @@ class Task:
         status = None
         params = {} if params is None else params
         try:
-            exposed_params = Parameters(params)
+            params = Parameters(params)
 
             # We filter only the non-explicit parameters (session parameters)
-            exposed_params = self.filter_params(exposed_params)
+            params = self.filter_params(params)
+            params = Parameters(params)
 
-            exposed_params.update(self.parameters.materialize()) # Union setup params with call params
-            
-            output = self.execute_action(**exposed_params)
+            params.update(self.parameters) # Union setup params with call params
+            params = params.materialize()
+
+            output = self.execute_action(**params)
 
         except SchedulerRestart:
             # SchedulerRestart is considered as successfull task
