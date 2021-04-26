@@ -8,6 +8,7 @@ from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
 from atlas import session
 from atlas.conditions import IsParameter
+from atlas.parameters import Parameters, Private
 
 from threading import Thread
 import requests
@@ -28,7 +29,7 @@ def test_get(scheduler, port):
     HTTPConnection(name="http-api", force_run=True)
     session.parameters["http_api"] = {"host": "127.0.0.1", "port": port}
 
-    task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
+    task = FuncTask(lambda x, y: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
 
     # Test tasks
     page = requests.get(f"http://127.0.0.1:{port}/tasks", timeout=1)
@@ -95,3 +96,15 @@ def test_interact(scheduler, port):
     # Probably should have been run
     assert not task.disabled
 
+def test_privatized_host(scheduler, port):
+    # Test HTTP GET on scheduler running on another thread with a port open
+    HTTPConnection(name="http-api", force_run=True)
+    session.parameters["http_api"] = Private({"host": "127.0.0.1", "port": port})
+
+    task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
+
+    # Test tasks
+    page = requests.get(f"http://127.0.0.1:{port}/tasks", timeout=1)
+    assert page.status_code == 200
+    data = page.json()
+    assert {"http-api", "test-task"} == set(data.keys())
