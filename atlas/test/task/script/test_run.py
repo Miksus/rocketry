@@ -216,3 +216,22 @@ def test_parametrization_local(tmpdir, script_files):
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
         ] == records
+
+def test_parametrization_kwargs(tmpdir, script_files):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = PyScript(
+            "scripts/parameterized_kwargs_script.py", 
+            name="a task",
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+            execution="main"
+        )
+
+        task()
+
+        df = pd.DataFrame(session.get_task_log())
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records

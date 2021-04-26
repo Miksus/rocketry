@@ -237,7 +237,7 @@ class Task:
         if val is None:
             self._parameters = Parameters()
         else:
-            self._parameters = Parameters(**val)
+            self._parameters = Parameters(val)
 
     def _validate_cond(self, cond):
         if not isinstance(cond, (BaseCondition, bool)):
@@ -297,12 +297,14 @@ class Task:
         status = None
         params = {} if params is None else params
         try:
-            params = self.parameters | params # Union setup params with call params
+            exposed_params = Parameters(params)
 
-            exposed_params = params.materialize() # Now even Private arguments are plain text
-            params = self.filter_params(exposed_params)
+            # We filter only the non-explicit parameters (session parameters)
+            exposed_params = self.filter_params(exposed_params)
+
+            exposed_params.update(self.parameters.materialize()) # Union setup params with call params
             
-            output = self.execute_action(**params)
+            output = self.execute_action(**exposed_params)
 
         except SchedulerRestart:
             # SchedulerRestart is considered as successfull task

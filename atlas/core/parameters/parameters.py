@@ -25,6 +25,9 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
 
     def __init__(self, _param:dict=None, type_=None, **params):
         if _param is not None:
+            # We get original values if _param has Private or other arguments that are 
+            # hidden
+            _param = _param._params if isinstance(_param, Parameters) else _param
             params.update(_param)
 
         if type_ is not None:

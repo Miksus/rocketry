@@ -30,6 +30,12 @@ def run_parametrized(integer, string, optional_float=None):
     assert isinstance(string, str)
     assert isinstance(optional_float, float)
 
+def run_parametrized_kwargs(**kwargs):
+    assert {} != kwargs
+    assert isinstance(kwargs["integer"], int)
+    assert isinstance(kwargs["string"], str)
+    assert isinstance(kwargs["optional_float"], float)
+
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "task_func,expected_outcome,exc_cls",
@@ -167,6 +173,25 @@ def test_parametrization_local(tmpdir):
         session.reset()
         task = FuncTask(
             run_parametrized, 
+            name="a task",
+            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+            execution="main"
+        )
+
+        task()
+
+        df = pd.DataFrame(session.get_task_log())
+        records = df[["task_name", "action"]].to_dict(orient="record")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
+def test_parametrization_kwargs(tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            run_parametrized_kwargs, 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
             execution="main"

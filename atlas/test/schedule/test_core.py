@@ -5,6 +5,7 @@ from atlas.time import TimeDelta
 from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
+from atlas.parameters import Parameters, Private
 from atlas import session
 
 import pytest
@@ -219,14 +220,19 @@ def test_pass_params_as_global(tmpdir, execution):
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
 
+@pytest.mark.parametrize("parameters", [
+    pytest.param({"int_5": 5}, id="dict"), 
+    pytest.param(Parameters(int_5=5), id="Parameters"),
+    pytest.param(Parameters(int_5=Private(5)), id="Parameter with secret"),
+])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_pass_params_as_local(tmpdir, execution):
+def test_pass_params_as_local(tmpdir, execution, parameters):
     with tmpdir.as_cwd() as old_dir:
         session.reset()
         task = FuncTask(
             run_with_param, 
             name="parametrized", 
-            parameters={"int_5": 5, "extra_param": "something"},
+            parameters=parameters,
             start_cond=AlwaysTrue(),
             execution=execution
         )
