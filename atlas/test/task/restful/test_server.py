@@ -70,7 +70,7 @@ def test_interact(scheduler, port):
     HTTPConnection(name="http-api", force_run=True)
     session.parameters["http_api"] = {"host": "127.0.0.1", "port": port}
 
-    task = FuncTask(lambda: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
+    task = FuncTask(lambda x, y: None, name="test-task", parameters={"x": 1, "y":2}, execution="main", disabled=True)
 
     # Patch force_run
     assert not task.force_run
