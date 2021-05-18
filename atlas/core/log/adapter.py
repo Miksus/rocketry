@@ -1,6 +1,7 @@
 
 import logging
 import warnings
+import datetime
 
 import pandas as pd
 from typing import List, Dict
@@ -128,10 +129,10 @@ class RecordFilter:
                 # Considered as range
                 start, end = value[0], value[1]
 
-                if start is not None and type(start)(record_value) < start:
+                if start is not None and self._to_same_type(record_value, start) < start:
                     # Outside of start
                     break
-                if end is not None and type(end)(record_value) > end:
+                if end is not None and self._to_same_type(record_value, end) > end:
                     # Outside of end
                     break
             elif is_in:
@@ -143,3 +144,9 @@ class RecordFilter:
             return True
         # Loop did break, 
         return False
+
+    def _to_same_type(self, record_value, other):
+        if isinstance(other, datetime.datetime):
+            return parse_datetime(record_value)
+        else:
+            return type(other)(record_value)
