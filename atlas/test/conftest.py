@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 import os
 import sys
-import datetime
+import datetime, time
 from dateutil.parser import parse as parse_datetime
 
 import atlas
@@ -84,4 +84,27 @@ def mock_datetime_now(monkeypatch):
         mockdatetime._freezed_datetime = parse_datetime(dt)
         monkeypatch.setattr(datetime, 'datetime', mockdatetime)
 
+    return wrapper
+
+@pytest.fixture
+def mock_time(monkeypatch):
+    """Monkey patch time.time
+    Returns a function that takes datetime as string as input
+    and sets that to time.time()"""
+
+    def wrapper(dt):
+        mocktime = parse_datetime(dt).timestamp()
+        monkeypatch.setattr(time, 'time', lambda: mocktime)
+
+    return wrapper
+
+@pytest.fixture
+def mock_pydatetime(mock_time, mock_datetime_now):
+    """Monkey patch time.time & datetime.datetime.now
+    Returns a function that takes datetime as string as input
+    and sets that to time.time() and datetime.datetime.now()"""
+    
+    def wrapper(dt):
+        mock_time(dt)
+        mock_datetime_now(dt)
     return wrapper
