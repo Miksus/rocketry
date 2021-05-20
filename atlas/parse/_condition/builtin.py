@@ -18,6 +18,7 @@ from atlas.conditions import (
     AlwaysFalse,
 
     IsPeriod,
+    IsEnv,
 )
 
 from atlas.core.conditions.base import BaseCondition
@@ -95,6 +96,7 @@ for regex, func in [
     (r"false",        lambda: AlwaysFalse()),
 
     # Parameters
+    (r"env '(?P<env>.+)'", IsEnv),
     # (r"parameter '(?P<key>.+)' is '(?P<value>.+)'", lambda: ParamExists())
     # (r"parameter '(?P<key>.+)' exists", lambda: ParamExists())
 

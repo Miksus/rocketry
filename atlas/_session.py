@@ -119,6 +119,16 @@ class _Session:
         state["scheduler"] = None
         return state
 
+    @property
+    def env(self):
+        "Shorthand for parameter 'env'"
+        return self.parameters.get("env")
+
+    @env.setter
+    def env(self, value):
+        "Shorthand for parameter 'env'"
+        self.parameters["env"] = value
+
 session = _Session()
 
 # Set default sessions

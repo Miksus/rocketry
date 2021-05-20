@@ -2,6 +2,16 @@
 from atlas.core.conditions import Statement, Historical, Comparable, BaseCondition
 
 
+class IsEnv(BaseCondition):
+    """Condition checks whether session parameter 'env'
+    has the given value. 
+    """
+    def __init__(self, env):
+        self.env = env
+    
+    def __bool__(self):
+        return self.session.parameters.get("env", None) == self.env
+
 class IsParameter(BaseCondition):
 
     def __init__(self, **params):
