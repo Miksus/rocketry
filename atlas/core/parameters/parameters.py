@@ -38,6 +38,12 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         self._params = params
     
 # For mapping interface
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
+
     def __iter__(self):
         return iter(self._params)
 
