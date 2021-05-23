@@ -54,6 +54,19 @@ def test_fail(tmpdir):
         assert "fail" == task.status
         assert not task.is_running
 
+def test_without_running(tmpdir):
+    "An edge case if for mysterious reason the task did not log running. Logging should still not crash"
+    # Going to tempdir to dump the log files there
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = FuncTask(
+            lambda : None,
+            execution="main"
+        )
+        task.log_failure()
+        assert "fail" == task.status
+        assert not task.is_running
+
 def test_handle(tmpdir):
 
     def create_record(action, task_name):

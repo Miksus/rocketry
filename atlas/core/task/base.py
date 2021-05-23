@@ -631,7 +631,8 @@ class Task:
                 self.start_time = now
             else:
                 start_time = self.start_time if hasattr(self, "start_time") else None
-                extra = {"action": action, "start": start_time, "end": now, "runtime": now - self.start_time}
+                runtime = now - start_time if start_time is not None else None
+                extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
             
             log_method = self.logger.exception if action == "fail" else self.logger.info
             log_method(
