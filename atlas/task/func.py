@@ -78,5 +78,16 @@ class FuncTask(Task):
         ]
         return kw_args
 
+    @classmethod
+    def decorate(cls, **kwargs):
+        """FuncTask as a decorator
 
-
+        Example:
+        --------
+            @FuncTask.decorate(start_cond="daily")
+            def do_stuff():
+                ...
+        """
+        def wrapper(func):
+            return cls(func, **kwargs)
+        return wrapper

@@ -17,6 +17,23 @@ def test_construct(tmpdir):
         )
         assert task.status is None
 
+def test_construct_decorate(tmpdir):
+    session.reset()
+    # Going to tempdir to dump the log files there
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+
+        @FuncTask.decorate(start_cond=AlwaysTrue(), name="mytask")
+        def do_stuff():
+            pass
+        
+        assert isinstance(do_stuff, FuncTask)
+        assert do_stuff.status is None
+        assert do_stuff.start_cond == AlwaysTrue()
+        assert do_stuff.name == "mytask"
+
+        assert {"mytask": do_stuff} == session.tasks 
+
 
 @pytest.mark.parametrize(
     "start_cond,depend,expected",
