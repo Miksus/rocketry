@@ -118,6 +118,39 @@ def test_import_relative(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
+def test_import_package(tmpdir):
+    pkg_dir = tmpdir.mkdir("mypkg")
+    sub_dir = pkg_dir.mkdir("subpkg")
+    util_dir = pkg_dir.mkdir("utils")
+
+    pkg_dir.join("__init__.py").write("")
+    sub_dir.join("__init__.py").write("")
+    util_dir.join("__init__.py").write("from .util_file import value")
+
+    sub_dir.join("myfile.py").write(dedent("""
+    from mypkg.utils import value
+    def main():
+        assert value == 5
+    """))
+
+    util_dir.join("util_file.py").write("value = 5")
+
+    with tmpdir.as_cwd() as old_dir:
+        session.reset()
+        task = PyScript(
+            "mypkg/subpkg/myfile.py", 
+            name="a task",
+            execution="main"
+        )
+        task()
+
+        df = pd.DataFrame(session.get_task_log())
+        records = df[["task_name", "action"]].to_dict(orient="records")
+        assert [
+            {"task_name": "a task", "action": "run"},
+            {"task_name": "a task", "action": "success"},
+        ] == records
+
 def test_import_relative_with_params(tmpdir):
     task_dir = tmpdir.mkdir("mytasks")
     task_dir.join("myfile.py").write(dedent("""

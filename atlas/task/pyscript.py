@@ -8,6 +8,8 @@ import subprocess
 import re
 import sys
 
+from pybox.pkg import find_package_root
+
 @register_task_cls
 class PyScript(Task):
     """Task that executes a Python script
@@ -72,12 +74,13 @@ class PyScript(Task):
         
         if not hasattr(self, "_task_func"):
             # Add dir of self.path to sys.path so importing from that dir works
-            root = str(Path(self.path).parent)
+            pkg_path = find_package_root(self.path)
+            root = str(Path(self.path).parent) if not pkg_path else str(pkg_path)
             sys_paths = self.sys_paths
             self._set_paths(root, sys_paths)
 
             # _task_func is cached to faster performance
-            task_module = self.get_module(self.path)
+            task_module = self.get_module(self.path, pkg_path=pkg_path)
             task_func = getattr(task_module, self.func)
             self._task_func = task_func
 
@@ -85,8 +88,17 @@ class PyScript(Task):
         return self._task_func
 
     @staticmethod
-    def get_module(path):
-        spec = importlib.util.spec_from_file_location("task", path)
+    def get_module(path, pkg_path=None):
+        if pkg_path:
+            name = '.'.join(
+                path
+                .with_suffix('') # path/to/file/myfile.py --> path/to/file/myfile
+                .parts[len(pkg_path.parts):] # root/myproject/pkg/myfile.py --> myproject.pkg.myfile
+            )
+        else:
+            name = path.name
+
+        spec = importlib.util.spec_from_file_location(name, path)
         task_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(task_module)
         return task_module
