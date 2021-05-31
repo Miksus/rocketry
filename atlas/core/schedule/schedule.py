@@ -68,6 +68,10 @@ class Scheduler:
         self.tasks_as_daemon = tasks_as_daemon
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
+        self._log_queue = multiprocessing.Queue(-1)
+        self._return_queue = multiprocessing.Queue(-1)
+
+
         # Other
         self.session = session or self.session
 
@@ -177,6 +181,7 @@ class Scheduler:
         extra_params = {} if extra_params is None else extra_params
         params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
         start_time = datetime.datetime.now()
+
         try:
             task(
                 params=params, 
@@ -348,9 +353,6 @@ class Scheduler:
         #self.setup_listener()
         self.logger.info(f"Setting up...", extra={"action": "setup"})
 
-        self._log_queue = multiprocessing.Queue(-1)
-        self._return_queue = multiprocessing.Queue(-1)
-
         self.n_cycles = 0
         self.startup_time = datetime.datetime.now()
 
@@ -403,7 +405,7 @@ class Scheduler:
         else:
             self.terminate_all(reason="shutdown")
 
-    def _wait_task_shutdown(self):
+    def wait_task_alive(self):
         "Wait till all, especially threading tasks, are finished"
         while self.n_alive > 0:
             time.sleep(0.005)
@@ -433,7 +435,7 @@ class Scheduler:
 
         self.logger.info(f"Shutting down tasks...")
         self._shut_down_tasks(traceback, exception)
-        self._wait_task_shutdown()
+        self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
         self.is_alive = False
         self.logger.info(f"Shutdown completed. Good bye.")
