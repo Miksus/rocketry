@@ -71,6 +71,15 @@ def create_line_to_shutdown():
             ],
             id="get time span (pd.Timestamp, open right)"),
         pytest.param(
+            {"asctime": (None, None), "action": "run"}, 
+            [
+                {'task_name': 'task1', 'asctime': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task2', 'asctime': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+            ],
+            id="get time span (open left, open right)"),
+        pytest.param(
             {"asctime": (datetime.datetime(2021, 1, 1, 2, 0, 0), datetime.datetime(2021, 1, 1, 3, 0, 0))}, 
             [
                 {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
