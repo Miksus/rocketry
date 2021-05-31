@@ -44,4 +44,6 @@ def test_is_parameter():
 # Test no unexpected errors in all
 @pytest.mark.parametrize("cls", set(Statement.__subclasses__() + Comparable.__subclasses__() + Historical.__subclasses__()))
 def test_magic_noerror(cls):
+    if cls.__name__ in ('TaskSucceeded', 'DependFinish', 'TaskTerminated', 'TaskFinished', 'TaskFailed', 'DependFailure', 'TaskStarted', 'DependSuccess', 'TaskInacted', 'TaskRunning'):
+        pytest.skip("Initing requires task as argument")
     str(cls())
