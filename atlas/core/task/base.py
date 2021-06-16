@@ -309,13 +309,13 @@ class Task:
             output = self.execute_action(**params)
 
         except SchedulerRestart:
-            # SchedulerRestart is considered as successfull task
+            # SchedulerRestart is considered as successful task
             self.log_success()
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(output)
             # TODO: Probably should raise and not silently return?
-            return output
+            raise
 
         except TaskInactionException:
             # Task did not fail, it did not succeed:
