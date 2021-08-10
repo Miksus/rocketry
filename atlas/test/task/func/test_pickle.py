@@ -1,5 +1,4 @@
 
-from atlas import session
 from atlas.task import FuncTask
 from atlas.core import Parameters, Scheduler
 from atlas.conditions import TaskFailed
@@ -11,11 +10,11 @@ import pytest
 def run_successful_func():
     print("Running func")
 
-def test_func(tmpdir):
+def test_func(tmpdir, session):
     # Process tasks must be picklable
     # in order to be run
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_successful_func, 
             name="example",
@@ -24,12 +23,12 @@ def test_func(tmpdir):
         # This should not return error
         pickle.dumps(task)
 
-def test_lambda(tmpdir):
+def test_lambda(tmpdir, session):
     # Lambda funcs cannot be pickled
     # thus this documents how that 
     # should fail
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None, 
             name="example",
@@ -39,12 +38,11 @@ def test_lambda(tmpdir):
         with pytest.raises(AttributeError, match=r".+[.]<locals>[.]<lambda>"):
             pickle.dumps(task)
 
-def test_with_dependency(tmpdir):
+def test_with_dependency(tmpdir, session):
     """A task must be pickleable even if
     it's depencency in start/end condition is not
     """
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         dep_task = FuncTask(lambda: None, name="Lambda func")
 

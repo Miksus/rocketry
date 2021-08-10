@@ -4,6 +4,7 @@ from functools import partial
 from abc import abstractmethod
 from inspect import signature
 import datetime
+import time
 
 import numpy as np
 
@@ -145,7 +146,7 @@ class Statement(BaseCondition):
             raise
         except Exception as exc:
             logger.exception(f"Statement '{self}' is False due to an Exception.")
-            if self.session.debug:
+            if self.session.config["debug"]:
                 # Typically error is not good but we don't want to crash the whole production
                 # due to a random error in one task's initiation. 
                 # However, we do want to crash tests because of it.
@@ -303,3 +304,16 @@ class Historical(Statement):
             has_same_period = self.period == other.period
             return super().__eq__(other) and has_same_period
         return super().__eq__(other)
+
+    def _now(self):
+        """Get current datetime"""
+        # There is super weird bug caused by datetime.datetime.now()
+        # vs datetime.datetime.fromtimestamp(time.time())
+
+        # For example:
+        #     start = time.time()
+        #     end = datetime.datetime.now()
+        #     start = datetime.datetime.fromtimestamp(start)
+        #     start < end (half of the time)
+        # Even though: datetime.datetime.now() is defined as datetime.datetime.fromtimestamp(time.time(), None) 
+        return datetime.datetime.fromtimestamp(time.time())

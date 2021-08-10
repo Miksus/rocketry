@@ -7,7 +7,6 @@ from atlas.parse import parse_condition
 from atlas.conditions import AlwaysFalse
 
 from textwrap import dedent
-from atlas import session
 
 import sys
 import pytest
@@ -34,10 +33,9 @@ def test_minimal_scheduler():
     )
     assert isinstance(scheduler, Scheduler)
 
-def test_full_featured(tmpdir):
+def test_full_featured(tmpdir, session):
     
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         # A throw-away file to link all pre-set tasks
         tmpdir.join("funcs.py").write(dedent("""
@@ -156,9 +154,8 @@ def test_full_featured(tmpdir):
         assert session.get_task("fetch.fundamentals").start_cond == cond
 
 
-def test_scheduler_tasks_set(tmpdir):
+def test_scheduler_tasks_set(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         tmpdir.join("some_funcs.py").write(dedent("""
         def do_task_1():
             pass

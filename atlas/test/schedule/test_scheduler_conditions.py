@@ -2,14 +2,12 @@
 from atlas.core import Scheduler
 from atlas.time import TimeDelta
 from atlas.conditions import SchedulerCycles, SchedulerStarted
-from atlas import session
 
 import pytest
 
 
-def test_scheduler_started(tmpdir):
+def test_scheduler_started(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         scheduler = Scheduler(
             [], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
@@ -18,9 +16,8 @@ def test_scheduler_started(tmpdir):
 
         assert scheduler.n_cycles > 1
 
-def test_scheduler_cycles(tmpdir):
+def test_scheduler_cycles(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         scheduler = Scheduler(
             [], shut_condition=SchedulerCycles() >= 4

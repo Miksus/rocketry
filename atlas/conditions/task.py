@@ -21,8 +21,8 @@ class TaskStarted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
-        records = task.logger.get_records(asctime=(_start_, _end_), action="run")
-        run_times = [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action="run")
+        run_times = [record["timestamp"] for record in records]
         return run_times
         
     def __str__(self):
@@ -43,8 +43,8 @@ class TaskFailed(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
-        records = task.logger.get_records(asctime=(_start_, _end_), action="fail")
-        return [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action="fail")
+        return [record["timestamp"] for record in records]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -64,8 +64,8 @@ class TaskTerminated(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
-        records = task.logger.get_records(asctime=(_start_, _end_), action="terminate")
-        return [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action="terminate")
+        return [record["timestamp"] for record in records]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -84,8 +84,8 @@ class TaskSucceeded(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
-        records = task.logger.get_records(asctime=(_start_, _end_), action="success")
-        return [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action="success")
+        return [record["timestamp"] for record in records]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -104,8 +104,8 @@ class TaskFinished(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
-        records = task.logger.get_records(asctime=(_start_, _end_), action=["success", "fail", "terminate"])
-        return [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action=["success", "fail", "terminate"])
+        return [record["timestamp"] for record in records]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -142,8 +142,8 @@ class TaskInacted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
-        records = task.logger.get_records(asctime=(_start_, _end_), action="inaction")
-        return [record["asctime"] for record in records]
+        records = task.logger.get_records(timestamp=(_start_, _end_), action="inaction")
+        return [record["timestamp"] for record in records]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -240,7 +240,7 @@ class DependFinish(Historical):
             # Depend has finished but the actual task has not
             return True
 
-        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+        return last_depend_finish["created"] > last_actual_start["created"]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -282,7 +282,7 @@ class DependSuccess(Historical):
             # Depend has succeeded but the actual task has not
             return True
             
-        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+        return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -323,7 +323,7 @@ class DependFailure(Historical):
             # Depend has failed but the actual task has not
             return True
             
-        return last_depend_finish["asctime"] > last_actual_start["asctime"]
+        return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
 
     def __str__(self):
         if hasattr(self, "_str"):

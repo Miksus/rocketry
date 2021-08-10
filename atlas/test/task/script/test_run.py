@@ -7,8 +7,6 @@ from atlas.task import PyScript
 #from atlas.core.task.base import Task
 #
 import pandas as pd
-#Task.use_instance_naming = True
-from atlas import session
 import pytest
 from textwrap import dedent
 
@@ -29,10 +27,10 @@ from textwrap import dedent
             id="Failure"),
     ],
 )
-def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution):
+def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
     kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             script_path, 
             name="a task",
@@ -65,7 +63,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         ] == records
 
 
-def test_run_specified_func(tmpdir):
+def test_run_specified_func(tmpdir, session):
     task_dir = tmpdir.mkdir("mytasks")
     task_dir.join("myfile.py").write(dedent("""
     def myfunc():
@@ -73,7 +71,7 @@ def test_run_specified_func(tmpdir):
     """))
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "mytasks/myfile.py", 
             func="myfunc",
@@ -90,7 +88,7 @@ def test_run_specified_func(tmpdir):
         ] == records
 
 
-def test_import_relative(tmpdir):
+def test_import_relative(tmpdir, session):
     task_dir = tmpdir.mkdir("mytasks")
     task_dir.join("myfile.py").write(dedent("""
     from utils import value
@@ -103,7 +101,7 @@ def test_import_relative(tmpdir):
     """))
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "mytasks/myfile.py", 
             name="a task",
@@ -118,7 +116,7 @@ def test_import_relative(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_import_package(tmpdir):
+def test_import_package(tmpdir, session):
     pkg_dir = tmpdir.mkdir("mypkg")
     sub_dir = pkg_dir.mkdir("subpkg")
     util_dir = pkg_dir.mkdir("utils")
@@ -136,7 +134,7 @@ def test_import_package(tmpdir):
     util_dir.join("util_file.py").write("value = 5")
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "mypkg/subpkg/myfile.py", 
             name="a task",
@@ -151,7 +149,7 @@ def test_import_package(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_import_relative_with_params(tmpdir):
+def test_import_relative_with_params(tmpdir, session):
     task_dir = tmpdir.mkdir("mytasks")
     task_dir.join("myfile.py").write(dedent("""
     from utils import value
@@ -165,7 +163,7 @@ def test_import_relative_with_params(tmpdir):
     """))
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "mytasks/myfile.py", 
             name="a task",
@@ -180,7 +178,7 @@ def test_import_relative_with_params(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_additional_sys_paths(tmpdir):
+def test_additional_sys_paths(tmpdir, session):
     task_dir = tmpdir.mkdir("mytasks")
     task_dir.join("myfile.py").write(dedent("""
     from utils import value
@@ -196,7 +194,7 @@ def test_additional_sys_paths(tmpdir):
     """))
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "mytasks/myfile.py", 
             name="a task",
@@ -213,9 +211,9 @@ def test_additional_sys_paths(tmpdir):
         ] == records
 
 # Parametrization
-def test_parametrization_runtime(tmpdir, script_files):
+def test_parametrization_runtime(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
@@ -231,9 +229,9 @@ def test_parametrization_runtime(tmpdir, script_files):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_parametrization_local(tmpdir, script_files):
+def test_parametrization_local(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "scripts/parameterized_script.py", 
             name="a task",
@@ -250,9 +248,9 @@ def test_parametrization_local(tmpdir, script_files):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_parametrization_kwargs(tmpdir, script_files):
+def test_parametrization_kwargs(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             "scripts/parameterized_kwargs_script.py", 
             name="a task",

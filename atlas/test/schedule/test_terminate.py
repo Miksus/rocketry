@@ -5,7 +5,6 @@ from atlas.time import TimeDelta
 from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskTerminationException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas import session
 
 import pytest
 import pandas as pd
@@ -31,9 +30,9 @@ def run_slow_threaded(_thread_terminate_):
 
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
-def test_without_timeout(tmpdir, execution):
+def test_without_timeout(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         func_run_slow = run_slow if execution == "process" else run_slow_threaded
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
 
@@ -54,9 +53,9 @@ def test_without_timeout(tmpdir, execution):
         assert os.path.exists("work.txt")
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
-def test_task_timeout(tmpdir, execution):
+def test_task_timeout(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         func_run_slow = run_slow if execution == "process" else run_slow_threaded
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
@@ -75,13 +74,13 @@ def test_task_timeout(tmpdir, execution):
         assert not os.path.exists("work.txt")
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
-def test_task_terminate(tmpdir, execution):
+def test_task_terminate(tmpdir, execution, session):
 
     def terminate_task(_scheduler_):
         _scheduler_.tasks[0].force_termination = True
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         func_run_slow = run_slow if execution == "process" else run_slow_threaded
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 

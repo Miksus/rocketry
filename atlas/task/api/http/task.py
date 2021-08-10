@@ -5,7 +5,6 @@ from flask import Blueprint, render_template, abort, request, jsonify, Flask
 from flask.json import JSONEncoder
 import jwt
 
-from atlas import session
 from atlas.parse import parse_task
 from atlas.core import Task, Parameters
 from atlas.core.task import register_task_cls

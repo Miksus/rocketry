@@ -12,7 +12,6 @@ from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas.parameters import Parameters, Private
-from atlas import session
 
 import pytest
 import pandas as pd
@@ -48,10 +47,10 @@ def run_inacting():
             id="Inacting task"),
     ],
 )
-def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_count):
+def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_count, session):
     "Example of how to run only one task once using the scheduler"
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+        
         task = FuncTask(task_func, name="task", start_cond=AlwaysFalse(), execution=execution)
 
         scheduler = Scheduler()

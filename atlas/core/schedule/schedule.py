@@ -52,8 +52,6 @@ class Scheduler:
                 maintain() : Run maintanance tasks that may operate on the scheduler
     """
 
-    _logger_basename = "atlas.scheduler"
-
     session = None # This is set as atlas.session
 
     def __init__(self, session=None, max_processes=None, tasks_as_daemon=True, timeout="30 minutes",
@@ -477,7 +475,7 @@ class Scheduler:
         now = datetime.datetime.now()
         try:
             delay = min(
-                task.next_start - now
+                task.start_cond.next_start - now
                 for task in self.tasks
             )
         except (AttributeError, ValueError): # Raises ValueError if min() is empty
@@ -511,12 +509,13 @@ class Scheduler:
 
     @logger.setter
     def logger(self, logger):
+        basename = self.session.config["scheduler_logger_basename"]
         if logger is None:
             # Get class logger (default logger)
-            logger = logging.getLogger(self._logger_basename)
+            logger = logging.getLogger(basename)
 
-        if not logger.name.startswith(self._logger_basename):
-            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+        if not logger.name.startswith(basename):
+            raise ValueError(f"Logger name must start with '{basename}' as session finds loggers with names")
 
         # TODO: Use TaskAdapter to relay the scheduler name?
         self._logger = logger

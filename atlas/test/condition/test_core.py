@@ -1,7 +1,6 @@
 from atlas.conditions import (
     true, false, ParamExists, IsParameter
 )
-from atlas import session
 from atlas.core.conditions import Statement, Comparable, Historical
 
 import pytest
@@ -12,7 +11,7 @@ def test_true():
 def test_false():
     assert not bool(false)
 
-def test_params():
+def test_params(session):
     
     cond = ParamExists(mode="test", state="right")
 
@@ -27,7 +26,7 @@ def test_params():
 
     assert bool(cond)
 
-def test_is_parameter():
+def test_is_parameter(session):
     cond = IsParameter(x="yes", y="yes")
     assert not bool(cond)
 

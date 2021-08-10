@@ -4,11 +4,7 @@ from atlas.core import Scheduler
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess, AlwaysTrue
 
 from atlas.task import PyScript
-#from atlas.core.task.base import Task
-#
-#
-#Task.use_instance_naming = True
-from atlas import session
+
 import pytest
 import pandas as pd
 
@@ -29,9 +25,9 @@ import pandas as pd
             id="Failure"),
     ],
 )
-def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution):
+def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = PyScript(
             script_path, 
             name="a task",
@@ -51,7 +47,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             assert 3 == len(failures)
 
             # Check it has correct traceback in message
-            for tb in failures["message"]:
+            for tb in failures["exc_text"]:
                 assert "Traceback (most recent call last):" in tb
                 assert "RuntimeError: This task failed" in tb
         else:

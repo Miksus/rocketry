@@ -4,7 +4,6 @@ from atlas.task import FuncTask
 from atlas.time import TimeDelta
 from atlas.core.task.base import Task
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas import session
 
 import pandas as pd
 import pytest
@@ -21,9 +20,9 @@ def run_slow():
     with open("work.txt", "a") as file:
         file.write("line created\n")
 
-def test_without_timeout(tmpdir):
+def test_without_timeout(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never")
 
         scheduler = Scheduler(
@@ -43,9 +42,9 @@ def test_without_timeout(tmpdir):
 
         assert os.path.exists("work.txt")
 
-def test_task_timeout(tmpdir):
+def test_task_timeout(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
 
         scheduler = Scheduler(
@@ -62,11 +61,11 @@ def test_task_timeout(tmpdir):
 
         assert not os.path.exists("work.txt")
 
-def test_task_terminate(tmpdir):
+def test_task_terminate(tmpdir, session):
     def terminate_task(_scheduler_):
         _scheduler_.tasks[0].force_termination = True
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(run_slow, name="slow task", start_cond=AlwaysTrue(), execution="process")
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main"),
         scheduler = Scheduler(

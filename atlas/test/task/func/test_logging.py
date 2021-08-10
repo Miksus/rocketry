@@ -6,19 +6,18 @@ from queue import Empty
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.core.task.base import Task
-from atlas.log import CsvHandler
-from atlas import session
+from atlas.log import CsvHandler, MemoryHandler
 
 import pandas as pd
 
 def run_success():
     pass
 
-def test_running(tmpdir):
+def test_running(tmpdir, session):
     
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -27,11 +26,11 @@ def test_running(tmpdir):
         assert "run" == task.status
         assert task.is_running
 
-def test_success(tmpdir):
+def test_success(tmpdir, session):
     
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -41,10 +40,10 @@ def test_success(tmpdir):
         assert "success" == task.status
         assert not task.is_running
 
-def test_fail(tmpdir):
+def test_fail(tmpdir, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -54,11 +53,11 @@ def test_fail(tmpdir):
         assert "fail" == task.status
         assert not task.is_running
 
-def test_without_running(tmpdir):
+def test_without_running(tmpdir, session):
     "An edge case if for mysterious reason the task did not log running. Logging should still not crash"
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
             execution="main"
@@ -67,7 +66,7 @@ def test_without_running(tmpdir):
         assert "fail" == task.status
         assert not task.is_running
 
-def test_handle(tmpdir):
+def test_handle(tmpdir, session):
 
     def create_record(action, task_name):
         # Util func to create a LogRecord
@@ -87,7 +86,7 @@ def test_handle(tmpdir):
 
     # Tests Task.handle (used in process tasks)
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
             execution="main",
@@ -114,41 +113,37 @@ def test_handle(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_without_handlers(tmpdir):
-    orig_value = Task.status_from_logs
-    try:
-        with tmpdir.as_cwd() as old_dir:
-            
+def test_without_handlers(tmpdir, session):
+    session.config["force_status_from_logs"] = True
+    with tmpdir.as_cwd() as old_dir:
+    
+        logger = logging.getLogger("atlas.task.test")
+        logger.handlers = []
+        logger.propagate = False
 
-            logger = logging.getLogger("atlas.task.test")
-            logger.handlers = []
-            logger.propagate = False
+        task = FuncTask(
+            lambda : None, 
+            name="task 1",
+            start_cond="always true",
+            logger="atlas.task.test",
+            execution="main",
+        )
+        task()
+        # Cannot know the task.status as there is no log about it
+        assert task.status is None
 
-            Task.status_from_logs = True
-            task = FuncTask(
-                lambda : None, 
-                name="task 1",
-                start_cond="always true",
-                logger="atlas.task.test",
-                execution="main",
-            )
-            task()
-            # Cannot know the task.status as there is no log about it
-            assert task.status is None
+        session.config["force_status_from_logs"] = False
+        task = FuncTask(
+            lambda : None, 
+            name="task 2",
+            start_cond="always true",
+            logger="atlas.task.test",
+            execution="main",
+        )
+        task()
+        # Can know the task.status as stored in a variable
+        assert task.status == "success"
 
-            Task.status_from_logs = False
-            task = FuncTask(
-                lambda : None, 
-                name="task 2",
-                start_cond="always true",
-                logger="atlas.task.test",
-                execution="main",
-            )
-            task()
-            # Can know the task.status as stored in a variable
-            assert task.status == "success"
-    finally:
-        Task.status_from_logs = orig_value
 
 @pytest.mark.parametrize("method",
     [
@@ -158,11 +153,11 @@ def test_without_handlers(tmpdir):
         pytest.param("log_termination", id="Termination"),
     ],
 )
-def test_action_start(tmpdir, method):
+def test_action_start(tmpdir, method, session):
     
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
         )
@@ -173,7 +168,7 @@ def test_action_start(tmpdir, method):
 
         # First should not have "end"
         first = next(records)
-        assert not first["end"]
+        assert "end" not in first
         assert "2000-01-01" <= str(first["start"])
         assert str(first["start"]) <= "2200-01-01"
 
@@ -186,27 +181,26 @@ def test_action_start(tmpdir, method):
         assert "2000-01-01" <= str(last["end"])
         assert str(last["end"]) <= "2200-01-01"
 
-def test_process_no_double_logging(tmpdir):
+def test_process_no_double_logging(tmpdir, session):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
     # while this is not occuring on Windows. This tests the bug.
+    # TODO 0.2: Test this with MemoryHandler and CSVHandler
 
     expected_actions = ["run", "success"]
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_success, 
             name="a task",
             execution="process"
         )
 
-        
         log_queue = multiprocessing.Queue(-1)
         return_queue = multiprocessing.Queue(-1)
 
         # Start the process
         proc = multiprocessing.Process(target=task._run_as_process, args=(log_queue, return_queue, None), daemon=None) 
         proc.start()
-
 
         # Do the logging manually (copied from the method)
         actual_actions = []
@@ -241,7 +235,7 @@ def test_process_no_double_logging(tmpdir):
         handlers[1] # Checking it has atleast 2
         assert (
             isinstance(handlers[0], logging.StreamHandler)
-            and isinstance(handlers[1], CsvHandler)
+            and isinstance(handlers[1], MemoryHandler)
             and len(handlers) == 2
         ), f"Double logging. Too many handlers: {handlers}"
 

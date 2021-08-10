@@ -10,7 +10,6 @@ from atlas.conditions import (
     DependSuccess
 )
 from atlas.core.conditions import set_statement_defaults
-from atlas import session
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 
@@ -20,10 +19,9 @@ def run_task(fail=False):
     if fail:
         raise RuntimeError("Task failed")
 
-def test_task_finish_compare(tmpdir):
+def test_task_finish_compare(tmpdir, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         equals = TaskFinished(task="runned task") == 2
         greater = TaskFinished(task="runned task") > 2
         less = TaskFinished(task="runned task") < 2

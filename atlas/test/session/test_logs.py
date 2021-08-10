@@ -1,7 +1,7 @@
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.conditions import AlwaysTrue, TaskStarted
-from atlas import session
+
 
 import pandas as pd
 from typing import Generator
@@ -27,71 +27,70 @@ def create_line_to_shutdown():
         pytest.param(
             {"action": "run"}, 
             [
-                {'task_name': 'task1', 'asctime': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task2', 'asctime': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task1', 'timestamp': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': ''},
+                {'task_name': 'task2', 'timestamp': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="Get running"),
         pytest.param(
             {"action": ["success", "fail"]}, 
             [
-                {'task_name': 'task1', 'asctime': datetime.datetime(2021, 1, 1, 4, 0, 0), 'action': 'success', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': datetime.datetime(2021, 1, 1, 4, 0, 0), 'runtime': '4:00:00', 'message': ''},
-                {'task_name': 'task2', 'asctime': datetime.datetime(2021, 1, 1, 5, 0, 0), 'action': 'fail',    'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': datetime.datetime(2021, 1, 1, 5, 0, 0), 'runtime': '4:00:00', 'message': "Task 'task2' failed\nNoneType: None"},
+                {'task_name': 'task1', 'timestamp': datetime.datetime(2021, 1, 1, 4, 0, 0), 'action': 'success', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': datetime.datetime(2021, 1, 1, 4, 0, 0), 'runtime': datetime.timedelta(hours=4), 'message': ''},
+                {'task_name': 'task2', 'timestamp': datetime.datetime(2021, 1, 1, 5, 0, 0), 'action': 'fail',    'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': datetime.datetime(2021, 1, 1, 5, 0, 0), 'runtime': datetime.timedelta(hours=4), 'message': "Task 'task2' failed"},
             ],
             id="get succees & failure"),
         pytest.param(
-            {"asctime": ("2021-01-01 02:00:00,000", "2021-01-01 03:00:00,000")}, 
+            {"timestamp": ("2021-01-01 02:00:00,000", "2021-01-01 03:00:00,000")}, 
             [
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="get time span (str)"),
         pytest.param(
-            {"asctime": (pd.Timestamp("2021-01-01 02:00:00"), pd.Timestamp("2021-01-01 03:00:00"))}, 
+            {"timestamp": (pd.Timestamp("2021-01-01 02:00:00"), pd.Timestamp("2021-01-01 03:00:00"))}, 
             [
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="get time span (pd.Timestamp)"),
         pytest.param(
-            {"asctime": (None, pd.Timestamp("2021-01-01 03:00:00")), "action": "run"}, 
+            {"timestamp": (None, pd.Timestamp("2021-01-01 03:00:00")), "action": "run"}, 
             [
-                {'task_name': 'task1', 'asctime': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task2', 'asctime': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task1', 'timestamp': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': ''},
+                {'task_name': 'task2', 'timestamp': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="get time span (pd.Timestamp, open left)"),
         pytest.param(
-            {"asctime": (pd.Timestamp("2021-01-01 02:00:00"), None), "action": "run"}, 
+            {"timestamp": (pd.Timestamp("2021-01-01 02:00:00"), None), "action": "run"}, 
             [
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="get time span (pd.Timestamp, open right)"),
         pytest.param(
-            {"asctime": (None, None), "action": "run"}, 
+            {"timestamp": (None, None), "action": "run"}, 
             [
-                {'task_name': 'task1', 'asctime': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task2', 'asctime': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task1', 'timestamp': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': ''},
+                {'task_name': 'task2', 'timestamp': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             id="get time span (open left, open right)"),
         pytest.param(
-            {"asctime": (datetime.datetime(2021, 1, 1, 2, 0, 0), datetime.datetime(2021, 1, 1, 3, 0, 0))}, 
+            {"timestamp": (datetime.datetime(2021, 1, 1, 2, 0, 0), datetime.datetime(2021, 1, 1, 3, 0, 0))}, 
             [
-                {'task_name': 'task3', 'asctime': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'end': '', 'runtime': '', 'message': ''},
-                {'task_name': 'task4', 'asctime': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'end': '', 'runtime': '', 'message': ''},
+                {'task_name': 'task3', 'timestamp': datetime.datetime(2021, 1, 1, 2, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': ''},
+                {'task_name': 'task4', 'timestamp': datetime.datetime(2021, 1, 1, 3, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': ''},
             ],
             marks=pytest.mark.xfail(reason="timerange passed as datetime but datetime is mocked and isinstance fails"),
             id="get time span (datetime)"),
     ],
 )
-def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected):
+def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         task1 = FuncTask(lambda: None, name="task1", execution="main", force_run=True)
         task2 = FuncTask(lambda: None, name="task2", execution="main", force_run=True)
@@ -130,4 +129,10 @@ def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected):
         assert isinstance(logs, chain)
         
         logs = list(logs)
-        assert expected == logs
+        assert len(expected) == len(logs)
+        for e, a in zip(expected, logs):
+            #assert e.keys() <= a.keys()
+            # Check all expected items in actual (actual can contain extra)
+            for key, val in e.items():
+                assert a[key] == e[key]
+            # assert e.items() <= a.items()

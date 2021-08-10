@@ -17,7 +17,6 @@ from atlas.time import (
     TimeOfDay
 )
 
-from atlas import session
 from atlas.task import FuncTask
 
 import pytest
@@ -186,7 +185,7 @@ import time
 
     ],
 )
-def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
+def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
 
     def to_epoch(dt):
         # Hack as time.tzlocal() does not work for 1970-01-01
@@ -195,7 +194,6 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         
         task = FuncTask(

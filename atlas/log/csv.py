@@ -96,7 +96,7 @@ class CsvHandler(FileHandler):
         )
     """
     # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
-    def __init__(self, filename, *args, delay=False, headers=None, kwds_csv=None, make_dir=False, **kwargs):
+    def __init__(self, filename, *args, delay=True, headers=None, kwds_csv=None, make_dir=False, **kwargs):
         """
         Open the specified file and use it as the stream for logging.
         """

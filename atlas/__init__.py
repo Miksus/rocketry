@@ -1,3 +1,11 @@
+
+
+from .core import Scheduler
+from ._session import Session
+from ._setup import _setup_defaults
+
+from .config import *
+
 from .task import FuncTask
 from . import (
     conditions,
@@ -6,6 +14,7 @@ from . import (
     parameters,
     time
 )
-from .core import Scheduler
-from ._session import session
-from .config import *
+_setup_defaults()
+
+session = Session()
+session.set_as_default()

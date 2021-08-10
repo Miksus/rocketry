@@ -5,23 +5,21 @@ from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.core.task.base import Task
 from atlas.conditions import AlwaysFalse, AlwaysTrue, DependSuccess, Any, Not
-from atlas import session
 
-def test_construct(tmpdir):
-    session.reset()
+def test_construct(tmpdir, session):
+
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None,
         )
         assert task.status is None
 
-def test_construct_decorate(tmpdir):
-    session.reset()
+def test_construct_decorate(tmpdir, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
 
         @FuncTask.decorate(start_cond=AlwaysTrue(), name="mytask")
         def do_stuff():
@@ -50,11 +48,11 @@ def test_construct_decorate(tmpdir):
             id="AlwaysTrue with dependent"),
     ],
 )
-def test_set_start_condition(tmpdir, start_cond, depend, expected):
+def test_set_start_condition(tmpdir, start_cond, depend, expected, session):
 
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None, 
             name="task",
@@ -71,11 +69,11 @@ def test_set_start_condition(tmpdir, start_cond, depend, expected):
         pytest.param("always true & always true", lambda: AlwaysTrue() & AlwaysTrue(), id="always true & always true"),
     ],
 )
-def test_set_start_condition_str(tmpdir, start_cond_str, start_cond):
+def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
 
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             lambda : None, 
             name="task",

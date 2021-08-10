@@ -14,7 +14,6 @@ from atlas.core.conditions import set_statement_defaults
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 #from atlas.core.task.base import Task
-from atlas import session
 
 import pytest
 
@@ -24,10 +23,9 @@ def run_task(fail=False):
         raise RuntimeError("Task failed")
 
 @pytest.mark.parametrize("cls", [TaskFinished, TaskSucceeded, TaskFailed], ids=["TaskFinished", "TaskSucceeded", "TaskFailed"])
-def test_task_set_default(tmpdir, cls):
+def test_task_set_default(tmpdir, cls, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         task = FuncTask(
             run_task, 
             name="a task"
@@ -43,10 +41,9 @@ def test_task_set_default(tmpdir, cls):
         assert condition.kwargs["task"] == task.name
 
 @pytest.mark.parametrize("oper", ["__and__", "__or__"], ids=["&", "|"])
-def test_task_set_default_nested(tmpdir, oper):
+def test_task_set_default_nested(tmpdir, oper, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         base_cond = TaskFinished(task="nondefault")
         conditions = [
@@ -72,10 +69,9 @@ def test_task_set_default_nested(tmpdir, oper):
                 assert cond.kwargs["task"] == task.name
 
 
-def test_task_set_default_nested_deep(tmpdir):
+def test_task_set_default_nested_deep(tmpdir, session):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         base_cond = TaskFinished(task="nondefault")
         

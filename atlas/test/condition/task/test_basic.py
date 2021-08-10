@@ -18,7 +18,6 @@ from atlas.time import (
 
 from atlas.core.task import Task
 from atlas.core.conditions import set_statement_defaults
-from atlas import session
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 
@@ -28,6 +27,7 @@ from dateutil.tz import tzlocal
 
 import logging
 import time
+import datetime
 
 Task.use_instance_naming = True
 
@@ -35,6 +35,43 @@ def run_task(fail=False):
     print("Running func")
     if fail:
         raise RuntimeError("Task failed")
+
+@pytest.mark.parametrize('execution_number', range(10))
+def test_task_status_race(tmpdir, session, execution_number):
+
+    # c = logging.LogRecord("",1, "a", "a", "2", (), "").created
+    # c = time.time()
+    # t = time.time()
+    # c = datetime.datetime.fromtimestamp(c)
+    # t = datetime.datetime.now()
+    # assert t >= c
+    # return
+
+    condition = TaskFinished(task="runned task")
+    task = FuncTask(
+        run_task, 
+        name="runned task",
+        execution="main"
+    )
+    task(params={"fail": False})
+
+    # Imitating the __bool__
+    assert condition.observe(task=task)
+    return
+
+    t = time.time()
+    now = condition.observe()
+    interv = task.period.rollback(now)
+    _start_, _end_ = interv.left, interv.right
+
+    records = task.logger.get_records(timestamp=(_start_, _end_), action=["success", "fail", "terminate"])
+    records = [record["timestamp"] for record in records]
+    try:
+        assert bool(records)
+    except:
+        timestamp = [r['timestamp'] for r in list(task.logger.get_records())][-1]
+        print(f"Now: {now}\nStart: {_start_}\nEnd: {_end_}\nAll records: {timestamp}")
+        raise
 
 @pytest.mark.parametrize(
     "cls,succeeding,expected",
@@ -67,11 +104,10 @@ def run_task(fail=False):
             id="TaskFailed Failure"),
     ],
 )
-def test_task_status(tmpdir, cls, succeeding, expected):
+def test_task_status(tmpdir, session, cls, succeeding, expected):
     # Going to tempdir to dump the log files there
 
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         condition = cls(task="runned task")
 
         task = FuncTask(
@@ -88,6 +124,15 @@ def test_task_status(tmpdir, cls, succeeding, expected):
             task(params={"fail": not succeeding})
         except: 
             pass
+
+        # we sleep 20ms to 
+        # There is a very small inaccuracy in time.time() that is used by
+        # logging library to create LogRecord.created. On Windows this 
+        # inaccuracy can be 16ms (https://stackoverflow.com/questions/1938048/high-precision-clock-in-python)
+        # and in some cases the task is not registered to have run as 
+        # in memory logging is way too fast. Therefore we just wait
+        # 20ms to fix the issue
+        # time.sleep(0.02) 
         assert bool(condition) if expected else not bool(condition)
 
 
@@ -110,10 +155,9 @@ def test_task_status(tmpdir, cls, succeeding, expected):
             id="DependFailure"),
     ],
 )
-def test_task_depend_fail(tmpdir, cls, expected):
+def test_task_depend_fail(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
@@ -177,10 +221,9 @@ def test_task_depend_fail(tmpdir, cls, expected):
             id="DependFailure"),
     ],
 )
-def test_task_depend_success(tmpdir, cls, expected):
+def test_task_depend_success(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(

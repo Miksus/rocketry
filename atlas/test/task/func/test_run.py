@@ -8,7 +8,6 @@ from atlas.task import FuncTask
 from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.core.conditions import AlwaysFalse, AlwaysTrue, Any
-from atlas import session
 
 import pandas as pd
 
@@ -57,11 +56,11 @@ def run_parametrized_kwargs(**kwargs):
             id="Inaction"),
     ],
 )
-def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
+def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution, session):
 
     kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             task_func, 
             name="a task",
@@ -98,11 +97,11 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution):
         ] == records
 
 
-def test_force_run(tmpdir):
+def test_force_run(tmpdir, session):
     
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_successful_func, 
             name="task",
@@ -118,11 +117,11 @@ def test_force_run(tmpdir):
         assert not task.force_run
 
 
-def test_dependency(tmpdir):
+def test_dependency(tmpdir, session):
 
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task_a = FuncTask(
             run_successful_func, 
             name="task_a", 
@@ -150,9 +149,9 @@ def test_dependency(tmpdir):
 
 
 # Parametrization
-def test_parametrization_runtime(tmpdir):
+def test_parametrization_runtime(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_parametrized, 
             name="a task",
@@ -168,9 +167,9 @@ def test_parametrization_runtime(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_parametrization_local(tmpdir):
+def test_parametrization_local(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_parametrized, 
             name="a task",
@@ -187,9 +186,9 @@ def test_parametrization_local(tmpdir):
             {"task_name": "a task", "action": "success"},
         ] == records
 
-def test_parametrization_kwargs(tmpdir):
+def test_parametrization_kwargs(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_parametrized_kwargs, 
             name="a task",

@@ -1,4 +1,6 @@
 
+import atlas
+from atlas import Session
 from atlas.core import Scheduler
 from atlas.task import FuncTask
 from atlas.time import TimeDelta
@@ -6,15 +8,14 @@ from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
 from atlas.parameters import Parameters, Private
-from atlas import session
 
 import pytest
 import pandas as pd
 
 import logging
-import sys
+import sys, datetime
 import time
-import os
+import os, re
 import multiprocessing
 
 # TODO:
@@ -46,9 +47,8 @@ def run_creating_child():
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_execution(tmpdir, execution):
+def test_task_execution(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside atlas
@@ -62,46 +62,85 @@ def test_task_execution(tmpdir, execution):
         with open("work.txt", "r") as file:
             assert 3 == len(list(file))
 
+@pytest.mark.parametrize("logging_scheme", ["memory_logging", "csv_logging"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
-    "task_func,run_count,fail_count,success_count",
+    "task_func,run_count,fail_count,success_count,inact_count",
     [
         pytest.param(
             run_succeeding, 
-            3, 0, 3,
+            3, 0, 3, 0,
             id="Succeeding task"),
 
         pytest.param(
             run_failing, 
-            3, 3, 0,
+            3, 3, 0, 0,
             id="Failing task"),
         pytest.param(
             run_inacting, 
-            3, 0, 0,
+            3, 0, 0, 3,
             id="Inacting task"),
     ],
 )
-def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_count):
+def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_count, inact_count, logging_scheme):
+    """Test the task logging thoroughly including the common
+    logging schemes, execution (main, thread, process) and 
+    outcomes (fail, success, inaction).
+
+    This task may take some time but should cover most of the
+    issues with logging.
+    """
+
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
-        task = FuncTask(task_func, name="task", start_cond=AlwaysTrue(), execution=execution)
+
+        # Set session (and logging)
+        session = Session(logging_scheme=logging_scheme, config={"debug": True})
+        atlas.session = session
+        session.set_as_default()
+
+        task = FuncTask(task_func, name="mytask", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="task") >= run_count
+            shut_condition=TaskStarted(task="mytask") >= run_count
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
-        assert run_count == (history["action"] == "run").sum()
-        assert success_count == (history["action"] == "success").sum()
-        assert fail_count == (history["action"] == "fail").sum()
+        # Test history
+        history = list(task.get_history())
+        assert run_count == len([rec for rec in history if rec["action"] == "run"])
+        assert success_count == len([rec for rec in history if rec["action"] == "success"])
+        assert fail_count == len([rec for rec in history if rec["action"] == "fail"])
+        assert inact_count == len([rec for rec in history if rec["action"] == "inaction"])
 
+        # Test relevant log items
+        for record in history:
+            assert record["task_name"] == "mytask"
+            assert isinstance(record["timestamp"], datetime.datetime)
+            assert isinstance(record["start"], datetime.datetime)
+            if record["action"] != "run":
+                assert isinstance(record["end"], datetime.datetime)
+                assert isinstance(record["runtime"], datetime.timedelta)
+
+            # Test traceback
+            if record["action"] == "fail":
+                assert re.match(
+                    r'Traceback \(most recent call last\):\n  File ".+", line [0-9]+, in [\s\S]+, in run_failing\n    raise RuntimeError\("Task failed"\)\nRuntimeError: Task failed', 
+                    record["exc_text"]
+                )
+
+        # Test some other relevant APIs
+        assert history == list(task.logger.get_records())
+        assert history[-1] == task.logger.get_latest()
+        assert history == list(session.get_task_log())
+
+        assert run_count == len(list(task.logger.get_records(action="run")))
+        assert success_count == len(list(task.logger.get_records(action="success")))
+        assert fail_count == len(list(task.logger.get_records(action="fail")))
+        assert inact_count == len(list(task.logger.get_records(action="inaction")))
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_run(tmpdir, execution):
+def test_task_force_run(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
-
         task = FuncTask(
             run_succeeding, 
             start_cond=AlwaysFalse(), 
@@ -123,9 +162,8 @@ def test_task_force_run(tmpdir, execution):
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_disabled(tmpdir, execution):
+def test_task_disabled(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         task = FuncTask(
             run_succeeding, 
@@ -147,14 +185,13 @@ def test_task_disabled(tmpdir, execution):
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_disabled(tmpdir, execution):
+def test_task_force_disabled(tmpdir, execution, session):
     # NOTE: force_run overrides disabled
     # as it is more practical to keep 
     # a task disabled and force it running
     # manually than prevent force run with
     # disabling
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         task = FuncTask(
             run_succeeding, 
@@ -177,9 +214,8 @@ def test_task_force_disabled(tmpdir, execution):
         assert not task.force_run # This should be reseted
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_priority(tmpdir, execution):
+def test_priority(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         task_1 = FuncTask(run_succeeding, priority=1, name="first", start_cond=AlwaysTrue(), execution=execution)
         task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue(), execution=execution)
@@ -189,21 +225,21 @@ def test_priority(tmpdir, execution):
         )
 
         scheduler()
-        assert scheduler.n_cycles == 1
+        assert scheduler.n_cycles == 1 # TODO: Possibly a race condition on threading
 
         history = pd.DataFrame(session.get_task_log())
         history = history.set_index("action")
 
-        task_1_start = history[(history["task_name"] == "first")].loc["run", "asctime"]
-        task_3_start = history[(history["task_name"] == "second")].loc["run", "asctime"]
-        task_2_start = history[(history["task_name"] == "last")].loc["run", "asctime"]
+        task_1_start = history[(history["task_name"] == "first")].loc["run", "timestamp"]
+        task_3_start = history[(history["task_name"] == "second")].loc["run", "timestamp"]
+        task_2_start = history[(history["task_name"] == "last")].loc["run", "timestamp"]
         
         assert task_1_start < task_3_start < task_2_start
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_pass_params_as_global(tmpdir, execution):
+def test_pass_params_as_global(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution)
         scheduler = Scheduler(
             shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
@@ -226,9 +262,9 @@ def test_pass_params_as_global(tmpdir, execution):
     pytest.param(Parameters(int_5=Private(5)), id="Parameter with secret"),
 ])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_pass_params_as_local(tmpdir, execution, parameters):
+def test_pass_params_as_local(tmpdir, execution, parameters, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_with_param, 
             name="parametrized", 
@@ -248,9 +284,9 @@ def test_pass_params_as_local(tmpdir, execution, parameters):
         assert 0 == (history["action"] == "fail").sum()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_pass_params_as_local_and_global(tmpdir, execution):
+def test_pass_params_as_local_and_global(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = FuncTask(
             run_with_param, 
             name="parametrized", 
@@ -286,9 +322,8 @@ def create_line_to_shutdown():
         file.write("line created\n")
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_startup_shutdown(tmpdir, execution):
+def test_startup_shutdown(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         
         FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution)
         FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution)

@@ -3,7 +3,6 @@ from atlas.task import FuncTask
 from atlas.core import Task, Scheduler
 from atlas.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
 
-from atlas import session
 
 import pytest
 import pandas as pd
@@ -28,9 +27,8 @@ def create_line_to_file():
         file.write("line created\n")
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_dependent(tmpdir, execution):
+def test_dependent(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         # Running the master tasks only once
         task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(task="A"), execution=execution)
@@ -64,11 +62,11 @@ def test_dependent(tmpdir, execution):
         history = pd.DataFrame(session.get_task_log())
         history = history.set_index("action")
 
-        a_start = history[(history["task_name"] == "A")].loc["run", "asctime"]
-        b_start = history[(history["task_name"] == "B")].loc["run", "asctime"]
-        after_a_start = history[(history["task_name"] == "After A")].loc["run", "asctime"]
-        after_b_start = history[(history["task_name"] == "After B")].loc["run", "asctime"]
-        after_all_start = history[(history["task_name"] == "After all")].loc["run", "asctime"]
+        a_start = history[(history["task_name"] == "A")].loc["run", "timestamp"]
+        b_start = history[(history["task_name"] == "B")].loc["run", "timestamp"]
+        after_a_start = history[(history["task_name"] == "After A")].loc["run", "timestamp"]
+        after_b_start = history[(history["task_name"] == "After B")].loc["run", "timestamp"]
+        after_all_start = history[(history["task_name"] == "After all")].loc["run", "timestamp"]
         
         assert a_start < after_a_start < after_all_start
         assert b_start < after_b_start < after_all_start

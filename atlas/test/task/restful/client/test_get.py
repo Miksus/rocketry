@@ -213,7 +213,7 @@ def test_parameters(client, query_url, params, expected):
             id="Multiple"),
     ],
 )
-def test_logs(client, logs, query_url, expected_logs):
+def test_logs(client, logs, query_url, expected_logs, session):
     
     # A throwaway task for only forming the logger
     task = FuncTask(lambda: None)

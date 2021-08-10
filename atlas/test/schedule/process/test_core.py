@@ -5,7 +5,6 @@ from atlas.time import TimeDelta
 from atlas.core.task.base import Task
 from atlas.core.exceptions import TaskInactionException
 from atlas.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from atlas import session
 
 import pandas as pd
 import pytest
@@ -24,9 +23,9 @@ def run_creating_child():
     proc = multiprocessing.Process(target=run_succeeding, daemon=True)
     proc.start()
 
-def test_creating_child(tmpdir):
+def test_creating_child(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside atlas

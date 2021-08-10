@@ -1,4 +1,5 @@
 
+from attr import has
 from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
 from atlas.core.conditions import set_statement_defaults, BaseCondition
@@ -10,7 +11,8 @@ from .utils import get_execution, get_dependencies
 from atlas.conditions import DependSuccess
 from atlas.core.parameters import Parameters
 
-import os
+import os, time
+import platform
 import logging
 import inspect
 import warnings
@@ -28,6 +30,8 @@ import pandas as pd
 
 CLS_TASKS = {}
 
+_IS_WINDOWS = platform.system()
+
 def register_task_cls(cls):
     """Add Task class to registered
     Task dict in order to initiate
@@ -35,7 +39,21 @@ def register_task_cls(cls):
     CLS_TASKS[cls.__name__] = cls
     return cls
 
-class Task:
+class _TaskMeta(type):
+    def __new__(mcs, name, bases, class_dict):
+
+        cls = type.__new__(mcs, name, bases, class_dict)
+
+        # Store the name and class for configurations
+        is_private = name.startswith("_")
+        is_base = name == "Task"
+        if not is_private and not is_base:
+            if cls.session is not None and cls.session.config["session_store_task_cls"]:
+                cls.session.task_cls[cls.__name__] = cls
+        return cls
+
+
+class Task(metaclass=_TaskMeta):
     """Executable task 
 
     This class is meant to be container
@@ -105,10 +123,7 @@ class Task:
 
     """
     use_instance_naming = False
-    _logger_basename = "atlas.task"
-    on_exists = "raise"
     permanent_task = False # Whether the task is not meant to finish (Ie. RestAPI)
-    status_from_logs = False # Force to check status from logs every time (slow but robust)
     _actions = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
 
     # For multiprocessing (if None, uses scheduler's default)
@@ -144,10 +159,11 @@ class Task:
 
             on_exists ([str]) -- What to do if task (with same name) has already been created. (Options: 'raise', 'ignore', 'replace')
         """
+        self.session = self.session or session
 
         self.name = name
         self.logger = logger
-        self.session = self.session or session
+        
         self.status = None
 
         self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
@@ -260,6 +276,15 @@ class Task:
         # Run the actual task
         if self.execution == "main":
             self.run_as_main(**kwargs)
+            if _IS_WINDOWS:
+                # There is an annoying bug (?) in Windows:
+                # https://bugs.python.org/issue44831
+                # If one checks whether the task has succeeded/failed
+                # already the log might show that the task finished 
+                # 1 microsecond in the future if memory logging is used. 
+                # Therefore we sleep that so condition checks especially 
+                # in tests will succeed. 
+                time.sleep(1e-6)
         elif self.execution == "process":
             self.run_as_process(**kwargs)
         elif self.execution == "thread":
@@ -400,15 +425,17 @@ class Task:
         # logger (with multiprocessing.Queue as queue) so that all the logging
         # records end up in the main process to be logged properly. 
 
+        basename = self.session.config["task_logger_basename"]
+        handler = logging.handlers.QueueHandler(queue)
+
+        # TODO: Put the original formatter to the handler
+
         # Set the process logger
-        
-        logger = logging.getLogger(self._logger_basename + "._process") # task._logger_basename
+        logger = logging.getLogger(basename + "._process")
         logger.setLevel(logging.INFO)
         logger.propagate = False
         logger.handlers = []
-        logger.addHandler(
-            logging.handlers.QueueHandler(queue)
-        )
+        logger.addHandler(handler)
         try:
             with warnings.catch_warnings():
                 # task.set_logger will warn that 
@@ -490,7 +517,7 @@ class Task:
         if name is None:
             name = (
                 id(self)
-                if self.use_instance_naming 
+                if self.session.config["use_instance_naming"]
                 else self.get_default_name()
             )
 
@@ -498,13 +525,14 @@ class Task:
             return
         
         if name in self.session.tasks:
-            if self.on_exists == "replace":
+            on_exists = self.session.config["on_task_pre_exists"]
+            if on_exists == "replace":
                 self.session.tasks[name] = self
-            elif self.on_exists == "raise":
+            elif on_exists == "raise":
                 raise KeyError(f"Task {name} already exists. (All tasks: {self.session.tasks})")
-            elif self.on_exists == "ignore":
+            elif on_exists == "ignore":
                 pass
-            elif self.on_exists == "rename":
+            elif on_exists == "rename":
                 for i in count():
                     new_name = name + str(i)
                     if new_name not in self.session.tasks:
@@ -558,14 +586,15 @@ class Task:
 
     @logger.setter
     def logger(self, logger):
+        basename = self.session.config["task_logger_basename"]
         if logger is None:
             # Get class logger (default logger)
-            logger = logging.getLogger(self._logger_basename)
+            logger = logging.getLogger(basename)
         if isinstance(logger, str):
             logger = logging.getLogger(logger)
 
-        if not logger.name.startswith(self._logger_basename):
-            raise ValueError(f"Logger name must start with '{self._logger_basename}' as session finds loggers with names")
+        if not logger.name.startswith(basename):
+            raise ValueError(f"Logger name must start with '{basename}' as session finds loggers with names")
 
         if not isinstance(logger, TaskAdapter):
             logger = TaskAdapter(logger, task=self)
@@ -598,7 +627,7 @@ class Task:
 
     @property
     def status(self):
-        if self.status_from_logs:
+        if self.session.config["force_status_from_logs"]:
             try:
                 record = self.logger.get_latest()
             except AttributeError:

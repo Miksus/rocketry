@@ -8,6 +8,7 @@ import datetime, time
 from dateutil.parser import parse as parse_datetime
 
 import atlas
+from atlas import Session
 
 from atlas.core.task.base import Task
 
@@ -44,24 +45,24 @@ def script_files(tmpdir):
     copy_file_to_tmpdir(tmpdir, source_file="parameterized_kwargs_script.py", target_path="scripts/parameterized_kwargs_script.py")
 
 
-@pytest.fixture(scope="session", autouse=True)
-def reset_loggers():
-    #reload(atlas)
-    # prepare something ahead of all tests
-    # request.addfinalizer(finalizer_function)
+@pytest.fixture(scope="function", autouse=True)
+def session():
+    session = Session(logging_scheme="memory_logging", config={"debug": True})
+    atlas.session = session
+    session.set_as_default()
+    return session
 
-    atlas.session.reset()
+@pytest.fixture(scope="session", autouse=True)
+def set_loggers():
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(action)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
 
-    task_logger = logging.getLogger(Task._logger_basename)
+    task_logger = logging.getLogger(atlas.session.config["task_logger_basename"])
     task_logger.addHandler(handler)
-    #Task.add_logger_handler(handler)
-    yield
-    atlas.session.reset()
 
+    yield session
 
 class mockdatetime(datetime.datetime):
     _freezed_datetime = None
@@ -74,6 +75,7 @@ def mock_datetime_now(monkeypatch):
     """Monkey patch datetime.datetime.now
     Returns a function that takes datetime as string as input
     and sets that to datetime.datetime.now()"""
+    import datetime
     class mockdatetime(datetime.datetime):
         _freezed_datetime = None
         @classmethod
@@ -81,10 +83,21 @@ def mock_datetime_now(monkeypatch):
             return cls._freezed_datetime
 
     def wrapper(dt):
-        mockdatetime._freezed_datetime = parse_datetime(dt)
+        dt = parse_datetime(dt)
+        mockdatetime._freezed_datetime = mockdatetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
         monkeypatch.setattr(datetime, 'datetime', mockdatetime)
 
-    return wrapper
+        # We also need to mock isinstance checks by injecting our
+        # class on datetime.datetime on relevant modules
+        #datetime.datetime = mockdatetime
+
+    # Getting original datetime.datetime so we can reset it after
+    # the test
+    
+    #_datetime_orig = datetime.datetime
+
+    yield wrapper
+    #datetime.datetime = _datetime_orig
 
 @pytest.fixture
 def mock_time(monkeypatch):

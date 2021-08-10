@@ -1,10 +1,8 @@
 
 from atlas.config import parse_dict
-from atlas import session
 
-def test_init_maintain(tmpdir):
+def test_init_maintain(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         scheduler = parse_dict(
             {
                 "tasks": {

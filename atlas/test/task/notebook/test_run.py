@@ -6,15 +6,12 @@ from atlas.task import JupyterTask
 #
 #
 #from nbconvert.preprocessors import CellExecutionError
-#
-#Task.use_instance_naming = True
-from atlas import session
+
 
 import pytest
 
 @pytest.mark.xfail
-def test_success(tmpdir):
-    session.reset()
+def test_success(tmpdir, session):
 
     nb_success = r"""{
  "cells": [
@@ -85,8 +82,7 @@ def test_success(tmpdir):
         assert task.status == "success"
 
 @pytest.mark.xfail
-def test_failure(tmpdir):
-    session.reset()
+def test_failure(tmpdir, session):
 
     nb_failure = r"""{
  "cells": [

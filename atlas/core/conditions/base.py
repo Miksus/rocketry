@@ -15,6 +15,8 @@ class _ConditionMeta(type):
         is_private = name.startswith("_")
         is_base = name == "BaseCondition"
         if not is_private and not is_base:
+            if cls.session is not None and cls.session.config["session_store_cond_cls"]:
+                cls.session.cond_cls[cls.__name__] = cls
             CLS_CONDITIONS[cls.__name__] = cls
         return cls
 
@@ -77,8 +79,6 @@ class BaseCondition(metaclass=_ConditionMeta):
 class _ConditionContainer:
     "Wraps another condition"
 
-    __magicmethod__ = None
-
     def flatten(self):
         conditions = []
         for attr in self._cond_attrs:
@@ -86,18 +86,6 @@ class _ConditionContainer:
 
             conditions += conds
         return conditions
-
-    def apply(self, func, **kwargs):
-        "Apply the function to all subconditions"
-        # TODO: Delete?
-        subconds = []
-        for subcond in self.subconditions:
-            if isinstance(subcond, ConditionContainer):
-                subcond = subcond.apply(func, **kwargs)
-            else:
-                subcond = func(subcond, **kwargs)
-            subconds.append(subcond)
-        return type(self)(*subconds)
         
     def __getitem__(self, val):
         return self.subconditions[val]
@@ -115,8 +103,6 @@ class _ConditionContainer:
 
 
 class Any(_ConditionContainer, BaseCondition):
-
-    __magicmethod__ = "__or__"
 
     def __init__(self, *conditions):
         self.subconditions = []
@@ -154,8 +140,6 @@ class Any(_ConditionContainer, BaseCondition):
 
 class All(_ConditionContainer, BaseCondition):
 
-    __magicmethod__ = "__and__"
-
     def __init__(self, *conditions):
         self.subconditions = []
 
@@ -188,8 +172,6 @@ class All(_ConditionContainer, BaseCondition):
         return time.All(*[cond.cycle for cond in self.subconditions])
 
 class Not(_ConditionContainer, BaseCondition):
-
-    __magicmethod__ = "__invert__"
 
     def __init__(self, condition):
         # TODO: rename condition as child

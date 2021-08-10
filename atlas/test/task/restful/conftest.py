@@ -19,9 +19,8 @@ import pandas as pd
 
 
 @pytest.fixture
-def scheduler(tmpdir):
+def scheduler(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
         #orig_cwd = os.getcwd()
         #tmpdir.chdir()
 
@@ -36,7 +35,7 @@ def scheduler(tmpdir):
         #os.chdir(orig_cwd)
 
 @pytest.fixture
-def client(tmpdir):
+def client(tmpdir, session):
     app = HTTPConnection().create_app()
     #db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
     app.config['TESTING'] = True
@@ -44,7 +43,6 @@ def client(tmpdir):
     #tmpdir.chdir()
     with tmpdir.as_cwd() as old_cwd:
         with app.test_client() as client:
-            session.reset()
             #with app.app_context():
             #    myapp.init_db()
             yield client

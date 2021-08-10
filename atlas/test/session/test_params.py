@@ -3,7 +3,7 @@
 from atlas.core import Parameters
 from atlas.parameters import Private
 
-from atlas import session, Scheduler
+from atlas import Scheduler
 from atlas.task import FuncTask
 from atlas.conditions import TaskStarted
 
@@ -16,9 +16,8 @@ def run_task(secret, public, secret_list, task_secret, task_public):
     assert task_secret == "hsss"
     assert task_public == "world"
 
-def test_parametrization_private(tmpdir):
+def test_parametrization_private(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         session.parameters.update({"secret": Private("psst"), "public": "hello", "secret_list": Private([1,2,3])})
 

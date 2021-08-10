@@ -5,7 +5,6 @@ from atlas.parse import parse_task
 from atlas.task import FuncTask, PyScript
 
 from textwrap import dedent
-from atlas import session
 
 import sys
 import pytest
@@ -34,9 +33,9 @@ from pathlib import Path
         ),
     ]
 )
-def test_parse_attrs(tmpdir, obj, cls, attrs):
+def test_parse_attrs(tmpdir, obj, cls, attrs, session):
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
+
         task = parse_task(obj)
         assert isinstance(task, cls)
         for attr, val in attrs.items():

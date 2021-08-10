@@ -3,13 +3,12 @@
 from atlas.conditions import (
     IsEnv
 )
-from atlas import session
 from atlas.core.conditions import Statement, Comparable, Historical
 
 import pytest
 
 
-def test_env():
+def test_env(session):
     
     cond = IsEnv("test")
     assert not bool(cond)

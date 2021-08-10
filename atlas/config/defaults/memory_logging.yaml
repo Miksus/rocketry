@@ -5,29 +5,13 @@ clear_existing: True
 logging:
   version: 1
   disable_existing_loggers: True
+
   formatters:
     standard:
-      format: '%(asctime)s %(levelname)s %(name)s %(message)s'
+      format: '%(message)s'
     # Custom
-    csv_formatter:
-      (): atlas.log.CsvFormatter
-      fields: [
-        asctime,
-        levelname,
-        name,
-        message
-      ]
-    csv_task_formatter:
-      (): atlas.log.CsvFormatter
-      fields: [
-        task_name,
-        asctime,
-        action,
-        start, # Represents the start time of the task (for failure/success/etc.)
-        end,
-        runtime,
-        exc_text,
-      ]
+    rec_formatter:
+      (): atlas.log.AttributeFormatter
 
   handlers:
     default:
@@ -47,24 +31,18 @@ logging:
        stream: 'ext://sys.stdout'  # Default is stderr
 
     # Custom
-    csv_scheduler:
-       (): "atlas.log.CsvHandler"
-       formatter: "csv_formatter"
-       filename: "log/scheduler.csv"
-       make_dir: True
-       delay: True
-    csv_task:
-       (): "atlas.log.CsvHandler"
-       formatter: "csv_task_formatter"
-       filename: "log/tasks.csv"
-       make_dir: True
-       delay: True
-    csv_task_maintain:
-       (): "atlas.log.CsvHandler"
-       formatter: "csv_task_formatter"
-       filename: "log/maintainers.csv"
-       make_dir: True
-       delay: True
+    mem_scheduler:
+       (): "atlas.log.MemoryHandler"
+       store_as: "dict"
+       formatter: 'rec_formatter'
+    mem_task:
+       (): "atlas.log.MemoryHandler"
+       store_as: "dict"
+       formatter: 'rec_formatter'
+    mem_task_maintain:
+       (): "atlas.log.MemoryHandler"
+       store_as: "dict"
+       formatter: 'rec_formatter'
 
   loggers:
     '': # root logger
@@ -72,7 +50,7 @@ logging:
        level: 'WARNING'
        propagate: False
     atlas.task: 
-       handlers: ['stderr', 'csv_task']
+       handlers: ['stderr', 'mem_task']
        level: 'INFO'
        propagate: False
     atlas.task._process:
@@ -81,11 +59,11 @@ logging:
       # logger
       propagate: False
     atlas.task.maintainer: 
-       handlers: ['csv_task_maintain']
+       handlers: ['mem_task_maintain']
        level: 'INFO'
        propagate: False
     atlas.scheduler:
-       handlers: ['csv_scheduler']
+       handlers: ['mem_scheduler']
        level: 'INFO'
        propagate: False
     __main__:  # if __name__ == '__main__'

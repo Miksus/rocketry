@@ -1,6 +1,5 @@
 
 from flask import Blueprint, render_template, abort, request, jsonify, abort
-from atlas import session
 from .utils import parse_url_parameters
 
 # For system info

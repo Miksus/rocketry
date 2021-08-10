@@ -18,7 +18,6 @@ from atlas.time import (
     TimeOfDay
 )
 
-from atlas import session
 from atlas.task import FuncTask
 
 import pytest
@@ -27,6 +26,7 @@ from dateutil.tz import tzlocal
 
 import logging
 import time
+from typing import List, Tuple
 
 def to_epoch(dt):
     # Hack as time.tzlocal() does not work for 1970-01-01
@@ -34,17 +34,27 @@ def to_epoch(dt):
         dt = dt.tz_convert("utc").tz_localize(None)
     return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
-def run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
+def setup_task_state(tmpdir, mock_datetime_now, logs:List[Tuple[str, str]], time_after):
+    """A mock up that sets up a task to test the 
+    condition with given logs
+
+    Parameters
+    ----------
+    tmpdir : Pytest fixture
+    mock_datetime_now : Pytest fixture
+    logs : list of tuples
+        Logs to be inserted for the task.
+        The tuple is in form (datetime, action)
+    time_after : date-like
+        The datetime when inspecting the condition status
+    """
     with tmpdir.as_cwd() as old_dir:
-        session.reset()
 
         task = FuncTask(
             lambda:None, 
             name="the task",
             execution="main"
         )
-
-        condition = get_condition()
 
         # pd.Timestamp -> Epoch, https://stackoverflow.com/a/54313505/13696660
         # We also need tz_localize to convert timestamp to localized form (logging thinks the time is local time and convert that to GTM)
@@ -64,12 +74,9 @@ def run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
             record.task_name = "the task"
 
             task.logger.handle(record)
-        mock_datetime_now(time_after)
 
-        if outcome:
-            assert bool(condition) 
-        else:
-            assert not bool(condition)
+        mock_datetime_now(time_after)
+        return task
 
 
 @pytest.mark.parametrize(
@@ -155,7 +162,13 @@ def run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
     ],
 )
 def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome)
+
+    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+    cond = get_condition()
+    if outcome:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
 
 
 @pytest.mark.parametrize(
@@ -211,7 +224,12 @@ def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome)
+    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+    cond = get_condition()
+    if outcome:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
 
 
 
@@ -305,7 +323,12 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome)
+    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+    cond = get_condition()
+    if outcome:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
 
 
 @pytest.mark.parametrize(
@@ -395,7 +418,12 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
     ],
 )
 def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome)
+    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+    cond = get_condition()
+    if outcome:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
 
 
 @pytest.mark.parametrize(
@@ -485,4 +513,9 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_fail(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    run_test_body(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome)
+    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+    cond = get_condition()
+    if outcome:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
