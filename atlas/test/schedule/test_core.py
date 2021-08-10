@@ -221,11 +221,11 @@ def test_priority(tmpdir, execution, session):
         task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue(), execution=execution)
         task_3 = FuncTask(run_failing, priority=5, name="second", start_cond=AlwaysTrue(), execution=execution)
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="last") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+            shut_condition=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         scheduler()
-        assert scheduler.n_cycles == 1 # TODO: Possibly a race condition on threading
+        assert scheduler.n_cycles == 1 
 
         history = pd.DataFrame(session.get_task_log())
         history = history.set_index("action")
