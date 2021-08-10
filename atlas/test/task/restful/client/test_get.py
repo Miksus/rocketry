@@ -1,11 +1,12 @@
 
+import datetime
 import tempfile
 
 import pytest
 
 from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
-from atlas import Scheduler, session
+from atlas import Scheduler
 from atlas.conditions import IsParameter
 from atlas.parameters import Private
 
@@ -38,16 +39,22 @@ def to_epoch(dt):
             {
                 "test-task": {
                     "name": "test-task", 
+                    "class": "atlas.task.func.FuncTask",
                     'func':'<lambda>', 
                     'execution':'main', 
                     "parameters": {"x": 1, "y": 2}, 
-                    'status':None
+                    'status':None,
                 },
             },
             id="FuncTask, no filter"),
     ],
 )
 def test_tasks(client, make_tasks, query_url, expected_attrs):
+    # Adding HTTP Task to expected task (to be DRY)
+    expected_attrs["HTTP-API"] = {
+        "name": "HTTP-API",
+        "class": "atlas.task.api.http.task.HTTPConnection"
+    }
     make_tasks()
 
     response = client.get("/tasks")
@@ -80,7 +87,7 @@ def test_tasks(client, make_tasks, query_url, expected_attrs):
             id="No filter with private"),
     ],
 )
-def test_parameters(client, query_url, params, expected):
+def test_parameters(client, query_url, params, expected, session):
     session.parameters.update(params)
     response = client.get("/parameters" + query_url)
     data = response.get_json()
@@ -235,13 +242,12 @@ def test_logs(client, logs, query_url, expected_logs, session):
         task.logger.handle(record)
 
     response = client.get("/logs/tasks" + query_url)
-    data = response.get_json()
+    actual_logs = response.get_json()
 
-    actual_logs = [
-        (rec["asctime"][:19], rec["action"], rec["task_name"]) 
-        for rec in data
-    ]
-    assert expected_logs == actual_logs
+    for act_rec, exp_rec in zip(actual_logs, expected_logs):
+        assert exp_rec[0] == act_rec["timestamp"]
+        assert exp_rec[1] == act_rec["action"]
+        assert exp_rec[2] == act_rec["task_name"]
 
 def test_ping(client):
     response = client.get("/ping")

@@ -6,7 +6,7 @@ import pytest
 from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
 from atlas import Scheduler, session
-from atlas.conditions import IsParameter
+from atlas.conditions import IsParameter, ParamExists
 from atlas.parameters import Private
 
 from threading import Thread
@@ -24,8 +24,8 @@ def scheduler(tmpdir, session):
         #orig_cwd = os.getcwd()
         #tmpdir.chdir()
 
-        session.parameters["shutdown"] = False
-        sched = Scheduler(shut_condition=IsParameter(shutdown=True))
+        #session.parameters["shutdown"] = False
+        sched = Scheduler(shut_condition=ParamExists(shutdown=True))
         thread = Thread(target=sched)
         thread.start()
         yield sched
@@ -35,8 +35,18 @@ def scheduler(tmpdir, session):
         #os.chdir(orig_cwd)
 
 @pytest.fixture
-def client(tmpdir, session):
-    app = HTTPConnection().create_app()
+def api_port(tmpdir, session):
+    return 12700
+
+@pytest.fixture
+def api_task(api_port, session):
+    session.config["http_api_host"] = '127.0.0.1'
+    session.config["http_api_port"] = api_port # Just a random port
+    return HTTPConnection(force_run=True)
+
+@pytest.fixture
+def client(tmpdir, api_task):
+    app = api_task.create_app()
     #db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
     app.config['TESTING'] = True
     #orig_cwd = os.getcwd()

@@ -1,5 +1,5 @@
 
-from flask import Blueprint, render_template, abort, request, jsonify, abort
+from flask import Blueprint, render_template, abort, request, jsonify, abort, current_app
 from .utils import parse_url_parameters
 
 # For system info
@@ -13,9 +13,21 @@ rest_api = Blueprint(
     __name__,
 )
 
+@rest_api.route('/config', methods=['GET'])
+def config():
+    session = current_app.config["ATLAS_SESSION"]
+    if request.method == "GET":
+        # Read parameters
+        if session.config.get("configs_private", True):
+            abort(403) # , "Configurations are inaccessible."
+        else:
+            return jsonify(session.config)
+    return ""
+
 @rest_api.route('/parameters', methods=['GET', "POST"])
 @rest_api.route('/parameters/<key>', methods=['PUT', "DELETE"])
 def parameters(key=None):
+    session = current_app.config["ATLAS_SESSION"]
     if request.method == "GET":
         # Read parameters
         data = session.parameters
@@ -45,6 +57,7 @@ def parameters(key=None):
 @rest_api.route('/tasks', methods=['GET', "POST"])
 @rest_api.route('/tasks/<name>', methods=['GET', "PATCH", "DELETE"])
 def tasks(name=None): 
+    session = current_app.config["ATLAS_SESSION"]
     if request.method == "GET":
         # Read
         is_collection = name is None
@@ -83,7 +96,7 @@ def tasks(name=None):
 @rest_api.route('/logs/<type_>/<logger>', methods=['GET'])
 def logs(type_="tasks", logger=None): 
     "Whole log. Name is the name of the logger (ie. atlas.task.maintain)"
-
+    session = current_app.config["ATLAS_SESSION"]
     # TODO: Querying
     # query and sort: http://localhost:5001/logs/tasks?sort=+task_name,-start
     # query range: http://localhost:5001/logs/tasks?min_start=2021-01-01&max_start=2021-01-02
@@ -121,6 +134,7 @@ def ping():
 def shut_down(): 
     "Shutdown scheduler"
     # TODO: Test
+    session = current_app.config["ATLAS_SESSION"]
     session.scheduler.shut_down()
     return ""
 
@@ -154,6 +168,7 @@ def info(name=None):
         }
 
     def get_scheduler_info():
+        session = current_app.config["ATLAS_SESSION"]
         return {
             "version": pkg_resources.get_distribution("atlas").version,
             "n_tasks": len(session.tasks),

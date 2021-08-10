@@ -48,12 +48,12 @@ class HTTPConnection(Task):
         self.delay = pd.Timedelta(delay).total_seconds()
 
     # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
-    def execute_action(self, http_api:dict):
+    def execute_action(self, access_token=None):
 
         # TODO: refetch the http_api parameters in while loop
-        host = http_api["host"]
-        port = http_api["port"]
-        access_token = http_api.get("access_token", None)
+        host = self.get_host()
+        port = self.get_port()
+        access_token = self.get_access_token(access_token)
         
         self.app = self.create_app(access_token=access_token)
         server = self.create_server(self.app, host, port)
@@ -70,11 +70,25 @@ class HTTPConnection(Task):
         # Note, this may take like 10 seconds
         server.shutdown()
         
+    def get_host(self) -> str:
+        "Get IP to host the app (by default uses localhost)"
+        return self.session.config.get("http_api_host", '127.0.0.1')
+
+    def get_port(self) -> int:
+        "Get port to host the app"
+        return self.session.config.get("http_api_port", 5000)
+
+    def get_access_token(self, access_token):
+        "Get access token for authentication (if None, no access tokens used)"
+        conf_access_token = self.session.config.get("http_api_access_token", None)
+        return conf_access_token if conf_access_token is not None else access_token
+
     def create_app(self, **kwargs):
         # https://stackoverflow.com/a/45017691/13696660
         app = Flask("atlas.api")
         app.register_blueprint(rest_api)
         app.json_encoder = AtlasJSONEncoder
+        app.config["ATLAS_SESSION"] = self.session
 
         app.before_request(check_route_access(app))
         self._set_config(app, **kwargs)

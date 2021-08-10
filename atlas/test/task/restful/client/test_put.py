@@ -5,7 +5,7 @@ import pytest
 
 from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
-from atlas import Scheduler, session
+from atlas import Scheduler
 from atlas.core import Parameters
 from atlas.conditions import IsParameter
 from atlas.parameters import Private
@@ -56,7 +56,7 @@ import pandas as pd
             id="JSON, other types"),
     ],
 )
-def test_parameters(client, existing, query_url, content, expected):
+def test_parameters(session, client, existing, query_url, content, expected):
     session.parameters.update(existing)
     assert Parameters(existing).to_dict() == session.parameters.to_dict()
     data = json.dumps(content)
@@ -66,7 +66,7 @@ def test_parameters(client, existing, query_url, content, expected):
     assert Parameters(expected).to_dict() == session.parameters.to_dict()
 
 
-def test_scheduler_shutdown(client, scheduler):
+def test_scheduler_shutdown(client, scheduler, session):
     assert session.scheduler.is_alive
 
     response = client.put("scheduler/shutdown")
