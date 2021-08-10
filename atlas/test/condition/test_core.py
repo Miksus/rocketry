@@ -11,20 +11,54 @@ def test_true():
 def test_false():
     assert not bool(false)
 
-def test_params(session):
+@pytest.mark.parametrize(
+    "params,make_cond,expected",
+    [
+        pytest.param(
+            {"mode": "test", "state": "right"},
+            lambda: ParamExists(mode="test", state="right"),
+            True, id="Dict, true"
+        ),
+        pytest.param(
+            {"mode": "test", "state": "right"},
+            lambda: ParamExists(mode="test", state="wrong"),
+            False, id="Dict, false (wrong value)"
+        ),
+        pytest.param(
+            {"mode": "test", "state": "right"},
+            lambda: ParamExists(mode="test", stuff="right"),
+            False, id="Dict, false (missing key)"
+        ),
+        pytest.param(
+            {"mode": "test", "state": "right"},
+            lambda: ParamExists("mode"),
+            True, id="Tuple, true"
+        ),
+        pytest.param(
+            {"mode": "test", "state": "right"},
+            lambda: ParamExists("stuff"),
+            False, id="Tuple, false (missing key)"
+        ),
+        pytest.param(
+            {"mode": "test", "feel": "good", "state": "right", "distance": "short", "world": "this"},
+            lambda: ParamExists("mode", "feel", state="right", distance="short"),
+            True, id="Multi, true"
+        ),
+        pytest.param(
+            {},
+            lambda: ParamExists("mode", "feel", state="right", distance="short"),
+            False, id="Multi, false (empty)"
+        ),
+    ]
+)
+def test_params(session, params, make_cond, expected):
     
-    cond = ParamExists(mode="test", state="right")
-
-    assert not bool(cond)
-    session.parameters["mode"] = "test"
-    
-    assert not bool(cond)
-    session.parameters["state"] = "wrong"
-
-    assert not bool(cond)
-    session.parameters["state"] = "right"
-
-    assert bool(cond)
+    session.parameters.update(params)
+    cond = make_cond()
+    if expected:
+        assert bool(cond)
+    else:
+        assert not bool(cond)
 
 def test_is_parameter(session):
     cond = IsParameter(x="yes", y="yes")

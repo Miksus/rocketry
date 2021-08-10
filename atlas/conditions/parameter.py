@@ -1,4 +1,5 @@
 
+from typing import Mapping
 from atlas.core.conditions import Statement, Historical, Comparable, BaseCondition
 
 
@@ -25,22 +26,39 @@ class IsParameter(BaseCondition):
             for key, val in self.params.items()
         ) 
 
-@Statement.from_func(use_globals=False)
-def ParamExists(**kwargs):
-    """Whether session has given parameter and value
-    
-    Example:
-    --------
-        is_test = ParamExists(mode="test")
-        session.parameters["mode"] = "test"
-        assert is_test
+class ParamExists(BaseCondition):
+    """Condition to check whether a parameter (and its value)
+    exists.
+
+    Examples:
+    ---------
+        >>> session.parameters = {"x": 1, "y": 2, "z": 3}
+
+        >>> ParamExists(x=1, y=2)
+        True
+        >>> ParamExists(x=1, z=-999)
+        False
+        >>> ParamExists("x", "y", "z")
+        True
+        >>> ParamExists("x", "y", "k")
+        False
     """
-    for key, val in kwargs.items():
-        try:
-            found_val = Statement.session.parameters[key]
-        except KeyError:
-            return False
-        else:
-            if val != found_val:
+    param_keys:dict
+    param_vals:tuple
+
+    def __init__(self, *param_keys, **param_vals):
+        self.param_keys = param_keys
+        self.param_values = param_vals
+    
+    def __bool__(self):
+        params = self.session.parameters
+        for key in self.param_keys:
+            if key not in params:
                 return False
-    return True
+        for key, val in self.param_values.items():
+            if key not in params:
+                return False
+            elif params[key] != val:
+                return False
+        # Passed all test
+        return True
