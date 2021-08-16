@@ -10,12 +10,19 @@ from dateutil.parser import parse as parse_datetime
 
 
 class MemoryHandler(Handler):
-    """[summary]
     """
-    # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
+    Logging handler for storing the records in memory.
+    """
+
     def __init__(self, store_as="record", **kwargs):
-        """
-        Open the specified file and use it as the stream for logging.
+        """Initialize the class
+
+        Parameters
+        ----------
+        store_as : str, optional
+            How the records are stored.
+            Options: [record, dict], 
+            by default "record"
         """
         super().__init__(**kwargs)
         self.records = []

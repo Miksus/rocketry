@@ -11,9 +11,12 @@ class AttributeFormatter(Formatter):
     handler to use.
     """
 
-    def __init__(self, *args, has_default=False, **kwargs):
+    def __init__(self, *args, has_default=False, include=None, exclude=None, attr_formats=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.has_default = has_default
+        self.include = include
+        self.exclude = exclude
+        self.attr_formats = attr_formats
 
     def format(self, record:LogRecord) -> LogRecord:
 
@@ -26,13 +29,32 @@ class AttributeFormatter(Formatter):
         self.set_traceback(record)
         self.set_formatted_message(record)
 
+        self.prune(record)
+        self.format_attrs(record)
         return record
+
+    def prune(self, record:LogRecord):
+        if self.include:
+            attrs = list(vars(record))
+            for attr in attrs:
+                if attr not in self.include:
+                    delattr(record, attr)
+        if self.exclude:
+            for attr in self.exclude:
+                if hasattr(record, attr):
+                    delattr(record, attr)
+
+    def format_attrs(self, record:LogRecord):
+        if self.attr_formats:
+            for attr, func in self.attr_formats.items():
+                if hasattr(record, attr):
+                    setattr(record, attr, func(getattr(record, attr)))
 
     def set_formatted_message(self, record:LogRecord):
         s = self.formatMessage(record)
         if hasattr(record, 'traceback') and record.traceback:
             s = self._add_new_line(s) + record.traceback
-        record.formatted_message = s
+        record.message = s
 
     def set_exc_text(self, record:LogRecord):
         if record.exc_info:

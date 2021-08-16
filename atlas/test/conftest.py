@@ -16,6 +16,19 @@ from atlas.core.task.base import Task
 import logging
 from importlib import reload
 
+# Utils
+def get_node_id(request):
+    components = request.node.nodeid.split("::")
+    filename = components[0]
+    test_class = components[1] if len(components) == 3 else None
+    test_func_with_params = components[-1]
+    test_func = test_func_with_params.split('[')[0]
+
+    filename = filename.replace(".py", "").replace("/", "-")
+    if test_class:
+        return f'{filename}-{test_class}-{test_func_with_params}'
+    else:
+        return f'{filename}-{test_func_with_params}'
 
 def pytest_sessionstart(session):
     """
@@ -121,3 +134,24 @@ def mock_pydatetime(mock_time, mock_datetime_now):
         mock_time(dt)
         mock_datetime_now(dt)
     return wrapper
+
+
+@pytest.fixture(scope="function")
+def collection(request):
+    pytest.importorskip("pymongo")
+    db_name = "pytest"
+    col_name = get_node_id(request)
+    
+    import pymongo
+    import yaml
+    with open("atlas/test/private.yaml", 'r') as f:
+        conf = yaml.load(f)
+    conn_str = conf["mongodb"]["conn_str"]
+    client = pymongo.MongoClient(conn_str)
+
+    collection = client[db_name][col_name]
+
+    # Empty the collection
+    collection.delete_many({})
+
+    yield collection

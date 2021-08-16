@@ -5,9 +5,10 @@ Test generic logging functionalities of the custom handlers
 
 import multiprocessing, queue, logging, csv
 from sys import exc_info
+import sys
 import pytest
 
-from atlas.log import QueueHandler, MemoryHandler, CsvHandler
+from atlas.log import QueueHandler, MemoryHandler, CsvHandler, MongoHandler
 
 class HandlerTestBase:
 
@@ -166,3 +167,67 @@ class TestQueueHandler(HandlerTestBase):
         assert "a fail log" == record.msg
         assert 1629113147 < record.created
         assert "ERROR" == record.levelname
+
+class TestMongoHandler(HandlerTestBase):
+
+#    @pytest.fixture(scope="function", autouse=True)
+#    def logger(self, request):
+#        name = __name__ + '.'.join(request.node.nodeid.split("::")[1:])
+#        logger = logging.getLogger(name)
+#        logger.setLevel(logging.INFO)
+#        yield logger
+#        logger.handlers = []
+
+    def setup_method(self, method):
+        """setup any state specific to the execution of the given class (which
+        usually contains tests).
+        """
+        pytest.importorskip("pymongo")
+
+    @pytest.fixture(scope="function")
+    def collection2(self):
+        
+        import pymongo
+        import yaml
+        with open("atlas/test/private.yaml", 'r') as f:
+            conf = yaml.load(f)
+        conn_str = conf["mongodb"]["conn_str"]
+        client = pymongo.MongoClient(conn_str)
+
+        collection = client["pytest"][type(self).__name__]
+
+        # Empty the collection
+        collection.delete_many({})
+
+        yield collection
+
+
+    @pytest.fixture(scope="function")
+    def handler(self, collection, logger):
+        handler = MongoHandler(collection)
+        logger.addHandler(handler)
+        return handler
+
+    def test_info(self, collection, handler, logger):
+
+        logger.info("a log")
+
+        record = collection.find_one()
+        assert "a log" == record["msg"]
+        assert 1629113147 < record["created"]
+        assert record["exc_text"] is None
+
+    def test_exception(self, collection, handler, logger):
+        try:
+            raise RuntimeError("Deliberate failure")
+        except RuntimeError as exc:
+            logger.exception("a fail log")
+        
+        record = collection.find_one()
+        assert record["exc_text"].startswith("Traceback (most recent call last):")
+        assert record["exc_text"].endswith("RuntimeError: Deliberate failure")
+
+        # Test other
+        assert "a fail log" == record["msg"]
+        assert 1629113147 < record["created"]
+        assert "ERROR" == record["levelname"]

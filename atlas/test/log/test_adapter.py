@@ -6,30 +6,14 @@ Test TaskAdapter as it is used in Atlas
 import pytest
 import logging, time
 import datetime
-from atlas.log import MemoryHandler, CsvHandler
+from pathlib import Path
+from atlas.log import MemoryHandler, CsvHandler, MongoHandler
+from atlas.log import AttributeFormatter
 from atlas.core.log import TaskAdapter
 
-@pytest.fixture(scope="function")
-def adapter(request):
-    name = __name__ + "." + '.'.join(request.node.nodeid.split("::")[1:])
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+class AdapterTestBase:
+    def test_get_records(self, handler, adapter):
 
-    task_logger = TaskAdapter(logger, task="mytask")
-    yield task_logger
-    task_logger.logger.handlers = []
-
-TEST_CASES = [
-    pytest.param(lambda: MemoryHandler(store_as="dict"), id="Memory"), 
-    pytest.param(lambda: CsvHandler("test_log.csv", fields=["created", "task_name", "action", "msg", "exc_text", "runtime", "start", "end"]), id="CSV"),
-]
-
-@pytest.mark.parametrize(
-    "cls", TEST_CASES
-)
-def test_get_records(cls, adapter, tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        handler = cls()
         adapter.logger.addHandler(handler)
 
         task_start = datetime.datetime(2021, 1, 1)
@@ -53,12 +37,7 @@ def test_get_records(cls, adapter, tmpdir):
         assert start <= record["timestamp"] <= end
         assert runtime == record["runtime"]
 
-@pytest.mark.parametrize(
-    "cls", TEST_CASES
-)
-def test_get_records_exc(cls, adapter, tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        handler = cls()
+    def test_get_records_exc(self, handler, adapter, tmpdir):
         adapter.logger.addHandler(handler)
 
         task_start = datetime.datetime(2021, 1, 1)
@@ -90,3 +69,36 @@ def test_get_records_exc(cls, adapter, tmpdir):
         # Test exception
         assert record["exc_text"].startswith("Traceback (most recent call last):")
         assert record["exc_text"].endswith("RuntimeError: Deliberate failure")
+
+    @pytest.fixture(scope="function")
+    def adapter(self, request):
+        name = __name__ + "." + '.'.join(request.node.nodeid.split("::")[1:])
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+
+        task_logger = TaskAdapter(logger, task="mytask")
+        yield task_logger
+        task_logger.logger.handlers = []
+
+class TestMemory(AdapterTestBase):
+
+    @pytest.fixture
+    def handler(self):
+        return MemoryHandler(store_as="dict")
+
+class TestCsv(AdapterTestBase):
+
+    @pytest.fixture
+    def handler(self, tmpdir):
+        path = Path(str(tmpdir)) / "test_log.csv"
+        filename = str(path)
+        return CsvHandler(filename, fields=["created", "task_name", "action", "msg", "exc_text", "runtime", "start", "end"])
+
+class TestMongo(AdapterTestBase):
+
+    @pytest.fixture
+    def handler(self, collection):
+        formatter = AttributeFormatter(attr_formats={"runtime": str})
+        handler = MongoHandler(collection)
+        handler.setFormatter(formatter)
+        return handler

@@ -12,21 +12,10 @@ from ..formatters import CsvFormatter
 
 
 class CsvHandler(FileHandler):
-    """[summary]
-
-    Usage:
-    ------
-        logging.basicConfig(level=logging.DEBUG)
-
-        logger = logging.getLogger(__name__)
-        logger.addHandler(
-            CsvHandler(
-                "log.csv", 
-                headers=["time", "level", "message"],
-                fields=["asctime", "levelname", "msg"], 
-                kwds_csv=dict(delimiter=";")
-            )
-        )
+    """
+    Logging handler for storing the log records to a CSV
+    file. The attributes of the LogRecord represent the
+    cells in the CSV file.
     """
     default_formatter = CsvFormatter()
 

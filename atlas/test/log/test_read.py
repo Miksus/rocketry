@@ -3,28 +3,15 @@
 Test Atlas specific reading functionality of the handlers
 """
 
+from _pytest.fixtures import fixture
 import pytest
 import logging, time
 import datetime
-from atlas.log import MemoryHandler, CsvHandler
+from pathlib import Path
+from atlas.log import MemoryHandler, CsvHandler, MongoHandler
 
-@pytest.fixture(scope="function")
-def logger(request):
-    name = __name__ + "." + '.'.join(request.node.nodeid.split("::")[1:])
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    yield logger
-    logger.handlers = []
-
-@pytest.mark.parametrize(
-    "cls", [
-        pytest.param(lambda: MemoryHandler(store_as="dict"), id="Memory"), 
-        pytest.param(lambda: CsvHandler("test_log.csv", fields=["created", "task_name", "action", "msg", "exc_text"]), id="CSV"),
-    ]
-)
-def test_read(cls, logger, tmpdir):
-    with tmpdir.as_cwd() as old_dir:
-        handler = cls()
+class ReadTestBase:
+    def test_read(self, logger, handler, tmpdir):
         logger.addHandler(handler)
 
         epoch_start = time.time()
@@ -38,3 +25,30 @@ def test_read(cls, logger, tmpdir):
         assert "mytask" == record["task_name"]
         assert "a log" == record["msg"]
         assert epoch_start <= float(record["created"]) <= epoch_end
+
+    @pytest.fixture(scope="function")
+    def logger(self, request):
+        name = __name__ + "." + '.'.join(request.node.nodeid.split("::")[1:])
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+        yield logger
+        logger.handlers = []
+
+class TestMemory(ReadTestBase):
+
+    @pytest.fixture
+    def handler(self):
+        return MemoryHandler(store_as="dict")
+
+class TestCsv(ReadTestBase):
+
+    @pytest.fixture
+    def handler(self, tmpdir):
+        path = Path(str(tmpdir)) / "test_log.csv"
+        return CsvHandler(str(path), fields=["created", "task_name", "action", "msg", "exc_text"], delay=True)
+
+class TestMongo(ReadTestBase):
+
+    @pytest.fixture
+    def handler(self, collection):
+        return MongoHandler(collection)
