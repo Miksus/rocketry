@@ -1,5 +1,5 @@
 from atlas.conditions import (
-    true, false, ParamExists, IsParameter
+    true, false, ParamExists,
 )
 from atlas.core.conditions import Statement, Comparable, Historical
 
@@ -60,8 +60,8 @@ def test_params(session, params, make_cond, expected):
     else:
         assert not bool(cond)
 
-def test_is_parameter(session):
-    cond = IsParameter(x="yes", y="yes")
+def test_parameter_exists(session):
+    cond = ParamExists(x="yes", y="yes")
     assert not bool(cond)
 
     session.parameters["x"] = "yes"

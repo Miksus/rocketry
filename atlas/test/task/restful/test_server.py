@@ -6,7 +6,6 @@ import pytest
 
 from atlas.task.api.http import HTTPConnection
 from atlas.task import FuncTask
-from atlas.conditions import IsParameter
 from atlas.parameters import Parameters, Private
 
 from threading import Thread
