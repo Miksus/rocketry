@@ -54,7 +54,7 @@ def test_task_execution(tmpdir, execution, session):
         # actual measurable impact outside atlas
         FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="add line to file") >= 3,
+            shut_condition=(TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second")),
         )
 
         scheduler()
@@ -238,6 +238,7 @@ def test_priority(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_pass_params_as_global(tmpdir, execution, session):
+    # thread-Parameters has been observed to fail rarely
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution)
