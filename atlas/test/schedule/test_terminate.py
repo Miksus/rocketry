@@ -28,12 +28,20 @@ def run_slow_threaded(_thread_terminate_):
         with open("work.txt", "a") as file:
             file.write("line created\n")
 
+def get_slow_func(execution):
+    return {
+        "process": run_slow,
+        # Thread tasks are terminated inside the task (the task should respect _thread_terminate_)
+        "thread": run_slow_threaded,
+    }[execution]
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
 def test_without_timeout(tmpdir, execution, session):
+    """Test the task.timeout is respected overt scheduler.timeout"""
+    # TODO: There is probably better ways to test this
     with tmpdir.as_cwd() as old_dir:
 
-        func_run_slow = run_slow if execution == "process" else run_slow_threaded
+        func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
 
         scheduler = Scheduler(
@@ -54,9 +62,11 @@ def test_without_timeout(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
 def test_task_timeout(tmpdir, execution, session):
+    """Test task termination due to the task ran too long"""
     with tmpdir.as_cwd() as old_dir:
 
-        func_run_slow = run_slow if execution == "process" else run_slow_threaded
+        func_run_slow = get_slow_func(execution)
+
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
@@ -75,13 +85,14 @@ def test_task_timeout(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
 def test_task_terminate(tmpdir, execution, session):
+    """Test task termination due to the task was terminated by another task"""
 
     def terminate_task(_scheduler_):
         _scheduler_.tasks[0].force_termination = True
 
     with tmpdir.as_cwd() as old_dir:
 
-        func_run_slow = run_slow if execution == "process" else run_slow_threaded
+        func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main")
