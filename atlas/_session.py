@@ -16,7 +16,7 @@ from atlas.core import Scheduler, Task, BaseCondition, Parameters
 from atlas.core import conditions
 
 from atlas.log import CsvHandler, CsvFormatter
-from atlas.config import get_default
+from atlas.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
 import atlas
 
 _BASE_CONDITIONS = {cls.__name__: cls for cls in (conditions.All, conditions.Any, conditions.AlwaysTrue, conditions.AlwaysFalse)}
@@ -44,8 +44,8 @@ class Session:
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
         "on_task_pre_exists": "raise", # What to do if a task name is already taken
         "force_status_from_logs": False, # Force to check status from logs every time (slow but robust)
-        "task_logger_basename": "atlas.task",
-        "scheduler_logger_basename": "atlas.scheduler",
+        "task_logger_basename": DEFAULT_BASENAME_TASKS,
+        "scheduler_logger_basename": DEFAULT_BASENAME_SCHEDULER,
 
         "session_store_cond_cls": True,
         "session_store_task_cls": True,
