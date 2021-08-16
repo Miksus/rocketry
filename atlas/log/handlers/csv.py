@@ -3,80 +3,13 @@ import logging
 import csv
 import io
 import os
-from logging import Formatter, FileHandler
+from logging import Formatter, FileHandler, Handler, LogRecord
 from pathlib import Path
 from typing import List, Dict
 from dateutil.parser import parse as parse_datetime
 
+from ..formatters import CsvFormatter
 
-class CsvFormatter(Formatter):
-    # https://stackoverflow.com/a/19766056
-    """
-    Format the output as row in csv file
-    """
-    fields = [
-        "levelname",
-        "asctime",
-        "msg",
-    ]
-    
-    
-    def __init__(self, fields=None, **kwargs):
-        super().__init__()
-        self._output = io.StringIO()
-        self.csv_kwargs = kwargs
-        self.fields = fields if fields is not None else self.fields
-
-    def format(self, record):
-        # Copied from: https://github.com/python/cpython/blob/master/Lib/logging/__init__.py#L674
-        record.message = super().format(record)
-        self.add_extra(record)
-        row = self.get_row(record)
-        self._rec = record
-
-        return self.to_row(row)
-
-    def usesTime(self):
-        return "asctime" in self.fields
-    
-    def add_extra(self, record):
-        # Copied from https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L646
-        if self.usesTime():
-            record.asctime = self.formatTime(record, self.datefmt)
-        if record.exc_info:
-            # Cache the traceback text to avoid converting it multiple times
-            # (it's constant anyway)
-            if not record.exc_text:
-                record.exc_text = self.formatException(record.exc_info)
-    
-    def get_row(self, record):
-        basic = record.__dict__
-        extra = record.args
-        if not isinstance(extra, dict):
-            extra = {}
-        return [extra.get(field, basic.get(field, "")) for field in self.fields]
-    
-    def to_row(self, row):
-        
-        self.writer.writerow(row)
-        data = self._output.getvalue()
-        
-        # Flush and reset
-        self._output.truncate(0)
-        self._output.seek(0)
-        return data.strip()
-    
-    @property
-    def writer(self):
-        # We create csv writer lazily as
-        # pickling is not possible with
-        # csv writer. Lazy creation allows
-        # to pass this to multiprocess etc.
-        # after initiation (but before using)
-        if not hasattr(self, "_writer"):
-            self._writer = csv.writer(self._output, quoting=csv.QUOTE_ALL, **self.csv_kwargs)
-        return self._writer
-        
 
 class CsvHandler(FileHandler):
     """[summary]
@@ -95,8 +28,10 @@ class CsvHandler(FileHandler):
             )
         )
     """
+    default_formatter = CsvFormatter()
+
     # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
-    def __init__(self, filename, *args, delay=True, headers=None, kwds_csv=None, make_dir=False, **kwargs):
+    def __init__(self, filename, *args, delay=True, fields=None, headers=None, kwds_csv=None, make_dir=False, **kwargs):
         """
         Open the specified file and use it as the stream for logging.
         """
@@ -106,6 +41,9 @@ class CsvHandler(FileHandler):
             self.create_dir()
 
         super().__init__(filename, *args, delay=delay, **kwargs)
+        if not self.formatter:
+            # Formatter was not passed with __init__, we set default
+            self.formatter = CsvFormatter(fields=fields)
         
         kwds_csv = kwds_csv or {}
         
@@ -160,7 +98,7 @@ class CsvHandler(FileHandler):
                 
 # Extras
     def read(self, **kwargs) -> List[Dict]:
-        "Read the log file as pandas dataframe"
+        "Read the log file"
         # We return generator to be more performant
         if not Path(self.baseFilename).exists():
             return []

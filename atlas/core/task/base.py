@@ -1,10 +1,10 @@
 
-from attr import has
 from atlas.core.conditions import AlwaysTrue, AlwaysFalse, All
 from atlas.core.log import TaskAdapter
 from atlas.core.conditions import set_statement_defaults, BaseCondition
 from atlas.core.utils import is_pickleable
 from atlas.core.exceptions import SchedulerRestart, TaskInactionException, TaskTerminationException
+from atlas.log import QueueHandler
 
 from .utils import get_execution, get_dependencies
 
@@ -426,9 +426,8 @@ class Task(metaclass=_TaskMeta):
         # records end up in the main process to be logged properly. 
 
         basename = self.session.config["task_logger_basename"]
-        handler = logging.handlers.QueueHandler(queue)
-
-        # TODO: Put the original formatter to the handler
+        # handler = logging.handlers.QueueHandler(queue)
+        handler = QueueHandler(queue)
 
         # Set the process logger
         logger = logging.getLogger(basename + "._process")
