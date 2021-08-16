@@ -136,7 +136,7 @@ class RecordFormatter:
         elif "created" in record:
             # record.create is in every LogRecord (but not necessarily end up to handler msg)
             created = record["created"]
-            timestamp = datetime.datetime.fromtimestamp(created)
+            timestamp = datetime.datetime.fromtimestamp(float(created))
         elif "asctime" in record:
             # asctime is most likely in handler message when formatted
             asctime = record["asctime"]
