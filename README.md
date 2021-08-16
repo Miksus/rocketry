@@ -16,8 +16,8 @@
 
 - Clone the source code and pip install:
 ```shell
-git clone https://github.com/Miksus/atlas.git
-cd atlas
+git clone https://github.com/Miksus/powerbase.git
+cd powerbase
 pip install -e .
 ```
 

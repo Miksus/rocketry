@@ -9,7 +9,7 @@ pytest = ">=5.0.1"
 psutil = ">=5.7.0"
 pyyaml = "*"
 pybox = {ref = "master", git = "https://github.com/Miksus/pybox.git"}
-atlas = {ref = "master", git = "https://github.com/Miksus/atlas.git"}
+powerbase = {ref = "master", git = "https://github.com/Miksus/powerbase.git"}
 
 [dev-packages]
 

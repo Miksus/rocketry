@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-    name="atlas",
+    name="powerbase",
     version="0.1.0",
     author="Mikael Koli",
     author_email="koli.mikael@gmail.com",
