@@ -26,6 +26,7 @@ import pandas as pd
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
+    # RACE CONDITION: 2021-08-16 Success-thread has been observed failing rarely (assert 3 == len(success) --> len(success) = 4)
     with tmpdir.as_cwd() as old_dir:
 
         task = PyScript(

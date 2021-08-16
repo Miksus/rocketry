@@ -105,7 +105,7 @@ def test_task_status_race(tmpdir, session, execution_number):
     ],
 )
 def test_task_status(tmpdir, session, cls, succeeding, expected):
-    # Going to tempdir to dump the log files there
+    # RACE CONDITION 2021-08-16: 'TaskFailed Failure' failed due to assert bool(condition) if expected else not bool(condition)
 
     with tmpdir.as_cwd() as old_dir:
         condition = cls(task="runned task")
