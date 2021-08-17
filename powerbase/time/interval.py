@@ -62,10 +62,10 @@ class TimeOfHour(AnchoredInterval):
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
             return to_nanoseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
 
-        res = re.search(r"(?P<n>[1-4] ?(quarter|q))", value, flags=re.IGNORECASE)
+        res = re.search(r"(?P<n>[1-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
         if res:
             # ie. "1 quarter"
-            n_quarters = res["n"]
+            n_quarters = int(res["n"])
             return self._scope_max / 4 * n_quarters
 
 
@@ -110,7 +110,7 @@ class TimeOfWeek(AnchoredInterval):
         TimeOfWeek("Mon 15:00", "Wed 16:00")
     """
     _scope = "week"
-    _scope_max = to_nanoseconds(day=1) * 7
+    _scope_max = to_nanoseconds(day=8) - 1 # Sun day end of day 
 
     weeknum_mapping = {
         **dict(zip(calendar.day_name, range(7))), 
@@ -144,7 +144,7 @@ class TimeOfWeek(AnchoredInterval):
             if key in ("hour", "minute", "second", "microsecond", "nanosecond")
         }
         dayofweek = dt.weekday()
-        return to_nanoseconds(**d) + dayofweek * 8.64e+13
+        return to_nanoseconds(**d) + dayofweek * to_nanoseconds(day=1)
 
 
 class TimeOfMonth(AnchoredInterval):
@@ -162,11 +162,11 @@ class TimeOfMonth(AnchoredInterval):
     #   rollforward/rollback/contains would need slight changes 
 
     _scope = "year"
-    _scope_max = to_nanoseconds(day=1) * 31 # Note, this is only absolute maximum but not applicable for every month
+    _scope_max = to_nanoseconds(day=32) - 1 # 31st end of day
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 
-    def anchor_str(self, s, **kwargs):
+    def anchor_str(self, s, side=None, **kwargs):
         # Allowed:
         #   "5th", "1st", "5", "3rd 12:30:00"
         #   TODO: "first 5th", "last 5th", "last 3rd 10:00:00"
@@ -177,9 +177,21 @@ class TimeOfMonth(AnchoredInterval):
         nth_day = int(dayofmonth)
 
         # TODO: TimeOfDay.anchor_str as function
-        nanoseconds = DayMixin().anchor_str(time) if time else 0
+        ceil_time = not time and side == "end"
+        if ceil_time:
+            # If time is not defined and the end
+            # is being anchored, the time is ceiled.
 
-        return DayMixin._scope_max * nth_day + nanoseconds
+            # If one says 'thing X was organized between 
+            # 15th and 17th of July', the sentence
+            # includes 17th till midnight.
+            nanoseconds = TimeOfDay._scope_max - 1 
+        elif time:
+            nanoseconds = TimeOfDay().anchor_str(time) 
+        else:
+            nanoseconds = 0
+
+        return TimeOfDay._scope_max * nth_day + nanoseconds
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
@@ -223,7 +235,7 @@ class TimeOfYear(AnchoredInterval):
     }
     # NOTE: Floating
 
-    def anchor_str(self, s, **kwargs):
+    def anchor_str(self, s, side=None, **kwargs):
         # Allowed:
         #   "January", "Dec", "12", "Dec last 5th 10:00:00"
         res = re.search(r"(?P<monthofyear>[a-z]+) ?(?P<month>.*)", s, flags=re.IGNORECASE)
@@ -233,21 +245,34 @@ class TimeOfYear(AnchoredInterval):
         nth_month = self.monthnum_mapping[monthofyear]
 
         # TODO: TimeOfDay.anchor_str as function
-        nanoseconds = MonthMixin().anchor_str(month_str) if month_str else 0
+        # nanoseconds = TimeOfMonth().anchor_str(month_str) if month_str else 0
 
-        return MonthMixin._scope_max * (nth_month * TimeOfMonth.days_in_month) + nanoseconds
+        ceil_time = not month_str and side == "end"
+        if ceil_time:
+            # If time is not defined and the end
+            # is being anchored, the time is ceiled.
+
+            # If one says 'thing X was organized between 
+            # 15th and 17th of July', the sentence
+            # includes 17th till midnight.
+            nanoseconds = TimeOfMonth._scope_max - 1 
+        elif month_str:
+            nanoseconds = TimeOfMonth().anchor_str(month_str) 
+        else:
+            nanoseconds = 0
+
+        return nth_month * TimeOfMonth._scope_max + nanoseconds
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
-        days_in_month = 31
-        d = to_dict(dt)
+        dt_dict = to_dict(dt)
         d = {
             key: val
-            for key, val in d.items()
+            for key, val in dt_dict.items()
             if key in ("day", "hour", "minute", "second", "microsecond", "nanosecond")
         }
-
-        return to_nanoseconds(**d) + d["month"] * 8.64e+13 * days_in_month
+        nth_month = dt_dict["month"] - 1
+        return to_nanoseconds(**d) + nth_month * TimeOfMonth._scope_max
 
 
 class RelativeDay(TimeInterval):
