@@ -37,7 +37,7 @@ class Session:
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
-        "on_task_pre_exists": "raise", # What to do if a task name is already taken
+        "task_pre_exist": "raise", # What to do if a task name is already taken
         "force_status_from_logs": False, # Force to check status from logs every time (slow but robust)
         "task_logger_basename": DEFAULT_BASENAME_TASKS,
         "scheduler_logger_basename": DEFAULT_BASENAME_SCHEDULER,

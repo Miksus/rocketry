@@ -524,7 +524,7 @@ class Task(metaclass=_TaskMeta):
             return
         
         if name in self.session.tasks:
-            on_exists = self.session.config["on_task_pre_exists"]
+            on_exists = self.session.config["task_pre_exist"]
             if on_exists == "replace":
                 self.session.tasks[name] = self
             elif on_exists == "raise":
