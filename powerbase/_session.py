@@ -6,7 +6,7 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Union
 from pathlib import Path
 from itertools import chain
 import pandas as pd
@@ -25,12 +25,7 @@ class Session:
     """Collection of the relevant data and methods
     of the powerbase ecosystem. 
 
-    Returns:
-        [type]: [description]
     """
-    # TODO:
-    #   .reset() Put logger to default, clear Parameters, Schedulers and Tasks
-    #   .
 
     tasks: dict
     config: dict
@@ -52,11 +47,15 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, logging_scheme:str=None):
+    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, scheme:Union[str,list]=None):
         # Set defaults
         config = {} if config is None else config
         tasks = {} if tasks is None else tasks
-        parameters = Parameters() if parameters is None else parameters
+        parameters = (
+            Parameters() if parameters is None 
+            else Parameters(parameters) if not isinstance(parameters, Parameters)
+            else parameters
+        )
 
         # Set attrs
         self.config = self.default_config.copy()
@@ -69,15 +68,24 @@ class Session:
         self.task_cls = self.task_cls.copy()
 
         self.scheduler = None
-        if logging_scheme is not None:
-            self.set_logging_scheme(logging_scheme)
+        if scheme is not None:
+            is_list_of_schemes = not isinstance(scheme, str)
+            if is_list_of_schemes:
+                for sch in scheme:
+                    self.set_scheme(sch)
+            else:
+                self.set_scheme(scheme)
 
-    def set_logging_scheme(self, scheme:str):
+    def set_scheme(self, scheme:str):
         scheduler_basename = self.config["scheduler_logger_basename"]
         task_basename = self.config["task_logger_basename"]
         get_default(scheme, scheduler_basename=scheduler_basename, task_basename=task_basename)
 
     def start(self):
+        """Start the scheduling session.
+
+        Will block and wait till the scheduler finishes 
+        (if has shutdown condition)"""
         self.scheduler()
 
     def get_tasks(self) -> list:
