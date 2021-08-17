@@ -60,7 +60,7 @@ def script_files(tmpdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def session():
-    session = Session(logging_scheme="memory_logging", config={"debug": True})
+    session = Session(scheme="memory_logging", config={"debug": True})
     powerbase.session = session
     session.set_as_default()
     return session

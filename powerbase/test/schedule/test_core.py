@@ -94,7 +94,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     with tmpdir.as_cwd() as old_dir:
 
         # Set session (and logging)
-        session = Session(logging_scheme=logging_scheme, config={"debug": True})
+        session = Session(scheme=logging_scheme, config={"debug": True})
         powerbase.session = session
         session.set_as_default()
 
