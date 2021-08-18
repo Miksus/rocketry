@@ -65,7 +65,7 @@ def setup_task_state(tmpdir, mock_datetime_now, logs:List[Tuple[str, str]], time
             record = logging.LogRecord(
                 # The content here should not matter for task status
                 name='powerbase.core.task.base', level=logging.INFO, lineno=1, 
-                pathname='d:\\Projects\\powerbase\\powerbase\\core\\task\\base.py',
+                pathname='powerbase\\powerbase\\core\\task\\base.py',
                 msg="Logging of 'task'", args=(), exc_info=None,
             )
 

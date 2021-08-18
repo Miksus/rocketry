@@ -57,21 +57,6 @@ def test_task_status_race(tmpdir, session, execution_number):
 
     # Imitating the __bool__
     assert condition.observe(task=task)
-    return
-
-    t = time.time()
-    now = condition.observe()
-    interv = task.period.rollback(now)
-    _start_, _end_ = interv.left, interv.right
-
-    records = task.logger.get_records(timestamp=(_start_, _end_), action=["success", "fail", "terminate"])
-    records = [record["timestamp"] for record in records]
-    try:
-        assert bool(records)
-    except:
-        timestamp = [r['timestamp'] for r in list(task.logger.get_records())][-1]
-        print(f"Now: {now}\nStart: {_start_}\nEnd: {_end_}\nAll records: {timestamp}")
-        raise
 
 @pytest.mark.parametrize(
     "cls,succeeding,expected",
