@@ -57,26 +57,26 @@ class YAMLFinder(Task):
     def get_default_name(self):
         return type(self).__name__
 
-    def execute_action(self, _scheduler_, env):
+    def execute_action(self):
         if self.execution == "main":
-            self.find_tasks(env)
+            self.find_tasks()
         else:
             while not self.thread_terminate.is_set():
-                self.find_tasks(env)
+                self.find_tasks()
                 time.sleep(self.delay)
 
-    def find_tasks(self, env):
+    def find_tasks(self):
         tasks = []
         task_names = []
         e = None
         for conf_path in Path(self.path).glob(self.glob):
             self.parse_file(conf_path)
-        LOGGER.info(f"Found tasks: {task_names}")
+        # LOGGER.info(f"Found tasks: {task_names}")
 
         deleted_tasks = [old for old in self._task_names_old if old not in task_names]
         for del_task in deleted_tasks:
             try:
-                del session.tasks[del_task]
+                del self.session.tasks[del_task]
             except KeyError:
                 pass
         
