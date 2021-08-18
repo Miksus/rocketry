@@ -17,7 +17,7 @@ import logging
 import inspect
 import warnings
 import datetime
-from typing import List, Dict, Union, Tuple
+from typing import Callable, List, Dict, Union, Tuple, Type, Optional
 import multiprocessing
 import threading
 from queue import Empty
@@ -122,27 +122,51 @@ class Task(metaclass=_TaskMeta):
 
 
     """
-    use_instance_naming = False
-    permanent_task = False # Whether the task is not meant to finish (Ie. RestAPI)
-    _actions = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
 
-    # For multiprocessing (if None, uses scheduler's default)
-    daemon: bool = None
+    # Class
+    use_instance_naming: bool = False
+    permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
+    _actions: Tuple = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
 
+    
+    daemon: Optional[bool]
+
+    session: 'Session' = None
+
+    # Instance
+    name: str
+    logger: TaskAdapter
+    execution: str
+    priority: int
     disabled: bool
     force_run: bool
-    name: str
-    priority: int
+    force_termination: bool
+    status: str
+    timeout: pd.Timedelta
 
-    session = None
-    # TODO:
-    #   remove "run_cond"
+    parameters: Parameters
+    dependent: List['Task']
+
+    start_cond: BaseCondition
+    run_cond: BaseCondition
+    end_cond: BaseCondition
+    
+    on_success: Callable
+    on_failure: Callable
+    on_finish: Callable
+
+    on_startup: Callable
+    on_shutdown: Callable
+
+    last_run: Optional[datetime.datetime]
+    last_success: Optional[datetime.datetime]
+    last_fail: Optional[datetime.datetime]
 
     def __init__(self, parameters=None, session=None,
                 start_cond=None, run_cond=None, end_cond=None, 
                 dependent=None, timeout=None, priority=1, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, logger=None, 
+                name=None, logger=None, daemon=None,
                 execution="process", disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False):
         """[summary]
@@ -159,7 +183,7 @@ class Task(metaclass=_TaskMeta):
 
             on_exists ([str]) -- What to do if task (with same name) has already been created. (Options: 'raise', 'ignore', 'replace')
         """
-        self.session = self.session or session
+        self.session = self.session if session is None else session
 
         self.name = name
         self.logger = logger
@@ -180,6 +204,8 @@ class Task(metaclass=_TaskMeta):
         self.priority = priority
 
         self.execution = execution
+        self.daemon = daemon
+
         self.on_startup = on_startup
         self.on_shutdown = on_shutdown
 
@@ -202,6 +228,11 @@ class Task(metaclass=_TaskMeta):
         self.is_maintenance = False
 
         self._set_default_task()
+
+        # Caches
+        self._last_success = self._get_last_action_from_log("success")
+        self._last_fail = self._get_last_action_from_log("fail")
+        self._last_run = self._get_last_action_from_log("run")
 
     @property
     def start_cond(self):
@@ -385,7 +416,7 @@ class Task(metaclass=_TaskMeta):
 
         event_is_running = threading.Event()
         self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
-        self.start_time = datetime.datetime.now() # Needed for termination
+        self._last_run = datetime.datetime.now() # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
@@ -406,7 +437,7 @@ class Task(metaclass=_TaskMeta):
             log_queue = multiprocessing.Queue(-1)
         daemon = self.daemon if self.daemon is not None else daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
-        self.start_time = datetime.datetime.now() # Needed for termination
+        self._last_run = datetime.datetime.now() # Needed for termination
         self._process.start()
         
         self._lock_to_run_log(log_queue)
@@ -656,9 +687,9 @@ class Task(metaclass=_TaskMeta):
             now = datetime.datetime.now()
             if action == "run":
                 extra = {"action": "run", "start": now}
-                self.start_time = now
+                # self._last_run = now
             else:
-                start_time = self.start_time if hasattr(self, "start_time") else None
+                start_time = self._last_run
                 runtime = now - start_time if start_time is not None else None
                 extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
             
@@ -667,8 +698,43 @@ class Task(metaclass=_TaskMeta):
                 message, 
                 extra=extra
             )
+            cache_attr = f"_last_{action}"
+            setattr(self, cache_attr, now)
         self._status = action
-            
+
+    @property
+    def last_success(self):
+        return self._get_last_action("success")
+
+    @property
+    def last_fail(self):
+        return self._get_last_action("fail")
+
+    @property
+    def last_run(self):
+        return self._get_last_action("run")
+
+    def _get_last_action(self, action):
+        cache_attr = f"_last_{action}"
+
+        allow_cache = not self.session.config["force_status_from_logs"]
+        if allow_cache: #  and getattr(self, cache_attr) is not None
+            return getattr(self, cache_attr)
+        else:
+            return self._get_last_action_from_log(action)
+
+    def _get_last_action_from_log(self, action):
+        """Get last action timestamp from log"""
+        try:
+            record = self.logger.get_latest(action=action)
+        except AttributeError:
+            warnings.warn(f"Task '{self.name}' logger is not readable. Latest {action} unknown.")
+            return None
+        else:
+            if not record:
+                return None
+            timestamp = record["timestamp"]
+            return timestamp
 
     def get_history(self) -> List[Dict]:
         records = self.logger.get_records()

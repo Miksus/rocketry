@@ -253,7 +253,7 @@ class Scheduler:
         
         if timeout is None:
             return False
-        run_duration = datetime.datetime.now() - task.start_time
+        run_duration = datetime.datetime.now() - task.last_run
         return run_duration > timeout
 
     def is_task_runnable(self, task):

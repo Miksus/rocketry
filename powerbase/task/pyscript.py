@@ -1,4 +1,5 @@
 
+from typing import List, Optional, Union
 from powerbase.core.task import Task, register_task_cls
 
 from pathlib import Path
@@ -17,6 +18,10 @@ class PyScript(Task):
     PyScript("folder/subfolder/main.py")
     PyScript("folder/subfolder/mytask.py")
     """
+
+    path: Union[str, Path]
+    func: Optional[str]
+    sys_paths: List[str]
 
     # TODO: support to run the file by only importing it
     # ie PyScript(path="mytask.py", as_main=True)

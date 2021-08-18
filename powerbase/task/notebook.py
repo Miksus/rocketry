@@ -1,3 +1,4 @@
+from typing import Union
 from powerbase.core.task import Task, register_task_cls
 #from .config import parse_config
 
@@ -20,6 +21,7 @@ class JupyterTask(Task):
     """
 
     parameter_tag = "parameter"
+    path: Union[str, Path]
 
     def __init__(self, path, on_preprocess=None, param_names=None, clear_outputs=True, **kwargs):
         self.path = path
