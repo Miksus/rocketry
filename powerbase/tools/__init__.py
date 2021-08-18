@@ -1,2 +1,1 @@
-
-#from .command import parse_sentence
+from .sequence import Sequence
