@@ -87,6 +87,12 @@ class TaskAdapter(logging.LoggerAdapter):
     def addHandler(self, *args, **kwargs):
         return self.logger.addHandler(*args, **kwargs)
 
+    def __eq__(self, o: object) -> bool:
+        is_same_type = type(self) == type(o)
+        has_same_logger = self.logger == o.logger
+        has_same_name = self.name == o.name
+        return is_same_type and has_same_logger and has_same_name
+
 class TaskFilter(logging.Filter):
     """Filter only task related so one logger can be
     used with scheduler and tasks"""

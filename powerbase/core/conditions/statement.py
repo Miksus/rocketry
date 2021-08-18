@@ -297,7 +297,7 @@ class Historical(Statement):
 
     def __eq__(self, other):
         # self == other
-        is_same_class = isinstance(other, Historical)
+        is_same_class = isinstance(other, type(self))
         if is_same_class:
             # Not storing as parameter to statement but
             # check whether the statements are same
