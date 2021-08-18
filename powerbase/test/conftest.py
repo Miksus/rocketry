@@ -16,6 +16,9 @@ from powerbase.core.task.base import Task
 import logging
 from importlib import reload
 
+# add helpers to path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
+
 # Utils
 def get_node_id(request):
     components = request.node.nodeid.split("::")
