@@ -3,14 +3,16 @@
 
 import re
 from typing import Callable
-from ..utils import Parser, ParserError
 
 # TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
 
 
-CONDITION_PARSERS = []
 
-def add_condition_parser(s:str, func:Callable, regex:bool=True):
+from ..utils import Parser, ParserError
+
+TIME_PARSERS = []
+
+def add_time_parser(s:str, func:Callable, regex:bool=True):
     """Add a parsing instruction to be used for parsing a 
     string to condition.
 
@@ -27,11 +29,11 @@ def add_condition_parser(s:str, func:Callable, regex:bool=True):
         by default True
     """
     sentence = Parser(s, func, regex=regex)
-    CONDITION_PARSERS.append(sentence)
+    TIME_PARSERS.append(sentence)
 
-def parse_condition_item(s:str):
+def parse_time_item(s:str):
     "Parse one condition"
-    for parser in CONDITION_PARSERS:
+    for parser in TIME_PARSERS:
         try:
             return parser(s)
         except ParserError:
