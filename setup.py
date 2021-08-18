@@ -1,12 +1,13 @@
 from setuptools import setup, find_packages
-
+import versioneer
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
     name="powerbase",
-    version="0.1.0",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author="Mikael Koli",
     author_email="koli.mikael@gmail.com",
     packages=find_packages(),
