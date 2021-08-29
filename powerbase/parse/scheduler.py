@@ -1,6 +1,6 @@
 
 from .utils import ParserPicker, DictInstanceParser
-from .misc import parse_tasks
+from .task import parse_tasks
 
 from powerbase.core.parameters import Parameters
 from powerbase.core import Scheduler
