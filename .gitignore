@@ -46,3 +46,6 @@ proto/
 
 # Private configurations
 private.yaml
+
+# Some other random stuff
+bash.exe.stackdump
