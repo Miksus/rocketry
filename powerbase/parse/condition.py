@@ -4,7 +4,7 @@ from ._condition import parse_condition_string
 
 from .utils import ParserPicker, DictInstanceParser
 
-def _parse_condition_string(s:str):
+def _parse_condition_string(s:str, **kwargs):
     cond = parse_condition_string(s)
     cond._str = s
     return cond

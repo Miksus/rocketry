@@ -67,5 +67,5 @@ def _rename_basenames(loggers:dict, task_basename, scheduler_basename):
             continue
         loggers[new_key] = loggers.pop(key)
 
-def parse_dict(conf:dict):
-    return parse_session(conf)
+def parse_dict(conf:dict, **kwargs):
+    return parse_session(conf, **kwargs)

@@ -9,35 +9,6 @@ from .utils import ParserPicker, DictInstanceParser
 
 from logging.config import dictConfig
 
-def parse_tasks(conf, resources=None, **kwargs) -> list:
-    if conf is None:
-        return []
-
-    if isinstance(conf, dict):
-        tasks = []
-        for name, task_conf in conf.items():
-            task_conf["name"] = name
-            tasks.append(parse_task(task_conf))
-        return tasks
-
-    elif isinstance(conf, list):
-        tasks = []
-        strategies = resources.get("strategies", []) if resources is not None else []
-        sequences = resources.get("sequences", []) if resources is not None else []
-        for task_conf in conf:
-            if task_conf in strategies:
-                tasks += parse_tasks(strategies[task_conf]())
-            elif task_conf in sequences:
-                tasks += parse_tasks(sequences[task_conf])
-            elif isinstance(task_conf, Task):
-                tasks.append(task_conf)
-            else:
-                tasks.append(parse_task(task_conf))
-        return tasks
-
-    else:
-        raise TypeError
-
 def _create_sequence(tasks, start_cond=None):
     session = Task.session # TODO: Get somewhere else the session
     for i, task in enumerate(tasks):

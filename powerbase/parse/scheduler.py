@@ -9,7 +9,7 @@ parse_scheduler = DictInstanceParser(
     classes={},
     subparsers={
         "tasks": parse_tasks,
-        "parameters": lambda d, resources: Parameters(**d),
+        "parameters": lambda d, **kwargs: Parameters(**d),
     },
     default=Scheduler
 )

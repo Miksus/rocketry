@@ -3,7 +3,7 @@ from powerbase.config import parse_dict
 
 def test_init_maintain(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        scheduler = parse_dict(
+        sess = parse_dict(
             {
                 "tasks": {
                     "git-fetch": {"class": "GitFetch"},
@@ -13,10 +13,10 @@ def test_init_maintain(tmpdir, session):
                 },
             }
         )
-        tasks = session.tasks
+        tasks = sess.tasks
         assert [
             "git-fetch",
             "git-pull",
             "pip-install",
             "restart"
-        ] == [session.get_task(task).name for task in tasks]
+        ] == [sess.get_task(task).name for task in tasks]

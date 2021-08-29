@@ -5,6 +5,7 @@ from powerbase.core import Scheduler, Scheduler
 from powerbase.parse import parse_condition
 
 from powerbase.conditions import AlwaysFalse
+from powerbase import Session
 
 from textwrap import dedent
 
@@ -22,16 +23,10 @@ def set_sys_path(tmpdir):
     sys.path.remove(str(tmpdir))
 
 def test_no_config():
-    scheduler = parse_dict(
+    sess = parse_dict(
         {}
     )
-    assert scheduler is None
-
-def test_minimal_scheduler():
-    scheduler = parse_dict(
-        {"scheduler": {}}
-    )
-    assert isinstance(scheduler, Scheduler)
+    assert isinstance(sess, Session)
 
 def test_full_featured(tmpdir, session):
     
@@ -60,7 +55,7 @@ def test_full_featured(tmpdir, session):
             pass
         """))
 
-        scheduler = parse_dict(
+        sess = parse_dict(
             {
                 "parameters": {
                     "mode": "test"
@@ -77,11 +72,11 @@ def test_full_featured(tmpdir, session):
 
                     "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}, "execution": "main"},
                     "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
-                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
+                    "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main", "start_cond": "daily starting 19:00"},
                 },
                 "sequences": {
                     "sequence.signals-1": {
-                        "start_cond": "daily starting 19:00", # Start condition for the first task of the sequence
+                        "interval": "time of day after 19:00", # Start condition for the first task of the sequence
                         "tasks": [
                             "fetch.stock-prices",
                             "calculate.signals",
@@ -89,33 +84,27 @@ def test_full_featured(tmpdir, session):
                         ],
                     },
                     "sequence.signals-2": {
-                        "start_cond": "daily starting 19:00", # Start condition for the first task of the sequence
+                        "interval": "time of day before 19:00", # Start condition for the first task of the sequence
                         "tasks": [
                             "fetch.fundamentals",
                             "calculate.signals",
                             "report.signals",
                         ]
                     },
-                    "sequence.maintain": {
-                        "tasks": [
-                            "maintain.fetch",
-                            "maintain.pull",
-                            "maintain.status",
-                        ]
-                    },
                 },
                 "scheduler": {
                     "name": "my_scheduler",
                     "restarting": "relaunch",
-                    "parameters": {"maintainers": ["myself"]}
                 }
             }
         )
         
-        assert isinstance(scheduler, Scheduler)
+        assert isinstance(sess, Session)
 
         # Assert found tasks
-        tasks = {task.name for task in scheduler.tasks}
+        for name, task in sess.tasks.items():
+            assert name == task.name
+        tasks = {task_name for task_name in sess.tasks}
         assert {
             "fetch.stock-prices", 
             "fetch.fundamentals", 
@@ -138,20 +127,13 @@ def test_full_featured(tmpdir, session):
         assert {
             # Globals
             "mode": "test",
-            # Locals
-            "maintainers": ["myself"],
-        } == dict(**scheduler.session.parameters)
+        } == dict(**session.parameters)
 
         # Test sequences
         cond = parse_condition("daily starting 19:00")
-        cond.kwargs["task"] = session.get_task("fetch.stock-prices")
-        assert session.get_task("fetch.stock-prices").start_cond == cond
+        cond.kwargs["task"] = sess.get_task("maintain.status")
+        assert sess.get_task("maintain.status").start_cond == cond
 
-        
-        cond = parse_condition("daily") & parse_condition("daily starting 19:00")
-        cond[0].kwargs["task"] = session.get_task("fetch.fundamentals")
-        cond[1].kwargs["task"] = session.get_task("fetch.fundamentals")
-        assert session.get_task("fetch.fundamentals").start_cond == cond
 
 
 def test_scheduler_tasks_set(tmpdir, session):
@@ -165,7 +147,7 @@ def test_scheduler_tasks_set(tmpdir, session):
             pass
         """))
 
-        scheduler = parse_dict(
+        sess = parse_dict(
             {
                 "tasks": {
                     "task_1": {"class": "FuncTask", "func": "some_funcs.do_task_1"},
@@ -179,9 +161,9 @@ def test_scheduler_tasks_set(tmpdir, session):
                 }
             }
         )
-        assert isinstance(scheduler, Scheduler)
-        assert ["task_1", "task_2", "maintain.task_1"] == [task.name for task in scheduler.tasks]
-        assert ["do_task_1", "do_task_2", "do_maintain"] == [task.func.__name__ for task in scheduler.tasks]
+        assert isinstance(sess, Session)
+        assert ["task_1", "task_2", "maintain.task_1"] == [task for task in sess.tasks]
+        assert ["do_task_1", "do_task_2", "do_maintain"] == [task.func.__name__ for task in sess.tasks.values()]
 
-        assert {"param_a": 1, "param_b": 2} == dict(**scheduler.session.parameters)
+        assert {"param_a": 1, "param_b": 2} == dict(**sess.parameters)
     
