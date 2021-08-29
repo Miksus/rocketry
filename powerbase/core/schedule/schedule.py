@@ -3,6 +3,7 @@
 
 from multiprocessing import Process, cpu_count
 import multiprocessing
+from powerbase.task.maintain.os import ShutDown
 import threading
 
 import traceback
@@ -22,7 +23,7 @@ import pandas as pd
 from powerbase.core.task import Task
 from powerbase.core.log import FilterAll, read_logger
 
-from powerbase.core.exceptions import SchedulerRestart
+from powerbase.core.exceptions import SchedulerRestart, SchedulerExit
 
 from powerbase.core.utils import is_pickleable
 from powerbase.core.conditions import set_statement_defaults, AlwaysFalse
@@ -130,6 +131,10 @@ class Scheduler:
             self.logger.info('Shutting down...', extra={"action": "shutdown"})
             exception = exc
 
+        except SchedulerExit as exc:
+            self.logger.info('Shutdown called. Shutting down...', exc_info=True, extra={"action": "shutdown"})
+            exception = exc
+
         except SchedulerRestart as exc:
             self.logger.info('Restart called. Shutting down...', exc_info=True, extra={"action": "shutdown"})
             exception = exc
@@ -188,7 +193,7 @@ class Scheduler:
                 return_queue=self._return_queue, 
                 daemon=self.tasks_as_daemon
             )
-        except SchedulerRestart as exc:
+        except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:
             exception = exc
@@ -454,7 +459,7 @@ class Scheduler:
 
         if self.restarting == "replace":
             os.execl(python, python, *sys.argv)
-            # After here no code will be run
+            # After this, no code will be run. It all died :(
         elif self.restarting == "relaunch":
             # Relaunch the process
             subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
@@ -465,6 +470,10 @@ class Scheduler:
             else:
                 # Linux does not have CREATE_NEW_CONSOLE creation flag but shell=True is pretty close
                 subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
+        elif self.restarting == "recall":
+            # Mostly useful for testing.
+            # Restart by calling the self.__call__ again 
+            return self()
         else:
             raise ValueError(f"Invalid restaring: {self.restarting}")
 

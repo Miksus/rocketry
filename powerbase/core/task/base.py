@@ -3,7 +3,7 @@ from powerbase.core.conditions import AlwaysTrue, AlwaysFalse, All
 from powerbase.core.log import TaskAdapter
 from powerbase.core.conditions import set_statement_defaults, BaseCondition
 from powerbase.core.utils import is_pickleable
-from powerbase.core.exceptions import SchedulerRestart, TaskInactionException, TaskTerminationException
+from powerbase.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from powerbase.log import QueueHandler
 
 from .utils import get_execution, get_dependencies
@@ -364,12 +364,12 @@ class Task(metaclass=_TaskMeta):
 
             output = self.execute_action(**params)
 
-        except SchedulerRestart:
+        except (SchedulerRestart, SchedulerExit):
             # SchedulerRestart is considered as successful task
             self.log_success()
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
-            self.process_success(output)
+            self.process_success(None)
             # TODO: Probably should raise and not silently return?
             raise
 

@@ -5,6 +5,9 @@ class ScheduerInterupt(Exception):
 class SchedulerRestart(Exception):
     "Restart the scheduler"
 
+class SchedulerExit(Exception):
+    "Shut down the scheduler"
+
 class CycleInterupt(Exception):
     "Stop executing the current cycle"
 
