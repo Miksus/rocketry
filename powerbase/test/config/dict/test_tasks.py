@@ -9,7 +9,7 @@ def test_init_maintain(tmpdir, session):
                     "git-fetch": {"class": "GitFetch"},
                     "git-pull": {"class": "GitPull"},
                     "pip-install": {"class": "PipInstall"},
-                    "restart": {"class": "Restart"}
+                    # "restart": {"class": "Restart"}
                 },
             }
         )
@@ -18,5 +18,5 @@ def test_init_maintain(tmpdir, session):
             "git-fetch",
             "git-pull",
             "pip-install",
-            "restart"
+            # "restart"
         ] == [sess.get_task(task).name for task in tasks]
