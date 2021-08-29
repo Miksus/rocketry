@@ -255,11 +255,11 @@ def test_ping(client):
 @pytest.mark.parametrize(
     "name,keys",
     [
-        pytest.param("", {"python", "node", "os", "scheduler", "performance", "ram", "disk"}, id="Full info"),
+        pytest.param("", {"python", "node", "os", "scheduler", "performance", "ram", "disk"}, id="Full info", marks=pytest.mark.skip("Requires installing the package (TODO)")),
         pytest.param("?metric=python&metric=os", {"python", "os"}, id="Selected info"),
         pytest.param("/os", {"info", "system", "machine", "release", "processor", "processor_count", "boot_time"}, id="OS info"),
         pytest.param("/python", {"info", "version", "implementation"}, id="Python info"),
-        pytest.param("/scheduler", {"version", "n_tasks"}, id="Scheduler info"),
+        pytest.param("/scheduler", {"version", "n_tasks"}, id="Scheduler info", marks=pytest.mark.skip("Requires installing the package (TODO)")),
     ],
 )
 def test_info(client, name, keys):
