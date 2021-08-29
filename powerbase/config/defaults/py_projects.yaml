@@ -1,103 +1,40 @@
 
-# Clear existing tasks & schedulers
-clear_existing: True
+tasks:
+  config.find-tasks:
+    class: YAMLFinder
+    path: 'project/'
+    execution: 'main'
+    force_run: True
+  config.rest-server:
+    class: HTTPConnection
+    force_run: True
 
-# Global parameters
-parameters:
-  mode: 'test'
-#  root: '../../'
+  config.git-fetch:
+    class: GitFetch
+  config.git-pull:
+    class: GitPull
+    start_cond: {class: IsGitBehind, fetch: False}
+  config.pip-install:
+    class: PipInstall
+    requirements: requirements.txt
+  config.reinstall:
+    class: PipInstall
+    package: 'git+https://github.com/Miksus/atlas.git@master#egg=atlas'
+    options: ["--upgrade", "--no-deps", "--force-reinstall"]
+  config.restart:
+    class: Restart
+    execution: 'main'
 
-scheduler:
-  restarting: 'relaunch'
-
-strategies:
-  strategy.find-projects:
-    class: ProjectFinder
-    path: synergy/projects/personal
-
-
-# Loggers, handlers, formatters
-logging:
-  version: 1
-  disable_existing_loggers: True
-
-  formatters:
-    standard:
-      format: '%(asctime)s %(levelname)s %(name)s %(message)s'
-    # Custom
-    csv_formatter:
-      (): powerbase.log.CsvFormatter
-      fields: [
-        asctime,
-        levelname,
-        name,
-        message
-      ]
-    csv_task_formatter:
-      (): powerbase.log.CsvFormatter
-      fields: [
-        asctime,
-        levelname,
-        action,
-        task_name,
-        message
-      ]
-
-  handlers:
-    default:
-       level: 'INFO'
-       formatter: 'standard'
-       class: 'logging.StreamHandler'
-       stream: 'ext://sys.stdout' # Default is stderr
-    stdout:
-       level: 'INFO'
-       formatter: 'standard'
-       class: 'logging.StreamHandler'
-       stream: 'ext://sys.stdout'  # Default is stderr
-    stderr:
-       level: 'ERROR'
-       formatter: 'standard'
-       class: 'logging.StreamHandler'
-       stream: 'ext://sys.stdout'  # Default is stderr
-
-    # Custom
-    csv_scheduler:
-       (): "powerbase.log.CsvHandler"
-       formatter: "csv_formatter"
-       filename: "log/scheduler.csv"
-       make_dir: True
-       delay: True
-    csv_task:
-       (): "powerbase.log.CsvHandler"
-       formatter: "csv_task_formatter"
-       filename: "log/tasks.csv"
-       make_dir: True
-       delay: True
-    csv_task_maintain:
-       (): "powerbase.log.CsvHandler"
-       formatter: "csv_task_formatter"
-       filename: "log/maintainers.csv"
-       make_dir: True
-       delay: True
-
-  loggers:
-    '': # root logger
-       handlers: ['default']
-       level: 'WARNING'
-       propagate: False
-    powerbase.task: 
-       handlers: ['stderr', 'csv_task']
-       level: 'INFO'
-       propagate: False
-    powerbase.task.maintainer: 
-       handlers: ['csv_task_maintain']
-       level: 'INFO'
-       propagate: False
-    powerbase.scheduler:
-       handlers: ['csv_scheduler']
-       level: 'INFO'
-       propagate: False
-    __main__:  # if __name__ == '__main__'
-       handlers: ['default']
-       level: 'DEBUG'
-       propagate: False
+sequences:
+  config.sequence.auto-pull:
+    interval: 'every 30 minutes'
+    tasks:
+      - config.git-fetch
+      - config.git-pull
+      - config.pip-install
+      - config.restart
+  config.sequence.auto-pip-upgrade:
+    start_cond: 'daily between 00:00 and 18:00'
+    tasks:
+      - config.reinstall
+      - config.restart
