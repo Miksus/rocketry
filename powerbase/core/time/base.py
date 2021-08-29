@@ -167,7 +167,7 @@ class TimeInterval(TimePeriod):
         raise NotImplementedError("Contains not implemented.")
 
     @abstractmethod
-    def from_between(start, end):
+    def from_between(start, end) -> pd.Interval:
         raise NotImplementedError("__between__ not implemented.")
 
     def rollforward(self, dt):
@@ -181,7 +181,7 @@ class TimeInterval(TimePeriod):
         
         return pd.Interval(start, end, closed="both")
     
-    def rollback(self, dt):
+    def rollback(self, dt) -> pd.Interval:
         "Get previous time interval of the period"
 
         end = self.rollend(dt)

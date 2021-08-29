@@ -1,6 +1,8 @@
 
 
+from datetime import datetime
 import re
+from typing import Union
 import dateutil
 import calendar
 from abc import abstractmethod
@@ -73,7 +75,7 @@ class AnchoredInterval(TimeInterval):
         kwargs = {key: val for key, val in d.items() if key in comps}
         return to_nanoseconds(**kwargs)
 
-    def anchor_dt(self, dt, **kwargs):
+    def anchor_dt(self, dt: Union[datetime, pd.Timestamp], **kwargs) -> int:
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
         components = self.components
         components = components[components.index(self._scope) + 1:]
@@ -130,7 +132,7 @@ class AnchoredInterval(TimeInterval):
             # End is one nanosecond away from start
             obj._end = obj._start - 1 
 
-    def __contains__(self, dt):
+    def __contains__(self, dt) -> bool:
         "Whether dt is in the interval"
 
         ns_start = self._start
