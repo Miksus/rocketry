@@ -6,7 +6,9 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-from typing import List, Dict, Union
+from powerbase.core.conditions.base import Any
+from powerbase.components import BaseComponent
+from typing import List, Dict, Type, Union
 from pathlib import Path
 from itertools import chain
 import pandas as pd
@@ -22,18 +24,39 @@ import powerbase
 _BASE_CONDITIONS = {cls.__name__: cls for cls in (conditions.All, conditions.Any, conditions.AlwaysTrue, conditions.AlwaysFalse)}
 
 class Session:
-    """Collection of the relevant data and methods
-    of the powerbase ecosystem. 
+    """Collection of the scheduler objects.
+
+    Attributes
+    ----------
+    tasks : dict
+        Tasks the session has. These tasks are used for
+        the scheduler. Keys of the dict are the names
+        of the tasks. 
+    config : dict
+        Central configuration for defining behaviour
+        of different object and classes in the session.
+    parameters : Parameters
+        Parameters feeded to the tasks.
+    scheduler : Scheduler
+        Scheduler of the session.
+    components : dict
+        External components that help to shape the 
+        behaviour of tasks. These are built on top
+        of the core functionalities and extends it.
+        This is not much used by anything but 
+        stored in the session if the user wants to 
+        access them.
 
     """
 
-    tasks: dict
-    config: dict
+    tasks: Dict[str, Task]
+    config: Dict[str, Any]
+    components: Dict[Type, Dict[str, BaseComponent]]
     parameters: Parameters
     scheduler: Scheduler
 
-    task_cls: dict
-    cond_cls: dict
+    task_cls: Dict[str, Type]
+    cond_cls: Dict[str, Type]
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
@@ -47,7 +70,7 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, scheme:Union[str,list]=None):
+    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, components:dict=None, scheme:Union[str,list]=None):
         # Set defaults
         config = {} if config is None else config
         tasks = {} if tasks is None else tasks
@@ -56,6 +79,7 @@ class Session:
             else Parameters(parameters) if not isinstance(parameters, Parameters)
             else parameters
         )
+        components = {} if components is None else components
 
         # Set attrs
         self.config = self.default_config.copy()
@@ -63,6 +87,7 @@ class Session:
 
         self.tasks = tasks
         self.parameters = parameters
+        self.components = components
 
         self.cond_cls = self.cond_cls.copy()
         self.task_cls = self.task_cls.copy()
@@ -185,4 +210,5 @@ class Session:
         Task.session = self
         BaseCondition.session = self
         Parameters.session = self
+        BaseComponent.session = self
         powerbase.session = self
