@@ -49,3 +49,9 @@ private.yaml
 
 # Some other random stuff
 bash.exe.stackdump
+
+# Sphinx documentation
+docs/_build/
+
+# tox
+.tox/
