@@ -17,18 +17,18 @@ class ParamExists(BaseCondition):
     """Condition to check whether a parameter (and its value)
     exists.
 
-    Examples:
-    ---------
-        >>> session.parameters = {"x": 1, "y": 2, "z": 3}
+    Examples
+    --------
+    >>> session.parameters = {"x": 1, "y": 2, "z": 3}
 
-        >>> ParamExists(x=1, y=2)
-        True
-        >>> ParamExists(x=1, z=-999)
-        False
-        >>> ParamExists("x", "y", "z")
-        True
-        >>> ParamExists("x", "y", "k")
-        False
+    >>> ParamExists(x=1, y=2)
+    True
+    >>> ParamExists(x=1, z=-999)
+    False
+    >>> ParamExists("x", "y", "z")
+    True
+    >>> ParamExists("x", "y", "k")
+    False
     """
     param_keys:dict
     param_vals:tuple

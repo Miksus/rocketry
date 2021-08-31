@@ -16,7 +16,7 @@ import re
 
 @register_task_cls
 class FuncTask(Task):
-    """Function Task, task that executes a function
+    """Function Task, task that executes a function.
     """
     func: Callable
 
@@ -82,14 +82,7 @@ class FuncTask(Task):
 
     @classmethod
     def decorate(cls, **kwargs):
-        """FuncTask as a decorator
-
-        Example:
-        --------
-            @FuncTask.decorate(start_cond="daily")
-            def do_stuff():
-                ...
-        """
+        """FuncTask as a decorator"""
         def wrapper(func):
             return cls(func, **kwargs)
         return wrapper

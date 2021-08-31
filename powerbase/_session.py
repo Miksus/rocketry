@@ -21,7 +21,7 @@ from powerbase.log import CsvHandler, CsvFormatter
 from powerbase.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
 import powerbase
 
-_BASE_CONDITIONS = {cls.__name__: cls for cls in (conditions.All, conditions.Any, conditions.AlwaysTrue, conditions.AlwaysFalse)}
+_BASE_CONDITIONS = {cls.__name__: cls for cls in (conditions.All, conditions.Any, conditions.AlwaysTrue, conditions.AlwaysFalse)} #! TODO: Is this needed?
 
 class Session:
     """Collection of the scheduler objects.
@@ -102,6 +102,15 @@ class Session:
                 self.set_scheme(scheme)
 
     def set_scheme(self, scheme:str):
+        """Set logging/scheduling scheme from
+        default schemes.
+
+        Parameters
+        ----------
+        scheme : str
+            Name of the scheme. See powerbase.config.defaults
+        """
+        #! TODO: A function to list existing defaults and help of them
         scheduler_basename = self.config["scheduler_logger_basename"]
         task_basename = self.config["task_logger_basename"]
         get_default(scheme, scheduler_basename=scheduler_basename, task_basename=task_basename)
@@ -114,9 +123,17 @@ class Session:
         self.scheduler()
 
     def get_tasks(self) -> list:
+        """Get session tasks as list.
+
+        Returns
+        -------
+        list[Task]
+            List of tasks in the session.
+        """
         return self.tasks.values()
 
     def get_task(self, task):
+        #! TODO: Do we need this?
         return self.tasks[task] if not isinstance(task, Task) else task
 
     def get_task_loggers(self, with_adapters=True) -> dict:
@@ -157,6 +174,7 @@ class Session:
         return data
 
     def get_task_info(self):
+        #! TODO: Remove
         return pd.DataFrame([
             {
                 "name": name, 
@@ -168,7 +186,7 @@ class Session:
         ])
 
     def reset(self):
-        "Set Pypipe ecosystem to default settings (clearing tasks etc)"
+        """Reset the session to defaults."""
 
         # Clear stuff
         self.tasks = {}
@@ -179,7 +197,8 @@ class Session:
         get_default("csv_logging")
         
     def clear(self):
-        "Clear tasks, parameters etc. of the session"
+        """Clear tasks, parameters etc. of the session"""
+        #! TODO: Remove?
         self.tasks = {}
         self.parameters = Parameters()
         self.scheduler = None
@@ -205,7 +224,8 @@ class Session:
     def set_as_default(self):
         """Set this session as default session for 
         next tasks, conditions and schedulers that
-        are created."""
+        are created.
+        """
         Scheduler.session = self
         Task.session = self
         BaseCondition.session = self

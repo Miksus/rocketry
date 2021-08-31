@@ -54,74 +54,96 @@ class _TaskMeta(type):
 
 
 class Task(metaclass=_TaskMeta):
-    """Executable task 
+    # TODO
+    """Base class for Tasks.
 
-    This class is meant to be container
-    for all the information needed to run
-    the task.
+    A task can be a function, command or other procedure that 
+    does a specific thing. A task can be parametrized by supplying
+    session level parameters or parameters on task basis.
 
-    To subclass:
-    ------------
-        - Put task specific parameters to __init__ 
-          and session/scheduler specific to 
-          execute_action. 
-          Remember to call super().__init__.
+    Note
+    ----
+    Do not include the `self` parameter in the ``Parameters`` section.
 
-    Public attributes:
-    ------------------
-        action {function} : Function to execute as task. Parameters are passed by scheduler
+    Parameters
+    ----------
+    parameters : Parameters, optional
+        Parameters set specifically to the task, 
+        by default None
+    session : Session, optional
+        Session the task is binded to, 
+        by default default session 
+    start_cond : BaseCondition, optional
+        Condition that when True the task
+        is to be started, by default AlwaysFalse()
+    run_cond : BaseCondition, optional
+        The task will run as long as this 
+        condition is True, by default AlwaysTrue()
+    end_cond : BaseCondition, optional
+        Condition that when True the task
+        will be terminated. Only works for for 
+        tasks with execution='process' or 'thread'
+        if thread termination is implemented in 
+        the task, by default AlwaysFalse()
+    dependent : List, optional
+        TODO
+    timeout : Any, optional
+        TODO
+    priority : int, optional
+        Priority of the task. Higher priority
+        tasks are first inspected whether they
+        can be executed, by default 1
+        TODO
 
-        start_cond {Condition} : Condition to start the task (bool returns True)
-        run_cond {Condition} : If condition returns False when task is running, termination occurs (only applicable with multiprocessing/threading)
-        end_cond {Condition} : If condition returns True when task is running, termination occurs (only applicable with multiprocessing/threading)
-        timeout {int, float} : Seconds allowed to run or terminated (only applicable with multiprocessing/threading)
+    on_success : Callable, optional
+        Function to run after successful execution
+        of the task, by default None
+    on_failure : Callable, optional
+        Function to run after failing execution
+        of the task, by default None
+    on_finish : Callable, optional
+        Function to run after execution
+        of the task, by default None
 
-        priority {int} : Priority of the task. Higher priority tasks are run first
+    name : str, optional
+        Name of the task. Ideally, all tasks
+        should have unique name. If None, the
+        return value of Task.get_default_name() 
+        is used instead, by default None
+    logger : Any, optional
+        TODO
+    daemon : Bool, optional
+        Whether run the task as daemon process
+        or not. Only applicable for execution='process',
+        by default use Scheduler default
+    execution : str
+        How the task is executed. Allowed values
+        'main' (run on main thread & process), 
+        'thread' (run on another thread) and 
+        'process' (run on another process),
+        by default 'process'
+    disabled : bool
+        If True, the task is not allowed to be run
+        regardless of the start_cond,
+        by default False
+    force_run : bool
+        If True, the task will be run once 
+        regardless of the start_cond,
+        by default True TODO
+    on_startup : bool
+        Run the task on the startup sequence of 
+        the Scheduler, by default False
+    on_shutdown : bool
+        Run the task on the shutdown sequence of 
+        the Scheduler, by default False
 
-        on_failure {function} : Function to execute if the action raises exception
-        on_success {function} : Function to execute if the action succeessed
-        on_finish {function} : Function to execute when the function finished (failed or success)
-
-        dependent {List[str]} : List of task names to must run before this task (in their execution cycle)
-
-        name {str, tuple} : Name of the task. Must be unique
-        groups {tuple} : Name of the group the task is part of. Different groups use different loggers
-
-        force_run {bool} : Force the task to be run once (if True)
-        disabled {bool} : Force the task to not to be run (force_run overrides disabling)
-
-        execution {str} : How to execute the task. Options: {single, process, thread}
-
-    Readonly Properties:
-    -----------
-        is_running -> bool : Check whether the task is currently running or not
-        status -> str : Latest status of the task
-
-    Class attributes:
-    -----------------
-        use_instance_naming {bool} : if task instance has specified no name, use id(task) as the name
-        permanent_task {bool} : Whether the task is meant to be run indefinitely. Use in subclassing.
-        status_from_logs {bool} : Whether to check the task.status from the logs (True) or store to memory (False)
-        on_exists {str} : If task already exists, 
-            raise an exception (on_exists="raise")
-            or replace the old task (on_exists="replace")
-            or generate new name for the new task (on_exists="rename")
-            or don't overwrite the existing task (on_exists="ignore")
-
-    Methods:
-    --------
-        __call__(*args, **kwargs) : Execute the task
-        __bool__() : Whether the task can be run now or not
-        filter_params(params:Dict) : Filter the passed parameters needed by the action
-
-        log_running() : Log that the task is running
-        log_failure() : Log that the task has failed
-        log_success() : Log that the task has succeeded
-        log_termination() : Log that the task has been terminated
-        log_inaction() : Log that the task has not really done anything
-
+    Attributes
+    ----------
+    session : Session
+        Session the task is binded to
 
     """
+    
 
     # Class
     use_instance_naming: bool = False
@@ -236,6 +258,7 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def start_cond(self):
+        """BaseCondition: When True, the task will be started (if not running)."""
         return self._start_cond
     
     @start_cond.setter
@@ -250,6 +273,7 @@ class Task(metaclass=_TaskMeta):
         
     @property
     def end_cond(self):
+        """BaseCondition: When True, the task will be terminated (if running)."""
         return self._end_cond
     
     @end_cond.setter
@@ -264,6 +288,7 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def dependent(self):
+        #! TODO: Delete
         return get_dependencies(self)
 
     @dependent.setter
@@ -277,6 +302,7 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def parameters(self):
+        """Parameters: Parameters of the task."""
         return self._parameters
 
     @parameters.setter
@@ -297,6 +323,7 @@ class Task(metaclass=_TaskMeta):
         set_statement_defaults(self.end_cond, task=self)
 
     def __call__(self, **kwargs):
+        """Execute the task."""
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
         if hasattr(self, "_process"):
@@ -324,7 +351,14 @@ class Task(metaclass=_TaskMeta):
             raise ValueError(f"Invalid execution: {self.execution}")
 
     def __bool__(self):
-        "Check whether the task can be run or not"
+        """Check whether the task can be run or not.
+        
+        If force_run is True, the task can be run regardless.
+        If disabled is True, the task is prevented to be run 
+        (unless force_true=True). 
+        If neither of the previous, the start_cond is inspected
+        and if it is True, the task can be run.
+        """
         # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
         # Also add methods: 
         #    set_pending() : Set forced_state to False
@@ -341,6 +375,7 @@ class Task(metaclass=_TaskMeta):
         return cond
 
     def run_as_main(self, params=None, _log_running=True, **kwargs):
+        """Run the task on the current thread and process"""
         if _log_running:
             self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
@@ -411,7 +446,7 @@ class Task(metaclass=_TaskMeta):
             #    os.chdir(old_cwd)
 
     def run_as_thread(self, params=None, **kwargs):
-        "Create thread and run the task in it"
+        """Create a new thread and run the task on that."""
         self.thread_terminate.clear()
 
         event_is_running = threading.Event()
@@ -422,7 +457,8 @@ class Task(metaclass=_TaskMeta):
  
 
     def _run_as_thread(self, params=None, event=None):
-        "Run the task in the thread itself"
+        """Running the task in a new thread. This method should only
+        be run by the new thread."""
         self.log_running()
         event.set()
         # Adding the _thread_terminate as param so the task can
@@ -432,6 +468,7 @@ class Task(metaclass=_TaskMeta):
         self.run_as_main(params=params, _log_running=False)
 
     def run_as_process(self, params=None, log_queue=None, return_queue=None, daemon=None):
+        """Create a new process and run the task on that."""
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         if not log_queue:
             log_queue = multiprocessing.Queue(-1)
@@ -444,7 +481,8 @@ class Task(metaclass=_TaskMeta):
         return log_queue
 
     def _run_as_process(self, queue, return_queue, params):
-        """Run a task in a separate process (has own memory)"""
+        """Running the task in a new process. This method should only
+        be run by the new process."""
 
         # NOTE: This is in the process and other info in the application
         # cannot be accessed here. Self is a copy of the original
@@ -500,7 +538,8 @@ class Task(metaclass=_TaskMeta):
                 return_queue.put((self.name, output))
 
     def filter_params(self, params):
-        "By default, filter keyword arguments required by self.execute_action"
+        """Select the parameters from the session and specified in the task itself 
+        that are passed to the execution of the task. Override this."""
         sig = inspect.signature(self.execute_action)
         kw_args = [
             val.name
@@ -516,27 +555,38 @@ class Task(metaclass=_TaskMeta):
         }
 
     def execute_action(self, *args, **kwargs):
-        "Run the actual, given, task"
+        """Run the actual task. Override this.
+        
+        Parameters are materialized to the positional and
+        keyword arguments."""
         raise NotImplementedError(f"Method 'execute_action' not implemented to {type(self)}")
 
     def process_failure(self, exception):
+        """This method is executed after a failure of the task. 
+        By default, run the on_failure Callable (if not None)"""
         if self.on_failure:
             self.on_failure(exception=exception)
     
     def process_success(self, output):
+        """This method is executed after a success of the task. 
+        By default, run the on_success Callable (if not None)"""
         if self.on_success:
             self.on_success(output)
 
     def process_finish(self, status):
+        """This method is executed after finishing the task. 
+        By default, run the on_finish Callable (if not None)"""
         if self.on_finish:
             self.on_finish(status)
 
     @property
     def is_running(self):
+        """bool: Whether the task is currently running or not."""
         return self.status == "run"
 
     @property
     def name(self):
+        """str: Name of the task"""
         return self._name
     
     @name.setter
@@ -577,15 +627,20 @@ class Task(metaclass=_TaskMeta):
             del self.session.tasks[old_name]
 
     def get_default_name(self):
+        """Create a name for the task when name was not passed to initiation of
+        the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
     def is_alive(self):
+        """Whether the task is alive: check if the task has a live process or thread."""
         return self.is_alive_as_thread() or self.is_alive_as_process()
 
     def is_alive_as_thread(self):
+        """Whether the task has a live thread."""
         return hasattr(self, "_thread") and self._thread.is_alive()
 
     def is_alive_as_process(self):
+        """Whether the task has a live process."""
         return hasattr(self, "_process") and self._process.is_alive()
         
 # Logging
@@ -612,6 +667,7 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def logger(self):
+        # TODO
         return self._logger
 
     @logger.setter
@@ -631,15 +687,19 @@ class Task(metaclass=_TaskMeta):
         self._logger = logger
 
     def log_running(self):
+        """Log that the task is currently running."""
         self.status = "run"
 
     def log_failure(self):
+        """Log that the task failed."""
         self.status = "fail", f"Task '{self.name}' failed"
 
     def log_success(self):
+        """Log that the task succeeded."""
         self.status = "success"
 
     def log_termination(self, reason=None):
+        """Log that the task was terminated."""
         reason = reason or "unknown reason"
         self.status = "terminate", reason
 
@@ -648,15 +708,20 @@ class Task(metaclass=_TaskMeta):
         self.force_termination = False
 
     def log_inaction(self):
+        """Log that the task did nothing."""
         self.status = "inaction"
 
-    def log_record(self, record):
-        "For multiprocessing in which the record goes from copy of the task to scheduler before it comes back to the original task"
+    def log_record(self, record:logging.LogRecord):
+        """Log the record with the logger of the task.
+        Also sets the status according to the record.
+        """
         self.logger.handle(record)
         self._status = record.action
 
     @property
     def status(self):
+        """str: Latest status of the task. 
+        Values: None, 'run', 'fail', 'success', 'terminate' and 'inaction'"""
         if self.session.config["force_status_from_logs"]:
             try:
                 record = self.logger.get_latest()
@@ -704,14 +769,17 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def last_success(self):
+        """datetime.datetime: The lastest timestamp when the task succeeded."""
         return self._get_last_action("success")
 
     @property
     def last_fail(self):
+        """datetime.datetime: The lastest timestamp when the task failed."""
         return self._get_last_action("fail")
 
     @property
     def last_run(self):
+        """datetime.datetime: The lastest timestamp when the task ran."""
         return self._get_last_action("run")
 
     def _get_last_action(self, action):
@@ -737,6 +805,7 @@ class Task(metaclass=_TaskMeta):
             return timestamp
 
     def get_history(self) -> List[Dict]:
+        # TODO, is this needed?
         records = self.logger.get_records()
         return records
 
@@ -761,17 +830,20 @@ class Task(metaclass=_TaskMeta):
         return state
 
     @property
-    def thread_terminate(self):
-        "Event to signal terminating the threaded task"
+    def thread_terminate(self) -> threading.Event:
+        """threading.Event: Event to signal terminating the threaded task.
+        This property should be used by the execute_action of the task."""
         # Readonly "attribute"
         return self._thread_terminate
 
     @property
     def lock(self):
+        #! TODO: Is this needed?
         return self._lock
 
 # Other
     @property
     def period(self):
         "Determine Time object for the interval (maximum possible if time independent as 'or')"
+        #! TODO: Is this needed?
         return get_execution(self)

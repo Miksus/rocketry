@@ -7,19 +7,13 @@ from pybox.io import read_yaml
 
 class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
 
-    """
+    """Parameter set for tasks.
 
-    Example:
-        # Creating parameters
-        Parameters({
-            "mode": "test",
-            "rep_date": FuncArg(get_prev_date),
-            "conns": YamlArg("databases.yaml")
-        })
-
-        # Joining parameters
-        Parameters({"mode": "test"}) | Parameters.from_yaml("conf.yaml") | Parameters.from_json("conf.json")
+    Parameter set is a mapping (similar as dictionary).
+    The parameter set materializes the arguments so that
+    those can be inputted to the tasks.
     """
+    #! TODO: Do we need extra class for Parameters?
 
     _params: dict
 

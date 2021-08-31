@@ -3,6 +3,8 @@
 
 from multiprocessing import Process, cpu_count
 import multiprocessing
+from powerbase.core.conditions.base import BaseCondition
+from typing import List, Optional
 from powerbase.task.maintain.os import ShutDown
 import threading
 
@@ -40,28 +42,48 @@ from powerbase.core.parameters import Parameters
 class Scheduler:
     """Multiprocessing scheduler
 
-    Flow of action:
-    ---------------
-        __call__() : Start and run the scheduler
-            setup() : Set up the scheduler (set up scheduler logger etc.)
-            Check and possibly run runnable tasks until shut_condition is not met
-                hibernate() : Put scheduler to sleep (to throttle down the scheduler)
-                run_cycle() : Iterate tasks once through and run tasks that can be run 
-                    Check if task's start_cond is met. If it is:
-                        run_task() : Executes the actual task
-                            Task.__call__() : Handles logging and how the task is run
-                maintain() : Run maintanance tasks that may operate on the scheduler
-    """
+    Parameters
+    ----------
+    session : Session, optional
+        [description], by default None
+    max_processes : [type], optional
+        [description], by default None
+    tasks_as_daemon : bool, optional
+        [description], by default True
+    timeout : str, optional
+        [description], by default "30 minutes"
+    shut_condition : [type], optional
+        [description], by default None
+    parameters : [type], optional
+        [description], by default None
+    min_sleep : float, optional
+        [description], by default 0.1
+    max_sleep : int, optional
+        [description], by default 600
+    logger : [type], optional
+        [description], by default None
+    name : [type], optional
+        [description], by default None
+    restarting : str, optional
+        [description], by default "replace"
+    instant_shutdown : bool, optional
+        [description], by default False
 
+    Attributes
+    ----------
+    session : Session
+        Session for which the scheduler is
+        for. One session has only one 
+        scheduler.
+    """
     session = None # This is set as powerbase.session
 
-    def __init__(self, session=None, max_processes=None, tasks_as_daemon=True, timeout="30 minutes",
-                shut_condition=None, parameters=None,
+    def __init__(self, session=None, max_processes:Optional[int]=None, tasks_as_daemon:bool=True, timeout="30 minutes",
+                shut_condition:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,
                 min_sleep=0.1, max_sleep=600, 
-                logger=None, name=None,
-                restarting="replace", 
-                instant_shutdown=False):
-
+                logger=None, name:str=None,
+                restarting:str="replace", 
+                instant_shutdown:bool=False):
         # MultiProcessing stuff
         self.max_processes = cpu_count() if max_processes is None else max_processes
         self.tasks_as_daemon = tasks_as_daemon
@@ -69,7 +91,6 @@ class Scheduler:
 
         self._log_queue = multiprocessing.Queue(-1)
         self._return_queue = multiprocessing.Queue(-1)
-
 
         # Other
         self.session = session or self.session
@@ -84,7 +105,7 @@ class Scheduler:
 
         # self.task_returns = Parameters() # TODO
 
-        self.name = name if name is not None else id(self)
+        self.name = name if name is not None else id(self) #! TODO Is this needed?
         self._register_instance()
         self.logger = logger
 
@@ -107,13 +128,16 @@ class Scheduler:
 
     @property
     def tasks(self):
+
+        #! TODO: Is this needed?
         tasks = self.session.get_tasks()
         # There may be extra rare situation that priority is not in the task
         # for short period if it is being modified thus we use getattr
         return sorted(tasks, key=lambda task: getattr(task, "priority", 0))
 
     def __call__(self):
-        "Start and run the scheduler"
+        """Start and run the scheduler. Will block till the end of the scheduling
+        session."""
         self.is_alive = True
         exception = None
         try:
@@ -153,7 +177,7 @@ class Scheduler:
             self._shut_down(exception=exception)
 
     def _run_cycle(self):
-        "Run a cycle of tasks"
+        """Run a cycle of tasks."""
         tasks = self.tasks
         self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
         for task in tasks:
@@ -179,7 +203,8 @@ class Scheduler:
         #self.handle_zombie_tasks()
         
 
-    def run_task(self, task, *args, extra_params=None, **kwargs):
+    def run_task(self, task:Task, *args, extra_params=None, **kwargs):
+        """Run a given task"""
         params = self.session.parameters
         extra_params = {} if extra_params is None else extra_params
         params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
@@ -212,13 +237,14 @@ class Scheduler:
             exception=exception
         )
 
-    def terminate_all(self, reason=None):
-        "Terminate all running tasks"
+    def terminate_all(self, reason:str=None):
+        """Terminate all running tasks."""
         for task in self.tasks:
             if task.is_alive():
                 self.terminate_task(task, reason=reason)
 
     def terminate_task(self, task, reason=None):
+        """Terminate a given task."""
         self.logger.debug(f"Terminating task '{task.name}'")
         is_threaded = hasattr(task, "_thread")
         is_multiprocessed = hasattr(task, "_process")
@@ -241,6 +267,8 @@ class Scheduler:
             pass
 
     def is_timeouted(self, task):
+        """Check if the task is timeouted."""
+        #! TODO: Can this be put to the Task?
         if task.permanent_task:
             # Task is meant to be on all the time thus no reason to terminate due to timeout
             return False
@@ -262,7 +290,8 @@ class Scheduler:
         return run_duration > timeout
 
     def is_task_runnable(self, task):
-        "Whether the task should be run"
+        """Whether the task should be run."""
+        #! TODO: Can this be put to the Task?
         if task.execution == "process":
             is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
@@ -279,7 +308,8 @@ class Scheduler:
             raise NotImplementedError(task.execution)
 
     def is_out_of_condition(self, task):
-        "Whether the task should be terminated"
+        """Whether the task should be terminated."""
+        #! TODO: Can this be put to the Task?
         if not task.is_alive():
             # NOTE:
             # Task running on the main process
@@ -293,7 +323,7 @@ class Scheduler:
             return bool(task.end_cond) or not bool(task.run_cond)
             
     def handle_logs(self, timeout=0.01):
-        "Handle the status queue and carries the logging on their behalf"
+        """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
         queue = self._log_queue
         while True:
@@ -326,13 +356,14 @@ class Scheduler:
         # self.returns[return_values[0]] = return_values[1]
 
     def handle_zombie_tasks(self):
-        "If there are tasks that has been crashed during setting up the task loggers, this method finds those out and logs them"
+        """If there are tasks that has been crashed during setting up the task loggers, 
+        this method finds those out and logs them."""
         for task in self.tasks:
             if task.status == "run" and not task.is_alive():
                 task.logger.critical(f"Task '{task.name}' crashed in process setup", extra={"action": "crash"})
 
     def handle_return(self):
-        "Handle task return queue and saves task return values for other tasks to use"
+        """Handle task return queue and saves task return values for other tasks to use."""
         while True:
             try:
                 output = self._return_queue.get(block=False)
@@ -346,13 +377,13 @@ class Scheduler:
                 #self.task_returns[task_name] = return_value
 
     def _hibernate(self):
-        "Go to sleep and wake up when next task can be executed"
+        """Go to sleep and wake up when next task can be executed."""
         delay = self.delay
         self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
         time.sleep(delay)
 
     def _setup(self):
-        "Set up the scheduler"
+        """Set up the scheduler."""
         #self.setup_listener()
         self.logger.info(f"Setting up...", extra={"action": "setup"})
 
@@ -371,11 +402,14 @@ class Scheduler:
 
         self.logger.info(f"Setup complete.")
 
-    def has_free_processors(self):
+    def has_free_processors(self) -> bool:
+        """Whether the Scheduler has free processors to
+        allocate more tasks."""
         return self.n_alive <= self.max_processes
 
     @property
-    def n_alive(self):
+    def n_alive(self) -> int:
+        """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
 
     def _shut_down_tasks(self, traceback=None, exception=None):
@@ -409,7 +443,7 @@ class Scheduler:
             self.terminate_all(reason="shutdown")
 
     def wait_task_alive(self):
-        "Wait till all, especially threading tasks, are finished"
+        """Wait till all, especially threading tasks, are finished."""
         while self.n_alive > 0:
             time.sleep(0.005)
 
@@ -479,7 +513,7 @@ class Scheduler:
 
     @property
     def delay(self):
-        # TODO: Delete
+        #! TODO: Delete
         "Number of seconds that needs to be wait for next executable task"
         now = datetime.datetime.now()
         try:
@@ -498,6 +532,9 @@ class Scheduler:
 # System control
     @property
     def on_hold(self):
+        """bool: If True, the scheduler won't execute new tasks
+        till this is set False. Useful to halt task execution in
+        a controller task."""
         return not self._flag_enabled.is_set()
 
     @on_hold.setter
@@ -508,12 +545,15 @@ class Scheduler:
             self._flag_enabled.set()
 
     def shut_down(self):
+        """Shut down the scheduler. Useful to shut down the 
+        scheduler in a controller task."""
         self.on_hold = False # In case was set to wait
         self._flag_shutdown.set()
 
 # Logging
     @property
     def logger(self):
+        # TODO
         return self._logger
 
     @logger.setter
@@ -530,7 +570,7 @@ class Scheduler:
         self._logger = logger
 
     def log_status(self, task, status, **kwargs):
-        "Log a run task"
+        """Log a run task."""
 
         # Log it to strout/files/email/whatever
         if status == "success":
@@ -539,11 +579,11 @@ class Scheduler:
             self.log_failure(task, **kwargs)
 
     def log_success(self, task, **kwargs):
-        "Log a succeeded task"
+        """Log a succeeded task."""
         self.logger.debug(f"Task {task} succeeded.")
 
     def log_failure(self, task, exception, **kwargs):
-        "Log a failed task"
+        """Log a failed task."""
         tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
         tb_string = ''.join(tb)
         self.logger.debug(f"Task {task} failed: \n{tb_string}")

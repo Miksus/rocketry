@@ -210,19 +210,6 @@ class DependFinish(Historical):
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has finished and "task" has not yet ran after it.
         Useful for start cond for task that should be run after finish of another task.
-        
-        Illustration:
-            task          depend_task      t0
-                | -------------- | ------------
-                >>> True
-
-            depend_task         task          t0
-                | -------------- | ------------
-                >>> False
-
-                                            t0
-                -------------------------------
-                >>> False
         """
         # Name ideas: TaskNotRanAfterFinish, NotRanAfterFinish, DependFinish
         # HasRunAfterTaskFinished, RanAfterTask, RanAfterTaskFinished, AfterTaskFinished
@@ -255,19 +242,6 @@ class DependSuccess(Historical):
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has succeeded and "task" has not yet ran after it.
         Useful for start cond for task that should be run after success of another task.
-        
-        Illustration:
-            task          depend_task      t0
-                | -------------- | ------------
-                >>> True
-
-            depend_task         task          t0
-                | -------------- | ------------
-                >>> False
-
-                                            t0
-                -------------------------------
-                >>> False
         """
         actual_task = Statement.session.get_task(task)
         depend_task = Statement.session.get_task(depend_task)
@@ -296,19 +270,6 @@ class DependFailure(Historical):
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has failed and "task" has not yet ran after it.
         Useful for start cond for task that should be run after failure of another task.
-        
-        Illustration:
-            task          depend_task      t0
-                | -------------- | ------------
-                >>> True
-
-            depend_task         task          t0
-                | -------------- | ------------
-                >>> False
-
-                                            t0
-                -------------------------------
-                >>> False
         """
         actual_task = Statement.session.get_task(task)
         depend_task = Statement.session.get_task(depend_task)

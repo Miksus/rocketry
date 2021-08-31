@@ -6,6 +6,18 @@ DEFAULT_BASENAME_TASKS = "powerbase.task"
 DEFAULT_BASENAME_SCHEDULER = "powerbase.scheduler"
 
 def parse_yaml(path):
+    """Parse YAML configuration file.
+
+    Parameters
+    ----------
+    path : [pathlib.Path, str]
+        Path to the configuration file
+
+    Returns
+    -------
+    Session
+        Session object.
+    """
     conf = read_yaml(path)
     return parse_dict(conf)
 
