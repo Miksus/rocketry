@@ -1,10 +1,10 @@
-from powerbase.core.conditions import PARSERS
+from powerbase.core.condition import PARSERS
 from .task import *
 from .scheduler import *
 from .time import *
 from .git import *
 from .parameter import ParamExists, IsEnv
-from powerbase.core.conditions import AlwaysFalse, AlwaysTrue, All, Any, Not
+from powerbase.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
 
 true = AlwaysTrue()
 false = AlwaysFalse()

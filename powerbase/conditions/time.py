@@ -1,7 +1,7 @@
 from powerbase.time import TimeOfDay, TimeOfWeek, TimeDelta
 from powerbase.time.construct import get_full_cycle, get_between, get_after, get_before
 
-from powerbase.core.conditions.base import TimeCondition, BaseCondition
+from powerbase.core.condition.base import TimeCondition, BaseCondition
 
 import datetime
 import re

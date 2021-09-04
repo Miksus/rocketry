@@ -6,7 +6,7 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-from powerbase.core.conditions.base import Any
+from powerbase.conditions import Any
 from powerbase.components import BaseComponent
 from typing import List, Dict, Type, Union
 from pathlib import Path
@@ -15,13 +15,13 @@ import pandas as pd
 
 from powerbase.core.log import TaskAdapter
 from powerbase.core import Scheduler, Task, BaseCondition, Parameters
-from powerbase.core import conditions
+from powerbase.core import condition
 
 from powerbase.log import CsvHandler, CsvFormatter
 from powerbase.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
 import powerbase
 
-_BASE_CONDITIONS = {cls.__name__: cls for cls in (conditions.All, conditions.Any, conditions.AlwaysTrue, conditions.AlwaysFalse)} #! TODO: Is this needed?
+_BASE_CONDITIONS = {cls.__name__: cls for cls in (condition.All, condition.Any, condition.AlwaysTrue, condition.AlwaysFalse)} #! TODO: Is this needed?
 
 class Session:
     """Collection of the scheduler objects.

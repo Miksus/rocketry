@@ -9,7 +9,6 @@ from powerbase.conditions import (
     DependFailure,
     DependSuccess
 )
-from powerbase.core.conditions import set_statement_defaults
 from powerbase.core import Scheduler
 from powerbase.task import FuncTask
 

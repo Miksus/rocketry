@@ -2,7 +2,7 @@
 import re
 
 from typing import Mapping
-from powerbase.core.conditions import Statement, Historical, Comparable, BaseCondition
+from powerbase.core.condition import Statement, Historical, Comparable, BaseCondition
 
 
 class IsEnv(BaseCondition):

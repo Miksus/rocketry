@@ -4,7 +4,7 @@
 import re
 from typing import Callable, Dict, Optional, Pattern, Union
 from ..utils import Parser, ParserError
-from powerbase.core.conditions.base import PARSERS, BaseCondition
+from powerbase.core.condition.base import PARSERS, BaseCondition
 
 # TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
 

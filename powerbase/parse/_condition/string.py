@@ -1,6 +1,6 @@
 
 from ..utils.string_parser import InstructionParser
-from powerbase.core.conditions import Any, All, Not
+from powerbase.conditions import Any, All, Not
 from .condition_item import parse_condition_item
 
 def _flatten(*args, types, with_attr):

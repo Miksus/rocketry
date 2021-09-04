@@ -1,6 +1,6 @@
 
 from powerbase.core.task import base
-from powerbase.core.conditions import Statement
+from powerbase.core.condition import Statement
 
 import psutil
 import os

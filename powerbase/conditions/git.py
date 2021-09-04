@@ -1,5 +1,5 @@
 
-from powerbase.core.conditions import Statement
+from powerbase.core.condition import Statement
 
 try:
     from git import Repo

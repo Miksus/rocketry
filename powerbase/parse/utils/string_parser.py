@@ -4,8 +4,6 @@ from typing import Callable, Dict, Any, List
 from pybox.string.parse import ClosureParser
 from pybox.container.visitor import Visitor
 
-#from powerbase.core.conditions.base import All, Any, Not
-
 import re
 
 class InstructionParser:

@@ -1,6 +1,6 @@
 
 from powerbase.core.task import base
-from powerbase.core.conditions import Statement, Historical, Comparable
+from powerbase.core.condition import Statement, Historical, Comparable
 from powerbase.core.time import TimeDelta
 from .time import IsPeriod
 from powerbase.time.construct import get_before, get_between, get_full_cycle ,get_after

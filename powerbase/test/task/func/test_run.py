@@ -7,7 +7,7 @@ from powerbase.core import Scheduler
 from powerbase.task import FuncTask
 from powerbase.core.task.base import Task
 from powerbase.core.exceptions import TaskInactionException
-from powerbase.core.conditions import AlwaysFalse, AlwaysTrue, Any
+from powerbase.conditions import AlwaysFalse, AlwaysTrue, Any
 
 import pandas as pd
 

@@ -1,5 +1,5 @@
 
-from powerbase.core.conditions.base import CLS_CONDITIONS
+from powerbase.core.condition.base import CLS_CONDITIONS
 from ._condition import parse_condition_string
 
 from .utils import ParserPicker, DictInstanceParser

@@ -4,7 +4,7 @@ from powerbase.conditions import (
     ParamExists,
     All, Any, Not
 )
-from powerbase.core.conditions import Statement, Comparable, Historical
+from powerbase.core.condition import Statement, Comparable, Historical
 
 import pytest
 

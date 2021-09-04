@@ -3,7 +3,7 @@
 
 from multiprocessing import Process, cpu_count
 import multiprocessing
-from powerbase.core.conditions.base import BaseCondition
+from powerbase.core.condition.base import BaseCondition
 from typing import List, Optional
 from powerbase.task.maintain.os import ShutDown
 import threading
@@ -28,7 +28,7 @@ from powerbase.core.log import FilterAll, read_logger
 from powerbase.core.exceptions import SchedulerRestart, SchedulerExit
 
 from powerbase.core.utils import is_pickleable
-from powerbase.core.conditions import set_statement_defaults, AlwaysFalse
+from powerbase.core.condition import set_statement_defaults, AlwaysFalse
 from powerbase.core.parameters import Parameters
 
 # TODO:

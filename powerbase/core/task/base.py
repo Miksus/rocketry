@@ -1,7 +1,6 @@
 
-from powerbase.core.conditions import AlwaysTrue, AlwaysFalse, All
+from powerbase.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from powerbase.core.log import TaskAdapter
-from powerbase.core.conditions import set_statement_defaults, BaseCondition
 from powerbase.core.utils import is_pickleable
 from powerbase.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from powerbase.log import QueueHandler
