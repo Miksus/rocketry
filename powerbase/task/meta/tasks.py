@@ -14,36 +14,30 @@ import logging
 
 @register_task_cls
 class YAMLFinder(Task):
-    """[summary]
+    """Task that searches other tasks from 
+    a directory. All matched YAML files are
+    read and the contents are parsed.
 
- 
-    Examples
-    --------
-        mytask.yaml
-            name: mytask
-            start_cond: 'daily starting 08:00'
-            path: mytask.py
-            func: main
+    Parameters
+    ----------
+    path : path-like
+        Path to the directory that is searched for the
+        tasks.
+    glob : str
+        Unix pattern that is used to identify a YAML file
+        that is parsed to task(s).
+    delay : str
+        Time delay after each cycle of going through the 
+        found YAML files. Only usable if ``execution='thread'``
+    **kwargs : dict
+        See :py:class:`powerbase.core.Task`
 
-        list_of_mytasks.yaml
-            - name: mytask1
-              start_cond: 'daily starting 08:00'
-              path: mytask.py
-              func: do_task1
-            - name: mytask2
-              start_cond: 'daily starting 08:00'
-              path: mytask.py
-              func: do_task2
+    Notes
+    -----
+    ``execution`` can have only values ``main`` and ``thread``.
+    Subprocesses cannot change the state of the session tasks in
+    the main thread.
 
-        dict_of_mytasks.yaml
-            mytask1:
-              start_cond: 'daily starting 08:00'
-              path: mytask.py
-              func: do_task1
-            mytask2:
-              start_cond: 'daily starting 08:00'
-              path: mytask.py
-              func: do_task2
 
     """
     def __init__(self, path=None, glob="**/*.yaml", delay="1 minutes", **kwargs):

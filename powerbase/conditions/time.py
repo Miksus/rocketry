@@ -7,6 +7,29 @@ import datetime
 import re
 
 class IsPeriod(BaseCondition):
+    """Condition for checking whether current time
+    is in the given time period. 
+
+    Parameters
+    ----------
+    period : powerbase.core.time.TimePeriod
+        Time period to check.
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("time of day between 10:00 and 15:00")
+    IsPeriod(period=TimeOfDay('10:00', '15:00'))
+
+    **Construction example:**
+
+    >>> from powerbase.conditions import IsPeriod
+    >>> from powerbase.time import TimeOfDay
+    >>> is_morning = IsPeriod(period=TimeOfDay("06:00", "12:00")) # doctest: +SKIP
+    """
     def __init__(self, period):
         if isinstance(period, TimeDelta):
             raise AttributeError("TimeDelta does not have __contains__.")

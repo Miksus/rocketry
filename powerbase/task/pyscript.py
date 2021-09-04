@@ -13,10 +13,20 @@ from pybox.pkg import find_package_root
 
 @register_task_cls
 class PyScript(Task):
-    """Task that executes a Python script
+    """Task that executes a Python script.  
 
-    PyScript("folder/subfolder/main.py")
-    PyScript("folder/subfolder/mytask.py")
+    Parameters
+    ----------
+    path : path-like
+        Absolute or relative path to the executable script.
+    func : str
+        Function name to be executed (default is ``main``).
+    sys_paths : list of path-like, optional
+        List of paths that are set to ``sys.path`` temporarily
+        to solve possible imports in the script.
+    **kwargs : dict
+        See :py:class:`powerbase.core.Task`
+
     """
 
     path: Union[str, Path]

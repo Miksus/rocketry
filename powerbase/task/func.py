@@ -16,7 +16,15 @@ import re
 
 @register_task_cls
 class FuncTask(Task):
-    """Function Task, task that executes a function.
+    """Task that executes a function or callable.
+
+    Parameters
+    ----------
+    func : Callable
+        Function or callable to be executed.
+    **kwargs : dict
+        See :py:class:`powerbase.core.Task`
+
     """
     func: Callable
 

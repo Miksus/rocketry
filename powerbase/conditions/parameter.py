@@ -6,8 +6,30 @@ from powerbase.core.conditions import Statement, Historical, Comparable, BaseCon
 
 
 class IsEnv(BaseCondition):
-    """Condition checks whether session parameter 'env'
+    """Condition checks whether session parameter `env`
     has the given value. 
+
+    Parameters
+    ----------
+    env : str
+        The environment to be set in order to the condition
+        to be ``True``.
+
+    Examples
+    --------
+    >>> from powerbase.conditions import IsEnv
+    >>> is_prod = IsEnv("prod")
+
+    >>> # Correct environment
+    >>> from powerbase import session
+    >>> session.env = 'prod'
+    >>> bool(is_prod)
+    True
+
+    >>> # Incorrect environment
+    >>> session.env = 'dev'
+    >>> bool(is_prod)
+    False
     """
     __parsers__ = {re.compile(r"env '(?P<env>.+)'"): "__init__"}
 
@@ -18,28 +40,42 @@ class IsEnv(BaseCondition):
         return self.session.parameters.get("env", None) == self.env
 
 class ParamExists(BaseCondition):
-    """Condition to check whether a parameter (and its value)
-    exists.
+    """Condition to check whether parameter(s) (and their values)
+    exists from ``session.parameters``.
+
+    Parameters
+    ----------
+    *args : iterable of strings
+        Names of the parameters expected to be 
+        found from the session (in order the 
+        condition to be True)
+    **kwargs : dict
+        Names of the parameters and their values 
+        expected from the session (in order the 
+        condition to be True)
 
     Examples
     --------
-    >>> session.parameters = {"x": 1, "y": 2, "z": 3}
+    >>> from powerbase.conditions import ParamExists
+    >>> condition = ParamExists("z", x=1, y=2)
+    
+    >>> # Parameters found
+    >>> from powerbase import session
+    >>> session.parameters = {"x": 1, "y": 2, "z": 3, "k": 4}
+    >>> bool(condition)
+    True
 
-    >>> ParamExists(x=1, y=2)
-    True
-    >>> ParamExists(x=1, z=-999)
-    False
-    >>> ParamExists("x", "y", "z")
-    True
-    >>> ParamExists("x", "y", "k")
+    >>> # Missing parameter(s)
+    >>> session.parameters = {"x": 1}
+    >>> bool(condition)
     False
     """
     param_keys:dict
     param_vals:tuple
 
-    def __init__(self, *param_keys, **param_vals):
-        self.param_keys = param_keys
-        self.param_values = param_vals
+    def __init__(self, *args, **kwargs):
+        self.param_keys = args
+        self.param_values = kwargs
     
     def __bool__(self):
         params = self.session.parameters

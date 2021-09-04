@@ -14,6 +14,18 @@ import numpy as np
 #@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' stared {period}")
 class TaskStarted(Historical, Comparable):
 
+    """Condition for whether a task has started
+    (for given period).
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("'mytask' started")
+    TaskStarted(task='mytask')
+    """
 
     __parsers__ = {
         re.compile(r"'(?P<task>.+)' started"): "__init__",
@@ -61,6 +73,7 @@ class TaskFailed(Historical, Comparable):
 
 #@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' terminated {period}")
 class TaskTerminated(Historical, Comparable):
+
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -82,6 +95,7 @@ class TaskTerminated(Historical, Comparable):
 
 #@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' succeeded {period}")
 class TaskSucceeded(Historical, Comparable):
+
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -102,6 +116,7 @@ class TaskSucceeded(Historical, Comparable):
 
 #@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' finished {period}")
 class TaskFinished(Historical, Comparable):
+
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -164,13 +179,18 @@ class TaskInacted(Historical, Comparable):
         return f"task '{task}' inacted"
 
 class TaskExecutable(Historical):
-    """[summary]
+    """Condition for checking whether a given
+    task has not finished (for given period).
 
-    # Run only once between 10:00 and 14:00
-    TaskExecutable(period=TimeOfDay("10:00", "14:00"))
+    Examples
+    --------
 
-    # Try twice (if fails) between 10:00 and 14:00
-    TaskExecutable(period=TimeOfDay("10:00", "14:00"), retry=2)
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("daily between 10:00 and 15:00")
+    TaskExecutable(task=None, period=TimeOfDay('10:00', '15:00'))
+
     """
 
     def __init__(self, retries=None, task=None, period=None, **kwargs):
@@ -243,6 +263,19 @@ class TaskExecutable(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' finished before {task} started")
 class DependFinish(Historical):
+    """Condition for checking whether a given
+    task has not finished after running a dependent 
+    task.
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("after 'other' finished")
+    DependFinish(task=None, depend_task='other')
+    """
     __parsers__ = {
         re.compile(r"after '(?P<depend_task>.+)' finished"): "__init__",
     }
@@ -281,6 +314,20 @@ class DependFinish(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' succeeded before {task} started")
 class DependSuccess(Historical):
+    """Condition for checking whether a given
+    task has not succeeded after running a dependent 
+    task.
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("after 'other' succeeded")
+    DependSuccess(task=None, depend_task='other')
+
+    """
 
     __parsers__ = {
         re.compile(r"after '(?P<depend_task>.+)'( succeeded)?"): "__init__",
@@ -317,6 +364,19 @@ class DependSuccess(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' failed before {task} started")
 class DependFailure(Historical):
+    """Condition for checking whether a given
+    task has not failed after running a dependent 
+    task.
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("after 'other' failed")
+    DependFailure(task=None, depend_task='other')
+    """
 
     __parsers__ = {
         re.compile(r"after '(?P<depend_task>.+)' failed"): "__init__",

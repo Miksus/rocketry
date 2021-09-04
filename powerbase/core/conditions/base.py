@@ -42,6 +42,38 @@ class BaseCondition(metaclass=_ConditionMeta):
         - Scheduler is killed
         - Scheduler is maintained
 
+    Examples
+    --------
+
+    Minimum example:
+
+    >>> from powerbase.core import BaseCondition
+    >>> class MyCondition(BaseCondition):
+    ...     def __bool__(self):
+    ...         ... # Code that defines state either 
+    ...         return True
+
+    Complicated example with parser:
+
+    >>> import os, re
+    >>> class IsFooBar(BaseCondition):
+    ...     __parsers__ = {
+    ...         re.compile(r"is foo '(?P<outcome>.+)'"): "__init__"
+    ...     }
+    ...
+    ...     def __init__(self, outcome):
+    ...         self.outcome = outcome
+    ...
+    ...     def __bool__(self):
+    ...         return self.outcome == "bar"
+    ...
+    ...     def __repr__(self):
+    ...         return f"IsFooBar('{self.outcome}')"
+    ...
+    >>> from powerbase.parse import parse_condition
+    >>> parse_condition("is foo 'bar'")
+    IsFooBar('bar')
+
     """
     # The session (set in powerbase.session)
     session = None
@@ -73,6 +105,7 @@ class BaseCondition(metaclass=_ConditionMeta):
     @property
     def cycle(self):
         "By default, the cycle is all the times"
+        #! TODO: Delete
         # By default the time cycle cannot be determined thus full range is given
         return time.StaticInterval()
 
@@ -86,6 +119,7 @@ class BaseCondition(metaclass=_ConditionMeta):
             return self._str
         else:
             raise AttributeError
+
 
 class _ConditionContainer:
     "Wraps another condition"
@@ -149,6 +183,7 @@ class Any(_ConditionContainer, BaseCondition):
             # Cannot be determined --> all times may be valid
             return time.StaticInterval()
 
+
 class All(_ConditionContainer, BaseCondition):
 
     def __init__(self, *conditions):
@@ -181,6 +216,7 @@ class All(_ConditionContainer, BaseCondition):
     def cycle(self):
         "Aggregate the TimePeriods the condition has"
         return time.All(*[cond.cycle for cond in self.subconditions])
+
 
 class Not(_ConditionContainer, BaseCondition):
 
@@ -237,6 +273,7 @@ class Not(_ConditionContainer, BaseCondition):
         else:
             return False
 
+
 class AlwaysTrue(BaseCondition):
     "Condition that is always true"
     def __bool__(self):
@@ -251,8 +288,10 @@ class AlwaysTrue(BaseCondition):
         except AttributeError:
             return 'true'
 
+
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
+
     def __bool__(self):
         return False
 
