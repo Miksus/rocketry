@@ -20,6 +20,20 @@ class Sequence(BaseComponent):
     """
     Sequence is a task pipe but with exception that 
     each task is run only once in the interval.
+
+    Parameters
+    ----------
+    tasks : list of :py:class:`powerbase.core.Task`s
+        Tasks that are to be executed in order.
+    interval : str, :py:class:`powerbase.core.TimePeriod`, optional
+        Interval when the sequence is allowed to run. When
+        the interval starts, the sequence starts from the 
+        first task regardless of previous state. 
+    sys_paths : list of path-like, optional
+        List of paths that are set to ``sys.path`` temporarily
+        to solve possible imports in the script.
+    **kwargs : dict
+        See :py:class:`powerbase.component.BaseComponent`
     """
 
     __parsekey__ = "sequences"
