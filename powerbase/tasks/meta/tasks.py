@@ -1,7 +1,7 @@
 
 
 from powerbase.core.task.base import Task, register_task_cls
-from powerbase.task import PyScript
+from powerbase.tasks import PyScript
 from powerbase.parse import parse_task
 from pybox.io import read_yaml
 

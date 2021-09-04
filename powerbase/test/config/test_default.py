@@ -23,7 +23,7 @@ def test_logger(tmpdir, logging_scheme):
         get_default(logging_scheme)
         loggers = {name: logging.getLogger(name) for name in logging.root.manager.loggerDict}
 
-        # Some of the powerbase.task handlers must have two way logger (ability to read log file)
+        # Some of the powerbase.tasks handlers must have two way logger (ability to read log file)
         assert any(hasattr(handler, "read") for handler in loggers["powerbase.task"].handlers)
 
         # Test logging

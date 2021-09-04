@@ -3,7 +3,7 @@
 #import pytest
 import multiprocessing
 #
-from powerbase.task import PyScript
+from powerbase.tasks import PyScript
 #from powerbase.core.task.base import Task
 #
 import pandas as pd

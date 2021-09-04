@@ -102,7 +102,7 @@ class HTTPConnection(Task):
 
     def _set_config(self, app, access_token=None):
         app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
-        app.logger.name = "powerbase.api.http" # We don't want it to pollute task logs (would be named as "powerbase.task.api.http.task" otherwise)
+        app.logger.name = "powerbase.api.http" # We don't want it to pollute task logs (would be named as "powerbase.tasks.api.http.task" otherwise)
         app.config["HOST_TASK"] = self
         app.config["ACCESS_TOKEN"] = access_token
 

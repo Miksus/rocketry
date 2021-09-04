@@ -4,8 +4,8 @@ import tempfile
 
 import pytest
 
-from powerbase.task.api.http import HTTPConnection
-from powerbase.task import FuncTask
+from powerbase.tasks.api.http import HTTPConnection
+from powerbase.tasks import FuncTask
 from powerbase import Scheduler
 from powerbase.parameters import Private
 
@@ -38,7 +38,7 @@ def to_epoch(dt):
             {
                 "test-task": {
                     "name": "test-task", 
-                    "class": "powerbase.task.func.FuncTask",
+                    "class": "powerbase.tasks.func.FuncTask",
                     'func':'<lambda>', 
                     'execution':'main', 
                     "parameters": {"x": 1, "y": 2}, 
@@ -52,7 +52,7 @@ def test_tasks(client, make_tasks, query_url, expected_attrs):
     # Adding HTTP Task to expected task (to be DRY)
     expected_attrs["HTTP-API"] = {
         "name": "HTTP-API",
-        "class": "powerbase.task.api.http.task.HTTPConnection"
+        "class": "powerbase.tasks.api.http.task.HTTPConnection"
     }
     make_tasks()
 

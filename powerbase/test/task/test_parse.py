@@ -2,7 +2,7 @@
 
 from powerbase.core import Scheduler
 from powerbase.parse import parse_task
-from powerbase.task import FuncTask, PyScript
+from powerbase.tasks import FuncTask, PyScript
 
 from textwrap import dedent
 

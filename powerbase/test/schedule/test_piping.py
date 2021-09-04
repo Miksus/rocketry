@@ -1,5 +1,5 @@
 
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.core import Task, Scheduler
 from powerbase.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
 

@@ -4,8 +4,8 @@ import tempfile
 
 import pytest
 
-from powerbase.task.api.http import HTTPConnection
-from powerbase.task import FuncTask
+from powerbase.tasks.api.http import HTTPConnection
+from powerbase.tasks import FuncTask
 from powerbase.parameters import Parameters, Private
 
 from threading import Thread

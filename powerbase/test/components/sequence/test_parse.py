@@ -2,7 +2,7 @@
 from powerbase.components import Sequence
 from powerbase.components.piping import TriggerCluster
 from powerbase.conditions import All
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.config import parse_dict
 
 def test_parse(session):

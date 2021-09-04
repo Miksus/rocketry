@@ -3,12 +3,11 @@
 #import pytest
 import multiprocessing, itertools
 from pathlib import Path
-from powerbase.task.func import FuncTask
 #
 from powerbase import Session
-from powerbase.task import PyScript
+from powerbase.tasks import PyScript
 from powerbase.core import Task
-from powerbase.task.meta import YAMLFinder
+from powerbase.tasks.meta import YAMLFinder
 #from powerbase.core.task.base import Task
 #
 import pandas as pd

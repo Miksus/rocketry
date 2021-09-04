@@ -2,7 +2,7 @@
 import pytest
 
 from powerbase.core import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.core.task.base import Task
 from powerbase.conditions import AlwaysFalse, AlwaysTrue, DependSuccess, Any, Not
 

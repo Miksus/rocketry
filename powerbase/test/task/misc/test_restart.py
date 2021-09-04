@@ -1,5 +1,5 @@
-from powerbase.task.maintain import Restart
-from powerbase.task import FuncTask
+from powerbase.tasks.maintain import Restart
+from powerbase.tasks import FuncTask
 from powerbase.core.exceptions import SchedulerRestart
 import pytest
 

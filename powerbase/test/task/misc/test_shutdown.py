@@ -1,6 +1,6 @@
 from powerbase.conditions import AlwaysFalse, AlwaysTrue
-from powerbase.task.maintain import ShutDown
-from powerbase.task import FuncTask
+from powerbase.tasks.maintain import ShutDown
+from powerbase.tasks import FuncTask
 from powerbase.core.exceptions import SchedulerExit
 import pytest
 

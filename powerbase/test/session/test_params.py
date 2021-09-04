@@ -4,7 +4,7 @@ from powerbase.core import Parameters
 from powerbase.parameters import Private
 
 from powerbase import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.conditions import TaskStarted
 
 import pytest

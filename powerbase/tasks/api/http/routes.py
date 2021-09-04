@@ -95,7 +95,7 @@ def tasks(name=None):
 @rest_api.route('/logs/<type_>', methods=['GET'])
 @rest_api.route('/logs/<type_>/<logger>', methods=['GET'])
 def logs(type_="tasks", logger=None): 
-    "Whole log. Name is the name of the logger (ie. powerbase.task.maintain)"
+    "Whole log. Name is the name of the logger (ie. powerbase.tasks.maintain)"
     session = current_app.config["ATLAS_SESSION"]
     # TODO: Querying
     # query and sort: http://localhost:5001/logs/tasks?sort=+task_name,-start

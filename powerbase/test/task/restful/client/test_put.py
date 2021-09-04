@@ -3,8 +3,6 @@ import tempfile
 
 import pytest
 
-from powerbase.task.api.http import HTTPConnection
-from powerbase.task import FuncTask
 from powerbase import Scheduler
 from powerbase.core import Parameters
 from powerbase.parameters import Private

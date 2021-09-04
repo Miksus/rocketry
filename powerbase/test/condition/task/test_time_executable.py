@@ -17,7 +17,7 @@ from powerbase.time import (
     TimeOfDay
 )
 
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 
 import pytest
 import pandas as pd

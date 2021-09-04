@@ -8,11 +8,11 @@ Base class
 
 Builtin task classes
 --------------------
-.. autoclass:: powerbase.task.FuncTask
+.. autoclass:: powerbase.tasks.FuncTask
    :members:
 
-.. autoclass:: powerbase.task.PyScript
+.. autoclass:: powerbase.tasks.PyScript
    :members:
 
-.. autoclass:: powerbase.task.meta.YAMLFinder
+.. autoclass:: powerbase.tasks.meta.YAMLFinder
    :members:

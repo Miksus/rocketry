@@ -3,7 +3,7 @@
 from powerbase.core import Scheduler
 from powerbase.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess, AlwaysTrue
 
-from powerbase.task import PyScript
+from powerbase.tasks import PyScript
 
 import pytest
 import pandas as pd

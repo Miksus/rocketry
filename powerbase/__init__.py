@@ -6,11 +6,11 @@ from ._setup import _setup_defaults
 
 from .config import *
 
-from .task import FuncTask
+from .tasks import FuncTask
 from . import (
     conditions,
     log,
-    task,
+    tasks,
     parameters,
     time
 )

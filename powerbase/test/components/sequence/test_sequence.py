@@ -3,7 +3,7 @@ from _pytest.fixtures import fixture
 from powerbase.components import Sequence
 from powerbase.components.piping import TriggerCluster
 from powerbase.conditions import All
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.config import parse_dict
 
 from log_helpers import log_task_record # From /test/helpers/log_helpers

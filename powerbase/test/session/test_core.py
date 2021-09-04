@@ -1,7 +1,7 @@
 
 
 from powerbase import Session
-from powerbase.task import FuncTask, PyScript
+from powerbase.tasks import FuncTask, PyScript
 from powerbase.core import Parameters, Scheduler, BaseCondition, Task
 from powerbase.conditions import Any, All, AlwaysTrue, AlwaysFalse, Not
 

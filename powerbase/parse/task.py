@@ -4,7 +4,7 @@ from .condition import parse_condition
 from .utils import _get_session, instances
 
 from powerbase.core.task.base import CLS_TASKS
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 
 import importlib
 

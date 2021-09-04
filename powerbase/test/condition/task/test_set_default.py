@@ -12,7 +12,7 @@ from powerbase.conditions import (
 from powerbase.core.condition import set_statement_defaults
 
 from powerbase.core import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 #from powerbase.core.task.base import Task
 
 import pytest

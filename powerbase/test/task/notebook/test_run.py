@@ -1,8 +1,8 @@
 # TODO
 
 #
-from powerbase.task import JupyterTask
-#from powerbase.task.base import Task
+from powerbase.tasks import JupyterTask
+#from powerbase.tasks.base import Task
 #
 #
 #from nbconvert.preprocessors import CellExecutionError

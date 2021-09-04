@@ -5,7 +5,7 @@ from multiprocessing import Process, cpu_count
 import multiprocessing
 from powerbase.core.condition.base import BaseCondition
 from typing import List, Optional
-from powerbase.task.maintain.os import ShutDown
+from powerbase.tasks.maintain.os import ShutDown
 import threading
 
 import traceback

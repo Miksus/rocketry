@@ -4,7 +4,7 @@ import multiprocessing
 from queue import Empty
 
 from powerbase.core import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.core.task.base import Task
 from powerbase.log import CsvHandler, MemoryHandler
 

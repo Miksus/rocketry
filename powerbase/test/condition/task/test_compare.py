@@ -10,7 +10,7 @@ from powerbase.conditions import (
     DependSuccess
 )
 from powerbase.core import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 
 import pytest
 def run_task(fail=False):

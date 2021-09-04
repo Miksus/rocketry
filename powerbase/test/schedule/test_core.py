@@ -2,7 +2,7 @@
 import powerbase
 from powerbase import Session
 from powerbase.core import Scheduler
-from powerbase.task import FuncTask
+from powerbase.tasks import FuncTask
 from powerbase.time import TimeDelta
 from powerbase.core.task.base import Task
 from powerbase.core.exceptions import TaskInactionException
