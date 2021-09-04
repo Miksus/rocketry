@@ -265,23 +265,6 @@ class AlwaysFalse(BaseCondition):
         except AttributeError:
             return 'false'
 
-class IsPeriod(BaseCondition):
-    def __init__(self, period):
-        if isinstance(period, time.TimeDelta):
-            raise AttributeError("TimeDelta does not have __contains__.")
-        self.period = period
-
-    def __bool__(self):
-        return datetime.datetime.now() in self.period
-
-    def __str__(self):
-        if hasattr(self, "_str"):
-            return self._str
-        elif hasattr(self, "period"):
-            return f'is {str(self.period)}'
-        else:
-            return type(self).__name__
-
 
 class TimeCondition(BaseCondition):
     """Base class for Time conditions (whether currently is specified time of day)
