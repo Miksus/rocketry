@@ -4,7 +4,9 @@ from .base import (
     TimeDelta, TimeCycle,
     StaticInterval,
     All, Any,
-    register_class
+    register_class,
+
+    PARSERS
 )
 
 

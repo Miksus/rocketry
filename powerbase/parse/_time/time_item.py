@@ -3,6 +3,8 @@
 
 import re
 from typing import Callable
+from ..utils import Parser, ParserError
+from powerbase.core.time.base import PARSERS, TimePeriod
 
 # TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
 
@@ -10,9 +12,7 @@ from typing import Callable
 
 from ..utils import Parser, ParserError
 
-TIME_PARSERS = []
-
-def add_time_parser(s:str, func:Callable, regex:bool=True):
+def add_time_parser(d):
     """Add a parsing instruction to be used for parsing a 
     string to condition.
 
@@ -28,15 +28,26 @@ def add_time_parser(s:str, func:Callable, regex:bool=True):
         Whether the 's' is a regex or exact string, 
         by default True
     """
-    sentence = Parser(s, func, regex=regex)
-    TIME_PARSERS.append(sentence)
+    PARSERS.update(d)
 
 def parse_time_item(s:str):
     "Parse one condition"
-    for parser in TIME_PARSERS:
-        try:
-            return parser(s)
-        except ParserError:
-            pass
-    raise ValueError(f"Cannot parse the condition: {repr(s)}")
+    for statement, parser in PARSERS.items():
+        if isinstance(statement, re.Pattern):
+            res = statement.fullmatch(s)
+            if res:
+                args = ()
+                kwargs = res.groupdict()
+                break
+        else:
+            if s == statement:
+                args = (s,)
+                kwargs = {}
+                break
+    else:
+        raise ParserError(f"Could not find parser for string {repr(s)}.")
 
+    if isinstance(parser, TimePeriod):
+        return parser
+    else:
+        return parser(**kwargs)

@@ -5,35 +5,13 @@ from powerbase.core.time import TimeDelta
 import pandas as pd
 import calendar
 
-# # Cycle
-# minutely = Minutely()
-# daily = Daily()
-# # today = Daily()
-# # yesterday = Daily(n=2)
-# weekly = Weekly()
-# 
-# # Interval
-# weekend = DaysOfWeek("Sat", "Sun")
-# weekday = DaysOfWeek("Mon", "Tue", "Wed", "Thu", "Fri")
-# 
-# month_end = OffsetInterval(pd.offsets.MonthEnd())
-# month_begin = OffsetInterval(pd.offsets.MonthBegin())
-# 
-# 
-# 
-# minutely.register("minutely", group="in_")
-# weekend.register("weekend", group="in_")
-# weekday.register("weekday", group="in_")
-# # Register all week days
-# for weekday in (*calendar.day_name, *calendar.day_abbr):
-#     DaysOfWeek(weekday).register(weekday, group="in_")
-# 
-# # Register classes
-# for cls in (
-#     Weekly, Daily, Hourly, Minutely, # , Quarterly
-#     TimeOfDay, DaysOfWeek
-#     ):
-#     register_class(cls)
-# 
-# del pd
-# del calendar
+from .construct import get_between, get_before, get_after, get_full_cycle
+
+from powerbase.core.time import PARSERS
+PARSERS.update(
+    {
+        re.compile(r"time of (?P<type_>month|week|day|hour|minute) between (?P<start>.+) and (?P<end>.+)"): get_between,
+        re.compile(r"time of (?P<type_>month|week|day|hour|minute) after (?P<start>.+)"): get_after,
+        re.compile(r"time of (?P<type_>month|week|day|hour|minute) before (?P<end>.+)"): get_before,
+    }
+)

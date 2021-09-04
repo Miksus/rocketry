@@ -3,9 +3,11 @@ import pandas as pd
 # TODO: Way to calculate how much time (ie. seconds) to next event
 
 from abc import abstractmethod
-from typing import List
+from typing import Callable, Dict, List, Pattern, Union
 import inspect
 import itertools
+
+from powerbase.core.meta import _add_parser
 
 SYNTAX_MAPPING = {
     "from_": {},
@@ -39,8 +41,17 @@ def register_class(cls):
     parent = TimeCycle if is_cycle else TimeInterval if is_interval else TimeDelta
     PERIOD_CLASSES[parent].append(cls)
 
+PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 
-class TimePeriod:
+class _TimeMeta(type):
+    def __new__(mcs, name, bases, class_dict):
+        cls = type.__new__(mcs, name, bases, class_dict)
+        # Add the parsers
+        _add_parser(cls, container=PARSERS)
+        return cls
+
+
+class TimePeriod(metaclass=_TimeMeta):
     """Base for all classes that represent a time period
 
     Time period is a section in time where an event/occurence/current time can be

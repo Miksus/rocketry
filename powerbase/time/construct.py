@@ -1,26 +1,7 @@
-from powerbase.parse import add_condition_parser
 
-from powerbase.conditions import (
-    TaskFinished, 
-    TaskFailed, 
-    TaskSucceeded, 
-    TaskRunning,
-    TaskStarted,
+import re
 
-    TaskExecutable,
-
-    DependSuccess,
-    DependFinish,
-    DependFailure,
-
-    AlwaysTrue,
-    AlwaysFalse,
-
-    IsPeriod,
-    IsEnv,
-)
-
-from powerbase.core.conditions.base import BaseCondition
+from powerbase.core.time import PARSERS
 from powerbase.time import (
     TimeOfWeek,
     TimeOfDay,
@@ -61,3 +42,5 @@ def get_full_cycle(type_, start=None):
     type_ = type_.lower()
     cls = TIME_CLASSES[type_]
     return cls(start, start)
+
+

@@ -3,8 +3,9 @@ from powerbase.core.task import base
 from powerbase.core.conditions import Statement, Historical, Comparable
 from powerbase.core.time import TimeDelta
 from .time import IsPeriod
+from powerbase.time.construct import get_before, get_between, get_full_cycle ,get_after
 
-import os
+import os, re
 import datetime
 import numpy as np
 
@@ -116,6 +117,12 @@ class TaskFinished(Historical, Comparable):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{task}' is running")
 class TaskRunning(Historical):
+
+    __parsers__ = {
+        re.compile(r"while '(?P<task>.+)' is running"): "__init__",
+        re.compile(r"'(?P<task>.+)' is running"): "__init__",
+    }
+
     def observe(self, task, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -229,6 +236,9 @@ class TaskExecutable(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' finished before {task} started")
 class DependFinish(Historical):
+    __parsers__ = {
+        re.compile(r"after '(?P<depend_task>.+)' finished"): "__init__",
+    }
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has finished and "task" has not yet ran after it.
         Useful for start cond for task that should be run after finish of another task.

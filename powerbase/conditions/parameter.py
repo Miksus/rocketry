@@ -7,6 +7,8 @@ class IsEnv(BaseCondition):
     """Condition checks whether session parameter 'env'
     has the given value. 
     """
+    __parsers__ = {re.compile(r"env '(?P<env>.+)'"): "__init__"}
+
     def __init__(self, env):
         self.env = env
     

@@ -2,39 +2,46 @@
 
 
 import re
-from typing import Callable
+from typing import Callable, Dict, Optional, Pattern, Union
 from ..utils import Parser, ParserError
+from powerbase.core.conditions.base import PARSERS, BaseCondition
 
 # TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
 
 
 CONDITION_PARSERS = []
 
-def add_condition_parser(s:str, func:Callable, regex:bool=True):
+def add_condition_parser(d: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']]):
     """Add a parsing instruction to be used for parsing a 
     string to condition.
 
     Parameters
     ----------
-    s : str
-        Exact string (if regex=False) or regex (if regex=True)
-        to be matched. If regex and has groups, the groups are
-        passed to func.
-    func : Callable
-        Function that should return a condition. 
-    regex : bool, optional
-        Whether the 's' is a regex or exact string, 
-        by default True
+    d : dict
+        TODO
     """
-    sentence = Parser(s, func, regex=regex)
-    CONDITION_PARSERS.append(sentence)
+    PARSERS.update(d)
 
-def parse_condition_item(s:str):
+def parse_condition_item(s:str) -> BaseCondition:
     "Parse one condition"
-    for parser in CONDITION_PARSERS:
-        try:
-            return parser(s)
-        except ParserError:
-            pass
-    raise ValueError(f"Cannot parse the condition: {repr(s)}")
+
+    for statement, parser in PARSERS.items():
+        if isinstance(statement, re.Pattern):
+            res = statement.fullmatch(s)
+            if res:
+                args = ()
+                kwargs = res.groupdict()
+                break
+        else:
+            if s == statement:
+                args = (s,)
+                kwargs = {}
+                break
+    else:
+        raise ParserError(f"Could not find parser for string {repr(s)}.")
+
+    if isinstance(parser, BaseCondition):
+        return parser
+    else:
+        return parser(**kwargs)
 

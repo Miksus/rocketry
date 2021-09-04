@@ -1,10 +1,15 @@
-
+import re
 import datetime
 from abc import abstractmethod
+from typing import Callable, Dict, Pattern, Union, Type
 
 from powerbase.core import time
+from powerbase.core.meta import _add_parser
 
-CLS_CONDITIONS = {}
+
+CLS_CONDITIONS: Dict[str, Type['BaseCondition']] = {}
+PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}
+
 
 class _ConditionMeta(type):
     def __new__(mcs, name, bases, class_dict):
@@ -18,7 +23,11 @@ class _ConditionMeta(type):
             if cls.session is not None and cls.session.config["session_store_cond_cls"]:
                 cls.session.cond_cls[cls.__name__] = cls
             CLS_CONDITIONS[cls.__name__] = cls
+
+        # Add the parsers
+        _add_parser(cls, container=PARSERS)
         return cls
+
 
 class BaseCondition(metaclass=_ConditionMeta):
     """Condition is a thing/occurence that should happen in order to something happen
@@ -36,6 +45,8 @@ class BaseCondition(metaclass=_ConditionMeta):
     """
     # The session (set in powerbase.session)
     session = None
+
+    __parsers__ = {}
 
     @abstractmethod
     def __bool__(self):
