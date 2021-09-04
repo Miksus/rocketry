@@ -2,11 +2,11 @@
 import datetime
 import calendar
 
-from powerbase.core.time.base import TimeInterval, register_class
+from powerbase.core.time.base import TimeInterval
 
 from powerbase.core.time.utils import floor_time, ceil_time, to_dict, to_nanoseconds, timedelta_to_str
 
-from powerbase.core.time.anchor import AnchoredInterval#, MinuteMixin, HourMixin, DayMixin, WeekMixin, MonthMixin, YearMixin
+from powerbase.core.time.anchor import AnchoredInterval
 
 import pandas as pd
 import re
@@ -81,7 +81,7 @@ class TimeOfDay(AnchoredInterval):
     """
     _scope = "day"
     _scope_max = to_nanoseconds(day=1)
-    
+
     def anchor_str(self, s, **kwargs):
         # ie. "10:00:15"
         dt = dateutil.parser.parse(s)

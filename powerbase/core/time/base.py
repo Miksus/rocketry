@@ -9,37 +9,6 @@ import itertools
 
 from powerbase.core.meta import _add_parser
 
-SYNTAX_MAPPING = {
-    "from_": {},
-    "in_cycle": {},
-    "in_": {}
-}
-
-def get_period(name, group):
-    periods = PERIOD_CLASSES[group]
-    period = [
-        period
-        for period in periods
-        if period.__name__.lower() == name.lower()
-    ]
-    if len(period) == 0:
-        raise ValueError(f"Period {name} from {group} not found. (Options: {periods})")
-    return period[0]
-
-def register_class(cls):
-    parents = inspect.getmro(cls)
-    is_cycle = TimeCycle in parents
-    is_interval = TimeInterval in parents
-    is_delta = TimeDelta in parents
-
-    n_parents = sum([is_cycle, is_interval, is_delta])
-    if n_parents > 1:
-        raise TypeError(f"Class {cls} cannot be registered as it inherits from more than one TimePeriod abstract classes")
-    elif n_parents < 1:
-        raise TypeError(f"Class {cls} cannot be registered as it does not inherit from TimePeriod abstract classes")
-
-    parent = TimeCycle if is_cycle else TimeInterval if is_interval else TimeDelta
-    PERIOD_CLASSES[parent].append(cls)
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 
@@ -69,10 +38,6 @@ class TimePeriod(metaclass=_TimeMeta):
 
     def __init__(self, *args, **kwargs):
         pass
-
-    def register(self, syntax, group):
-        "Save the instance to the register for easier access"
-        SYNTAX_MAPPING[group][syntax] = self
 
     def next_time_span(self, dt, *, include_current=False) -> tuple:
         "Return (start, end) for next "
@@ -581,9 +546,3 @@ class StaticInterval(TimePeriod):
     @property
     def is_max_interval(self):
         return (self.start == self.min) and (self.end == self.max)
-
-PERIOD_CLASSES = {
-    TimeCycle: [],
-    TimeDelta: [],
-    TimeInterval: [],
-}

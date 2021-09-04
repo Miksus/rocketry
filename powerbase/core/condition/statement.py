@@ -184,13 +184,6 @@ class Statement(BaseCondition):
         self.args = (*self.args, *args)
         self.kwargs.update(kwargs)
 
-    def has_param(self, *params):
-        sig = signature(self.observe)
-        return all(param in sig.parameters for param in params)
-
-    def has_param_set(self, *params):
-        return all(param in self.kwargs for param in params)
-
     def __str__(self):
         name = self.name
         return f"< Statement '{name}'>"
