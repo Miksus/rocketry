@@ -205,6 +205,28 @@ class TaskExecutable(Historical):
         period = self.period
         return f"task '{task}' {self.period} "
 
+    @classmethod
+    def _from_period(cls, span_type=None, **kwargs):
+        period_func = {
+            "between": get_between,
+            "after": get_after,
+            "before": get_before,
+            "starting": get_full_cycle,
+            None: get_full_cycle,
+            "every": TimeDelta,
+        }[span_type]
+        period = period_func(**kwargs)
+        return cls(period=period)
+
+    __parsers__ = {
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>starting) (?P<start>.+)"): "_from_period",
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>between) (?P<start>.+) and (?P<end>.+)"): "_from_period",
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>after) (?P<start>.+)"): "_from_period",
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>before) (?P<end>.+)"): "_from_period",
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)"): "_from_period",
+        re.compile(r"(run )?(?P<span_type>every) (?P<past>.+)"): "_from_period",
+    }
+
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' finished before {task} started")
 class DependFinish(Historical):
     def observe(self, task, depend_task, **kwargs):
@@ -239,6 +261,11 @@ class DependFinish(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' succeeded before {task} started")
 class DependSuccess(Historical):
+
+    __parsers__ = {
+        re.compile(r"after '(?P<depend_task>.+)'( succeeded)?"): "__init__",
+    }
+
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has succeeded and "task" has not yet ran after it.
         Useful for start cond for task that should be run after success of another task.
@@ -267,6 +294,11 @@ class DependSuccess(Historical):
 
 #@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' failed before {task} started")
 class DependFailure(Historical):
+
+    __parsers__ = {
+        re.compile(r"after '(?P<depend_task>.+)' failed"): "__init__",
+    }
+
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has failed and "task" has not yet ran after it.
         Useful for start cond for task that should be run after failure of another task.
