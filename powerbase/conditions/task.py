@@ -172,9 +172,11 @@ class TaskExecutable(Historical):
     # Try twice (if fails) between 10:00 and 14:00
     TaskExecutable(period=TimeOfDay("10:00", "14:00"), retry=2)
     """
-    def __init__(self, retries=0, task=None, period=None, **kwargs):
-        
-        super().__init__(period=period, retries=retries, task=task, **kwargs)
+
+    def __init__(self, retries=None, task=None, period=None, **kwargs):
+        if retries is not None:
+            kwargs["retries"] = retries
+        super().__init__(period=period, task=task, **kwargs)
 
         # TODO: If constant launching (allow launching alive tasks)
         # is to be implemented, there should be one more condition:
@@ -185,7 +187,7 @@ class TaskExecutable(Historical):
 
     def __bool__(self):
         period = self.period
-        retries = self.kwargs["retries"]
+        retries = self.kwargs.get("retries", 0)
         task = self.kwargs["task"]
 
         # Form the sub statements
@@ -244,6 +246,9 @@ class DependFinish(Historical):
     __parsers__ = {
         re.compile(r"after '(?P<depend_task>.+)' finished"): "__init__",
     }
+    def __init__(self, depend_task, task=None, **kwargs):
+        super().__init__(task=task, depend_task=depend_task, **kwargs)
+
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has finished and "task" has not yet ran after it.
         Useful for start cond for task that should be run after finish of another task.
@@ -281,6 +286,9 @@ class DependSuccess(Historical):
         re.compile(r"after '(?P<depend_task>.+)'( succeeded)?"): "__init__",
     }
 
+    def __init__(self, depend_task, task=None, **kwargs):
+        super().__init__(task=task, depend_task=depend_task, **kwargs)
+
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has succeeded and "task" has not yet ran after it.
         Useful for start cond for task that should be run after success of another task.
@@ -313,6 +321,9 @@ class DependFailure(Historical):
     __parsers__ = {
         re.compile(r"after '(?P<depend_task>.+)' failed"): "__init__",
     }
+
+    def __init__(self, depend_task, task=None, **kwargs):
+        super().__init__(task=task, depend_task=depend_task, **kwargs)
 
     def observe(self, task, depend_task, **kwargs):
         """True when the "depend_task" has failed and "task" has not yet ran after it.

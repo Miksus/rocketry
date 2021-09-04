@@ -101,6 +101,7 @@ class AnchoredInterval(TimeInterval):
             if val is not None 
             else 0
         )
+        self._start_orig = val
 
     @property
     def end(self):
@@ -119,6 +120,7 @@ class AnchoredInterval(TimeInterval):
         has_time = (ns % to_nanoseconds(day=1)) != 0
 
         self._end = ns
+        self._end_orig = val
 
     @abstractmethod
     def anchor_str(self, s, **kwargs):
@@ -341,7 +343,8 @@ class AnchoredInterval(TimeInterval):
         return dt + offset
 
     def __repr__(self):
-        return f'{self._scope}({self._start}, {self._end})'
+        cls_name = type(self).__name__
+        return f'{cls_name}({repr(self._start_orig)}, {repr(self._end_orig)})'
 
     def __str__(self):
         # Hour: '15:'

@@ -212,6 +212,19 @@ class Statement(BaseCondition):
         else:
             return False
 
+    def __repr__(self):
+        cls_name = type(self).__name__
+        arg_str = ', '.join(map(repr, self.args))
+        kwargs_str = ', '.join(f'{key}={repr(val)}' for key, val in self.kwargs.items())
+        param_str = ""
+        if arg_str:
+            param_str = arg_str
+        if kwargs_str:
+            if param_str:
+                param_str = param_str + ", "
+            param_str = param_str + kwargs_str
+        return f'{cls_name}({param_str})'
+
 class Comparable(Statement):
     # TODO
     pass
@@ -317,3 +330,14 @@ class Historical(Statement):
         #     start < end (half of the time)
         # Even though: datetime.datetime.now() is defined as datetime.datetime.fromtimestamp(time.time(), None) 
         return datetime.datetime.fromtimestamp(time.time())
+
+    def __repr__(self):
+        string = super().__repr__()
+        period = self.period
+        if period is not None:
+            base_string = string[:-1]
+            if base_string[-1] != "(":
+                base_string = base_string + ", "
+            return base_string + f"period={repr(self.period)})"
+        else:
+            return string
