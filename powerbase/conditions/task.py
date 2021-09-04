@@ -14,6 +14,11 @@ import numpy as np
 #@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' stared {period}")
 class TaskStarted(Historical, Comparable):
 
+
+    __parsers__ = {
+        re.compile(r"'(?P<task>.+)' started"): "__init__",
+    }
+
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
