@@ -1,4 +1,6 @@
 
+import re
+
 from typing import Mapping
 from powerbase.core.conditions import Statement, Historical, Comparable, BaseCondition
 
