@@ -1,6 +1,6 @@
 
 from typing import List, Optional, Union
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 
 from pathlib import Path
 import inspect
@@ -11,7 +11,7 @@ import sys
 
 from pybox.pkg import find_package_root
 
-@register_task_cls
+
 class PyScript(Task):
     """Task that executes a Python script.  
 

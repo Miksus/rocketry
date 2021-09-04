@@ -1,6 +1,6 @@
 
 
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 #from .config import parse_config
 
 from pathlib import Path
@@ -9,7 +9,7 @@ import importlib
 import subprocess
 import re
 
-@register_task_cls
+
 class CommandTask(Task):
     """Task that executes a commandline command
     """

@@ -5,6 +5,7 @@ def _add_parser(cls:Type, container:dict) -> None:
     """Acquire the parsers from the class
     and add them to the container.
     """
+    attr_parsers = "__parsers__"
     def _get_constructor(val, cls):
         if not isinstance(val, str):
             # If not string, e xpecting a function/callable
@@ -16,7 +17,7 @@ def _add_parser(cls:Type, container:dict) -> None:
             # Expecting a class method
             return getattr(cls, val)
 
-    parsers = getattr(cls, "__parsers__", None)
+    parsers = getattr(cls, attr_parsers, None)
     if not parsers:
         return
 
@@ -29,4 +30,13 @@ def _add_parser(cls:Type, container:dict) -> None:
     container.update(parsers)
     # We delete the attribute to not cause confusion 
     # as changing it does nothing
-    delattr(cls, "__parsers__")
+    delattr(cls, attr_parsers)
+
+def _register(cls, container:dict):
+    """Add class to the container"""
+    attr_register = "__register__"
+
+    if getattr(cls, attr_register, True):
+        container[cls.__name__] = cls
+    if hasattr(cls, attr_register):
+        delattr(cls, attr_register)

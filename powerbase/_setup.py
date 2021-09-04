@@ -10,8 +10,8 @@ def _setup_defaults():
     default_tasks = {cls.__name__: cls for cls in Task.__subclasses__() if not cls.__name__.startswith("_")}
 
     # Set default list of conds and tasks shared between any Session
-    Session.cond_cls = default_conds
-    Session.task_cls = default_tasks
+    #Session.cond_cls = default_conds
+    #Session.task_cls = default_tasks
 
     # Add some extra parsers from core 
     add_condition_parser({

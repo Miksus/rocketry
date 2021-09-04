@@ -55,8 +55,6 @@ class Session:
     parameters: Parameters
     scheduler: Scheduler
 
-    task_cls: Dict[str, Type]
-    cond_cls: Dict[str, Type]
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
@@ -65,8 +63,8 @@ class Session:
         "task_logger_basename": DEFAULT_BASENAME_TASKS,
         "scheduler_logger_basename": DEFAULT_BASENAME_SCHEDULER,
 
-        "session_store_cond_cls": True,
-        "session_store_task_cls": True,
+        #"session_store_cond_cls": True,
+        #"session_store_task_cls": True,
         "debug": False,
     }
 
@@ -88,9 +86,6 @@ class Session:
         self.tasks = tasks
         self.parameters = parameters
         self.components = components
-
-        self.cond_cls = self.cond_cls.copy()
-        self.task_cls = self.task_cls.copy()
 
         self.scheduler = None
         if scheme is not None:

@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
 
 from powerbase.core import time
-from powerbase.core.meta import _add_parser
+from powerbase.core.meta import _add_parser, _register
 
 
 CLS_CONDITIONS: Dict[str, Type['BaseCondition']] = {}
@@ -17,12 +17,8 @@ class _ConditionMeta(type):
         cls = type.__new__(mcs, name, bases, class_dict)
 
         # Store the name and class for configurations
-        is_private = name.startswith("_")
-        is_base = name == "BaseCondition"
-        if not is_private and not is_base:
-            if cls.session is not None and cls.session.config["session_store_cond_cls"]:
-                cls.session.cond_cls[cls.__name__] = cls
-            CLS_CONDITIONS[cls.__name__] = cls
+        # so they can be used in dict construction
+        _register(cls, CLS_CONDITIONS)
 
         # Add the parsers
         _add_parser(cls, container=PARSERS)
@@ -79,6 +75,7 @@ class BaseCondition(metaclass=_ConditionMeta):
     session = None
 
     __parsers__ = {}
+    __register__ = False
 
     @abstractmethod
     def __bool__(self):

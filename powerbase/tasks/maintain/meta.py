@@ -1,8 +1,7 @@
 
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 
 
-@register_task_cls
 class Refresher(Task):
     """Refresh the tasks and maintainer tasks of a scheduler
     by getting them via specified functions.
@@ -31,7 +30,7 @@ class Refresher(Task):
     def get_default_name(self):
         return "task_refresher"
 
-@register_task_cls
+
 class ParamRefresher(Task):
     """Refresh scheduler's/session's/tasks' parameters with a function/callable 
 

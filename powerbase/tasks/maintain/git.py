@@ -1,5 +1,5 @@
 
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 try:
     from git import Repo
 except ImportError:
@@ -8,7 +8,6 @@ except ImportError:
     pass
 
 
-@register_task_cls
 class GitFetch(Task):
     # Tested (manually)
     def execute_action(self, root=None, **kwargs):
@@ -17,7 +16,7 @@ class GitFetch(Task):
         origin = repo.remotes.origin
         origin.fetch()
 
-@register_task_cls
+
 class GitPull(Task):
 
     def __init__(self, branch="master", **kwargs):

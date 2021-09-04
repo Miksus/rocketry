@@ -21,45 +21,6 @@ def test_get_task(tmpdir, session):
         t = session.get_task(task)
         assert t is task
 
-def test_session_condition_defaults():
-    "Test user made condition classes are registered correctly"
-    session = Session()
-    session.set_as_default()
-
-    should_include = {
-        "Any": Any,
-        "All": All,
-        "AlwaysTrue": AlwaysTrue,
-        "AlwaysFalse": AlwaysFalse,
-        "Not": Not,
-    }
-    assert should_include.items() <= Session.cond_cls.items()
-
-    # Creating new condition class that should be automatically 
-    # included to list of default cond_cls
-    class MyCond(BaseCondition):
-        pass
-    assert "MyCond" not in Session.cond_cls
-    assert session.cond_cls["MyCond"] is MyCond
-
-def test_session_task_defaults():
-    "Test user made task classes are registered correctly"
-    session = Session()
-    session.set_as_default()
-
-    should_include = {
-        "FuncTask": FuncTask,
-        "PyScript": PyScript,
-    }
-    assert should_include.items() <= Session.task_cls.items()
-    
-    # Creating new task class that should be automatically 
-    # included to list of default task_cls
-    class MyTask(Task):
-        pass
-    assert "MyTask" not in Session.task_cls
-    assert session.task_cls["MyTask"] is MyTask
-
 
 def test_tasks_attr(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:

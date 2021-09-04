@@ -2,7 +2,7 @@
 
 
 from typing import Callable
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 #from .config import parse_config
 
 from pathlib import Path
@@ -11,10 +11,7 @@ import importlib
 import subprocess
 import re
 
-#from powerbase.core.parameters import ParameterSet
 
-
-@register_task_cls
 class FuncTask(Task):
     """Task that executes a function or callable.
 

@@ -9,6 +9,7 @@ from .utils import get_execution, get_dependencies
 
 from powerbase.conditions import DependSuccess
 from powerbase.core.parameters import Parameters
+from powerbase.core.meta import _register
 
 import os, time
 import platform
@@ -31,12 +32,6 @@ CLS_TASKS = {}
 
 _IS_WINDOWS = platform.system()
 
-def register_task_cls(cls):
-    """Add Task class to registered
-    Task dict in order to initiate
-    it from configuration"""
-    CLS_TASKS[cls.__name__] = cls
-    return cls
 
 class _TaskMeta(type):
     def __new__(mcs, name, bases, class_dict):
@@ -44,11 +39,7 @@ class _TaskMeta(type):
         cls = type.__new__(mcs, name, bases, class_dict)
 
         # Store the name and class for configurations
-        is_private = name.startswith("_")
-        is_base = name == "Task"
-        if not is_private and not is_base:
-            if cls.session is not None and cls.session.config["session_store_task_cls"]:
-                cls.session.task_cls[cls.__name__] = cls
+        _register(cls, CLS_TASKS)
         return cls
 
 
@@ -142,7 +133,7 @@ class Task(metaclass=_TaskMeta):
         Session the task is binded to
 
     """
-    
+    __register__ = False
 
     # Class
     use_instance_naming: bool = False

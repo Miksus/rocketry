@@ -7,7 +7,6 @@ import jwt
 
 from powerbase.parse import parse_task
 from powerbase.core import Task, Parameters
-from powerbase.core.task import register_task_cls
 
 from pybox.network import get_ip
 from .routes import rest_api
@@ -20,7 +19,7 @@ import requests
 import pandas as pd
 from .utils import check_route_access
 
-@register_task_cls
+
 class HTTPConnection(Task):
     """HTTP Rest API for a scheduler runtime communication
     using Flask. Useful for web UI or communication between
@@ -107,7 +106,6 @@ class HTTPConnection(Task):
         app.config["ACCESS_TOKEN"] = access_token
 
 
-@register_task_cls
 class IPAddressPinger(Task):
     
     """Task for pushing the connection information

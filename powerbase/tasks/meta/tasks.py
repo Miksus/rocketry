@@ -1,6 +1,6 @@
 
 
-from powerbase.core.task.base import Task, register_task_cls
+from powerbase.core.task.base import Task
 from powerbase.tasks import PyScript
 from powerbase.parse import parse_task
 from pybox.io import read_yaml
@@ -12,7 +12,6 @@ import time
 import logging
 
 
-@register_task_cls
 class YAMLFinder(Task):
     """Task that searches other tasks from 
     a directory. All matched YAML files are

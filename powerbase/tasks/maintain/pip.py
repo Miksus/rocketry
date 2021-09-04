@@ -1,11 +1,11 @@
 
-from powerbase.core.task import Task, register_task_cls
+from powerbase.core.task import Task
 
 import sys
 from pathlib import Path
 import subprocess
 
-@register_task_cls
+
 class PipInstall(Task):
 
     # Note: __init__ contains task specific params and execute_action session specific
