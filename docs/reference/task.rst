@@ -13,3 +13,6 @@ Builtin task classes
 
 .. autoclass:: powerbase.task.PyScript
    :members:
+
+.. autoclass:: powerbase.task.meta.YAMLFinder
+   :members:
