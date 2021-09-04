@@ -102,13 +102,6 @@ class BaseCondition(metaclass=_ConditionMeta):
         # bitwise not
         return Not(self)
 
-    @property
-    def cycle(self):
-        "By default, the cycle is all the times"
-        #! TODO: Delete
-        # By default the time cycle cannot be determined thus full range is given
-        return time.StaticInterval()
-
     def __eq__(self, other):
         "Equal operation"
         is_same_class = isinstance(other, type(self))
@@ -172,17 +165,6 @@ class Any(_ConditionContainer, BaseCondition):
             string = ' | '.join(map(str, self.subconditions))
             return f'({string})'
 
-    @property
-    def cycle(self):
-        "Aggregate the TimePeriods the condition has"
-        all_timeperiods = all(isinstance(cond, TimeCondition) for cond in self.subconditions)
-        if all_timeperiods:
-            # Can be determined
-            return time.Any(*[cond.cycle for cond in self.subconditions])
-        else:
-            # Cannot be determined --> all times may be valid
-            return time.StaticInterval()
-
 
 class All(_ConditionContainer, BaseCondition):
 
@@ -212,11 +194,6 @@ class All(_ConditionContainer, BaseCondition):
     def __getitem__(self, val):
         return self.subconditions[val]
 
-    @property
-    def cycle(self):
-        "Aggregate the TimePeriods the condition has"
-        return time.All(*[cond.cycle for cond in self.subconditions])
-
 
 class Not(_ConditionContainer, BaseCondition):
 
@@ -241,22 +218,6 @@ class Not(_ConditionContainer, BaseCondition):
     @property
     def subconditions(self):
         return (self.condition,)
-
-    @property
-    def cycle(self):
-        "Aggregate the TimePeriods the condition has"
-        if isinstance(self.condition, TimeCondition):
-            # Can be determined
-            return ~self.condition.cycle
-        else:
-            # Cannot be determined --> all times may be valid
-            return time.StaticInterval()
-
-#    def __getattr__(self, name):
-#        """Called as last resort so the actual 
-#        condition's attribute returned to be more
-#        flexible"""
-#        return getattr(self.condition, name)
 
     def __iter__(self):
         return iter((self.condition,))
