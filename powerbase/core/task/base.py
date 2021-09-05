@@ -126,6 +126,11 @@ class Task(metaclass=_TaskMeta):
     on_shutdown : bool
         Run the task on the shutdown sequence of 
         the Scheduler, by default False
+    on_exists : str
+        What to do if the name of the task already 
+        exists in the session, options: 'raise',
+        'ignore', 'replace', by default use session
+        configuration
 
     Attributes
     ----------
@@ -140,7 +145,6 @@ class Task(metaclass=_TaskMeta):
     permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: Tuple = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
 
-    
     daemon: Optional[bool]
 
     session: 'Session' = None
@@ -180,7 +184,8 @@ class Task(metaclass=_TaskMeta):
                 on_success=None, on_failure=None, on_finish=None, 
                 name=None, logger=None, daemon=None,
                 execution="process", disabled=False, force_run=False,
-                on_startup=False, on_shutdown=False):
+                on_startup=False, on_shutdown=False,
+                on_exists=None):
         """[summary]
 
         Arguments:
@@ -197,7 +202,7 @@ class Task(metaclass=_TaskMeta):
         """
         self.session = self.session if session is None else session
 
-        self.name = name
+        self.set_name(name, on_exists=on_exists)
         self.logger = logger
         
         self.status = None
@@ -575,27 +580,31 @@ class Task(metaclass=_TaskMeta):
         return self.status == "run"
 
     @property
-    def name(self):
+    def name(self) -> str:
         """str: Name of the task"""
         return self._name
     
     @name.setter
-    def name(self, name):
-        # TODO: Change the name in _TASKS
-        old_name = None if not hasattr(self, "_name") else self._name
+    def name(self, name:str):
+        self.set_name(name)
+
+    def set_name(self, name, on_exists=None, use_instance_naming=None):
+        
+        on_exists = self.session.config["task_pre_exist"] if on_exists is None else on_exists
+        use_instance_naming = self.session.config["use_instance_naming"] if use_instance_naming is None else use_instance_naming
 
         if name is None:
             name = (
                 id(self)
-                if self.session.config["use_instance_naming"]
+                if use_instance_naming
                 else self.get_default_name()
             )
 
+        old_name = None if not hasattr(self, "_name") else self._name
         if name == old_name:
             return
         
         if name in self.session.tasks:
-            on_exists = self.session.config["task_pre_exist"]
             if on_exists == "replace":
                 self.session.tasks[name] = self
             elif on_exists == "raise":
@@ -825,6 +834,11 @@ class Task(metaclass=_TaskMeta):
         This property should be used by the execute_action of the task."""
         # Readonly "attribute"
         return self._thread_terminate
+
+    def delete(self):
+        """Delete the task from the session. 
+        Overried if needed additional cleaning."""
+        del self.session.tasks[self.name]
 
     @property
     def lock(self):
