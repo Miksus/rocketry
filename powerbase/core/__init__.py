@@ -11,3 +11,4 @@ from .parameters import Parameters
 from .task import Task
 from .schedule import Scheduler
 from .condition import BaseCondition
+from .extensions import BaseExtension

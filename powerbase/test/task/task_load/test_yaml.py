@@ -7,7 +7,7 @@ from pathlib import Path
 from powerbase import Session
 from powerbase.tasks import PyScript
 from powerbase.core import Task
-from powerbase.tasks.meta import YAMLFinder
+from powerbase.tasks.loaders import YAMLLoader
 #from powerbase.core.task.base import Task
 #
 import pandas as pd
@@ -31,6 +31,15 @@ def asset_task_equal(a:Task, b:Task):
         b_attr_val = getattr(b, attr)
         assert a_attr_val == b_attr_val
 
+def create_file(file, content):
+    path = Path(file)
+    path.parent.mkdir(exist_ok=True)
+    #with open(path, "w") as f:
+    #    f.write(content)
+    path.write_text(content)
+
+def delete_file(file):
+    Path(file).unlink()
 
 def pytest_generate_tests(metafunc):
     if metafunc.cls is not None:
@@ -47,6 +56,34 @@ def pytest_generate_tests(metafunc):
             argvalues.append(tuple(scenario[name] for name in argnames))
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
+def test_find_multiple_times(tmpdir, session):
+    with tmpdir.as_cwd() as old_dir:
+        # Create the test files
+        root = Path(str(tmpdir)) / "project"
+  
+
+        finder = YAMLLoader(path="project", execution="main")
+        
+
+        create_file(root / "task1.yaml", """
+        class: PyScript
+        name: mytask-1
+        path: 'something.py'
+        """)
+        finder.execute_action()
+        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-1"]
+
+        create_file(root / "task2.yaml", """
+        class: PyScript
+        name: mytask-2
+        path: 'something.py'
+        """)
+        finder.execute_action()
+        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-1", "mytask-2"]
+
+        delete_file(root / "task1.yaml")
+        finder.execute_action()
+        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-2"]
 
 class TestParseTasks:
     argnames = ["file", "get_expected"]
@@ -97,7 +134,7 @@ class TestParseTasks:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(file["content"])       
 
-            finder = YAMLFinder(path="project", execution="main")
+            finder = YAMLLoader(path="project", execution="main")
             parsed_task = finder.parse_file(file["path"])
 
             expected_task = get_expected()
@@ -120,7 +157,7 @@ class TestFindTasks:
         {
             "id": "Typical case",
             "files": {
-                "project/mytask-1.yaml": """
+                "project/task-1.yaml": """
                     name: get_stuff
                     start_cond: 'time of day between 10:00 and 14:00'
                     path: scripts/get_some_stuff.py
@@ -131,7 +168,7 @@ class TestFindTasks:
                         pass
                 """,
 
-                "project/mytask-2.yaml": """
+                "project/task-2.yaml": """
                     name: do_stuff
                     start_cond: 'time of day between 22:00 and 23:00 & true'
                     path: scripts/do_some_stuff.py
@@ -150,7 +187,7 @@ class TestFindTasks:
         {
             "id": "One file",
             "files": {
-                "project/mytask-1.yaml": """
+                "project/task-1.yaml": """
                     - name: get_stuff
                       start_cond: 'time of day between 10:00 and 14:00'
                       path: scripts/get_some_stuff.py
@@ -188,7 +225,7 @@ class TestFindTasks:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(cont)       
 
-            finder = YAMLFinder(path="project", execution="main")
+            finder = YAMLLoader(path="project", execution="main")
             finder.execute_action()
             parsed_tasks = [task for task in session.tasks.values() if task is not finder]
 

@@ -1,6 +1,10 @@
 
 from powerbase.parse import parse_session
 from powerbase.parse.utils import instances, ParserPicker
+from powerbase.core.meta import _register
+
+CLS_EXTENSIONS = {}
+PARSERS = {}
 
 def _get_parser(init_method):
     return ParserPicker(
@@ -10,7 +14,7 @@ def _get_parser(init_method):
         }
     )
 
-class _ComponentMeta(type):
+class _ExtensionMeta(type):
     def __new__(mcs, name, bases, class_dict):
 
         cls = type.__new__(mcs, name, bases, class_dict)
@@ -18,19 +22,21 @@ class _ComponentMeta(type):
         # Store the name and class for configurations
         parse_key = getattr(cls, "__parsekey__", None)
         if parse_key is not None:
-            parse_session[parse_key] = _get_parser(cls.parse_cls)
-
+            parser = _get_parser(cls.parse_cls)
+            parse_session[parse_key] = parser
+            PARSERS[parse_key] = parser
+        _register(cls, CLS_EXTENSIONS)
         return cls
 
-class BaseComponent(metaclass=_ComponentMeta):
-    """Base for all components that are registered
+class BaseExtension(metaclass=_ExtensionMeta):
+    """Base for all extensions that are registered
     to the sessions and are parsable in configs.
 
-    Component is an external class that extends the
+    Extension is an external class that extends the
     existing behaviour of Powerbase but does not 
     much interfer with it by default. 
 
-    Examples of components could be:
+    Examples of extensions could be:
         - Task sequences or pipelines so 
           that tasks are run after each 
           other.
@@ -42,18 +48,23 @@ class BaseComponent(metaclass=_ComponentMeta):
     """
     session: 'Session'
     __parsekey__: str
+    __register__ = False
 
     def __init__(self, name:str=None, session:'Session'=None):
-        "Add the component to the session"
-        cls = type(self)
-        if cls not in self.session.components:
-            self.session.components[cls] = {}
-        self.session.components[cls][name] = self
+        "Add the extension to the session"
+        parse_key = self.__parsekey__
+        if parse_key not in self.session.extensions:
+            self.session.extensions[parse_key] = {}
+        self.session.extensions[parse_key][name] = self
 
         self.session = session if session is not None else self.session
         self.name = name
 
     @classmethod
-    def parse_cls(cls, d:dict, resources, session):
+    def parse_cls(cls, d:dict, session, resources=None):
         "Parse a configuration dict to an instance"
         return cls(**d, session=session)
+
+    def delete(self):
+        "Remove the extension from the session"
+        del self.session.extensions[self.__parsekey__][self.name]

@@ -1,22 +1,19 @@
 
-import datetime
-from powerbase.core import BaseCondition
-from ..base import BaseComponent
-from powerbase.conditions import Any, All, AlwaysFalse
-from powerbase.parse import parse_time, parse_task
-
 from .trigger import TriggerCluster
 #from .pipe import Pipe
-
+from typing import List
 import datetime
 from powerbase.core import BaseCondition
-from ..base import BaseComponent
+from powerbase.core import BaseExtension
 from powerbase.conditions import Any, All, AlwaysFalse
 from powerbase.parse import parse_time, parse_task
-from .trigger import TriggerCluster, IntervalTrigger, PulseTrigger
+from powerbase.core.time import TimePeriod
+from powerbase.core import Task
+
+from .trigger import TriggerCluster, IntervalTrigger, PulseTrigger, BaseTrigger
 
 
-class Sequence(BaseComponent):
+class Sequence(BaseExtension):
     """
     Sequence is a task pipe but with exception that 
     each task is run only once in the interval.
@@ -38,6 +35,10 @@ class Sequence(BaseComponent):
 
     __parsekey__ = "sequences"
 
+    triggers: List[BaseTrigger]
+    interval: TimePeriod
+    tasks: List[Task]
+
     def __init__(self, tasks:list, interval=None, **kwargs):
         super().__init__(**kwargs)
         self.tasks = [parse_task(task, session=self.session) for task in tasks]
@@ -56,17 +57,10 @@ class Sequence(BaseComponent):
         trigger = trigger_cls(task=task, depend_trigger=depend_trigger, parent=self)
         self.triggers.append(trigger)
         
-        if isinstance(task.start_cond, TriggerCluster):
-            task.start_cond.subconditions.append(trigger)
-        elif isinstance(task.start_cond, (Any, All)):
-            # The TriggerCluster is probably in the list of subconditions
-            for cond in task.start_cond:
-                if isinstance(cond, TriggerCluster):
-                    cond.subconditions.append(trigger)
-                    break
-            else:
-                # Not found, adding as And
-                task.start_cond &= TriggerCluster(trigger, task=task)
+        existing_cluster = TriggerCluster.find(task.start_cond)
+
+        if existing_cluster is not None:
+            existing_cluster.subconditions.append(trigger)
         else:
             if isinstance(task.start_cond, AlwaysFalse):
                 # Default condition is AlwaysFalse, 
@@ -91,3 +85,8 @@ class Sequence(BaseComponent):
 
     def get_last_run(self):
         return max(self.triggers, key=lambda trg: trg.task.last_run or datetime.datetime.min)
+
+    def delete(self):
+        super().delete()
+        for trigger in self.triggers:
+            trigger.delete()

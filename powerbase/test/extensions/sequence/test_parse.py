@@ -1,6 +1,6 @@
 
-from powerbase.components import Sequence
-from powerbase.components.piping import TriggerCluster
+from powerbase.extensions import Sequence
+from powerbase.extensions.piping import TriggerCluster
 from powerbase.conditions import All
 from powerbase.tasks import FuncTask
 from powerbase.config import parse_dict
@@ -22,11 +22,11 @@ def test_parse(session):
         }
     }
 
-    assert {} == session.components
+    assert {} == session.extensions
     sess = parse_dict(conf, session=session)
-
-    assert isinstance(session.components[Sequence]["my-sequence-1"], Sequence)
-    assert isinstance(session.components[Sequence]["my-sequence-2"], Sequence)
+    sequences = session.extensions["sequences"]
+    assert isinstance(sequences["my-sequence-1"], Sequence)
+    assert isinstance(sequences["my-sequence-2"], Sequence)
     
     # Test conditions
     task1 = session.tasks["mytask-1"]
@@ -38,11 +38,11 @@ def test_parse(session):
     assert isinstance(task3.start_cond[1], TriggerCluster)
 
     # Test sequences
-    assert session.components[Sequence]["my-sequence-1"].triggers[0].task is task1
-    assert session.components[Sequence]["my-sequence-1"].triggers[1].task is task2
+    assert sequences["my-sequence-1"].triggers[0].task is task1
+    assert sequences["my-sequence-1"].triggers[1].task is task2
 
-    assert session.components[Sequence]["my-sequence-2"].triggers[0].task is task2
-    assert session.components[Sequence]["my-sequence-2"].triggers[1].task is task3
+    assert sequences["my-sequence-2"].triggers[0].task is task2
+    assert sequences["my-sequence-2"].triggers[1].task is task3
 
     # test Sequence Triggers
     task1_trigger = task1.start_cond[0]

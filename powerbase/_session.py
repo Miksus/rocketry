@@ -7,7 +7,7 @@ about the scehuler/task/parameters etc.
 
 import logging
 from powerbase.conditions import Any
-from powerbase.components import BaseComponent
+from powerbase.core import BaseExtension
 from typing import List, Dict, Type, Union
 from pathlib import Path
 from itertools import chain
@@ -39,7 +39,7 @@ class Session:
         Parameters feeded to the tasks.
     scheduler : Scheduler
         Scheduler of the session.
-    components : dict
+    extensions : dict
         External components that help to shape the 
         behaviour of tasks. These are built on top
         of the core functionalities and extends it.
@@ -51,7 +51,7 @@ class Session:
 
     tasks: Dict[str, Task]
     config: Dict[str, Any]
-    components: Dict[Type, Dict[str, BaseComponent]]
+    extensions: Dict[Type, Dict[str, BaseExtension]]
     parameters: Parameters
     scheduler: Scheduler
 
@@ -68,7 +68,7 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, components:dict=None, scheme:Union[str,list]=None):
+    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None):
         # Set defaults
         config = {} if config is None else config
         tasks = {} if tasks is None else tasks
@@ -77,7 +77,7 @@ class Session:
             else Parameters(parameters) if not isinstance(parameters, Parameters)
             else parameters
         )
-        components = {} if components is None else components
+        extensions = {} if extensions is None else extensions
 
         # Set attrs
         self.config = self.default_config.copy()
@@ -85,7 +85,7 @@ class Session:
 
         self.tasks = tasks
         self.parameters = parameters
-        self.components = components
+        self.extensions = extensions
 
         self.scheduler = None
         if scheme is not None:
@@ -225,5 +225,5 @@ class Session:
         Task.session = self
         BaseCondition.session = self
         Parameters.session = self
-        BaseComponent.session = self
+        BaseExtension.session = self
         powerbase.session = self

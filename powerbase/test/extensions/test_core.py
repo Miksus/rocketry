@@ -1,5 +1,5 @@
 
-from powerbase.components import BaseComponent
+from powerbase.extensions import BaseExtension
 from powerbase.config import parse_dict
 
 import pytest
@@ -9,13 +9,13 @@ import pytest
     [
         pytest.param(
             {
-                "_pytest_component": {
-                    "my-component-1": {
+                "_pytest_extension": {
+                    "my-extension-1": {
                         "x": 1, 
                         "y": 2,
                         "z": 3
                     },
-                    "my-component-2": {
+                    "my-extension-2": {
                         "x": 1, 
                         "y": 2,
                         "z": 3
@@ -26,15 +26,15 @@ import pytest
         ),
         pytest.param(
             {
-                "_pytest_component": [
+                "_pytest_extension": [
                     {
-                        "name": "my-component-1",
+                        "name": "my-extension-1",
                         "x": 1, 
                         "y": 2,
                         "z": 3,
                     },
                     {
-                        "name": "my-component-2",
+                        "name": "my-extension-2",
                         "x": 1, 
                         "y": 2,
                         "z": 3,
@@ -47,9 +47,9 @@ import pytest
 )
 def test_creation(session, config):
 
-    # Test a custom component
-    class MyComponent(BaseComponent):
-        __parsekey__ = "_pytest_component"
+    # Test a custom extension
+    class MyExtension(BaseExtension):
+        __parsekey__ = "_pytest_extension"
         
         def __init__(self, x, y, **kwargs):
             self.x, self.y = x, y
@@ -60,13 +60,26 @@ def test_creation(session, config):
             assert 3 == d.pop("z")
             return super().parse_cls(d, **kwargs)
 
-    assert {} == session.components
+    assert {} == session.extensions
     parse_dict(config, session=session)
 
-    for comp_name in ("my-component-1", "my-component-2"):
-        comp = session.components[MyComponent][comp_name]
-        assert isinstance(comp, MyComponent)
+    for ext_name in ("my-extension-1", "my-extension-2"):
+        comp = session.extensions["_pytest_extension"][ext_name]
+        assert isinstance(comp, MyExtension)
         assert 1 == comp.x
         assert 2 == comp.y
         assert not hasattr(comp, "z")
         assert comp.session is session
+
+def test_delete(session):
+    # Test a custom extension
+    class MyExtension(BaseExtension):
+        __parsekey__ = "_pytest_extension"
+        
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+    
+    ext = MyExtension(name="my-extension")
+    assert session.extensions["_pytest_extension"] == {"my-extension": ext}
+    ext.delete()
+    assert session.extensions["_pytest_extension"] == {}

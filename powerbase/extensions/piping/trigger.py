@@ -2,10 +2,8 @@
 import datetime
 from powerbase.core.task.base import Task
 from typing import Tuple, Union
-from powerbase.components.base import BaseComponent
 from powerbase.core import BaseCondition
 from powerbase.conditions import Any, All, AlwaysFalse
-from powerbase.parse import parse_time, parse_task
 
 import pandas as pd
 
@@ -98,6 +96,24 @@ class TriggerCluster(Any):
 
     def add_queue(self, trigger):
         self._queue.append(trigger)
+
+    def delete_trigger(self, trigger):
+        self.subconditions = [
+            trig
+            for trig in self.subconditions
+            if trig is not trigger
+        ]
+
+    @classmethod
+    def find(cls, cond:BaseCondition):
+        "Find existing TriggerCluster from given condition"
+        if isinstance(cond, cls):
+            return cond
+        elif isinstance(cond, (Any, All)):
+            for subcond in cond:
+                if isinstance(subcond, TriggerCluster):
+                    return subcond
+        return None
 
 
 class BaseTrigger(BaseCondition):
@@ -201,6 +217,11 @@ class BaseTrigger(BaseCondition):
     def line_start(self):
         triggers = self.parent.triggers
         return triggers[0].task.last_run
+
+    def delete(self):
+        #! TODO
+        cluster = TriggerCluster.find(self.task.start_cond)
+        cluster.delete_trigger(self)
 
 class IntervalTrigger(BaseTrigger):
     """
