@@ -6,6 +6,7 @@ Welcome to Powerbase's documentation!
    :caption: Contents:
 
    reference/index
+   tutorial/index
    extending
 
 .. autofunction:: powerbase.config.parse_yaml
