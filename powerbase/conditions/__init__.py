@@ -1,4 +1,4 @@
-from powerbase.core.condition import PARSERS
+from powerbase.core.condition import PARSERS, CLS_CONDITIONS
 from .task import *
 from .scheduler import *
 from .time import *
