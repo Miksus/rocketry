@@ -1,68 +1,45 @@
 import argparse
+from pathlib import Path
+from typing import Optional
 
 from powerbase import Scheduler
 
-from powerbase.task import ScriptTask, JupyterTask, CommandTask
+from distutils.dir_util import copy_tree
 
 # https://docs.python.org/3/library/argparse.html
+PKG_ROOT = Path(__file__).parent
 
-SCHEDULERS = {
-    "simple": Scheduler,
-}
+def start_project(target, template):
+    template_dir = PKG_ROOT / "templates"
+    source = template_dir / template
+    if not source.is_dir():
+        tmpls = [folder.name for folder in template_dir.glob("*/")]
+        raise OSError(f"Template '{template}' does not exists. Full list: {tmpls}")
+    copy_tree(str(source), str(target))
 
+def parse_args(args):
+    parser = argparse.ArgumentParser(prog='Powerbase', description="Scheduling framework.")
 
-def main():
-    parser = argparse.ArgumentParser(description='Pypipe Scheduler')
+    # See: https://docs.python.org/3/library/argparse.html#sub-commands
+    subparsers = parser.add_subparsers(help='Command to use.', dest='command')
 
-    # Scheduler args
-    parser.add_argument('--type', '-t', type=str,
-                        help='type of the scheduler to initiate',
-                        choices=list(SCHEDULERS.keys()), default="multi")
-
-    parser.add_argument('--min_sleep', type=int,
-                        help='minimum wait time in seconds between cycles')
-
-    parser.add_argument('--max_sleep', type=int,
-                        help='maximum wait time in seconds between cycles')
-
-    # Task folders
-    parser.add_argument('--pytasks', type=str, 
-                        help='folder where the python tasks are')
-
-    parser.add_argument('--nbtasks', type=str, 
-                        help='folder where the notebook tasks are')
-
-    parser.add_argument('--cltasks', type=str, 
-                        help='folder where the command line tasks are')
-
-    parser.add_argument('--config', '-c', type=str, 
-                        help='set scheduler config file')
-
-    parser.add_argument('--sum', dest='accumulate', action='store_const',
-                        const=sum, default=max,
-                        help='sum the integers (default: find the max)')
-
-    args = parser.parse_args()
+    start_project_parser = subparsers.add_parser("create", parents=[], add_help=False, aliases=['quick-start'])
     
-    cls_scheduler = SCHEDULERS[args.type]
+    start_project_parser.set_defaults(func=start_project)
 
-    sched_kwargs = dict(
-        min_sleep=args.min_sleep,
-        max_wait=args.max_sleep,
+    start_project_parser.add_argument("target", default="scheduling-project", nargs='?', help='Name of the foder for the project.')
+    start_project_parser.add_argument("-t", "-template", default="minimal", dest="template", help='Template to use.', required=False)
+    
+    return parser.parse_args(args)
 
-    )
+def main(args=None):
+    #main2()
+    args = parse_args(args)
 
-    # Handle configs
-    # ...
+    args = vars(args)
+    func = args.pop("func")
+    args.pop("command")
+    return func(**args)
 
-    # Get tasks
-    # ...
-    tasks = []
-    if args.pytasks:
-        tasks += ScriptTask.from_folder(args.pytasks)
-    if args.cltasks:
-        tasks += CommandTask.from_folder(args.cltasks)
-    if args.nbtasks:
-        tasks += JupyterTask.from_folder(args.nbtasks)
-
-    scheduler = cls_scheduler(tasks, **sched_kwargs)
+if __name__ == "__main__":
+    main()

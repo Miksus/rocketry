@@ -1,0 +1,7 @@
+sequences:
+  my-sequence:
+    tasks:
+      # Names of the tasks that are executed one after another (also start_cond must be fulfilled)
+      - 'mytask-1'
+      - 'mytask-2'
+    interval: 'time of day between 08:00 and 16:00' # When the interval resets
