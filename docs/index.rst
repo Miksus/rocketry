@@ -1,4 +1,4 @@
-Welcome to Powerbase's documentation!
+Welcome to Red Engine's documentation!
 =====================================
 
 .. toctree::
@@ -9,7 +9,7 @@ Welcome to Powerbase's documentation!
    tutorial/index
    extending
 
-.. autofunction:: powerbase.config.parse_yaml
+.. autofunction:: redengine.config.parse_yaml
 
 
 Indices and tables

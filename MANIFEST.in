@@ -1,5 +1,5 @@
-include powerbase/test/test_files/*.ipynb
-include powerbase/test/test_files/*.py
-include powerbase/config/defaults/*.yaml
+include redengine/test/test_files/*.ipynb
+include redengine/test/test_files/*.py
+include redengine/config/defaults/*.yaml
 include versioneer.py
-include powerbase/_version.py
+include redengine/_version.py

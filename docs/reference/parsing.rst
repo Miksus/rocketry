@@ -4,7 +4,7 @@ String Parsing
 Condition
 ---------
 
-    >>> from powerbase.parse import parse_condition
+    >>> from redengine.parse import parse_condition
 
 Time related
 ------------
@@ -41,4 +41,4 @@ be as human readable as possible thus it is not as pure in sense of condition lo
 
 See all available string parsers:
 
-    >>> from powerbase.conditions import PARSERS
+    >>> from redengine.conditions import PARSERS

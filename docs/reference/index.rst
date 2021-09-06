@@ -1,4 +1,4 @@
-API References of Powerbase
+API References of Red Engine
 ===========================
 
 .. toctree::

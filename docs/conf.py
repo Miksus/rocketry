@@ -17,7 +17,7 @@ print(f"Root dir: {sys.path[0]}")
 
 # -- Project information -----------------------------------------------------
 
-project = 'powerbase'
+project = 'redengine'
 copyright = '2021, Mikael Koli'
 author = 'Mikael Koli'
 

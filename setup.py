@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-    name="powerbase",
+    name="redengine",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Mikael Koli",

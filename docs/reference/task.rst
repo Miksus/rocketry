@@ -3,16 +3,16 @@ Tasks
 
 Base class
 ----------
-.. autoclass:: powerbase.core.Task
+.. autoclass:: redengine.core.Task
    :members:
 
 Builtin task classes
 --------------------
-.. autoclass:: powerbase.tasks.FuncTask
+.. autoclass:: redengine.tasks.FuncTask
    :members:
 
-.. autoclass:: powerbase.tasks.PyScript
+.. autoclass:: redengine.tasks.PyScript
    :members:
 
-.. autoclass:: powerbase.tasks.meta.YAMLFinder
+.. autoclass:: redengine.tasks.meta.YAMLFinder
    :members:
