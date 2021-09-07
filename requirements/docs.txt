@@ -16,5 +16,4 @@ psutil >= 5.8.0
 versioneer
 sphinx >= 1.7.5
 pydata-sphinx-theme
-
-git+https://github.com/Miksus/pybox.git@master#egg=pybox
+sphinx_rtd_theme

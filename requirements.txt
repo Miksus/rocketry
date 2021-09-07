@@ -14,5 +14,3 @@ requests >= 2.25.1
 psutil >= 5.8.0
 
 versioneer
-
-git+https://github.com/Miksus/pybox.git@master#egg=pybox
