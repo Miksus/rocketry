@@ -1,8 +1,8 @@
 
 from typing import Callable, Dict, Any, List
 
-from pybox.string.parse import ClosureParser
-from pybox.container.visitor import Visitor
+from redengine._pybox.string.parse import ClosureParser
+from redengine._pybox.container.visitor import Visitor
 
 import re
 

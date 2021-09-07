@@ -8,7 +8,7 @@ import jwt
 from redengine.parse import parse_task
 from redengine.core import Task, Parameters
 
-from pybox.network import get_ip
+from redengine._pybox.network import get_ip
 from .routes import rest_api
 from .models import RedengineJSONEncoder
 

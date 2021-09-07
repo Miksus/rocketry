@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 from .arguments import Argument
 from redengine.core.utils import is_pickleable
-from pybox.io import read_yaml
+from redengine._pybox.io import read_yaml
 
 class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
 

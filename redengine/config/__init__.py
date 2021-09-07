@@ -1,6 +1,6 @@
 from redengine.parse import parse_session
 from pathlib import Path
-from pybox.io import read_yaml
+from redengine._pybox.io import read_yaml
 
 DEFAULT_BASENAME_TASKS = "redengine.task"
 DEFAULT_BASENAME_SCHEDULER = "redengine.scheduler"

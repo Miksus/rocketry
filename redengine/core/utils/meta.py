@@ -1,7 +1,7 @@
 
 from typing import Tuple, Dict
 
-# Copied from pybox\meta\func\func.py
+# Copied from redengine._pybox\meta\func\func.py
 
 def has_args(func):
     s = inspect.signature(func)
