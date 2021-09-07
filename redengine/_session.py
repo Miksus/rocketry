@@ -87,7 +87,7 @@ class Session:
         self.parameters = parameters
         self.extensions = extensions
 
-        self.scheduler = None
+        self.scheduler = Scheduler(session=self)
         if scheme is not None:
             is_list_of_schemes = not isinstance(scheme, str)
             if is_list_of_schemes:

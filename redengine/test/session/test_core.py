@@ -41,7 +41,7 @@ def test_clear(tmpdir, session):
 
         assert {} == session.tasks
         assert Parameters() == session.parameters
-        assert session.scheduler is None
+        # assert session.scheduler is None
 
         task1 = FuncTask(
             lambda : None, 
@@ -62,4 +62,4 @@ def test_clear(tmpdir, session):
 
         assert {} == session.tasks
         assert Parameters() == session.parameters
-        assert session.scheduler is None
+        assert session.scheduler is not sched
