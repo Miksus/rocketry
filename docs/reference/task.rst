@@ -14,5 +14,5 @@ Builtin task classes
 .. autoclass:: redengine.tasks.PyScript
    :members:
 
-.. autoclass:: redengine.tasks.meta.YAMLFinder
+.. autoclass:: redengine.tasks.loaders.YAMLLoader
    :members:

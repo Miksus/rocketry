@@ -15,7 +15,7 @@ subclassing Task, BaseComponent, Argument or BaseComponent is sufficient.
    :members:
    :noindex:
 
-.. autoclass:: redengine.components.BaseComponent
+.. autoclass:: redengine.core.BaseExtension
    :members:
    :noindex:
 

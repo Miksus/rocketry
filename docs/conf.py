@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import sphinx_rtd_theme
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
@@ -31,8 +32,13 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc', 
     'sphinx.ext.coverage', 
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx_rtd_theme'
 ]
+rst_prolog = """
+.. include:: <s5defs.txt>
+
+"""
 
 # Extension settings
 
@@ -55,7 +61,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'nature'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -64,4 +70,5 @@ html_static_path = ['_static']
 
 html_css_files = [
     'css/types.css',
+    'css/colors.css',
 ]

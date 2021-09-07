@@ -2,6 +2,21 @@ Quick Start
 ===========
 
 
-Create a qucik 
-.. code-block:: shell.
-    python -m redengine create myproject --template quick-start
+Generate a quick setup to directory `myproject` that will get you started.
+
+.. code-block:: console
+
+   python -m redengine create myproject
+
+or specify the template:
+
+.. code-block:: console
+
+   python -m redengine create myproject --template minimal
+
+
+See all available templates using:
+
+.. code-block:: console
+
+   python -m redengine create --help
