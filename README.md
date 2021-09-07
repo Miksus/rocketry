@@ -30,11 +30,8 @@ expressive, extendable and production ready.
 
 ## Installation
 
-- Clone the source code and pip install:
 ```shell
-git clone https://github.com/Miksus/redengine.git
-cd redengine
-pip install .
+pip install redengine
 ```
 
 ## Getting Started
