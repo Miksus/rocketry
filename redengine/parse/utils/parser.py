@@ -59,20 +59,14 @@ class Field:
             cont = conf.pop(key)
         else:
             cont = conf[key]
-        self.validate(cont)
+        self.validate(cont, key=key)
         return self.func(cont, resources=resources, **kwargs)
 
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.key == other
-        else:
-            return self.key == other.key
-
-    def validate(self, content):
+    def validate(self, content, key=None):
         if self.types is not None:
             is_valid_type = isinstance(content, self.types)
             if not is_valid_type:
-                raise ValueError(f"Field's '{self.key}' value is invalid type {type(content)}")
+                raise ValueError(f"Field '{key}' value is invalid type: {type(content)} (expected: {self.types})")
 
 
 class StaticParser:
