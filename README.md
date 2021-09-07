@@ -42,6 +42,7 @@ pip install .
 ```shell
 python -m redengine create myproject
 ```
+See [the docs](https://red-engine.readthedocs.io/en/latest/) for more.
 
 ---
 
