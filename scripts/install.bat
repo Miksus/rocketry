@@ -1,2 +1,0 @@
-pip install dev_requirements.txt
-versioneer install
