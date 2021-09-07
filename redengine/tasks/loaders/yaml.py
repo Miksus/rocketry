@@ -3,7 +3,7 @@
 from redengine.core.task.base import Task
 from redengine.tasks import PyScript
 from redengine.parse import parse_task
-from redengine._pybox.io import read_yaml
+from redengine.pybox.io import read_yaml
 from redengine import extensions
 
 import pandas as pd

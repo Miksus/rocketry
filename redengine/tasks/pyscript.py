@@ -9,7 +9,7 @@ import subprocess
 import re
 import sys
 
-from redengine._pybox.pkg import find_package_root
+from redengine.pybox.pkg import find_package_root
 
 
 class PyScript(Task):
