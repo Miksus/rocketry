@@ -82,7 +82,11 @@ class Task(metaclass=_TaskMeta):
     priority : int, optional
         Priority of the task. Higher priority
         tasks are first inspected whether they
-        can be executed, by default 1
+        can be executed. Can be any numeric value.
+        Setup tasks are recommended to have priority
+        >= 40 if they require loaded tasks,
+        >= 50 if they require loaded extensions
+        By default 0
         TODO
 
     on_success : Callable, optional
@@ -178,9 +182,12 @@ class Task(metaclass=_TaskMeta):
     last_success: Optional[datetime.datetime]
     last_fail: Optional[datetime.datetime]
 
+    # Class defaults
+    default_priority = 0
+
     def __init__(self, parameters=None, session=None,
                 start_cond=None, run_cond=None, end_cond=None, 
-                dependent=None, timeout=None, priority=1, 
+                dependent=None, timeout=None, priority=None, 
                 on_success=None, on_failure=None, on_finish=None, 
                 name=None, logger=None, daemon=None,
                 execution="process", disabled=False, force_run=False,
@@ -218,7 +225,7 @@ class Task(metaclass=_TaskMeta):
             if timeout is not None 
             else timeout
         )
-        self.priority = priority
+        self.priority = priority or self.default_priority
 
         self.execution = execution
         self.daemon = daemon

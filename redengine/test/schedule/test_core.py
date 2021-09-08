@@ -217,9 +217,13 @@ def test_task_force_disabled(tmpdir, execution, session):
 def test_priority(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
-        task_1 = FuncTask(run_succeeding, priority=1, name="first", start_cond=AlwaysTrue(), execution=execution)
-        task_2 = FuncTask(run_failing, priority=10, name="last", start_cond=AlwaysTrue(), execution=execution)
-        task_3 = FuncTask(run_failing, priority=5, name="second", start_cond=AlwaysTrue(), execution=execution)
+        task_1 = FuncTask(run_succeeding, name="1", priority=100, start_cond=AlwaysTrue(), execution=execution)
+        task_3 = FuncTask(run_failing, name="3", priority=10, start_cond=AlwaysTrue(), execution=execution)
+        task_2 = FuncTask(run_failing, name="2", priority=50, start_cond=AlwaysTrue(), execution=execution)
+        task_4 = FuncTask(run_failing, name="4", start_cond=AlwaysTrue(), execution=execution)
+
+        assert 0 == task_4.priority
+
         scheduler = Scheduler(
             shut_condition=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
@@ -227,14 +231,12 @@ def test_priority(tmpdir, execution, session):
         scheduler()
         assert scheduler.n_cycles == 1 
 
-        history = pd.DataFrame(session.get_task_log())
-        history = history.set_index("action")
-
-        task_1_start = history[(history["task_name"] == "first")].loc["run", "timestamp"]
-        task_3_start = history[(history["task_name"] == "second")].loc["run", "timestamp"]
-        task_2_start = history[(history["task_name"] == "last")].loc["run", "timestamp"]
+        task_1_start = list(task_1.get_history())[0]["timestamp"]
+        task_2_start = list(task_2.get_history())[0]["timestamp"]
+        task_3_start = list(task_3.get_history())[0]["timestamp"]
+        task_4_start = list(task_4.get_history())[0]["timestamp"]
         
-        assert task_1_start < task_3_start < task_2_start
+        assert task_1_start < task_2_start < task_3_start < task_4_start
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_pass_params_as_global(tmpdir, execution, session):

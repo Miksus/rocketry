@@ -133,7 +133,7 @@ class Scheduler:
         tasks = self.session.get_tasks()
         # There may be extra rare situation that priority is not in the task
         # for short period if it is being modified thus we use getattr
-        return sorted(tasks, key=lambda task: getattr(task, "priority", 0))
+        return sorted(tasks, key=lambda task: getattr(task, "priority", 0), reverse=True)
 
     def __call__(self):
         """Start and run the scheduler. Will block till the end of the scheduling
