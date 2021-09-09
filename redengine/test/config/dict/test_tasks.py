@@ -1,4 +1,5 @@
 
+from redengine.tasks import PyScript
 from redengine.config import parse_dict
 
 def test_init_maintain(tmpdir, session):
@@ -20,3 +21,15 @@ def test_init_maintain(tmpdir, session):
             "pip-install",
              "restart"
         ] == [sess.get_task(task).name for task in tasks]
+
+def test_without_class():
+    sess = parse_dict(
+        {
+            "tasks": {
+                "my-task-1": {"path": "something.py"},
+            },
+        }
+    )
+    assert [
+        ("my-task-1", PyScript),
+    ] == [(task.name, type(task)) for task in sess.tasks.values()]
