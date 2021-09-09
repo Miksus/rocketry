@@ -1,7 +1,7 @@
 
 
-from typing import Dict
-
+from typing import Callable, Dict, Type, Union
+import inspect
 
 class DictInstanceParser:
     """[summary]
@@ -9,21 +9,24 @@ class DictInstanceParser:
         {"class": "MyClass"}
     """
     # PROTO
-    def __init__(self, classes:dict, subparsers=None, default=None):
+    def __init__(self, classes:Dict[str, Callable], subparsers=None, default:Union[Callable, Type]=None):
         self.classes = classes
         self.subparsers = {} if subparsers is None else subparsers
         self.default = default
 
-    def __call__(self, conf:dict, resources:dict=None, **kwargs):
+    def __call__(self, conf:dict, resources:dict=None, kwds_subparser:dict=None, **kwargs):
         if "class" not in conf and self.default is not None:
-            cls = self.default
+            cls = self.default if inspect.isclass(self.default) else self.default(conf, **kwargs)
         else:
             cls_name = conf.pop("class")
             cls = self.classes[cls_name]
 
+        if kwds_subparser is None:
+            kwds_subparser = {}
+
         for key, parser in self.subparsers.items():
             if key in conf:
-                conf[key] = parser(conf[key], **kwargs)
+                conf[key] = parser(conf[key], **kwargs, **kwds_subparser)
         return cls(**conf, **kwargs)
 
 
@@ -76,10 +79,12 @@ class StaticParser:
         self.on_extra = on_extra
         self.resources = resources if resources is not None else {}
 
-    def __call__(self, d:dict, **kwargs):
+    def __call__(self, d:dict, kwds_fields=None, **kwargs):
         self.validate(d)
+        kwds_fields = {} if kwds_fields is None else kwds_fields
         for key, field in self.fields.items():
-            out = field(d, resources=self.resources, key=key, **kwargs)
+            kwds_field = kwds_fields.get(key, {})
+            out = field(d, resources=self.resources, key=key, **kwds_field, **kwargs)
         return out
 
     def validate(self, d):

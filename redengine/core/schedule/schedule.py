@@ -31,13 +31,6 @@ from redengine.core.utils import is_pickleable
 from redengine.core.condition import set_statement_defaults, AlwaysFalse
 from redengine.core.parameters import Parameters
 
-# TODO:
-#   Allow using return values as parameters to other tasks (new Argument class: Return)
-#   Support for Task execution="thread"
-#   Unify the supply of parameters
-#   New automatically passed parameters:
-#       _last_start_, _last_success_, _last_failure_, _task_name_
-
 
 class Scheduler:
     """Multiprocessing scheduler
@@ -45,29 +38,44 @@ class Scheduler:
     Parameters
     ----------
     session : Session, optional
-        [description], by default None
-    max_processes : [type], optional
-        [description], by default None
+        Session object containing tasks,
+        parameters and settings, 
+        by default None
+    max_processes : int, optional
+        Maximum number of processes
+        allowed to be started, 
+        by default number of CPUs
     tasks_as_daemon : bool, optional
-        [description], by default True
+        Whether process tasks are run
+        as daemon (if not specified in
+        the task) or not, by default True
     timeout : str, optional
-        [description], by default "30 minutes"
-    shut_condition : [type], optional
-        [description], by default None
+        Timeout of each task if not specified
+        in the task itself. Must be timedelta
+        string, by default "30 minutes"
+    shut_condition : BaseCondition, optional
+        Condition when the scheduler is allowed
+        to shut down, by default AlwaysFalse
     parameters : [type], optional
-        [description], by default None
+        Parameters of the session.
+        Can also be passed directly to the 
+        session, by default None
     min_sleep : float, optional
         [description], by default 0.1
     max_sleep : int, optional
         [description], by default 600
     logger : [type], optional
         [description], by default None
-    name : [type], optional
-        [description], by default None
+    name : str, optional
+        Name of the scheduler, deprecated, by default None
     restarting : str, optional
-        [description], by default "replace"
+        How the scheduler is restarted if 
+        Restart exception is raised, by default 
+        "replace"
     instant_shutdown : bool, optional
-        [description], by default False
+        Whether the scheduler tries to shut down
+        as quickly as possible or wait till all
+        the tasks have finished, by default False
 
     Attributes
     ----------
