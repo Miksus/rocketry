@@ -1,1 +1,1 @@
-from .yaml import YAMLLoader, YAMLExtensionLoader
+from .yaml import YAMLLoader, YAMLTaskLoader, YAMLExtensionLoader

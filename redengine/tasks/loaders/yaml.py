@@ -2,7 +2,7 @@
 
 from redengine.core.task.base import Task
 from redengine.tasks import PyScript
-from redengine.parse import parse_task
+from redengine.parse import parse_task, parse_session
 from redengine.pybox.io import read_yaml
 from redengine import extensions
 
@@ -18,7 +18,7 @@ class YAMLLoaderBase(Task):
     def __init__(self, path=None, glob=None, delay="1 minutes", execution=None, **kwargs):
         execution = "main" if execution is None else execution
         super().__init__(execution=execution, **kwargs)
-        self.path = path
+        self.path = Path.cwd() if path is None else path
         self.glob = glob or self.default_glob
         self.found_items = []
 
@@ -46,7 +46,51 @@ class YAMLLoaderBase(Task):
     def get_default_name(self):
         return type(self).__name__
 
+
 class YAMLLoader(YAMLLoaderBase):
+    """Task that searches other tasks from 
+    a directory. All matched YAML files are
+    read and the contents are parsed.
+
+    Parameters
+    ----------
+    path : path-like
+        Path to the directory that is searched for the
+        tasks.
+    glob : str
+        Unix pattern that is used to identify a YAML file
+        that is parsed to task(s).
+    delay : str
+        Time delay after each cycle of going through the 
+        found YAML files. Only usable if ``execution='thread'``
+    **kwargs : dict
+        See :py:class:`redengine.core.Task`
+
+    Notes
+    -----
+    ``execution`` can have only values ``main`` and ``thread``.
+    It is recommended to execute the task only once at the beginning
+    of scheduling session
+    """
+    default_glob = '**/conftask*.yaml'
+
+    def execute_action(self):
+        self.parse_items()
+
+    def parse_file(self, path):
+        root = Path(path).parent.absolute()
+        conf = read_yaml(path)
+        s = parse_session(
+            conf, 
+            session=self.session, 
+            kwds_fields={"tasks": {"kwds_subparser": {"root":root}}}
+        )
+
+    def delete_item(self, item):
+        pass
+
+
+class YAMLTaskLoader(YAMLLoaderBase):
     """Task that searches other tasks from 
     a directory. All matched YAML files are
     read and the contents are parsed.
@@ -70,11 +114,9 @@ class YAMLLoader(YAMLLoaderBase):
     ``execution`` can have only values ``main`` and ``thread``.
     Subprocesses cannot change the state of the session tasks in
     the main thread.
-
-
     """
     default_glob = '**/task*.yaml'
-
+    default_priority = 40 
     def parse_file(self, path):
         root = Path(path).parent
         conf = read_yaml(path)
@@ -114,9 +156,11 @@ class YAMLLoader(YAMLLoaderBase):
     def delete_item(self, item):
         self.session.tasks[item].delete()
 
+
 class YAMLExtensionLoader(YAMLLoaderBase):
 
     default_glob = '**/ext*.yaml'
+    default_priority = 20 # second lowest priority
 
     def parse_file(self, path):
         root = Path(path).parent

@@ -7,12 +7,13 @@ from pathlib import Path
 from redengine import Session
 from redengine.tasks import PyScript
 from redengine.core import Task
-from redengine.tasks.loaders import YAMLLoader
+from redengine.tasks.loaders import YAMLTaskLoader
 #from redengine.core.task.base import Task
 #
 import pandas as pd
 import pytest
 from textwrap import dedent
+from io_helpers import create_file, delete_file
 
 def asset_task_equal(a:Task, b:Task):
     assert isinstance(a, Task)
@@ -31,15 +32,6 @@ def asset_task_equal(a:Task, b:Task):
         b_attr_val = getattr(b, attr)
         assert a_attr_val == b_attr_val
 
-def create_file(file, content):
-    path = Path(file)
-    path.parent.mkdir(exist_ok=True)
-    #with open(path, "w") as f:
-    #    f.write(content)
-    path.write_text(content)
-
-def delete_file(file):
-    Path(file).unlink()
 
 def pytest_generate_tests(metafunc):
     if metafunc.cls is not None:
@@ -62,7 +54,7 @@ def test_find_multiple_times(tmpdir, session):
         root = Path(str(tmpdir)) / "project"
   
 
-        finder = YAMLLoader(path="project", execution="main")
+        finder = YAMLTaskLoader(path="project", execution="main")
         
 
         create_file(root / "task1.yaml", """
@@ -71,7 +63,7 @@ def test_find_multiple_times(tmpdir, session):
         path: 'something.py'
         """)
         finder.execute_action()
-        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-1"]
+        assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1"]
 
         create_file(root / "task2.yaml", """
         class: PyScript
@@ -79,11 +71,11 @@ def test_find_multiple_times(tmpdir, session):
         path: 'something.py'
         """)
         finder.execute_action()
-        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-1", "mytask-2"]
+        assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1", "mytask-2"]
 
         delete_file(root / "task1.yaml")
         finder.execute_action()
-        assert list(session.tasks.keys()) == ["YAMLLoader", "mytask-2"]
+        assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-2"]
 
 class TestParseTasks:
     argnames = ["file", "get_expected"]
@@ -134,7 +126,7 @@ class TestParseTasks:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(file["content"])       
 
-            finder = YAMLLoader(path="project", execution="main")
+            finder = YAMLTaskLoader(path="project", execution="main")
             parsed_task = finder.parse_file(file["path"])
 
             expected_task = get_expected()
@@ -225,7 +217,7 @@ class TestFindTasks:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(cont)       
 
-            finder = YAMLLoader(path="project", execution="main")
+            finder = YAMLTaskLoader(path="project", execution="main")
             finder.execute_action()
             parsed_tasks = [task for task in session.tasks.values() if task is not finder]
 

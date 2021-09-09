@@ -15,15 +15,7 @@ import pandas as pd
 import pytest
 from textwrap import dedent
 
-def create_file(file, content):
-    path = Path(file)
-    path.parent.mkdir(exist_ok=True)
-    #with open(path, "w") as f:
-    #    f.write(content)
-    path.write_text(content)
-
-def delete_file(file):
-    Path(file).unlink()
+from io_helpers import create_file, delete_file
 
 def test_loader_multiple_times(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
