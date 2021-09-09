@@ -18,7 +18,6 @@ parse_session = SessionParser({
         "logging": Field(parse_logging, if_missing="ignore"),
         "parameters": Field(parse_session_params, if_missing="ignore", types=(dict,)),
         "tasks": Field(parse_tasks, if_missing="ignore", types=(dict,)),
-        # "sequences": Field(parse_sequences, if_missing="ignore"),
         "scheduler": Field(parse_scheduler, if_missing="ignore"),
     },
     on_extra="ignore", 
