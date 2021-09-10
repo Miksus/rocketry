@@ -5,7 +5,7 @@ import datetime
 import time
 
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Union
 from dateutil.parser import parse as _parse_datetime
 
 class TaskAdapter(logging.LoggerAdapter):
@@ -112,8 +112,11 @@ def parse_datetime(dt):
 
 class RecordFormatter:
 
-    def __call__(self, data:List[Dict]):
+    def __call__(self, data:List[Union[Dict, logging.LogRecord]]):
         for record in data:
+            if isinstance(record, logging.LogRecord):
+                # Turn the LogRecord to dict
+                record = vars(record)
             self.format(record)
             yield record
 
