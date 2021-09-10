@@ -4,7 +4,6 @@ from .condition import parse_condition
 from .utils import _get_session, instances
 
 from redengine.core.task.base import CLS_TASKS
-from redengine.tasks import FuncTask, PyScript
 
 import importlib
 from pathlib import Path
@@ -14,6 +13,7 @@ def _get_task(*args, session=None, **kwargs):
     return session.get_task(*args, **kwargs)
 
 def _parse_func_task(**kwargs):
+    from redengine.tasks import FuncTask
 
     module, func = kwargs.pop("func").rsplit('.', 1)
     mdl = importlib.import_module(module)
@@ -30,6 +30,8 @@ def parse_path(path, root=None, **kwargs):
     return path
 
 def get_cls_from_conf(conf:dict, **kwargs):
+    from redengine.tasks import PyScript
+    
     filepath = conf.get("path", None)
     if filepath is None:
         name = conf.get("name", None)

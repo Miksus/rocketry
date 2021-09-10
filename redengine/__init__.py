@@ -6,14 +6,16 @@ from ._setup import _setup_defaults
 
 from .config import *
 
-from .tasks import FuncTask
+
 from . import (
     conditions,
     log,
-    tasks,
+    
     parameters,
-    time
+    time,
+    tasks,
 )
+from .tasks import FuncTask
 _setup_defaults()
 
 session = Session()

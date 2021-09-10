@@ -5,7 +5,7 @@ from redengine.pybox.io import read_yaml
 DEFAULT_BASENAME_TASKS = "redengine.task"
 DEFAULT_BASENAME_SCHEDULER = "redengine.scheduler"
 
-def parse_yaml(path):
+def parse_yaml(path, **kwargs):
     """Parse YAML configuration file.
 
     Parameters
@@ -19,7 +19,7 @@ def parse_yaml(path):
         Session object.
     """
     conf = read_yaml(path)
-    return parse_dict(conf)
+    return parse_dict(conf, **kwargs)
 
 def get_default(name:str, scheduler_basename:str=None, task_basename:str=None):
     """Get premade configuration. 
