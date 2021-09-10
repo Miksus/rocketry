@@ -69,9 +69,9 @@ def to_dict(dt):
         "nanosecond": dt.nanosecond if hasattr(dt, "nanosecond") else 0
     }
 
-def to_nanoseconds(day=0, hour=0, minute=0, second=0, microsecond=0, nanosecond=0):
+def to_nanoseconds(day=0, hour=0, minute=0, second=0, microsecond=0, nanosecond=0) -> int:
     "Turn time components to nanoseconds"
-    return nanosecond + microsecond * 1_000 + second * 1e+9 + minute * 6e+10 + hour * 3.6e+12 + day * 8.64e+13
+    return nanosecond + microsecond * 1_000 + second * int(1e+9) + minute * int(6e+10) + hour * int(3.6e+12) + day * int(8.64e+13)
 
 def to_microsecond(day=0, hour=0, minute=0, second=0, microsecond=0, nanosecond=0):
     "Turn time components to microseconds"
