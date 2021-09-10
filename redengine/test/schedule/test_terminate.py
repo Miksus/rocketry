@@ -45,7 +45,7 @@ def test_without_timeout(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=TaskFinished(task="slow task but passing") >= 2,
+            shut_cond=TaskFinished(task="slow task but passing") >= 2,
             timeout="0.1 seconds"
         )
         scheduler()
@@ -70,7 +70,7 @@ def test_task_timeout(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="slow task") >= 2,
+            shut_cond=TaskStarted(task="slow task") >= 2,
             timeout="0.1 seconds"
         )
         scheduler()
@@ -97,7 +97,7 @@ def test_task_terminate(tmpdir, execution, session):
 
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main")
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="slow task") >= 2,
+            shut_cond=TaskStarted(task="slow task") >= 2,
         )
         scheduler()
 

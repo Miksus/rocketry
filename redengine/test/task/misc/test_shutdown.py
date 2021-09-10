@@ -30,7 +30,7 @@ def test_scheduler_shutdown(tmpdir, session):
 
         task.force_run = True
         
-        scheduler = Scheduler(shut_condition=AlwaysFalse())
+        scheduler = Scheduler(shut_cond=AlwaysFalse())
         scheduler()
 
         with open("test.txt") as f:

@@ -10,7 +10,7 @@ def test_scheduler_started(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         scheduler = Scheduler(
-            [], shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            [], shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -20,7 +20,7 @@ def test_scheduler_cycles(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         scheduler = Scheduler(
-            [], shut_condition=SchedulerCycles() >= 4
+            [], shut_cond=SchedulerCycles() >= 4
         )
         scheduler()
 

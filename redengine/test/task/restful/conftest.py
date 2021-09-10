@@ -24,7 +24,7 @@ def scheduler(tmpdir, session):
         #tmpdir.chdir()
 
         #session.parameters["shutdown"] = False
-        sched = Scheduler(shut_condition=ParamExists(shutdown=True))
+        sched = Scheduler(shut_cond=ParamExists(shutdown=True))
         thread = Thread(target=sched)
         thread.start()
         yield sched

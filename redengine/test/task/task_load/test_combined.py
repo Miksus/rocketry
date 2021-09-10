@@ -40,7 +40,7 @@ def test_session(session, tmpdir):
         ext_loader = YAMLExtensionLoader(on_startup=True)
         task_loader = YAMLTaskLoader(on_startup=True)
 
-        Scheduler(shut_condition=AlwaysTrue())
+        Scheduler(shut_cond=AlwaysTrue())
         session.start()
         assert ['run', 'success'] == [rec['action'] for rec in task_loader.get_history()]
         assert ['run', 'success'] == [rec['action'] for rec in ext_loader.get_history()]

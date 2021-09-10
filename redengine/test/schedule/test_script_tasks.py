@@ -37,7 +37,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         )
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="a task") >= 3
+            shut_cond=TaskStarted(task="a task") >= 3
         )
         scheduler()
 

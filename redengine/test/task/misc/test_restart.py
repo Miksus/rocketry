@@ -30,7 +30,7 @@ def test_scheduler_restart(tmpdir, session):
         task.force_run = True
         
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task=task) == 1,
+            shut_cond=TaskStarted(task=task) == 1,
             restarting="recall"
         )
         scheduler()

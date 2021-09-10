@@ -31,7 +31,7 @@ def test_creating_child(tmpdir, session):
         # actual measurable impact outside redengine
         FuncTask(run_creating_child, name="task_1", start_cond=AlwaysTrue())
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="task_1") >= 1) | ~SchedulerStarted(period=TimeDelta("1 second")),
+            shut_cond=(TaskStarted(task="task_1") >= 1) | ~SchedulerStarted(period=TimeDelta("1 second")),
             tasks_as_daemon=False
         )
 

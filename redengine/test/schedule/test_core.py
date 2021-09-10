@@ -54,7 +54,7 @@ def test_task_execution(tmpdir, execution, session):
         # actual measurable impact outside redengine
         FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second")),
+            shut_cond=(TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second")),
         )
 
         scheduler()
@@ -101,7 +101,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         task = FuncTask(task_func, name="mytask", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="mytask") >= run_count
+            shut_cond=TaskStarted(task="mytask") >= run_count
         )
         scheduler()
 
@@ -150,7 +150,7 @@ def test_task_force_run(tmpdir, execution, session):
         task.force_run = True
 
         scheduler = Scheduler(
-            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -174,7 +174,7 @@ def test_task_disabled(tmpdir, execution, session):
         task.disabled = True
 
         scheduler = Scheduler(
-            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -203,7 +203,7 @@ def test_task_force_disabled(tmpdir, execution, session):
         task.force_run = True
 
         scheduler = Scheduler(
-            shut_condition=~SchedulerStarted(period=TimeDelta("1 second"))
+            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
         )
         scheduler()
 
@@ -225,7 +225,7 @@ def test_priority(tmpdir, execution, session):
         assert 0 == task_4.priority
 
         scheduler = Scheduler(
-            shut_condition=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+            shut_cond=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         scheduler()
@@ -245,7 +245,7 @@ def test_pass_params_as_global(tmpdir, execution, session):
 
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution)
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         # Passing global parameters
@@ -276,7 +276,7 @@ def test_pass_params_as_local(tmpdir, execution, parameters, session):
             execution=execution
         )
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         scheduler()
@@ -298,7 +298,7 @@ def test_pass_params_as_local_and_global(tmpdir, execution, session):
             execution=execution
         )
         scheduler = Scheduler(
-            shut_condition=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
         )
 
         # Additional parameters
@@ -332,7 +332,7 @@ def test_startup_shutdown(tmpdir, execution, session):
         FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=AlwaysTrue()
+            shut_cond=AlwaysTrue()
         )
 
         scheduler()

@@ -23,7 +23,7 @@ def test_parametrization_private(tmpdir, session):
 
         task = FuncTask(run_task, name="a task", execution="main", parameters={"task_secret": Private("hsss"), "task_public": "world"}, force_run=True)
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="a task") >= 1
+            shut_cond=TaskStarted(task="a task") >= 1
         )
 
         scheduler()

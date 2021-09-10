@@ -54,7 +54,7 @@ def test_dependent(tmpdir, execution, session):
         )
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="After all") >= 1
+            shut_cond=TaskStarted(task="After all") >= 1
         )
 
         scheduler()

@@ -29,7 +29,7 @@ def test_task_fail_traceback(tmpdir, execution, session):
         task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            shut_condition=TaskStarted(task="task") >= 3
+            shut_cond=TaskStarted(task="task") >= 3
         )
         scheduler()
         history = pd.DataFrame(task.get_history())

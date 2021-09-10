@@ -5,7 +5,7 @@ from multiprocessing import Process, cpu_count
 import multiprocessing
 from redengine.core.condition.base import BaseCondition
 from typing import List, Optional
-from redengine.tasks.maintain.os import ShutDown
+# from redengine.tasks.maintain.os import ShutDown
 import threading
 
 import traceback
@@ -53,7 +53,7 @@ class Scheduler:
         Timeout of each task if not specified
         in the task itself. Must be timedelta
         string, by default "30 minutes"
-    shut_condition : BaseCondition, optional
+    shut_cond : BaseCondition, optional
         Condition when the scheduler is allowed
         to shut down, by default AlwaysFalse
     parameters : [type], optional
@@ -87,7 +87,7 @@ class Scheduler:
     session = None # This is set as redengine.session
 
     def __init__(self, session=None, max_processes:Optional[int]=None, tasks_as_daemon:bool=True, timeout="30 minutes",
-                shut_condition:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,
+                shut_cond:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,
                 min_sleep=0.1, max_sleep=600, 
                 logger=None, name:str=None,
                 restarting:str="replace", 
@@ -103,10 +103,8 @@ class Scheduler:
         # Other
         self.session = session or self.session
 
-        self.shut_condition = False if shut_condition is None else copy(shut_condition)
+        self.shut_cond = False if shut_cond is None else copy(shut_cond)
         self.instant_shutdown = instant_shutdown
-
-        set_statement_defaults(self.shut_condition, _scheduler_=self)
 
         self.min_sleep = min_sleep
         self.max_sleep = max_sleep
@@ -151,7 +149,7 @@ class Scheduler:
         try:
             self._setup()
 
-            while not bool(self.shut_condition):
+            while not bool(self.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
 
@@ -419,6 +417,16 @@ class Scheduler:
     def n_alive(self) -> int:
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
+
+    @property
+    def shut_cond(self):
+        return self._shut_cond
+    
+    @shut_cond.setter
+    def shut_cond(self, cond:BaseCondition):
+        set_statement_defaults(cond, _scheduler_=self)
+        self._shut_cond = cond
+        
 
     def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
