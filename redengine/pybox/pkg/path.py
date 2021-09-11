@@ -17,4 +17,4 @@ def find_package_root(path) -> Union[Path, None]:
                 return None
             return path
     else:
-        raise FileExistsError(f"WTF dude? {path!r}")
+        raise FileExistsError("No package root found.")
