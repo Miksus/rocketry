@@ -8,4 +8,9 @@ class MyExtension(BaseExtension):
     __parsekey__ = 'myextensions'
 
     def __init__(self, **kwargs):
+        # What the extension does...
         super().__init__(**kwargs)
+
+    def delete(self):
+        # How the extension is deleted
+        super().delete()

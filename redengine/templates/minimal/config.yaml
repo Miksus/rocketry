@@ -52,6 +52,8 @@ logging:
        filename: "tasks.csv"
        make_dir: True
        delay: True
+    mem_task:
+       (): "redengine.log.MemoryHandler"
 
   loggers:
     '': # root logger
@@ -59,7 +61,10 @@ logging:
        level: 'WARNING'
        propagate: False
     redengine.task:
-       handlers: ['csv_task', 'default']
+       handlers: [
+        'mem_task', # Change this to csv_task if CSV logging is preferred
+        'default'
+       ]
        level: 'INFO'
        propagate: False
     redengine.scheduler:
