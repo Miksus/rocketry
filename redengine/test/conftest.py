@@ -50,6 +50,14 @@ def copy_file_to_tmpdir(tmpdir, source_file, target_path):
         fh.write(f.read())
     return fh
 
+@pytest.fixture(autouse=True)
+def sys_paths():
+    orig_sys_paths = sys.path.copy()
+    yield
+    # Setting back the original sys paths so they are not 
+    # carried over different tasks.
+    sys.path = orig_sys_paths
+
 @pytest.fixture
 def script_files(tmpdir):
     for folder in Path("scripts").parts:
