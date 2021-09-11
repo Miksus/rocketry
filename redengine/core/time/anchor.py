@@ -49,9 +49,12 @@ class AnchoredInterval(TimeInterval):
     _scope = None # ie. day, hour, second, microsecond
     _scope_max = None
 
-    def __init__(self, start=None, end=None):
-        self.start = start
-        self.end = end
+    def __init__(self, start=None, end=None, time_point=None):
+        #self.start = start
+        #self.end = end
+        # time_point = True if start is None and end is None else time_point
+        self.set_start(start)
+        self.set_end(end, time_point=time_point)
 
     def anchor(self, value, **kwargs):
         "Turn value to nanoseconds relative to scope of the class"
@@ -88,6 +91,28 @@ class AnchoredInterval(TimeInterval):
 
         return to_nanoseconds(**d)
 
+    def set_start(self, val):
+        if val is None:
+            ns = 0
+        else:
+            ns = self.anchor(val, side="start")
+        self._start = ns
+        self._start_orig = val
+
+    def set_end(self, val, time_point=False):
+        if time_point and val is None:
+            # Interval is "at" type, ie. on monday, at 10:00 (10:00 - 10:59:59)
+            ns = self._start + self._unit_resolution - 1
+        elif val is None:
+            ns = self._scope_max            
+        else:
+            ns = self.anchor(val, side="end")
+
+        has_time = (ns % to_nanoseconds(day=1)) != 0
+
+        self._end = ns
+        self._end_orig = val
+
     @property
     def start(self):
         delta = pd.Timedelta(self._start, unit="ns")
@@ -96,12 +121,7 @@ class AnchoredInterval(TimeInterval):
 
     @start.setter
     def start(self, val):
-        self._start = (
-            self.anchor(val, side="start") 
-            if val is not None 
-            else 0
-        )
-        self._start_orig = val
+        self.set_start(val)
 
     @property
     def end(self):
@@ -111,19 +131,10 @@ class AnchoredInterval(TimeInterval):
 
     @end.setter
     def end(self, val):
-        ns = (
-            self.anchor(val, side="end") 
-            if val is not None 
-            else self._scope_max
-        )
-
-        has_time = (ns % to_nanoseconds(day=1)) != 0
-
-        self._end = ns
-        self._end_orig = val
+        self.set_end(val)
 
     @abstractmethod
-    def anchor_str(self, s, **kwargs):
+    def anchor_str(self, s, **kwargs) -> int:
         raise NotImplementedError
 
     @classmethod
@@ -148,7 +159,6 @@ class AnchoredInterval(TimeInterval):
 
         ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
 
-
         is_over_period = ns_start > ns_end # period is overnight, over weekend etc.
         if not is_over_period:
             return ns_start <= ns <= ns_end
@@ -157,11 +167,11 @@ class AnchoredInterval(TimeInterval):
 
     def get_scope_back(self, dt):
         "Override if offsetting back is different than forward"
-        return self._scope_max
+        return self._scope_max + 1
 
     def get_scope_forward(self, dt):
         "Override if offsetting back is different than forward"
-        return self._scope_max
+        return self._scope_max + 1
 
     def rollstart(self, dt):
         "Roll forward to next point in time that on the period"

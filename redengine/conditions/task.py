@@ -3,7 +3,7 @@ from redengine.core.task import base
 from redengine.core.condition import Statement, Historical, Comparable
 from redengine.core.time import TimeDelta
 from .time import IsPeriod
-from redengine.time.construct import get_before, get_between, get_full_cycle ,get_after
+from redengine.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
 
 import os, re
 import datetime
@@ -248,6 +248,7 @@ class TaskExecutable(Historical):
             "starting": get_full_cycle,
             None: get_full_cycle,
             "every": TimeDelta,
+            "on": get_on,
         }[span_type]
         period = period_func(**kwargs)
         return cls(period=period)
@@ -258,6 +259,7 @@ class TaskExecutable(Historical):
         re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>after) (?P<start>.+)"): "_from_period",
         re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>before) (?P<end>.+)"): "_from_period",
         re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)"): "_from_period",
+        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>on) (?P<start>.+)"): "_from_period",
         re.compile(r"(run )?(?P<span_type>every) (?P<past>.+)"): "_from_period",
     }
 

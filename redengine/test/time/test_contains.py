@@ -93,6 +93,14 @@ true_cases = [
         "end": None,
         "id": "Full"
     },
+    {
+        "cls": TimeOfDay,
+        "dt": "2020-01-01 10:30",
+        "start": "10:00",
+        "end": None,
+        "time_point": True,
+        "id": "at"
+    },
 
     # TimeOfWeek
     {
@@ -211,6 +219,22 @@ false_cases = [
         "end": "02:00",
         "id": "After period overnight"
     },
+    {
+        "cls": TimeOfDay,
+        "dt": "2020-01-01 09:59",
+        "start": "10:00",
+        "end": None,
+        "time_point": True,
+        "id": "left of at"
+    },
+    {
+        "cls": TimeOfDay,
+        "dt": "2020-01-01 11:00",
+        "start": "10:00",
+        "end": None,
+        "time_point": True,
+        "id": "right of at"
+    },
 
     # IsTimeOfWeek
     {
@@ -297,78 +321,45 @@ false_cases = [
     },
 ]
 
+def _to_pyparams(cases):
+    return pytest.mark.parametrize(
+        "dt,start,end,cls,time_point",
+        [
+            pytest.param(
+                case["dt"],
+                case["start"],
+                case["end"],
+                case["cls"],
+                case.get('time_point', None),
+                id=f"{case['cls'].__name__}({case['start']}, {case['end']}) --> {case['dt']}{' with time_point' if 'time_point' in case else ''}"
+            )
+            for case in cases
+        ]
+    )
 
-@pytest.mark.parametrize(
-    "dt,start,end,cls",
-    [
-        pytest.param(
-            case["dt"],
-            case["start"],
-            case["end"],
-            case["cls"],
-            id=f"{case['cls'].__name__}({case['start']}, {case['end']}) --> {case['dt']}"
-        )
-        for case in true_cases
-    ]
-)
-def test_in(dt, start, end, cls):
+@_to_pyparams(true_cases)
+def test_in(dt, start, end, cls, time_point):
     dt = pd.Timestamp(dt)
-    time = cls(start, end)
+    time = cls(start, end, time_point=time_point)
 
     assert dt in time
 
-@pytest.mark.parametrize(
-    "dt,start,end,cls",
-    [
-        pytest.param(
-            case["dt"],
-            case["start"],
-            case["end"],
-            case["cls"],
-            id=f"{case['cls'].__name__}({case['start']}, {case['end']}) --> {case['dt']}"
-        )
-        for case in false_cases
-    ]
-)
-def test_not(dt, start, end, cls):
+@_to_pyparams(false_cases)
+def test_not(dt, start, end, cls, time_point):
     dt = pd.Timestamp(dt)
-    time = cls(start, end)
+    time = cls(start, end, time_point=time_point)
     
     assert dt not in time
 
 # Test conditions
-@pytest.mark.parametrize(
-    "dt,start,end,cls",
-    [
-        pytest.param(
-            case["dt"],
-            case["start"],
-            case["end"],
-            case["cls"],
-            id=f"{case['cls'].__name__}({case['start']}, {case['end']}) --> {case['dt']}"
-        )
-        for case in true_cases
-    ]
-)
-def test_true(dt, start, end, cls, mock_datetime_now):
+@_to_pyparams(true_cases)
+def test_true(dt, start, end, cls, time_point, mock_datetime_now):
     mock_datetime_now(dt)
-    cond = IsPeriod(cls(start, end))
+    cond = IsPeriod(cls(start, end, time_point=time_point))
     assert bool(cond)
 
-@pytest.mark.parametrize(
-    "dt,start,end,cls",
-    [
-        pytest.param(
-            case["dt"],
-            case["start"],
-            case["end"],
-            case["cls"],
-            id=f"{case['cls'].__name__}({case['start']}, {case['end']}) --> {case['dt']}"
-        )
-        for case in false_cases
-    ]
-)
-def test_false(dt, start, end, cls, mock_datetime_now):
+@_to_pyparams(false_cases)
+def test_false(dt, start, end, cls, time_point, mock_datetime_now):
     mock_datetime_now(dt)
-    cond = IsPeriod(cls(start, end))
+    cond = IsPeriod(cls(start, end, time_point=time_point))
     assert not bool(cond)

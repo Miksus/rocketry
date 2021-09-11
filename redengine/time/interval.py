@@ -25,7 +25,8 @@ class TimeOfMinute(AnchoredInterval):
     """
 
     _scope = "minute"
-    _scope_max = to_nanoseconds(minute=1) # See: pd.Timedelta(59999999999, unit="ns")
+    _scope_max = to_nanoseconds(minute=1) - 1 # See: pd.Timedelta(59999999999, unit="ns")
+    _unit_resolution = to_nanoseconds(second=1)
 
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
@@ -52,7 +53,8 @@ class TimeOfHour(AnchoredInterval):
         TimeOfHour("15:00", "30:00")
     """
     _scope = "hour"
-    _scope_max = to_nanoseconds(hour=1)
+    _scope_max = to_nanoseconds(hour=1) - 1
+    _unit_resolution = to_nanoseconds(minute=1)
 
     def anchor_str(self, s, **kwargs):
         # ie. 12:30.123
@@ -80,7 +82,8 @@ class TimeOfDay(AnchoredInterval):
         TimeOfDay("10:00", "15:00")
     """
     _scope = "day"
-    _scope_max = to_nanoseconds(day=1)
+    _scope_max = to_nanoseconds(day=1) - 1
+    _unit_resolution = to_nanoseconds(hour=1)
 
     def anchor_str(self, s, **kwargs):
         # ie. "10:00:15"
@@ -110,7 +113,8 @@ class TimeOfWeek(AnchoredInterval):
         TimeOfWeek("Mon 15:00", "Wed 16:00")
     """
     _scope = "week"
-    _scope_max = to_nanoseconds(day=8) - 1 # Sun day end of day 
+    _scope_max = to_nanoseconds(day=7) - 1 # Sun day end of day 
+    _unit_resolution = to_nanoseconds(day=1)
 
     weeknum_mapping = {
         **dict(zip(calendar.day_name, range(7))), 
@@ -129,11 +133,11 @@ class TimeOfWeek(AnchoredInterval):
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
-            nanoseconds = TimeOfDay._scope_max - 1 if side == "end" else 0
+            nanoseconds = to_nanoseconds(day=1) - 1 if side == "end" else 0
         else:
             nanoseconds = TimeOfDay().anchor_str(time) 
 
-        return TimeOfDay._scope_max * nth_day + nanoseconds
+        return to_nanoseconds(day=1) * nth_day + nanoseconds
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
@@ -162,7 +166,8 @@ class TimeOfMonth(AnchoredInterval):
     #   rollforward/rollback/contains would need slight changes 
 
     _scope = "year"
-    _scope_max = to_nanoseconds(day=32) - 1 # 31st end of day
+    _scope_max = to_nanoseconds(day=31) - 1 # 31st end of day
+    _unit_resolution = to_nanoseconds(day=1)
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 
@@ -170,7 +175,7 @@ class TimeOfMonth(AnchoredInterval):
         # Allowed:
         #   "5th", "1st", "5", "3rd 12:30:00"
         #   TODO: "first 5th", "last 5th", "last 3rd 10:00:00"
-        res = re.search(r"(?P<dayofmonth>[0-9]+)(st|nd|rd|th)? ?(?P<time>.*)", s, flags=re.IGNORECASE)
+        res = re.search(r"(?P<dayofmonth>[0-9]+)(st|nd|rd|th|[.])? ?(?P<time>.*)", s, flags=re.IGNORECASE)
         comps = res.groupdict()
         dayofmonth = comps.pop("dayofmonth")
         time = comps.pop("time")
@@ -185,13 +190,13 @@ class TimeOfMonth(AnchoredInterval):
             # If one says 'thing X was organized between 
             # 15th and 17th of July', the sentence
             # includes 17th till midnight.
-            nanoseconds = TimeOfDay._scope_max - 1 
+            nanoseconds = to_nanoseconds(day=1) - 1
         elif time:
             nanoseconds = TimeOfDay().anchor_str(time) 
         else:
             nanoseconds = 0
 
-        return TimeOfDay._scope_max * nth_day + nanoseconds
+        return to_nanoseconds(day=1) * (nth_day - 1) + nanoseconds
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
@@ -201,6 +206,9 @@ class TimeOfMonth(AnchoredInterval):
             for key, val in d.items()
             if key in ("day", "hour", "minute", "second", "microsecond", "nanosecond")
         }
+        if "day" in d:
+            # Day (of month) does not start from 0 (but from 1)
+            d["day"] = d["day"] - 1
 
         return to_nanoseconds(**d)
 
@@ -226,7 +234,7 @@ class TimeOfYear(AnchoredInterval):
     """
 
     _scope = "year"
-    _scope_max = to_nanoseconds(day=1) * 366
+    _scope_max = to_nanoseconds(day=1) * 366 - 1
 
     monthnum_mapping = {
         **dict(zip(calendar.month_name[1:], range(12))), 
@@ -255,13 +263,13 @@ class TimeOfYear(AnchoredInterval):
             # If one says 'thing X was organized between 
             # 15th and 17th of July', the sentence
             # includes 17th till midnight.
-            nanoseconds = TimeOfMonth._scope_max - 1 
+            nanoseconds = to_nanoseconds(day=31) - 1 
         elif month_str:
             nanoseconds = TimeOfMonth().anchor_str(month_str) 
         else:
             nanoseconds = 0
 
-        return nth_month * TimeOfMonth._scope_max + nanoseconds
+        return nth_month * to_nanoseconds(day=31) + nanoseconds
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
@@ -272,7 +280,10 @@ class TimeOfYear(AnchoredInterval):
             if key in ("day", "hour", "minute", "second", "microsecond", "nanosecond")
         }
         nth_month = dt_dict["month"] - 1
-        return to_nanoseconds(**d) + nth_month * TimeOfMonth._scope_max
+        if "day" in d:
+            # Day (of month) does not start from 0 (but from 1)
+            d["day"] = d["day"] - 1
+        return nth_month * to_nanoseconds(day=31) + to_nanoseconds(**d)
 
 
 class RelativeDay(TimeInterval):
