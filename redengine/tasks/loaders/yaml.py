@@ -124,9 +124,12 @@ class YAMLTaskLoader(YAMLLoaderBase):
             # List of tasks
             return [self.parse_task(task_conf, root=root) for task_conf in conf]
         elif isinstance(conf, dict):
-            # One task
-            task_conf = conf
-            return self.parse_task(task_conf, root=root)
+            # dict of tasks
+            tasks = []
+            for name, task_conf in conf.items():
+                task_conf["name"] = name
+                tasks.append(self.parse_task(task_conf, root=root))
+            return tasks
         else:
             raise TypeError("Expected a list of tasks or a dict of task.")
 
@@ -134,7 +137,7 @@ class YAMLTaskLoader(YAMLLoaderBase):
         conf["class"] = self._get_class(conf)
         self._set_absolute_path(conf, root=root)
         conf["on_exists"] = 'replace'
-        task = parse_task(conf)
+        task = parse_task(conf, session=self.session)
         self.found_items.append(task.name)
         return task
 
