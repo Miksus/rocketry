@@ -72,7 +72,7 @@ class YAMLLoader(YAMLLoaderBase):
     It is recommended to execute the task only once at the beginning
     of scheduling session
     """
-    default_glob = '**/conftask*.yaml'
+    default_glob = '**/conftask.yaml'
 
     def execute_action(self):
         self.parse_items()
