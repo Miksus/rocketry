@@ -52,6 +52,8 @@ cases_time = [
     pytest.param("weekly before Tuesday", TaskExecutable(period=TimeOfWeek(None, "Tue")), id="weekly before"),
     #pytest.param("monthly before 1.",  TaskExecutable(period=TimeOfMonth(None, 1)), id="monthly before"),
 
+    pytest.param("weekly on Tuesday", TaskExecutable(period=TimeOfWeek("Tue", time_point=True)), id="weekly on"),
+
     # Time delta
     pytest.param("every 1 hours", TaskExecutable(period=TimeDelta("1 hours")), id="every hour"),
     pytest.param("every 1 days 1 hours 30 minutes 30 seconds", TaskExecutable(period=TimeDelta("1 days 1 hours 30 minutes 30 seconds")), id="every hour 30 mins 30 seconds"),
@@ -70,6 +72,7 @@ cases_time = [
     pytest.param("time of hour before 45:00",   IsPeriod(period=TimeOfHour(None, "45:00")), id="time of hour before"),
     pytest.param("time of day before 10:00",    IsPeriod(period=TimeOfDay(None, "10:00")), id="time of day before"),
     pytest.param("time of week before Tuesday", IsPeriod(period=TimeOfWeek(None, "Tue")), id="time of week before"),
+    pytest.param("time of week on Tuesday", IsPeriod(period=TimeOfWeek("Tue", "Tue")), id="time of week on"),
     #pytest.param("time of month before 1.",  IsPeriod(period=TimeOfMonth(None, 1)), id="time of month before"),
 ]
 
