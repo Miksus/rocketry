@@ -1,7 +1,7 @@
 
 
 
-from typing import Callable
+from typing import Callable, Union
 from redengine.core.task import Task
 #from .config import parse_config
 
@@ -17,8 +17,9 @@ class FuncTask(Task):
 
     Parameters
     ----------
-    func : Callable
-        Function or callable to be executed.
+    func : Callable, str
+        Function or callable to be executed. If string is
+        passed, the string should be in form ´´
     **kwargs : dict
         See :py:class:`redengine.core.Task`
 
@@ -34,7 +35,7 @@ class FuncTask(Task):
         return self.func(**kwargs)
 
     def get_default_name(self):
-        return self.func.__name__
+        return f"{self.func.__module__}:{self.func.__name__}"
         
     def filter_params(self, params):
         return {
@@ -91,3 +92,19 @@ class FuncTask(Task):
         def wrapper(func):
             return cls(func, **kwargs)
         return wrapper
+
+    @property
+    def func(self):
+        return self._func
+
+    @func.setter
+    def func(self, func:Union[str, Callable]):
+        if isinstance(func, str):
+            if ":" in func:
+                import_name, func_name = func.split(":")
+            else:
+                import_name, func_name = func.rsplit('.', 1)
+            # Should be in form 'mypackage.mymodule:myfunc'
+            module = importlib.import_module(import_name)
+            func = getattr(module, func_name)
+        self._func = func

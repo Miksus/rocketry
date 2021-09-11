@@ -8,6 +8,10 @@ from redengine.core import Task, Parameters
 
 class RedengineJSONEncoder(JSONEncoder):
 
+    cls_properties = {
+        "FuncTask": ["func"]
+    }
+
     def default(self, obj):
         if isinstance(obj, Task):
             return self.format_task(obj)
@@ -54,7 +58,11 @@ class RedengineJSONEncoder(JSONEncoder):
             "logger": task.logger.name,
             "parameters": dict(**task.parameters),
         }
-        return {**attrs, **props}
+        extra = {
+            prop: getattr(task, prop)
+            for prop in self.cls_properties.get(type(task).__name__, [])
+        }
+        return {**attrs, **props, **extra}
 
     def format_params(self, params):
         return params.represent()

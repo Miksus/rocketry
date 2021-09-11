@@ -150,9 +150,9 @@ def test_scheduler_tasks_set(tmpdir, session):
         sess = parse_dict(
             {
                 "tasks": {
-                    "task_1": {"class": "FuncTask", "func": "some_funcs.do_task_1"},
-                    "task_2": {"class": "FuncTask", "func": "some_funcs.do_task_2"},
-                    "maintain.task_1": {"class": "FuncTask", "func": "some_funcs.do_maintain", "execution": "main"}
+                    "task_1": {"class": "FuncTask", "func": "some_funcs:do_task_1"},
+                    "task_2": {"class": "FuncTask", "func": "some_funcs:do_task_2"},
+                    "maintain.task_1": {"class": "FuncTask", "func": "some_funcs:do_maintain", "execution": "main"}
                 },
                 "scheduler": {
                     "name": "my_scheduler",
