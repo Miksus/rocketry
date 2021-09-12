@@ -60,10 +60,6 @@ class Scheduler:
         Parameters of the session.
         Can also be passed directly to the 
         session, by default None
-    min_sleep : float, optional
-        [description], by default 0.1
-    max_sleep : int, optional
-        [description], by default 600
     logger : [type], optional
         [description], by default None
     name : str, optional
@@ -88,7 +84,6 @@ class Scheduler:
 
     def __init__(self, session=None, max_processes:Optional[int]=None, tasks_as_daemon:bool=True, timeout="30 minutes",
                 shut_cond:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,
-                min_sleep=0.1, max_sleep=600, 
                 logger=None, name:str=None,
                 restarting:str="replace", 
                 instant_shutdown:bool=False):
@@ -105,9 +100,6 @@ class Scheduler:
 
         self.shut_cond = False if shut_cond is None else copy(shut_cond)
         self.instant_shutdown = instant_shutdown
-
-        self.min_sleep = min_sleep
-        self.max_sleep = max_sleep
 
         # self.task_returns = Parameters() # TODO
 
@@ -206,8 +198,6 @@ class Scheduler:
                     self.terminate_task(task)
 
         self.n_cycles += 1
-        #self.handle_zombie_tasks()
-        
 
     def run_task(self, task:Task, *args, extra_params=None, **kwargs):
         """Run a given task"""
@@ -368,6 +358,7 @@ class Scheduler:
             try:
                 output = self._return_queue.get(block=False)
                 task_name, return_value = output
+                # TODO: Store the returns
             except Empty:
                 break
             else:
@@ -378,9 +369,6 @@ class Scheduler:
 
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
-        delay = self.delay
-        self.logger.debug(f'Putting scheduler to sleep for {delay} sec', extra={"action": "hibernate"})
-        time.sleep(delay)
 
     def _setup(self):
         """Set up the scheduler."""
@@ -520,24 +508,6 @@ class Scheduler:
             return self()
         else:
             raise ValueError(f"Invalid restaring: {self.restarting}")
-
-    @property
-    def delay(self):
-        #! TODO: Delete
-        "Number of seconds that needs to be wait for next executable task"
-        now = datetime.datetime.now()
-        try:
-            delay = min(
-                task.start_cond.next_start - now
-                for task in self.tasks
-            )
-        except (AttributeError, ValueError): # Raises ValueError if min() is empty
-            delay = 0
-        else:
-            delay = delay.total_seconds()
-        delay = min(max(delay, self.min_sleep), self.max_sleep)
-        self.logger.debug(f"Next run cycle at {delay} seconds.")
-        return delay
 
 # System control
     @property
