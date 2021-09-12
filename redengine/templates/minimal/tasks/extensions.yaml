@@ -1,0 +1,6 @@
+sequences:
+  my-sequence:
+    # Define pipeline: my-task-2 runs only after my-task-1
+    tasks:
+      - 'my-task-1'
+      - 'my-task-2'

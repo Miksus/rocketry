@@ -10,7 +10,10 @@ parameters:
 
 tasks:
   # Put your meta tasks here
-  - class: YAMLLoader
+  - class: YAMLTaskLoader
+    path: 'tasks/'
+    on_startup: True
+  - class: YAMLExtensionLoader
     path: 'tasks/'
     on_startup: True
 
