@@ -53,11 +53,13 @@ def test_fail_command(tmpdir, execution, session):
 
         logs = list(task.get_history())
         assert "fail" == task.status
-        assert logs[1]["exc_text"].strip().replace('\r', '').endswith(dedent("""
-        OSError: Failed running command (2): 
-        unknown option --not_an_arg
-        usage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...
-        Try `python -h' for more information.""")[1:])
+
+        err = logs[1]["exc_text"].strip().replace('\r', '')
+        if platform.python_version() >= '3.8.0':
+            expected = "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
+        else:
+            expected = "OSError: Failed running command (2): \nUnknown option: --\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
+        assert err.endswith(expected)
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_success_bat_file(tmpdir, execution, session):
