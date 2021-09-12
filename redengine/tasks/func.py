@@ -38,7 +38,7 @@ class FuncTask(Task):
     def get_default_name(self):
         return f"{self.func.__module__}:{self.func.__name__}"
         
-    def filter_params(self, params):
+    def prefilter_params(self, params):
         return {
             key: val for key, val in params.items()
             if key in self.kw_args

@@ -201,13 +201,10 @@ class Scheduler:
 
     def run_task(self, task:Task, *args, extra_params=None, **kwargs):
         """Run a given task"""
-        params = self.session.parameters
-        extra_params = {} if extra_params is None else extra_params
-        params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
         start_time = datetime.datetime.fromtimestamp(time.time())
 
         try:
-            task(params=params)
+            task()
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:

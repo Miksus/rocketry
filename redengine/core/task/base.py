@@ -44,7 +44,6 @@ class _TaskMeta(type):
 
 
 class Task(metaclass=_TaskMeta):
-    # TODO
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that 
@@ -324,7 +323,7 @@ class Task(metaclass=_TaskMeta):
         set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
-    def __call__(self, **kwargs):
+    def __call__(self, params=None, **kwargs):
         """Execute the task."""
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
@@ -333,9 +332,11 @@ class Task(metaclass=_TaskMeta):
         if hasattr(self, "_thread"):
             del self._thread
 
+        params = self.get_extra_params(params) #Parameters(params)
         # Run the actual task
         if self.execution == "main":
-            self.run_as_main(**kwargs)
+            params = self.postfilter_params(params)
+            self.run_as_main(params=params, **kwargs)
             if _IS_WINDOWS:
                 # There is an annoying bug (?) in Windows:
                 # https://bugs.python.org/issue44831
@@ -346,9 +347,9 @@ class Task(metaclass=_TaskMeta):
                 # in tests will succeed. 
                 time.sleep(1e-6)
         elif self.execution == "process":
-            self.run_as_process(**kwargs)
+            self.run_as_process(params=params, **kwargs)
         elif self.execution == "thread":
-            self.run_as_thread(**kwargs)
+            self.run_as_thread(params=params, **kwargs)
         else:
             raise ValueError(f"Invalid execution: {self.execution}")
 
@@ -376,7 +377,7 @@ class Task(metaclass=_TaskMeta):
 
         return cond
 
-    def run_as_main(self, params=None, _log_running=True, **kwargs):
+    def run_as_main(self, params:Parameters, _log_running=True, **kwargs):
         """Run the task on the current thread and process"""
         if _log_running:
             self.log_running()
@@ -388,15 +389,8 @@ class Task(metaclass=_TaskMeta):
 
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
-        params = {} if params is None else params
         try:
-            params = Parameters(params)
-
-            # We filter only the non-explicit parameters (session parameters)
-            params = self.filter_params(params)
-            params = Parameters(params)
-
-            params.update(self.parameters) # Union setup params with call params
+            params = Parameters(params) | self.parameters
             params = params.materialize()
 
             output = self.execute_action(**params)
@@ -446,7 +440,7 @@ class Task(metaclass=_TaskMeta):
             #if cwd is not None:
             #    os.chdir(old_cwd)
 
-    def run_as_thread(self, params=None, **kwargs):
+    def run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
         self.thread_terminate.clear()
 
@@ -456,19 +450,19 @@ class Task(metaclass=_TaskMeta):
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
-
-    def _run_as_thread(self, params=None, event=None):
+    def _run_as_thread(self, params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
         self.log_running()
         event.set()
         # Adding the _thread_terminate as param so the task can
         # get the signal for termination
-        params = Parameters() if params is None else params
-        params = params | {"_thread_terminate_": self._thread_terminate}
+        #params = Parameters() if params is None else params
+        #params = params | {"_thread_terminate_": self._thread_terminate}
+        params = self.postfilter_params(params)
         self.run_as_main(params=params, _log_running=False)
 
-    def run_as_process(self, params=None, daemon=None):
+    def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
@@ -476,14 +470,14 @@ class Task(metaclass=_TaskMeta):
         return_queue = self.session.scheduler._return_queue
 
         daemon = self.daemon if self.daemon is not None else self.session.scheduler.tasks_as_daemon
-        self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
+        self._process = multiprocessing.Process(target=self._run_as_process, args=(params, log_queue, return_queue), daemon=daemon) 
         self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._process.start()
         
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, queue, return_queue, params):
+    def _run_as_process(self, params:Parameters, queue, return_queue):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -527,6 +521,7 @@ class Task(metaclass=_TaskMeta):
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
 
+        params = self.postfilter_params(params)
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
@@ -540,9 +535,17 @@ class Task(metaclass=_TaskMeta):
             if return_queue:
                 return_queue.put((self.name, output))
 
-    def filter_params(self, params):
-        """Select the parameters from the session and specified in the task itself 
-        that are passed to the execution of the task. Override this."""
+    def get_extra_params(self, params):
+        passed_params = Parameters(params)
+        session_params = self.session.parameters
+        #task_params = Parameters(self.parameters)
+        extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
+
+        return Parameters(self.prefilter_params(session_params | passed_params | extra_params))# | task_params
+
+    def prefilter_params(self, params:Parameters):
+        """Filter the parameters before passing them to the processes or threads
+        if parallerized"""
         sig = inspect.signature(self.execute_action)
         kw_args = [
             val.name
@@ -556,6 +559,11 @@ class Task(metaclass=_TaskMeta):
             key: val for key, val in params.items()
             if key in kw_args
         }
+
+    def postfilter_params(self, params:Parameters):
+        """Filter the parameters after passing them to the processes or threads
+        if parallerized"""
+        return params
 
     def execute_action(self, *args, **kwargs):
         """Run the actual task. Override this.

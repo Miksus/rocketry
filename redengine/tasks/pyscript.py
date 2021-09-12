@@ -1,4 +1,5 @@
 
+from redengine.core.parameters.parameters import Parameters
 from typing import List, Optional, Union
 from redengine.core.task import Task
 
@@ -68,7 +69,10 @@ class PyScript(Task):
                 # Path has been removed already
                 pass
 
-    def filter_params(self, params):
+    def prefilter_params(self, params:Parameters):
+        return params
+
+    def postfilter_params(self, params:Parameters):
         return {
             key: val for key, val in params.items()
             if key in self.kw_args

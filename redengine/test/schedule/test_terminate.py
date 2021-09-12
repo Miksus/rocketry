@@ -87,8 +87,8 @@ def test_task_timeout(tmpdir, execution, session):
 def test_task_terminate(tmpdir, execution, session):
     """Test task termination due to the task was terminated by another task"""
 
-    def terminate_task(_scheduler_):
-        _scheduler_.tasks[0].force_termination = True
+    def terminate_task(_session_):
+        _session_.tasks["slow task"].force_termination = True
 
     with tmpdir.as_cwd() as old_dir:
 
