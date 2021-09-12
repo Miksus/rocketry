@@ -199,7 +199,7 @@ def test_process_no_double_logging(tmpdir, session):
         return_queue = multiprocessing.Queue(-1)
 
         # Start the process
-        proc = multiprocessing.Process(target=task._run_as_process, args=(log_queue, return_queue, None), daemon=None) 
+        proc = multiprocessing.Process(target=task._run_as_process, args=(None, log_queue, return_queue), daemon=None) 
         proc.start()
 
         # Do the logging manually (copied from the method)
