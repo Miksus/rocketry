@@ -217,13 +217,7 @@ class Scheduler:
         start_time = datetime.datetime.fromtimestamp(time.time())
 
         try:
-            task(
-                params=params, 
-                # Additional arguments if multiprocessing
-                log_queue=self._log_queue, 
-                return_queue=self._return_queue, 
-                daemon=self.tasks_as_daemon
-            )
+            task(params=params)
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:

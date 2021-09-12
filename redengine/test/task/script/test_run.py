@@ -10,6 +10,8 @@ import pandas as pd
 import pytest
 from textwrap import dedent
 
+from task_helpers import wait_till_task_finish
+
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
@@ -28,7 +30,6 @@ from textwrap import dedent
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
-    kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
 
         task = PyScript(
@@ -38,20 +39,12 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         )
 
         try:
-            task(**kwargs)
+            task()
         except:
             # failing execution="main"
             pass
 
-        # Wait for finish
-        if execution == "thread":
-            while task.status == "run":
-                pass
-        elif execution == "process":
-            # Do the logging manually
-            que = kwargs["log_queue"]
-            record = que.get(block=True, timeout=30)
-            task.log_record(record)
+        wait_till_task_finish(task)
 
         assert task.status == expected_outcome
 

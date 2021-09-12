@@ -9,6 +9,8 @@ from redengine.core.task.base import Task
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import AlwaysFalse, AlwaysTrue, Any
 
+from task_helpers import wait_till_task_finish
+
 import pandas as pd
 
 Task.use_instance_naming = True
@@ -57,8 +59,6 @@ def run_parametrized_kwargs(**kwargs):
     ],
 )
 def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution, session):
-
-    kwargs = {"log_queue": multiprocessing.Queue(-1)} if execution == "process" else {}
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
@@ -68,25 +68,15 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution, session):
         )
 
         try:
-            task(**kwargs)
+            task()
         except:
             # failing execution="main"
             if expected_outcome != "fail":
                 raise
 
         # Wait for finish
-        if execution == "thread":
-            times = 0
-            timeout = 2
-            while task.status != expected_outcome and times < timeout / 0.2:
-                time.sleep(0.2)
-                times += 1
-        elif execution == "process":
-            # Do the logging manually
-            que = kwargs["log_queue"]
-            record = que.get(block=True, timeout=30)
-            task.log_record(record)
-
+        wait_till_task_finish(task)
+  
         assert task.status == expected_outcome
 
         df = pd.DataFrame(session.get_task_log())

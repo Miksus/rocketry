@@ -469,12 +469,14 @@ class Task(metaclass=_TaskMeta):
         params = params | {"_thread_terminate_": self._thread_terminate}
         self.run_as_main(params=params, _log_running=False)
 
-    def run_as_process(self, params=None, log_queue=None, return_queue=None, daemon=None):
+    def run_as_process(self, params=None, daemon=None):
         """Create a new process and run the task on that."""
+
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
-        if not log_queue:
-            log_queue = multiprocessing.Queue(-1)
-        daemon = self.daemon if self.daemon is not None else daemon
+        log_queue = self.session.scheduler._log_queue #multiprocessing.Queue(-1)
+        return_queue = self.session.scheduler._return_queue
+
+        daemon = self.daemon if self.daemon is not None else self.session.scheduler.tasks_as_daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
         self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._process.start()
