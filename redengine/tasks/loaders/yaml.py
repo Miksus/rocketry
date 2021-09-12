@@ -70,7 +70,7 @@ class YAMLLoader(YAMLLoaderBase):
     -----
     ``execution`` can have only values ``main`` and ``thread``.
     It is recommended to execute the task only once at the beginning
-    of scheduling session
+    of scheduling session.
     """
     default_glob = '**/conftask.yaml'
 
@@ -102,7 +102,7 @@ class YAMLTaskLoader(YAMLLoaderBase):
         tasks.
     glob : str
         Unix pattern that is used to identify a YAML file
-        that is parsed to task(s).
+        that is parsed to tasks.
     delay : str
         Time delay after each cycle of going through the 
         found YAML files. Only usable if ``execution='thread'``
@@ -161,6 +161,30 @@ class YAMLTaskLoader(YAMLLoaderBase):
 
 
 class YAMLExtensionLoader(YAMLLoaderBase):
+    """Task that searches extensions from 
+    a directory. All matched YAML files are
+    read and the contents are parsed.
+
+    Parameters
+    ----------
+    path : path-like
+        Path to the directory that is searched for the
+        extensions.
+    glob : str
+        Unix pattern that is used to identify a YAML file
+        that is parsed to extensions.
+    delay : str
+        Time delay after each cycle of going through the 
+        found YAML files. Only usable if ``execution='thread'``
+    **kwargs : dict
+        See :py:class:`redengine.core.Task`
+
+    Notes
+    -----
+    ``execution`` can have only values ``main`` and ``thread``.
+    Subprocesses cannot change the state of the session tasks in
+    the main thread.
+    """
 
     default_glob = '**/extensions.yaml'
     default_priority = 20 # second lowest priority

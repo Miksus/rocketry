@@ -19,7 +19,8 @@ class FuncTask(Task):
     ----------
     func : Callable, str
         Function or callable to be executed. If string is
-        passed, the string should be in form ´´
+        passed, the string should be in form "mypackage.mymodule:myfunc"
+        and the mypackage should be in sys.path.
     **kwargs : dict
         See :py:class:`redengine.core.Task`
 
