@@ -2,7 +2,7 @@
 
 from redengine.core import Scheduler
 from redengine.parse import parse_task
-from redengine.tasks import FuncTask, PyScript
+from redengine.tasks import FuncTask, PyScript, CommandTask
 
 from textwrap import dedent
 
@@ -13,7 +13,7 @@ from pathlib import Path
 @pytest.mark.parametrize(
     "obj,cls,attrs",
     [
-            pytest.param(
+        pytest.param(
             {"class": "PyScript", "path": "tasks/main.py"}, 
             PyScript,
             {"path": Path("tasks/main.py"), "func": "main", "name": "tasks.main:main"},
@@ -30,6 +30,12 @@ from pathlib import Path
             PyScript,
             {"path": Path("tasks/funcs.py"), "func": "myfunc", "name": "a task"},
             id="PyScript with name"
+        ),
+        pytest.param(
+            {"class": "CommandTask", "command": ["python", "-m", "pip", "list"]}, 
+            CommandTask,
+            {"action": ["python", "-m", "pip", "list"]},
+            id="CommandTask"
         ),
     ]
 )
