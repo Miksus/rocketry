@@ -5,7 +5,7 @@ from redengine.core.time import TimeDelta
 from .time import IsPeriod
 from redengine.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
 
-import os, re
+import os, re, time
 import datetime
 import numpy as np
 
@@ -35,7 +35,7 @@ class TaskStarted(Historical, Comparable):
 
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
@@ -57,7 +57,7 @@ class TaskFailed(Historical, Comparable):
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
             # If no period, start and end are the ones from the task
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
@@ -79,7 +79,7 @@ class TaskTerminated(Historical, Comparable):
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
             # If no period, start and end are the ones from the task
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
@@ -100,7 +100,7 @@ class TaskSucceeded(Historical, Comparable):
 
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
@@ -121,7 +121,7 @@ class TaskFinished(Historical, Comparable):
 
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
@@ -165,7 +165,7 @@ class TaskInacted(Historical, Comparable):
         task = Statement.session.get_task(task)
         if _start_ is None and _end_ is None:
             # If no period, start and end are the ones from the task
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         

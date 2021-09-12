@@ -214,7 +214,7 @@ class Scheduler:
         params = self.session.parameters
         extra_params = {} if extra_params is None else extra_params
         params = params | Parameters(_scheduler_=self, _task_=task) | Parameters(**extra_params)
-        start_time = datetime.datetime.now()
+        start_time = datetime.datetime.fromtimestamp(time.time())
 
         try:
             task(
@@ -234,7 +234,7 @@ class Scheduler:
             status = "success"
             # Set output to other task to use
             # self.task_returns[task.name] = output
-        end_time = datetime.datetime.now()
+        end_time = datetime.datetime.fromtimestamp(time.time())
 
         # NOTE: This only logs to the scheduler (task logger already handled). Probably remove this.
         self.log_status(
@@ -292,7 +292,7 @@ class Scheduler:
         
         if timeout is None:
             return False
-        run_duration = datetime.datetime.now() - task.last_run
+        run_duration = datetime.datetime.fromtimestamp(time.time()) - task.last_run
         return run_duration > timeout
 
     def is_task_runnable(self, task):

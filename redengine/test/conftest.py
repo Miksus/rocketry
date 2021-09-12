@@ -108,20 +108,16 @@ def mock_datetime_now(monkeypatch):
 
     def wrapper(dt):
         dt = parse_datetime(dt)
+
+        # Mock datetime.datetime
         mockdatetime._freezed_datetime = mockdatetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
         monkeypatch.setattr(datetime, 'datetime', mockdatetime)
 
-        # We also need to mock isinstance checks by injecting our
-        # class on datetime.datetime on relevant modules
-        #datetime.datetime = mockdatetime
-
-    # Getting original datetime.datetime so we can reset it after
-    # the test
-    
-    #_datetime_orig = datetime.datetime
+        # Mock time.time
+        mocktime = dt.timestamp()
+        monkeypatch.setattr(time, 'time', lambda: mocktime)
 
     yield wrapper
-    #datetime.datetime = _datetime_orig
 
 @pytest.fixture
 def mock_time(monkeypatch):

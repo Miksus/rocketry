@@ -453,7 +453,7 @@ class Task(metaclass=_TaskMeta):
 
         event_is_running = threading.Event()
         self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
-        self._last_run = datetime.datetime.now() # Needed for termination
+        self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
@@ -476,7 +476,7 @@ class Task(metaclass=_TaskMeta):
             log_queue = multiprocessing.Queue(-1)
         daemon = self.daemon if self.daemon is not None else daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(log_queue, return_queue, params), daemon=daemon) 
-        self._last_run = datetime.datetime.now() # Needed for termination
+        self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._process.start()
         
         self._lock_to_run_log(log_queue)
@@ -755,7 +755,7 @@ class Task(metaclass=_TaskMeta):
             raise KeyError(f"Invalid action: {action}")
         
         if action is not None:
-            now = datetime.datetime.now()
+            now = datetime.datetime.fromtimestamp(time.time())
             if action == "run":
                 extra = {"action": "run", "start": now}
                 # self._last_run = now

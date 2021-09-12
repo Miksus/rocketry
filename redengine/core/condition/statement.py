@@ -292,7 +292,7 @@ class Historical(Statement):
         if self.period is None:
             return kwargs
 
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.fromtimestamp(time.time())
 
         interval = self.period.rollback(dt)
         start = interval.left

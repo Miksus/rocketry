@@ -1,5 +1,6 @@
 
 import datetime
+import time
 from redengine.core.task.base import Task
 from typing import Tuple, Union
 from redengine.core import BaseCondition
@@ -235,7 +236,7 @@ class IntervalTrigger(BaseTrigger):
 
     def is_active(self):
         last_run = self.task.last_run or datetime.datetime.min
-        now = datetime.datetime.now()
+        now = datetime.datetime.fromtimestamp(time.time())
         return (
             now in self.interval # It's time for the interval
             and last_run not in self.interval.rollback(now) # Has not run in the interval yet
@@ -248,7 +249,8 @@ class IntervalTrigger(BaseTrigger):
         "Whether the trigger has been marked to have fired (but not necessarily completed)"
         # TODO: If no interval, is_triggered should probably be: self.depend_trigger.task.last_success <= self._triggered_interval.start
         last_trigger_interval = self._triggered_interval
-        curr_interval = self.interval.rollback(datetime.datetime.now())
+        now = datetime.datetime.fromtimestamp(time.time())
+        curr_interval = self.interval.rollback(now)
         return curr_interval.left == last_trigger_interval.left
 
     def trigger(self, dt):
@@ -256,7 +258,7 @@ class IntervalTrigger(BaseTrigger):
         self._triggered_interval = self.interval.rollback(dt).start
 
     def has_line_started(self):
-        now = datetime.datetime.now()
+        now = datetime.datetime.fromtimestamp(time.time())
         triggers = self.parent.triggers
         line_start = triggers[0].task.last_run or datetime.datetime.min
         return line_start in self.interval.rollback(now)
@@ -271,7 +273,8 @@ class IntervalTrigger(BaseTrigger):
             if last_success is None:
                 # Has never succeeded (yet)
                 return False
-            return last_success in interval.rollback(datetime.datetime.now())
+            now = datetime.datetime.fromtimestamp(time.time())
+            return last_success in interval.rollback(now)
         elif is_first:
             return True
 
@@ -282,7 +285,8 @@ class IntervalTrigger(BaseTrigger):
         if last_success is None:
             # Has never succeeded (yet)
             return False
-        return last_success in interval.rollback(datetime.datetime.now())
+        now = datetime.datetime.fromtimestamp(time.time())
+        return last_success in interval.rollback(now)
 
     @property
     def interval(self):
@@ -359,7 +363,8 @@ class TriggerOld(BaseCondition):
 
     def is_active(self):
         if self.has_interval():
-            return datetime.datetime.now() in self.interval
+            now = datetime.datetime.fromtimestamp(time.time())
+            return now in self.interval
         else:
             # Check current task has not succeeded after dependent
             return self.is_active_depend_ready()
@@ -433,13 +438,15 @@ class TriggerOld(BaseCondition):
                 else False # Prev task has not succeeded yet but current has succeeded --> not completed
             )
             return is_prev_succeeded_before
-        return last_success in interval.rollback(datetime.datetime.now())
+        now = datetime.datetime.fromtimestamp(time.time())
+        return last_success in interval.rollback(now)
 
     def is_triggered(self):
         "Whether the trigger has been marked to have fired (but not necessarily completed)"
         # TODO: If no interval, is_triggered should probably be: self.depend_trigger.task.last_success <= self._triggered_interval.start
         last_trigger_interval = self._triggered_interval
-        curr_interval = self.interval.rollback(datetime.datetime.now())
+        now = datetime.datetime.fromtimestamp(time.time())
+        curr_interval = self.interval.rollback(now)
         return curr_interval.start == last_trigger_interval.start
 
     def is_first(self):
