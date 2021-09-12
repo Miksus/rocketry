@@ -115,7 +115,7 @@ class YAMLTaskLoader(YAMLLoaderBase):
     Subprocesses cannot change the state of the session tasks in
     the main thread.
     """
-    default_glob = '**/task*.yaml'
+    default_glob = '**/tasks.yaml'
     default_priority = 40 
     def parse_file(self, path):
         root = Path(path).parent
@@ -162,7 +162,7 @@ class YAMLTaskLoader(YAMLLoaderBase):
 
 class YAMLExtensionLoader(YAMLLoaderBase):
 
-    default_glob = '**/ext*.yaml'
+    default_glob = '**/extensions.yaml'
     default_priority = 20 # second lowest priority
 
     def parse_file(self, path):
