@@ -2,6 +2,7 @@
 # TODO
 #import pytest
 import multiprocessing, itertools
+import os
 from pathlib import Path
 #
 from redengine import Session
@@ -57,23 +58,32 @@ def test_find_multiple_times(tmpdir, session):
         finder = YAMLTaskLoader(path="project", execution="main")
         
 
-        create_file(root / "task1.yaml", """
-        class: PyScript
-        name: mytask-1
-        path: 'something.py'
+        create_file(root/ "tasks.yaml", """
+        mytask-1:
+            class: PyScript
+            path: 'something.py'
         """)
         finder.execute_action()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1"]
 
-        create_file(root / "task2.yaml", """
-        class: PyScript
-        name: mytask-2
-        path: 'something.py'
+        delete_file(root / "tasks.yaml")
+        create_file(root / "tasks.yaml", """
+        mytask-1:
+            class: PyScript
+            path: 'something.py'
+        mytask-2:
+            class: PyScript
+            path: 'something.py'
         """)
         finder.execute_action()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1", "mytask-2"]
 
-        delete_file(root / "task1.yaml")
+        delete_file(root / "tasks.yaml")
+        create_file(root / "tasks.yaml", """
+        mytask-2:
+            class: PyScript
+            path: 'something.py'
+        """)
         finder.execute_action()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-2"]
 
@@ -83,22 +93,22 @@ class TestParseTasks:
         {
             "id": "Simple script task",
             "file": {
-                "path": "project/mytask-1.yaml",
+                "path": "project/tasks.yaml",
                 "content": """
-                    name: mytask
-                    start_cond: 'time of day between 10:00 and 14:00'
-                    path: mytask.py
-                    func: main
+                    - name: mytask
+                      start_cond: 'time of day between 10:00 and 14:00'
+                      path: mytask.py
+                      func: main
                 """,
             },
-            "get_expected": lambda: (
+            "get_expected": lambda: [
                 PyScript(name="mytask", path="project/mytask.py", func="main", start_cond="time of day between 10:00 and 14:00", session=Session())
-            )
+            ]
         },
         {
             "id": "Multiple script task",
             "file": {
-                "path": "project/mytask-1.yaml",
+                "path": "project/tasks.yaml",
                 "content": """
                     - name: mytask1
                       start_cond: 'time of day between 06:00 and 08:00'
@@ -149,37 +159,37 @@ class TestFindTasks:
         {
             "id": "Typical case",
             "files": {
-                "project/task-1.yaml": """
-                    name: get_stuff
-                    start_cond: 'time of day between 10:00 and 14:00'
-                    path: scripts/get_some_stuff.py
-                    func: main
+                "project/fetch/tasks.yaml": """
+                    - name: get_stuff
+                      start_cond: 'time of day between 10:00 and 14:00'
+                      path: ../scripts/get_some_stuff.py
+                      func: main
                 """,
                 "project/scripts/get_some_stuff.py": """
                     def main():
                         pass
                 """,
 
-                "project/task-2.yaml": """
-                    name: do_stuff
-                    start_cond: 'time of day between 22:00 and 23:00 & true'
-                    path: scripts/do_some_stuff.py
-                    func: do_this
+                "project/transform/tasks.yaml": """
+                    - name: do_stuff
+                      start_cond: 'time of day between 22:00 and 23:00 & true'
+                      path: scripts/do_some_stuff.py
+                      func: do_this
                 """,
-                "project/scripts/do_some_stuff.py": """
+                "project/transform/scripts/do_some_stuff.py": """
                     def do_this():
                         pass
                 """,
             },
             "get_expected": (lambda: [
-                PyScript(path="project/scripts/get_some_stuff.py", func="main", start_cond="time of day between 10:00 and 11:00", name="get_stuff", session=Session()),
-                PyScript(path="project/scripts/do_some_stuff.py", func="do_this", start_cond="time of day between 22:00 and 23:00 & true", name="do_stuff", session=Session()),
+                PyScript(path="project/fetch/../scripts/get_some_stuff.py", func="main", start_cond="time of day between 10:00 and 11:00", name="get_stuff", session=Session()),
+                PyScript(path="project/transform/scripts/do_some_stuff.py", func="do_this", start_cond="time of day between 22:00 and 23:00 & true", name="do_stuff", session=Session()),
             ])
         },
         {
             "id": "One file",
             "files": {
-                "project/task-1.yaml": """
+                "project/tasks.yaml": """
                     - name: get_stuff
                       start_cond: 'time of day between 10:00 and 14:00'
                       path: scripts/get_some_stuff.py
@@ -228,3 +238,5 @@ class TestFindTasks:
                 actual_task.session = session
                 expected_task.session = session
                 asset_task_equal(actual_task, expected_task)
+                if hasattr(actual_task, "path"):
+                    assert os.path.isfile(actual_task.path)

@@ -26,7 +26,7 @@ def test_loader_multiple_times(tmpdir, session):
 
         finder = YAMLExtensionLoader(path="project")
         
-        create_file(root / "extensions_1.yaml", dedent("""
+        create_file(root / "extensions.yaml", dedent("""
         sequences:
           my-sequence-1:
             tasks:
@@ -37,8 +37,14 @@ def test_loader_multiple_times(tmpdir, session):
         finder.execute_action()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-1"]
 
-        create_file(root / "extensions_2.yaml", dedent("""
+        delete_file(root / "extensions.yaml")
+        create_file(root / "extensions.yaml", dedent("""
         sequences:
+          my-sequence-1:
+            tasks:
+              - task-1
+              - task-2
+            interval: 'time of day between 12:00 and 16:00'
           my-sequence-2:
             tasks:
               - task-1
@@ -53,9 +59,26 @@ def test_loader_multiple_times(tmpdir, session):
         finder.execute_action()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-1", "my-sequence-2", "my-sequence-3"]
 
-        delete_file(root / "extensions_1.yaml")
+        delete_file(root / "extensions.yaml")
+        create_file(root / "extensions.yaml", dedent("""
+        sequences:
+          my-sequence-2:
+            tasks:
+              - task-1
+              - task-2
+            interval: 'time of day between 12:00 and 16:00'
+          my-sequence-3:
+            tasks:
+              - task-1
+              - task-2
+            interval: 'time of day between 12:00 and 16:00'
+        """))
         finder.execute_action()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-2", "my-sequence-3"]
+        
+        delete_file(root / "extensions.yaml")
+        finder.execute_action()
+        assert [] == list(session.extensions["sequences"].keys())
 
 def test_loader(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
@@ -66,7 +89,7 @@ def test_loader(tmpdir, session):
 
         finder = YAMLExtensionLoader(path="project")
         
-        create_file(root / "extensions_1.yaml", dedent("""
+        create_file(root / "extensions.yaml", dedent("""
         sequences:
           my-sequence-1:
             tasks:
