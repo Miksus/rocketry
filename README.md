@@ -1,13 +1,15 @@
 
 # <span style="color:red">Red</span> Engine
 
-> Advanced scheduling system for humans.
+> Advanced scheduling system for humans and for production.
 
 ---
 
 ## What is it?
 Red Engine is a Python package for scheduling scripts or functions. It is designed to be intuitive, 
 expressive, extendable and production ready. 
+
+Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/latest/)
 
 ## Core Features
 
@@ -39,7 +41,6 @@ pip install redengine
 ```shell
 python -m redengine create myproject
 ```
-See [the docs](https://red-engine.readthedocs.io/en/latest/) for more.
 
 ---
 
