@@ -407,7 +407,6 @@ class Task(metaclass=_TaskMeta):
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(None)
-            # TODO: Probably should raise and not silently return?
             raise
 
         except TaskInactionException:
