@@ -6,11 +6,7 @@ Tutorials
    :caption: Contents:
 
    quick_start
+   configurations
+   conditions
+   tasks
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
