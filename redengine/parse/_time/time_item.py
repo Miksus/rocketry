@@ -2,7 +2,7 @@
 
 
 import re
-from typing import Callable
+from typing import Callable, Pattern
 from ..utils import Parser, ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
 
@@ -33,7 +33,7 @@ def add_time_parser(d):
 def parse_time_item(s:str):
     "Parse one condition"
     for statement, parser in PARSERS.items():
-        if isinstance(statement, re.Pattern):
+        if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
             if res:
                 args = ()
