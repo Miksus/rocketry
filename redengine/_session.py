@@ -68,7 +68,7 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None):
+    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None, kwds_scheduler=None):
         # Set defaults
         config = {} if config is None else config
         tasks = {} if tasks is None else tasks
@@ -87,7 +87,8 @@ class Session:
         self.parameters = parameters
         self.extensions = extensions
 
-        self.scheduler = Scheduler(session=self)
+        kwds_scheduler = {} if kwds_scheduler is None else kwds_scheduler
+        self.scheduler = Scheduler(session=self, **kwds_scheduler)
         if scheme is not None:
             is_list_of_schemes = not isinstance(scheme, str)
             if is_list_of_schemes:
