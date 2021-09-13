@@ -1,4 +1,5 @@
 
+from redengine.core.parameters.parameters import Parameters
 import time
 import multiprocessing
 from pathlib import Path
@@ -13,15 +14,23 @@ from textwrap import dedent
 from task_helpers import wait_till_task_finish
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_success_command(tmpdir, session, execution):
+@pytest.mark.parametrize("cmd,params", [
+    pytest.param(["python", "-c", "open('test.txt', 'w');"], None, id="list"),
+    pytest.param("python -c \"open('test.txt', 'w');\"", None, id="string"),
+    pytest.param(["python"], {"c": "open('test.txt', 'w')"}, id="list with params"),
+    pytest.param("python", {"c": "open('test.txt', 'w')"}, id="string with params"),
+])
+def test_success_command(tmpdir, session, cmd, params, execution):
     with tmpdir.as_cwd() as old_dir:
         assert not Path("test.txt").is_file()
 
         task = CommandTask(
-            command=["python", "-c", "open('test.txt', 'w');"], 
+            command=cmd, 
             name="a task",
             shell=False,
-            execution="main"
+            execution="main",
+            parameters=params,
+            argform="short"
         )
         assert task.status is None
 
