@@ -1,3 +1,4 @@
+from functools import partial
 from redengine.core.condition import PARSERS, CLS_CONDITIONS
 from .task import *
 from .scheduler import *
@@ -8,6 +9,19 @@ from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
 
 true = AlwaysTrue()
 false = AlwaysFalse()
+
+def _from_period_task_has(cls, span_type=None, task=None, **kwargs):
+    period_func = {
+        "between": get_between,
+        "after": get_after,
+        "before": get_before,
+        "starting": get_full_cycle,
+        None: get_full_cycle,
+        "every": TimeDelta,
+        "on": get_on,
+    }[span_type]
+    period = period_func(**kwargs)
+    return cls(task=task, period=period)
 
 
 def _set_is_period_parsing():
@@ -25,4 +39,27 @@ def _set_is_period_parsing():
             for parsing, parser in _TIME_PARSERS.items()
         }
     )
+
+def _set_task_has_parsing():
+    clss = [
+        ("failed", TaskFailed),
+        ("succeeded", TaskSucceeded),
+        ("finished", TaskFinished),
+        ("terminated", TaskTerminated),
+        ("inacted", TaskInacted),
+    ]
+    for (action, cls) in clss:
+        func = partial(_from_period_task_has, cls=cls)
+        PARSERS.update(
+            {
+                re.compile(fr"task '(?P<task>.+)' has {action}"): cls,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>starting) (?P<start>.+)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>between) (?P<start>.+) and (?P<end>.+)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>after) (?P<start>.+)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>before) (?P<end>.+)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>on) (?P<start>.+)"): func,
+            }
+        )
 _set_is_period_parsing()
+_set_task_has_parsing()
