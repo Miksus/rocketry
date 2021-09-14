@@ -198,6 +198,9 @@ class TimeOfMonth(AnchoredInterval):
 
         return to_nanoseconds(day=1) * (nth_day - 1) + nanoseconds
 
+    def anchor_int(self, i, **kwargs):
+        return i * self._unit_resolution
+
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
         d = to_dict(dt)
