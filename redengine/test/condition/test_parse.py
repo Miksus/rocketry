@@ -78,15 +78,15 @@ cases_time = [
 
 cases_task = [
     # Single task related
-    pytest.param("while 'mytask' is running", TaskRunning(task="mytask"), id="while task running"),
-    pytest.param("'mytask' started", TaskStarted(task="mytask"), id="after task started"),
+    pytest.param("task 'mytask' is running", TaskRunning(task="mytask"), id="while task running"),
+    pytest.param("task 'mytask' started", TaskStarted(task="mytask"), id="after task started"),
 
     # Task dependent related (requires 2 tasks)
-    pytest.param("after 'other'",           DependSuccess(depend_task="other"), id="after task"),
-    pytest.param("after 'other' succeeded", DependSuccess(depend_task="other"), id="after task successs"),
-    pytest.param("after 'other' failed",    DependFailure(depend_task="other"), id="after failed"),
-    pytest.param("after 'other' finished",  DependFinish(depend_task="other"), id="after finished"),
-    pytest.param("after 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
+    pytest.param("after task 'other'",           DependSuccess(depend_task="other"), id="after task"),
+    pytest.param("after task 'other' succeeded", DependSuccess(depend_task="other"), id="after task successs"),
+    pytest.param("after task 'other' failed",    DependFailure(depend_task="other"), id="after failed"),
+    pytest.param("after task 'other' finished",  DependFinish(depend_task="other"), id="after finished"),
+    pytest.param("after task 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
 ]
 
 cases_logical = [

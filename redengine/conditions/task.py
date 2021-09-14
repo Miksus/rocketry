@@ -28,7 +28,7 @@ class TaskStarted(Historical, Comparable):
     """
 
     __parsers__ = {
-        re.compile(r"'(?P<task>.+)' started"): "__init__",
+        re.compile(r"task '(?P<task>.+)' started"): "__init__",
     }
 
     def observe(self, task, _start_=None, _end_=None, **kwargs):
@@ -139,8 +139,8 @@ class TaskFinished(Historical, Comparable):
 class TaskRunning(Historical):
 
     __parsers__ = {
-        re.compile(r"while '(?P<task>.+)' is running"): "__init__",
-        re.compile(r"'(?P<task>.+)' is running"): "__init__",
+        re.compile(r"while task '(?P<task>.+)' is running"): "__init__",
+        re.compile(r"task '(?P<task>.+)' is running"): "__init__",
     }
 
     def observe(self, task, **kwargs):
@@ -279,7 +279,7 @@ class DependFinish(Historical):
     DependFinish(task=None, depend_task='other')
     """
     __parsers__ = {
-        re.compile(r"after '(?P<depend_task>.+)' finished"): "__init__",
+        re.compile(r"after task '(?P<depend_task>.+)' finished"): "__init__",
     }
     def __init__(self, depend_task, task=None, **kwargs):
         super().__init__(task=task, depend_task=depend_task, **kwargs)
@@ -332,7 +332,7 @@ class DependSuccess(Historical):
     """
 
     __parsers__ = {
-        re.compile(r"after '(?P<depend_task>.+)'( succeeded)?"): "__init__",
+        re.compile(r"after task '(?P<depend_task>.+)'( succeeded)?"): "__init__",
     }
 
     def __init__(self, depend_task, task=None, **kwargs):
@@ -381,7 +381,7 @@ class DependFailure(Historical):
     """
 
     __parsers__ = {
-        re.compile(r"after '(?P<depend_task>.+)' failed"): "__init__",
+        re.compile(r"after task '(?P<depend_task>.+)' failed"): "__init__",
     }
 
     def __init__(self, depend_task, task=None, **kwargs):
