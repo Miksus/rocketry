@@ -8,18 +8,27 @@ from redengine.time import (
     TimeOfHour,
     TimeOfMinute,
     TimeDelta,
+    TimeOfMonth
 )
 
 TIME_CLASSES = {
-    "daily": TimeOfDay,
+    "monthly": TimeOfMonth,
     "weekly": TimeOfWeek,
+    "daily": TimeOfDay,
     "hourly": TimeOfHour,
     "minutely": TimeOfMinute,
 
-    "day": TimeOfDay,
+    "month": TimeOfMonth,
     "week": TimeOfWeek,
+    "day": TimeOfDay,
     "hour": TimeOfHour,
     "minute": TimeOfMinute,
+
+    "this month": TimeOfMonth,
+    "this week": TimeOfWeek,
+    "today": TimeOfDay,
+    "this hour": TimeOfHour,
+    "this minute": TimeOfMinute,
 }
 
 # Utility funcs
