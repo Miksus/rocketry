@@ -9,9 +9,7 @@ import os, re, time
 import datetime
 import numpy as np
 
-# TODO: instead of "Statement.session.get_task", use self.session
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' stared {period}")
 class TaskStarted(Historical, Comparable):
 
     """Condition for whether a task has started
@@ -23,7 +21,7 @@ class TaskStarted(Historical, Comparable):
     **Parsing example:**
 
     >>> from redengine.parse import parse_condition
-    >>> parse_condition("'mytask' started")
+    >>> parse_condition("task 'mytask' started")
     TaskStarted(task='mytask')
     """
 
@@ -50,8 +48,21 @@ class TaskStarted(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task '{task}' started {period}"
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' failed {period}")
+
 class TaskFailed(Historical, Comparable):
+    """Condition for whether the given task has failed
+    (in given period).
+
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' has failed today between 10:00 and 14:00")
+    TaskFailed(task='mytask', period=TimeOfDay('10:00', '14:00'))
+    """
 
     def observe(self, task, _start_=None, _end_=None, **kwargs):
         task = Statement.session.get_task(task)
@@ -71,9 +82,21 @@ class TaskFailed(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task '{task}' failed {period}"
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' terminated {period}")
-class TaskTerminated(Historical, Comparable):
 
+class TaskTerminated(Historical, Comparable):
+    """Condition for whether the given task has terminated
+    (in given period).
+
+
+    Examples
+    --------
+    
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' has terminated this week after Monday")
+    TaskTerminated(task='mytask', period=TimeOfWeek('Monday', None))
+    """
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -93,9 +116,21 @@ class TaskTerminated(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task '{task}' terminated {period}"
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' succeeded {period}")
-class TaskSucceeded(Historical, Comparable):
 
+class TaskSucceeded(Historical, Comparable):
+    """Condition for whether the given task has succeeded
+    (in given period).
+
+
+    Examples
+    --------
+    
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' has succeeded this month")
+    TaskSucceeded(task='mytask', period=TimeOfMonth(None, None))
+    """
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -114,9 +149,21 @@ class TaskSucceeded(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task 'task '{task}' succeeded {period}"
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' finished {period}")
-class TaskFinished(Historical, Comparable):
 
+class TaskFinished(Historical, Comparable):
+    """Condition for whether the given task has finished
+    (in given period).
+
+
+    Examples
+    --------
+    
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' has finished today")
+    TaskFinished(task='mytask', period=TimeOfDay(None, None))
+    """
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -135,8 +182,22 @@ class TaskFinished(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task '{task}' finished {period}"
 
-#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{task}' is running")
+
 class TaskRunning(Historical):
+
+    """Condition for whether a task is currently
+    running.
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' is running")
+    TaskRunning(task='mytask')
+    """
+    #! TODO: Does this need to be Historical?
 
     __parsers__ = {
         re.compile(r"while task '(?P<task>.+)' is running"): "__init__",
@@ -158,8 +219,20 @@ class TaskRunning(Historical):
         task = self.kwargs["task"]
         return f"task '{task}' is running"
 
-#@Statement.from_func(historical=True, quantitative=True, str_repr="task '{task}' inacted")
+
 class TaskInacted(Historical, Comparable):
+    """Condition for whether the given task has inacted
+    (in given period).
+
+    Examples
+    --------
+
+    **Parsing example:**
+
+    >>> from redengine.parse import parse_condition
+    >>> parse_condition("task 'mytask' has inacted")
+    TaskInacted(task='mytask')
+    """
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 
         task = Statement.session.get_task(task)
@@ -178,9 +251,12 @@ class TaskInacted(Historical, Comparable):
         task = self.kwargs["task"]
         return f"task '{task}' inacted"
 
+
 class TaskExecutable(Historical):
     """Condition for checking whether a given
     task has not finished (for given period).
+    Useful to set the given task to run once 
+    in given period.
 
     Examples
     --------
@@ -263,11 +339,12 @@ class TaskExecutable(Historical):
         re.compile(r"(run )?(?P<span_type>every) (?P<past>.+)"): "_from_period",
     }
 
-#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' finished before {task} started")
+
 class DependFinish(Historical):
     """Condition for checking whether a given
     task has not finished after running a dependent 
-    task.
+    task. Useful to set the given task to run after
+    another task has finished.
 
     Examples
     --------
@@ -275,7 +352,7 @@ class DependFinish(Historical):
     **Parsing example:**
 
     >>> from redengine.parse import parse_condition
-    >>> parse_condition("after 'other' finished")
+    >>> parse_condition("after task 'other' finished")
     DependFinish(task=None, depend_task='other')
     """
     __parsers__ = {
@@ -314,11 +391,11 @@ class DependFinish(Historical):
         return f"task '{depend_task}' finished before {task} started"
 
 
-#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' succeeded before {task} started")
 class DependSuccess(Historical):
     """Condition for checking whether a given
     task has not succeeded after running a dependent 
-    task.
+    task. Useful to set the given task to run after
+    another task has succeeded.
 
     Examples
     --------
@@ -326,7 +403,7 @@ class DependSuccess(Historical):
     **Parsing example:**
 
     >>> from redengine.parse import parse_condition
-    >>> parse_condition("after 'other' succeeded")
+    >>> parse_condition("after task 'other' succeeded")
     DependSuccess(task=None, depend_task='other')
 
     """
@@ -364,11 +441,12 @@ class DependSuccess(Historical):
         depend_task = self.kwargs["depend_task"]
         return f"task '{depend_task}' finished before {task} started"
 
-#@Statement.from_func(historical=False, quantitative=False, str_repr="task '{depend_task}' failed before {task} started")
+
 class DependFailure(Historical):
     """Condition for checking whether a given
     task has not failed after running a dependent 
-    task.
+    task. Useful to set the given task to run after
+    another task has failed.
 
     Examples
     --------
@@ -376,7 +454,7 @@ class DependFailure(Historical):
     **Parsing example:**
 
     >>> from redengine.parse import parse_condition
-    >>> parse_condition("after 'other' failed")
+    >>> parse_condition("after task 'other' failed")
     DependFailure(task=None, depend_task='other')
     """
 

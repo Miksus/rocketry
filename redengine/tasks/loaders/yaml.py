@@ -57,9 +57,9 @@ class YAMLLoader(YAMLLoaderBase):
     path : path-like
         Path to the directory that is searched for the
         tasks.
-    glob : str
+    glob : str, default="\*\*/conftask.yaml"
         Unix pattern that is used to identify a YAML file
-        that is parsed to task(s).
+        that is parsed to task.
     delay : str
         Time delay after each cycle of going through the 
         found YAML files. Only usable if ``execution='thread'``
@@ -100,7 +100,7 @@ class YAMLTaskLoader(YAMLLoaderBase):
     path : path-like
         Path to the directory that is searched for the
         tasks.
-    glob : str
+    glob : str, default="\*\*/tasks.yaml"
         Unix pattern that is used to identify a YAML file
         that is parsed to tasks.
     delay : str
@@ -170,7 +170,7 @@ class YAMLExtensionLoader(YAMLLoaderBase):
     path : path-like
         Path to the directory that is searched for the
         extensions.
-    glob : str
+    glob : str, default="\*\*/extensions.yaml"
         Unix pattern that is used to identify a YAML file
         that is parsed to extensions.
     delay : str

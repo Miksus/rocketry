@@ -56,12 +56,11 @@ class Task(metaclass=_TaskMeta):
 
     Parameters
     ----------
-    parameters : Parameters, optional
-        Parameters set specifically to the task, 
-        by default None
-    session : Session, optional
-        Session the task is binded to, 
-        by default default session 
+    name : str, optional
+        Name of the task. Ideally, all tasks
+        should have unique name. If None, the
+        return value of Task.get_default_name() 
+        is used instead.
     start_cond : BaseCondition, optional
         Condition that when True the task
         is to be started, by default AlwaysFalse()
@@ -74,47 +73,14 @@ class Task(metaclass=_TaskMeta):
         tasks with execution='process' or 'thread'
         if thread termination is implemented in 
         the task, by default AlwaysFalse()
-    dependent : List, optional
-        TODO
-    timeout : Any, optional
-        TODO
-    priority : int, optional
-        Priority of the task. Higher priority
-        tasks are first inspected whether they
-        can be executed. Can be any numeric value.
-        Setup tasks are recommended to have priority
-        >= 40 if they require loaded tasks,
-        >= 50 if they require loaded extensions
-        By default 0
-        TODO
-
-    on_success : Callable, optional
-        Function to run after successful execution
-        of the task, by default None
-    on_failure : Callable, optional
-        Function to run after failing execution
-        of the task, by default None
-    on_finish : Callable, optional
-        Function to run after execution
-        of the task, by default None
-
-    name : str, optional
-        Name of the task. Ideally, all tasks
-        should have unique name. If None, the
-        return value of Task.get_default_name() 
-        is used instead, by default None
-    logger : Any, optional
-        TODO
-    daemon : Bool, optional
-        Whether run the task as daemon process
-        or not. Only applicable for execution='process',
-        by default use Scheduler default
-    execution : str
+    execution : str, {'main', 'thread', 'process'}, default='process'
         How the task is executed. Allowed values
         'main' (run on main thread & process), 
         'thread' (run on another thread) and 
-        'process' (run on another process),
-        by default 'process'
+        'process' (run on another process).
+    parameters : Parameters, optional
+        Parameters set specifically to the task, 
+        by default None
     disabled : bool
         If True, the task is not allowed to be run
         regardless of the start_cond,
@@ -129,16 +95,60 @@ class Task(metaclass=_TaskMeta):
     on_shutdown : bool
         Run the task on the shutdown sequence of 
         the Scheduler, by default False
+    priority : int, optional
+        Priority of the task. Higher priority
+        tasks are first inspected whether they
+        can be executed. Can be any numeric value.
+        Setup tasks are recommended to have priority
+        >= 40 if they require loaded tasks,
+        >= 50 if they require loaded extensions.
+        By default 0
+    timeout : float, optional
+        If the task has not run in given timeout
+        the task will be terminated. Only applicable
+        for tasks with execution='process' or 
+        with execution='thread' if the task function
+        supports it.
+    on_success : Callable, optional
+        Function to run after successful execution
+        of the task, by default None
+    on_failure : Callable, optional
+        Function to run after failing execution
+        of the task, by default None
+    on_finish : Callable, optional
+        Function to run after execution
+        of the task, by default None
+    daemon : Bool, optional
+        Whether run the task as daemon process
+        or not. Only applicable for execution='process',
+        by default use Scheduler default
     on_exists : str
         What to do if the name of the task already 
         exists in the session, options: 'raise',
         'ignore', 'replace', by default use session
         configuration
+    logger : str, logger.Logger, optional
+        Logger of the task. Typically not needed
+        to be set.
+    session : Session, optional
+        Session the task is binded to, 
+        by default default session 
 
     Attributes
     ----------
     session : Session
-        Session the task is binded to
+        Session the task is binded to.
+
+    Examples
+    --------
+
+    Minimum example:
+
+    >>> from redengine.core import Task
+    >>> class MyTask(Task):
+    ...     def execute_action(self):
+    ...         ... # What the task does.
+    ...         return ...
 
     """
     __register__ = False
@@ -192,20 +202,7 @@ class Task(metaclass=_TaskMeta):
                 execution="process", disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False,
                 on_exists=None):
-        """[summary]
 
-        Arguments:
-            condition {[type]} -- [description]
-            action {[type]} -- [description]
-
-        Keyword Arguments:
-            priority {int} -- [description] (default: {1})
-            on_success {[func]} -- Function to run on success (default: {None})
-            on_failure {[func]} -- Function to run on failure (default: {None})
-            on_finish {[func]} -- Function to run after running the task (default: {None})
-
-            on_exists ([str]) -- What to do if task (with same name) has already been created. (Options: 'raise', 'ignore', 'replace')
-        """
         self.session = self.session if session is None else session
 
         self.set_name(name, on_exists=on_exists)
@@ -307,7 +304,7 @@ class Task(metaclass=_TaskMeta):
         return self._parameters
 
     @parameters.setter
-    def parameters(self, val):
+    def parameters(self, val:Union[Dict, Parameters, None]):
         if val is None:
             self._parameters = Parameters()
         else:
@@ -323,8 +320,21 @@ class Task(metaclass=_TaskMeta):
         set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
-    def __call__(self, params=None, **kwargs):
-        """Execute the task."""
+    def __call__(self, params:Union[dict, Parameters]=None, **kwargs):
+        """Execute the task. Creates a new process
+        (if execution='process'), a new thread
+        (if execution='thread') or blocks and 
+        runs till the task is completed (if 
+        execution='main').
+
+        Parameters
+        ----------
+        params : dict, Parameters, optional
+            Extra parameters for the task. Also
+            the session parameters, task parameters
+            and extra parameters are acquired, by default None
+        """
+
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
         if hasattr(self, "_process"):
@@ -332,12 +342,13 @@ class Task(metaclass=_TaskMeta):
         if hasattr(self, "_thread"):
             del self._thread
 
-        params = self.get_extra_params(params) #Parameters(params)
+        params = self.get_extra_params(params)
         # Run the actual task
         if self.execution == "main":
             params = self.postfilter_params(params)
             self.run_as_main(params=params, **kwargs)
             if _IS_WINDOWS:
+                #! TODO: This probably is now solved
                 # There is an annoying bug (?) in Windows:
                 # https://bugs.python.org/issue44831
                 # If one checks whether the task has succeeded/failed
@@ -362,7 +373,6 @@ class Task(metaclass=_TaskMeta):
         If neither of the previous, the start_cond is inspected
         and if it is True, the task can be run.
         """
-        # TODO: rename force_run to forced_state that can be set to False (will not run any case) or True (will run once any case)
         # Also add methods: 
         #    set_pending() : Set forced_state to False
         #    resume() : Reset forced_state to None
@@ -605,7 +615,28 @@ class Task(metaclass=_TaskMeta):
         self.set_name(name)
 
     def set_name(self, name, on_exists=None, use_instance_naming=None):
-        
+        """Set the name of the task.
+
+        Parameters
+        ----------
+        name : str
+            Name of this task.
+        on_exists : str
+            What to do if the name of the task already 
+            exists in the session, options: 'raise',
+            'ignore', 'replace', by default use session
+            configuration
+        use_instance_naming : bool, optional
+            Use id of the instance if name is not 
+            supplied. If False, the result of 
+            get_default_name is used instead, 
+            by default None
+
+        Raises
+        ------
+        KeyError
+            Task already exists
+        """
         on_exists = self.session.config["task_pre_exist"] if on_exists is None else on_exists
         use_instance_naming = self.session.config["use_instance_naming"] if use_instance_naming is None else use_instance_naming
 
@@ -646,15 +677,15 @@ class Task(metaclass=_TaskMeta):
         the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
-    def is_alive(self):
+    def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
         return self.is_alive_as_thread() or self.is_alive_as_process()
 
-    def is_alive_as_thread(self):
+    def is_alive_as_thread(self) -> bool:
         """Whether the task has a live thread."""
         return hasattr(self, "_thread") and self._thread.is_alive()
 
-    def is_alive_as_process(self):
+    def is_alive_as_process(self) -> bool:
         """Whether the task has a live process."""
         return hasattr(self, "_process") and self._process.is_alive()
         
@@ -682,11 +713,19 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def logger(self):
-        # TODO
         return self._logger
 
     @logger.setter
-    def logger(self, logger):
+    def logger(self, logger:Union[str, logging.Logger, None]):
+        """Set the logger of the task
+
+        Parameters
+        ----------
+        logger : str, logging.Logger, None
+            Logger for the task. If None, 
+            the logger from session config
+            is set.
+        """
         basename = self.session.config["task_logger_basename"]
         if logger is None:
             # Get class logger (default logger)
@@ -702,7 +741,7 @@ class Task(metaclass=_TaskMeta):
         self._logger = logger
 
     def log_running(self):
-        """Log that the task is currently running."""
+        """Make a log that the task is currently running."""
         self.status = "run"
 
     def log_failure(self):
@@ -710,11 +749,11 @@ class Task(metaclass=_TaskMeta):
         self.status = "fail", f"Task '{self.name}' failed"
 
     def log_success(self):
-        """Log that the task succeeded."""
+        """Make a log that the task succeeded."""
         self.status = "success"
 
     def log_termination(self, reason=None):
-        """Log that the task was terminated."""
+        """Make a log that the task was terminated."""
         reason = reason or "unknown reason"
         self.status = "terminate", reason
 
@@ -723,7 +762,7 @@ class Task(metaclass=_TaskMeta):
         self.force_termination = False
 
     def log_inaction(self):
-        """Log that the task did nothing."""
+        """Make a log that the task did nothing."""
         self.status = "inaction"
 
     def log_record(self, record:logging.LogRecord):
