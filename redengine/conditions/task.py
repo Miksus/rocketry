@@ -21,13 +21,9 @@ class TaskStarted(Historical, Comparable):
     **Parsing example:**
 
     >>> from redengine.parse import parse_condition
-    >>> parse_condition("task 'mytask' started")
-    TaskStarted(task='mytask')
+    >>> parse_condition("task 'mytask' has started today")
+    TaskStarted(task='mytask', period=TimeOfDay(None, None))
     """
-
-    __parsers__ = {
-        re.compile(r"task '(?P<task>.+)' started"): "__init__",
-    }
 
     def observe(self, task, _start_=None, _end_=None, **kwargs):
 

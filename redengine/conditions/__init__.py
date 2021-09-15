@@ -47,6 +47,7 @@ def _set_task_has_parsing():
         ("finished", TaskFinished),
         ("terminated", TaskTerminated),
         ("inacted", TaskInacted),
+        ("started", TaskStarted)
     ]
     for (action, cls) in clss:
         func = partial(_from_period_task_has, cls=cls)

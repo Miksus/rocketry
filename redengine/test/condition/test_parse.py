@@ -81,7 +81,6 @@ cases_time = [
 cases_task = [
     # Single task related
     pytest.param("task 'mytask' is running", TaskRunning(task="mytask"), id="while task running"),
-    pytest.param("task 'mytask' started", TaskStarted(task="mytask"), id="after task started"),
 
     # Task dependent related (requires 2 tasks)
     pytest.param("after task 'other'",           DependSuccess(depend_task="other"), id="after task"),
@@ -92,7 +91,7 @@ cases_task = [
 ]
 
 for (cls, action), time_kwds in itertools.product(
-    [(TaskSucceeded, "succeeded"), (TaskFailed, "failed"), (TaskTerminated, "terminated"), (TaskInacted, "inacted")], 
+    [(TaskSucceeded, "succeeded"), (TaskFailed, "failed"), (TaskTerminated, "terminated"), (TaskInacted, "inacted"), (TaskStarted, "started")], 
     [
         {"time_type": "today", "time_span": "between", "start": "10:00", "end": "12:00", "cls": TimeOfDay},
         {"time_type": "this week", "time_span": "between", "start": "Mon", "end": "Fri", "cls": TimeOfWeek},
