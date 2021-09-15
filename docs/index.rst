@@ -26,7 +26,7 @@ Examples of condition syntax:
 - Run twice a week: on monday and on friday between 10 AM and 3 PM.
     - ``time of day between 10:00 and 15:00 & (weekly on Monday | weekly on Friday)``
 - Run once after task `fetch-stuff` has succeeded or `fetch-things` have failed
-    - ``after 'fetch-stuff' succeeded | after 'fetch-things' failed``
+    - ``after task 'fetch-stuff' succeeded | after task 'fetch-things' failed``
 
 
 .. toctree::

@@ -61,8 +61,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
         self.name = name
 
     @classmethod
-    def parse_cls(cls, d:dict, session, resources=None):
-        "Parse a configuration dict to an instance"
+    def parse_cls(cls, d:dict, session:'Session'):
         return cls(**d, session=session)
 
     def delete(self):

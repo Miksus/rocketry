@@ -14,7 +14,7 @@ class DictInstanceParser:
         self.subparsers = {} if subparsers is None else subparsers
         self.default = default
 
-    def __call__(self, conf:dict, resources:dict=None, kwds_subparser:dict=None, **kwargs):
+    def __call__(self, conf:dict, kwds_subparser:dict=None, **kwargs):
         if "class" not in conf and self.default is not None:
             cls = self.default if inspect.isclass(self.default) else self.default(conf, **kwargs)
         else:
@@ -51,7 +51,7 @@ class Field:
         self.if_missing = if_missing
         self.consume = consume
     
-    def __call__(self, conf:dict, key, resources:dict, **kwargs):
+    def __call__(self, conf:dict, key, **kwargs):
         if key not in conf:
             if self.if_missing == "raise":
                 raise KeyError(f"Config missing key: {self.key}")
@@ -63,7 +63,7 @@ class Field:
         else:
             cont = conf[key]
         self.validate(cont, key=key)
-        return self.func(cont, resources=resources, **kwargs)
+        return self.func(cont, **kwargs)
 
     def validate(self, content, key=None):
         if self.types is not None:
@@ -74,17 +74,16 @@ class Field:
 
 class StaticParser:
 
-    def __init__(self, fields:Dict[str, Field], on_extra="ignore", resources=None):
+    def __init__(self, fields:Dict[str, Field], on_extra="ignore"):
         self.fields = fields
         self.on_extra = on_extra
-        self.resources = resources if resources is not None else {}
 
     def __call__(self, d:dict, kwds_fields=None, **kwargs):
         self.validate(d)
         kwds_fields = {} if kwds_fields is None else kwds_fields
         for key, field in self.fields.items():
             kwds_field = kwds_fields.get(key, {})
-            out = field(d, resources=self.resources, key=key, **kwds_field, **kwargs)
+            out = field(d, key=key, **kwds_field, **kwargs)
         return out
 
     def validate(self, d):
