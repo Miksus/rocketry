@@ -11,6 +11,9 @@ true = AlwaysTrue()
 false = AlwaysFalse()
 
 def _from_period_task_has(cls, span_type=None, task=None, **kwargs):
+    from redengine.time.construct import get_full_cycle, get_between, get_after, get_before
+    from redengine.time import TimeDelta
+
     period_func = {
         "between": get_between,
         "after": get_after,
@@ -19,6 +22,8 @@ def _from_period_task_has(cls, span_type=None, task=None, **kwargs):
         None: get_full_cycle,
         "every": TimeDelta,
         "on": get_on,
+
+        "past": TimeDelta,
     }[span_type]
     period = period_func(**kwargs)
     return cls(task=task, period=period)
@@ -60,6 +65,7 @@ def _set_task_has_parsing():
                 re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>before) (?P<end>.+)"): func,
                 re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute)"): func,
                 re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>on) (?P<start>.+)"): func,
+                re.compile(fr"task '(?P<task>.+)' has {action} (in )?past (?P<past>.+)"): partial(func, span_type='past'),
             }
         )
 _set_is_period_parsing()
