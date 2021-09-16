@@ -90,31 +90,34 @@ cases_task = [
     pytest.param("after task 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
 ]
 
-for (cls, action), time_kwds in itertools.product(
-    [(TaskSucceeded, "succeeded"), (TaskFailed, "failed"), (TaskTerminated, "terminated"), (TaskInacted, "inacted"), (TaskStarted, "started")], 
+for (cls, action), (str_time, period) in itertools.product(
     [
-        {"time_type": "today", "time_span": "between", "start": "10:00", "end": "12:00", "cls": TimeOfDay},
-        {"time_type": "this week", "time_span": "between", "start": "Mon", "end": "Fri", "cls": TimeOfWeek},
-        {"time_type": "this month", "time_span": "between", "start": "1st", "end": "5th", "cls": TimeOfMonth},
+        (TaskSucceeded, "succeeded"), 
+        (TaskFailed, "failed"), 
+        (TaskTerminated, "terminated"), 
+        (TaskInacted, "inacted"), 
+        (TaskStarted, "started")
+    ], 
+    [
+        ("today between 10:00 and 12:00", TimeOfDay("10:00", "12:00")),
+        ("this week between Mon and Fri", TimeOfWeek("Mon", "Fri")),
+        ("this month between 1st and 5th", TimeOfMonth("1st", "5th")),
 
-        {"time_type": "today", "time_span": "before", "end": "10:00", "cls": TimeOfDay},
-        {"time_type": "today", "cls": TimeOfDay},
-        {},
+        ("today before 10:00", TimeOfDay(None, "10:00")),
+        ("today", TimeOfDay()),
+        ('', None), # Testing with no time period
+        ("in past 15 minutes", TimeDelta("15 min")),
+        ("past 15 minutes", TimeDelta("15 min")),
     ],
 ):
-    str_time = ""
-    if "time_type" in time_kwds:
-        str_time = str_time + f' {time_kwds["time_type"]}'
-    if "time_span" in time_kwds:
-        str_time = str_time + f' {time_kwds["time_span"]}'
-    if "start" in time_kwds:
-        str_time = str_time + f" {time_kwds['start']}"
-    if "start" in time_kwds and "end" in time_kwds:
-        str_time = str_time + f" and"
-    if "end" in time_kwds:
-        str_time = str_time + f" {time_kwds['end']}"
-    str_command = f"task 'mytask' has {action}{str_time}"
-    period = time_kwds["cls"](time_kwds.get("start"), time_kwds.get("end")) if "cls" in time_kwds else None
+    # This is cryptic but just generates bunch of test cases quickly
+    # for different condition classes with different time objects.
+    # See ids of genereted tests for what the strings are that are 
+    # tested.
+    if str_time:
+        str_command = f"task 'mytask' has {action} {str_time}"
+    else:
+        str_command = f"task 'mytask' has {action}"
     cases_task.append(pytest.param(str_command, cls(task="mytask", period=period), id=str_command))
 
 cases_logical = [
