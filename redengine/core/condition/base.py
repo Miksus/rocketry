@@ -3,7 +3,6 @@ import datetime
 from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
 
-from redengine.core import time
 from redengine.core.meta import _add_parser, _register
 
 

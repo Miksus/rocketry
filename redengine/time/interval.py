@@ -4,7 +4,7 @@ import calendar
 
 from redengine.core.time.base import TimeInterval
 
-from redengine.core.time.utils import floor_time, ceil_time, to_dict, to_nanoseconds, timedelta_to_str
+from redengine.core.time.utils import to_dict, to_nanoseconds, timedelta_to_str
 
 from redengine.core.time.anchor import AnchoredInterval
 

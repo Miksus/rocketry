@@ -21,8 +21,6 @@ from redengine.log import CsvHandler, CsvFormatter
 from redengine.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
 import redengine
 
-_BASE_CONDITIONS = {cls.__name__: cls for cls in (condition.All, condition.Any, condition.AlwaysTrue, condition.AlwaysFalse)} #! TODO: Is this needed?
-
 class Session:
     """Collection of the scheduler objects.
 
@@ -168,29 +166,6 @@ class Session:
         for logger in loggers.values():
             data = chain(data, logger.get_records(**kwargs))
         return data
-
-    def get_task_info(self):
-        #! TODO: Remove
-        return pd.DataFrame([
-            {
-                "name": name, 
-                "priority": task.priority, 
-                "timeout": task.timeout, 
-                "start_condition": task.start_cond, 
-                "end_condition": task.end_cond
-            } for name, task in session.get_tasks().items()
-        ])
-
-    def reset(self):
-        """Reset the session to defaults."""
-
-        # Clear stuff
-        self.tasks = {}
-        self.parameters = Parameters()
-
-        # Set default settings
-        Task.use_instance_naming = False
-        get_default("csv_logging")
         
     def clear(self):
         """Clear tasks, parameters etc. of the session"""

@@ -1,18 +1,13 @@
 
-from copy import copy, deepcopy
+from copy import copy
 from functools import partial
 from abc import abstractmethod
-from inspect import signature
 import datetime
 import time
 
 import numpy as np
 
-from redengine.core.parameters import Parameters
-
-# TODO: convert Observation to a "statement" when comparison?
 from .base import BaseCondition
-#from .mixins import _Historical, Comparable
 
 import logging
 logger = logging.getLogger(__name__)

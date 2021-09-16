@@ -23,7 +23,7 @@ from queue import Empty
 import pandas as pd
 
 from redengine.core.task import Task
-from redengine.core.log import FilterAll, read_logger
+from redengine.core.log import FilterAll
 
 from redengine.core.exceptions import SchedulerRestart, SchedulerExit
 
