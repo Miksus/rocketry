@@ -545,7 +545,26 @@ class Task(metaclass=_TaskMeta):
             if return_queue:
                 return_queue.put((self.name, output))
 
-    def get_extra_params(self, params):
+    def get_extra_params(self, params) -> Parameters:
+        """Get additional parameters from
+        the session and extra for meta tasks
+        including the task itself, session 
+        and the thread terminate event.
+        These parameters may or may not be used
+        by the task.
+
+
+        Included parameters:
+
+        - _session_ : task's session
+        - _task_ : the task itself
+        - _thread_terminate_ : Task termination event if threading used (threading.Event)
+
+        Returns
+        -------
+        Parameters
+            Additional parameters
+        """
         passed_params = Parameters(params)
         session_params = self.session.parameters
         #task_params = Parameters(self.parameters)

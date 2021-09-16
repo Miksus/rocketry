@@ -8,7 +8,7 @@ about the scehuler/task/parameters etc.
 import logging
 from redengine.conditions import Any
 from redengine.core import BaseExtension
-from typing import List, Dict, Type, Union
+from typing import Iterable, List, Dict, Type, Union
 from pathlib import Path
 from itertools import chain
 import pandas as pd
@@ -113,7 +113,7 @@ class Session:
         """Start the scheduling session.
 
         Will block and wait till the scheduler finishes 
-        (if has shutdown condition)"""
+        if there is a shut condition."""
         self.scheduler()
 
     def get_tasks(self) -> list:
@@ -130,7 +130,24 @@ class Session:
         #! TODO: Do we need this?
         return self.tasks[task] if not isinstance(task, Task) else task
 
-    def get_task_loggers(self, with_adapters=True) -> dict:
+    def get_task_loggers(self, with_adapters=True) -> Dict[str, Union[TaskAdapter, logging.Logger]]:
+        """Get task logger(s) from the session.
+
+        Parameters
+        ----------
+        with_adapters : bool, optional
+            Whether get the loggers wrapped to 
+            redengine.core.log.TaskAdapter, by default True
+
+        Returns
+        -------
+        Dict[str, Union[TaskAdapter, logging.Logger]]
+            Dictionary of the loggers (or adapters)
+            in which the key is the logger name.
+            Placeholders and loggers built for parallerized
+            tasks are ignored.
+        """
+
         basename = self.config["task_logger_basename"]
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
@@ -141,7 +158,22 @@ class Session:
             and not name.endswith("_process") # No private
         }
 
-    def get_scheduler_loggers(self, with_adapters=True) -> dict:
+    def get_scheduler_loggers(self, with_adapters=True) -> Dict[str, Union[TaskAdapter, logging.Logger]]:
+        """Get scheduler logger(s) from the session.
+
+        Parameters
+        ----------
+        with_adapters : bool, optional
+            Whether get the loggers wrapped to 
+            redengine.core.log.TaskAdapter, by default True
+
+        Returns
+        -------
+        Dict[str, Union[TaskAdapter, logging.Logger]]
+            Dictionary of the loggers (or adapters)
+            in which the key is the logger name.
+            Placeholders and private loggers are ignored.
+        """
         basename = self.config["scheduler_logger_basename"]
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
@@ -153,14 +185,42 @@ class Session:
         }
 
 # Log data
-    def get_task_log(self, **kwargs) -> List[Dict]:
+    def get_task_log(self, **kwargs) -> Iterable[Dict]:
+        """Get task log records from all of the 
+        readable handlers in the session.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Query parameters passed to 
+            redengine.core.log.TaskAdapter.get_records
+
+        Returns
+        -------
+        Iterable[Dict]
+            Generator of the task log records.
+        """
         loggers = self.get_task_loggers(with_adapters=True)
         data = iter(())
         for logger in loggers.values():
             data = chain(data, logger.get_records(**kwargs))
         return data
 
-    def get_scheduler_log(self, **kwargs) -> List[Dict]:
+    def get_scheduler_log(self, **kwargs) -> Iterable[Dict]:
+        """Get scheduler log records from all of the 
+        readable handlers in the session.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Query parameters passed to 
+            redengine.core.log.TaskAdapter.get_records
+
+        Returns
+        -------
+        Iterable[Dict]
+            Generator of the task log records.
+        """
         loggers = self.get_scheduler_loggers(with_adapters=True)
         data = iter(())
         for logger in loggers.values():
@@ -193,7 +253,7 @@ class Session:
         self.parameters["env"] = value
 
     def set_as_default(self):
-        """Set this session as default session for 
+        """Set this session as the default session for 
         next tasks, conditions and schedulers that
         are created.
         """

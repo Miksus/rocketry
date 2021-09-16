@@ -3,6 +3,8 @@ from copy import copy
 from functools import partial
 from abc import abstractmethod
 import datetime
+from typing import Optional
+from redengine.core.time.base import TimePeriod
 import time
 
 import numpy as np
@@ -14,68 +16,22 @@ logger = logging.getLogger(__name__)
 
 
 class Statement(BaseCondition):
-    """
+    """Base class for Statements.
+    
+    Statement is a base condition that
+    require either inspecting historical
+    events or doing a comparison of observed
+    values to conclude whether the condition 
+    holds.
 
-    @Statement
-    def file_exists(filename):
-        pass
-
-    my_experiment(arg=5)
-
-    Example:
-        @Statement()
-        def file_exists(name):
-            ...
-        
-        file_exists(name="mydata.xlsx")
-
-    historical example:
-        @Statement(historical=True)
-        def file_modified(start, end):
-            ...
-        
-        file_modified.between("10:00", "11:00") # TimeInterval("10:00", "11:00")
-        file_modified.between("Mon", "Fri")     # TimeOfWeek.between("Mon", "Fri")
-        file_modified.between("1.", "15.")      # DaysOfMonth.between("1.", "15.")
-        file_modified.past("2 hours")           # TimeDelta("2 hours")
-        file_modified.in_("today")              # TimeInterval("00:00", "24:00")
-        file_modified.in_("yesterday")          # TimeInterval("00:00", "24:00") - pd.Timedelta("1 day")
-        file_modified.in_("hour")               # hourly
-
-        file_modified.after(another_statement)  # file modified after last occurence of another_staement
-        file_modified.before(another_statement) # file modified before first occurence of another_staement
-
-    Quantitative example:
-        @Statement(quantitative=True)
-        def has_free_ram(relative=False):
-            ...
-
-        has_free_ram(relative=True).more_than(0.5)
-        has_free_ram.more_than(900000)
-        has_free_ram > 900000
-
-
-    Quantitative & historical example:
-        @Statement(historical=True, quantitative=True, pass_task=True)
-        def has_run(task, start, end):
-            ...
-        
-        has_run(mytask).between("10:00", "11:00").more_than(5) # TimeInterval("10:00", "11:00")
-        has_run(mytask).between("Mon", "Fri").less_than(3)     # TimeOfWeek.between("Mon", "Fri")
-        has_run(mytask).between("1.", "15.")                   # DaysOfMonth.between("1.", "15.")
-        has_run(mytask).past("2 hours")                        # TimeDelta("2 hours")
-        has_run(mytask).in_("today")                           # TimeInterval("00:00", "24:00")
-        has_run(mytask).in_("yesterday")                       # TimeInterval("00:00", "24:00") - pd.Timedelta("1 day")
-        has_run(mytask).in_("hour")                            # hourly
-        has_run(mytask).in_cycle()                             # mytask.cycle
-
-    Special
-        Scheduler statement
-            @Statement(quantitative=True, pass_scheduler=True)
-            def tasks_alive(scheduler):
-                ...
-
-            tasks_alive == 0
+    Parameters
+    ----------
+    *args : tuple
+        Positional arguments for the ``observe``
+        method.
+    **kwargs : dict
+        Keyword arguments for the ``observe``
+        method.
     """
 
     name = None
@@ -83,15 +39,32 @@ class Statement(BaseCondition):
 
     @classmethod
     def from_func(cls, func=None, *, historical=False, quantitative=False, str_repr=None, use_globals=False):
-        """Create statement from function (returns new class)
-        
-        Arguments:
+        """Generate statement from a function.
+
+        The created statement is a subclass of 
+        Statement and Historical (if historical=True)
+        and Comparable (if quantitative=True).
+
+        Parameters
         ----------
-            func [callable] : Function to use as the "observe" method. Should return bool or 
-                              an object that can be compared if quantitative=True
-            historical [bool] : Whether the statement has a time window to check observation
-            quantitative [bool] : Whether the statement can be compared (with <, >, ==, >=, etc.)
-            use_globals [bool] : Whether to allow passing session.parameters to the observe method.
+        func : Callable, optional
+            The function to create the statement with, by default None
+        historical : bool, optional
+            Whether the statement has a time window to check observation, 
+            by default False
+        quantitative : bool, optional
+            Whether the statement can be compared (with <, >, ==, >=, etc.), 
+            by default False
+        str_repr : [type], optional
+            [description], by default None
+        use_globals : bool, optional
+            Whether to allow passing session.parameters to the observe method, 
+            by default False
+
+        Returns
+        -------
+        Type
+            Condition class.
         """
         if func is None:
             # Acts as decorator
@@ -101,8 +74,10 @@ class Statement(BaseCondition):
         #bases = (cls,)
 
         bases = []
-        if historical: bases.append(Historical)
-        if quantitative: bases.append(Comparable)
+        if historical: 
+            bases.append(Historical)
+        if quantitative: 
+            bases.append(Comparable)
         bases.append(cls)
         bases = tuple(bases)
 
@@ -121,14 +96,6 @@ class Statement(BaseCondition):
         return cls
 
     def __init__(self, *args, **kwargs):
-        """Base for events
-
-        Keyword Arguments:
-            func {[type]} -- [description] (default: {None})
-            quantitative {bool} -- Whether the statement function returns number
-            historical {bool} -- Whether the statement has start and end times
-        """
-
         self.args = args
         self.kwargs = kwargs
 
@@ -154,7 +121,9 @@ class Statement(BaseCondition):
 
     @abstractmethod
     def observe(self, *args, **kwargs):
-        "Observe status of the statement (returns true/false)"
+        """Observe status of the statement (returns true/false).
+        
+        Override this to build own logic."""
         return True
 
     def _to_bool(self, res):
@@ -213,14 +182,26 @@ class Statement(BaseCondition):
             param_str = param_str + kwargs_str
         return f'{cls_name}({param_str})'
 
+
 class Comparable(Statement):
-    # TODO
-    pass
+    """Statement that can be compared.
+
+    The ``.observe()`` method should 
+    return either:
+
+    - boolean: Whether the value is true or false
+    - Iterable: inspected whether the length fulfills the given comparisons.
+    - int, float: inspected whether the number fulfills the given comparisons. 
+
+    Parameters
+    ----------
+    *args : tuple
+        See ``Statement``.
+    **kwargs : dict
+        See ``Statement``.
+    """
 
     def _to_bool(self, res):
-        # For:
-        # [1,2,3] --> 3
-        # 
         if isinstance(res, bool):
             return super()._to_bool(res)
 
@@ -238,7 +219,6 @@ class Comparable(Statement):
             for comp, val in comps.items()
         )
 
-# Quantitative extra
     def __eq__(self, other):
         # self == other
         is_same_class = isinstance(other, Comparable)
@@ -276,9 +256,27 @@ class Comparable(Statement):
     def get_kwargs(self):
         return super().get_kwargs()
 
-class Historical(Statement):
 
-    def __init__(self, *args, period=None, **kwargs):
+class Historical(Statement):
+    """Statement that has history.
+
+    The ``.observe()`` method is supplemented with 
+    (if period passed to init):
+
+    - ``_start_``: Start time of the statement period
+    - ``_end_``: End time of the statement period
+
+    Parameters
+    ----------
+    *args : tuple
+        See ``Statement``.
+    period : TimePeriod
+        Time period the statement should hold.
+    **kwargs : dict
+        See ``Statement``.
+    """
+
+    def __init__(self, *args, period:Optional[TimePeriod]=None, **kwargs):
         self.period = period
         super().__init__(*args, **kwargs)
 
@@ -305,19 +303,6 @@ class Historical(Statement):
             has_same_period = self.period == other.period
             return super().__eq__(other) and has_same_period
         return super().__eq__(other)
-
-    def _now(self):
-        """Get current datetime"""
-        # There is super weird bug caused by datetime.datetime.now()
-        # vs datetime.datetime.fromtimestamp(time.time())
-
-        # For example:
-        #     start = time.time()
-        #     end = datetime.datetime.now()
-        #     start = datetime.datetime.fromtimestamp(start)
-        #     start < end (half of the time)
-        # Even though: datetime.datetime.now() is defined as datetime.datetime.fromtimestamp(time.time(), None) 
-        return datetime.datetime.fromtimestamp(time.time())
 
     def __repr__(self):
         string = super().__repr__()

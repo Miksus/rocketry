@@ -4,7 +4,7 @@ import warnings
 import datetime
 
 import pandas as pd
-from typing import List, Dict, Union
+from typing import Iterable, List, Dict, Union
 from dateutil.parser import parse as _parse_datetime
 
 class TaskAdapter(logging.LoggerAdapter):
@@ -39,7 +39,7 @@ class TaskAdapter(logging.LoggerAdapter):
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
-    def get_records(self, **kwargs) -> List[Dict]:
+    def get_records(self, **kwargs) -> Iterable[Dict]:
         """This method is needed for the events to 
         get the run records to determine if the task
         is finished/still running/failed etc. in 

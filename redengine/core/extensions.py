@@ -29,22 +29,53 @@ class _ExtensionMeta(type):
         return cls
 
 class BaseExtension(metaclass=_ExtensionMeta):
-    """Base for all extensions that are registered
+    """ Base for all extensions that are registered
     to the sessions and are parsable in configs.
 
     Extension is an external class that extends the
     existing behaviour of Redengine but does not 
-    much interfer with it by default. 
+    much interfer with it by default. They are also
+    stored if one needs to access them on scheduler
+    run time.
 
-    Examples of extensions could be:
-        - Task sequences or pipelines so 
-          that tasks are run after each 
-          other.
-        - Task groups so the attributes of 
-          multiple tasks can be changed at
-          once.
-        - Parameter groups so they can be
-          changed at once.
+    Warnings
+    ---------
+    Extensions are experimential and subject to change
+    somewhat in newer versions.
+
+
+    Parameters
+    ----------
+    name : str
+        Name of the extension instance.
+    session : redengine.Session
+        Session object for which the extension is for.
+
+
+    Examples
+    --------
+
+    Minimum example:
+
+    >>> from redengine.core import BaseExtension
+    >>> class MyExtension(BaseExtension):
+    ...     __parsekey__ = 'myextensions'
+    ...
+    ...     def at_parse(self, thing):
+    ...         self.thing = thing
+    ...         ... # What the extension does.
+    ...
+    ...     def __repr__(self):
+    ...         return f'MyExtension({self.thing})'
+    ...
+    >>> from redengine.config import parse_session
+    >>> session = parse_session({
+    ...     "myextensions": [
+    ...         {"thing": "hat", 'name': 'my_instance'}
+    ...     ]
+    ... })
+    >>> session.extensions['myextensions']
+    {'my_instance': MyExtension('thing')}
     """
     session: 'Session'
     __parsekey__: str
@@ -70,8 +101,19 @@ class BaseExtension(metaclass=_ExtensionMeta):
 
     @classmethod
     def parse_cls(cls, d:dict, session:'Session'):
+        """Parse the extension from configuration dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Configuration dictionary.
+        session : redengine.Session
+            Session object for which the extension is for.
+        """
         return cls(**d, session=session)
 
     def delete(self):
-        "Remove the extension from the session"
+        """Delete the extension from the session.
+        
+        Override for custom extension deletion logic."""
         del self.session.extensions[self.__parsekey__][self.name]
