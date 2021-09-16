@@ -1,4 +1,3 @@
-import re
 import datetime
 from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type

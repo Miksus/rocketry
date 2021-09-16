@@ -1,6 +1,7 @@
 class SchedulerRestart(Exception):
     "Restart the scheduler"
 
+
 class SchedulerExit(Exception):
     "Shut down the scheduler"
 

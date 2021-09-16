@@ -22,12 +22,14 @@ class SessionParser(StaticParser):
         super().__call__(*args, session=session, kwds_fields=kwds_fields, **kwargs)
         return session
 
+
 parse_session = SessionParser({
         "clear_existing": Field(parse_clear_existing, if_missing="ignore", types=(bool,)),
         "logging": Field(parse_logging, if_missing="ignore"),
         "parameters": Field(parse_session_params, if_missing="ignore", types=(dict,)),
         "tasks": Field(parse_tasks, if_missing="ignore", types=(dict, list)),
         "scheduler": Field(parse_scheduler, if_missing="ignore"),
+        # Note that extensions are set in redengine.ext
     },
     on_extra="ignore", 
 )

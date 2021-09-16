@@ -3,8 +3,6 @@ from redengine.core.task import base
 from redengine.core.time import StaticInterval, Any, All
 from redengine.conditions import TaskFinished, TaskSucceeded
 
-# TODO: 
-
 def get_dependencies(task):
     """Get tasks the inputted task depends on
     
