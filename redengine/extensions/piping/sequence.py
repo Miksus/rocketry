@@ -39,8 +39,7 @@ class Sequence(BaseExtension):
     interval: TimePeriod
     tasks: List[Task]
 
-    def __init__(self, tasks:list, interval=None, **kwargs):
-        super().__init__(**kwargs)
+    def at_parse(self, tasks:list, interval=None):
         self.tasks = [parse_task(task, session=self.session) for task in tasks]
         self.interval = parse_time(interval) if interval is not None else None
         self.triggers = []

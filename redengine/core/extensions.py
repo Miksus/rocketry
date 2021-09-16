@@ -50,8 +50,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
     __parsekey__: str
     __register__ = False
 
-    def __init__(self, name:str=None, session:'Session'=None):
-        "Add the extension to the session"
+    def __init__(self, name:str=None, session:'Session'=None, **kwargs):
         parse_key = self.__parsekey__
         if parse_key not in self.session.extensions:
             self.session.extensions[parse_key] = {}
@@ -59,6 +58,15 @@ class BaseExtension(metaclass=_ExtensionMeta):
 
         self.session = session if session is not None else self.session
         self.name = name
+
+        self.at_parse(**kwargs)
+
+    def at_parse(self):
+        """This is executed when the extension instance 
+        is parsed/created.
+
+        Override for custom extension logic in parse time.
+        """
 
     @classmethod
     def parse_cls(cls, d:dict, session:'Session'):
