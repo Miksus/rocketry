@@ -39,7 +39,7 @@ def test_scheduler_restart(tmpdir, session):
             cont = f.read()
         assert "StartedShutStartedShut" == cont
 
-        history = list(task.get_history())
+        history = list(task.logger.get_records())
         assert 1 == len([record for record in history if record["action"] == "run"])
         assert 1 == len([record for record in history if record["action"] == "success"])
 

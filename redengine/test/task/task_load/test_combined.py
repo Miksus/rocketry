@@ -42,7 +42,7 @@ def test_session(session, tmpdir):
 
         Scheduler(shut_cond=AlwaysTrue())
         session.start()
-        assert ['run', 'success'] == [rec['action'] for rec in task_loader.get_history()]
-        assert ['run', 'success'] == [rec['action'] for rec in ext_loader.get_history()]
+        assert ['run', 'success'] == [rec['action'] for rec in task_loader.logger.get_records()]
+        assert ['run', 'success'] == [rec['action'] for rec in ext_loader.logger.get_records()]
         assert ['YAMLExtensionLoader', 'YAMLTaskLoader', "task-1", "task-2"] == list(session.tasks.keys())
         assert ["my-sequence-1"] == list(session.extensions["sequences"].keys())

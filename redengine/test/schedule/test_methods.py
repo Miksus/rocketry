@@ -58,7 +58,7 @@ def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_c
         scheduler.wait_task_alive()
         scheduler.handle_logs()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert run_count == (history["action"] == "run").sum()
         assert success_count == (history["action"] == "success").sum()
         assert fail_count == (history["action"] == "fail").sum()

@@ -60,7 +60,7 @@ def test_fail_command(tmpdir, execution, session):
 
         wait_till_task_finish(task)
 
-        logs = list(task.get_history())
+        logs = list(task.logger.get_records())
         assert "fail" == task.status
 
         err = logs[1]["exc_text"].strip().replace('\r', '')

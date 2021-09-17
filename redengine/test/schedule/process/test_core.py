@@ -37,7 +37,7 @@ def test_creating_child(tmpdir, session):
 
         scheduler()
 
-        history = pd.DataFrame(session.get_task("task_1").get_history())
+        history = pd.DataFrame(session.get_task("task_1").logger.get_records())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()

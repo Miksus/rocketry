@@ -877,11 +877,6 @@ class Task(metaclass=_TaskMeta):
             timestamp = record["timestamp"]
             return timestamp
 
-    def get_history(self) -> List[Dict]:
-        # TODO, is this needed?
-        records = self.logger.get_records()
-        return records
-
     def __getstate__(self):
 
         # capture what is normally pickled

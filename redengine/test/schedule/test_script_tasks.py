@@ -41,7 +41,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         
         if expected_outcome == "fail":
             failures = history[history["action"] == "fail"]

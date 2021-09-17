@@ -32,7 +32,7 @@ def test_task_fail_traceback(tmpdir, execution, session):
             shut_cond=TaskStarted(task="task") >= 3
         )
         scheduler()
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         failures = history[history["action"] == "fail"]
         assert 3 == len(failures)
 

@@ -50,7 +50,7 @@ def test_without_timeout(tmpdir, execution, session):
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         # If Scheduler is quick, it may launch the task 3 times 
         # but there still should not be any terminations
         assert 2 <= (history["action"] == "run").sum()
@@ -75,7 +75,7 @@ def test_task_timeout(tmpdir, execution, session):
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()
@@ -101,7 +101,7 @@ def test_task_terminate(tmpdir, execution, session):
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 2 == (history["action"] == "run").sum()
         assert 2 == (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()

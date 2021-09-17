@@ -106,7 +106,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         scheduler()
 
         # Test history
-        history = list(task.get_history())
+        history = list(task.logger.get_records())
         assert run_count == len([rec for rec in history if rec["action"] == "run"])
         assert success_count == len([rec for rec in history if rec["action"] == "success"])
         assert fail_count == len([rec for rec in history if rec["action"] == "fail"])
@@ -154,7 +154,7 @@ def test_task_force_run(tmpdir, execution, session):
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 1 == (history["action"] == "run").sum()
 
         # The force_run should have reseted as it should have run once
@@ -178,7 +178,7 @@ def test_task_disabled(tmpdir, execution, session):
         )
         scheduler()
 
-        history = task.get_history()
+        history = task.logger.get_records()
         assert 0 == sum([record for record in history if record["action"] == "run"])
 
         assert task.disabled
@@ -207,7 +207,7 @@ def test_task_force_disabled(tmpdir, execution, session):
         )
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 1 == (history["action"] == "run").sum()
 
         assert task.disabled
@@ -231,10 +231,10 @@ def test_priority(tmpdir, execution, session):
         scheduler()
         assert scheduler.n_cycles == 1 
 
-        task_1_start = list(task_1.get_history())[0]["timestamp"]
-        task_2_start = list(task_2.get_history())[0]["timestamp"]
-        task_3_start = list(task_3.get_history())[0]["timestamp"]
-        task_4_start = list(task_4.get_history())[0]["timestamp"]
+        task_1_start = list(task_1.logger.get_records())[0]["timestamp"]
+        task_2_start = list(task_2.logger.get_records())[0]["timestamp"]
+        task_3_start = list(task_3.logger.get_records())[0]["timestamp"]
+        task_4_start = list(task_4.logger.get_records())[0]["timestamp"]
         
         assert task_1_start < task_2_start < task_3_start < task_4_start
 
@@ -254,7 +254,7 @@ def test_pass_params_as_global(tmpdir, execution, session):
 
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
@@ -281,7 +281,7 @@ def test_pass_params_as_local(tmpdir, execution, parameters, session):
 
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
@@ -306,7 +306,7 @@ def test_pass_params_as_local_and_global(tmpdir, execution, session):
 
         scheduler()
 
-        history = pd.DataFrame(task.get_history())
+        history = pd.DataFrame(task.logger.get_records())
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
