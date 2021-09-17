@@ -82,12 +82,13 @@ class BaseExtension(metaclass=_ExtensionMeta):
     __register__ = False
 
     def __init__(self, name:str=None, session:'Session'=None, **kwargs):
+        self.session = session if session is not None else self.session
+
         parse_key = self.__parsekey__
         if parse_key not in self.session.extensions:
             self.session.extensions[parse_key] = {}
         self.session.extensions[parse_key][name] = self
 
-        self.session = session if session is not None else self.session
         self.name = name
 
         self.at_parse(**kwargs)

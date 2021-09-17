@@ -4,6 +4,7 @@ from redengine.config import parse_dict
 
 import pytest
 
+@pytest.mark.parametrize("global_session", [True, False], ids=["global session", "local session"])
 @pytest.mark.parametrize(
     "config",
     [
@@ -45,23 +46,26 @@ import pytest
         ),
     ]
 )
-def test_creation(session, config):
-
+def test_creation(session, config, global_session):
+    config = config.copy()
     # Test a custom extension
     class MyExtension(BaseExtension):
         __parsekey__ = "_pytest_extension"
         
-        def __init__(self, x, y, **kwargs):
+        def at_parse(self, x, y, **kwargs):
             self.x, self.y = x, y
-            super().__init__(**kwargs)
 
         @classmethod
         def parse_cls(cls, d: dict, **kwargs):
-            assert 3 == d.pop("z")
-            return super().parse_cls(d, **kwargs)
+            d_ext = d.copy()
+            assert 3 == d_ext.pop("z")
+            return super().parse_cls(d_ext, **kwargs)
 
     assert {} == session.extensions
-    parse_dict(config, session=session)
+    if global_session:
+        parse_dict(config, session=session)
+    else:
+        session = parse_dict(config)
 
     for ext_name in ("my-extension-1", "my-extension-2"):
         comp = session.extensions["_pytest_extension"][ext_name]
