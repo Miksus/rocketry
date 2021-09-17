@@ -30,15 +30,6 @@ class MemoryHandler(Handler):
     """
 
     def __init__(self, store_as="record", **kwargs):
-        """Initialize the class
-
-        Parameters
-        ----------
-        store_as : str, optional
-            How the records are stored.
-            Options: [record, dict], 
-            by default "record"
-        """
         super().__init__(**kwargs)
         self.records = []
         self.store_as = store_as
