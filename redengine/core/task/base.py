@@ -49,10 +49,7 @@ class Task(metaclass=_TaskMeta):
     A task can be a function, command or other procedure that 
     does a specific thing. A task can be parametrized by supplying
     session level parameters or parameters on task basis.
-
-    Note
-    ----
-    Do not include the `self` parameter in the ``Parameters`` section.
+    
 
     Parameters
     ----------
@@ -88,7 +85,7 @@ class Task(metaclass=_TaskMeta):
     force_run : bool
         If True, the task will be run once 
         regardless of the start_cond,
-        by default True TODO
+        by default True
     on_startup : bool
         Run the task on the startup sequence of 
         the Scheduler, by default False
@@ -138,6 +135,9 @@ class Task(metaclass=_TaskMeta):
     ----------
     session : Session
         Session the task is binded to.
+    logger : TaskAdapter
+        Logger of the task. Access the 
+        log records using task.logger.get_records()
 
     Examples
     --------

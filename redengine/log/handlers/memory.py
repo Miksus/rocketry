@@ -10,8 +10,21 @@ from dateutil.parser import parse as parse_datetime
 
 
 class MemoryHandler(Handler):
-    """
-    Logging handler for storing the records in memory.
+    """A handler class which stores the log records
+    to an in-memory list.
+
+    Parameters
+    ----------
+    store_as : str, {'dict', 'record'}
+        How the records are stored. If 'record',
+        the records are kept as LogRecord objects.
+
+
+    Examples
+    --------
+
+    >>> from redengine.log import MemoryHandler
+    >>> handler = MemoryHandler(store_as="dict") # doctest: +SKIP
     """
 
     def __init__(self, store_as="record", **kwargs):

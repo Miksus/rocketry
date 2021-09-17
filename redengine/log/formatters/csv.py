@@ -6,10 +6,20 @@ from logging import Formatter
 
 
 class CsvFormatter(Formatter):
+    """Format the log record to a row 
+    in CSV file.
+
+    Parameters
+    ----------
+    fields : list
+        List of attributes in logging.LogRecord
+        which are written in this order to the CSV
+        file. 
+    **kwargs : dict
+        Keyword arguments for csv.writer.
+    """
+    
     # https://stackoverflow.com/a/19766056
-    """
-    Format the output as row in csv file
-    """
     fields = [
         "asctime",
         "levelname",

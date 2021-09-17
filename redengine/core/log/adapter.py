@@ -8,20 +8,21 @@ from typing import Iterable, List, Dict, Union
 from dateutil.parser import parse as _parse_datetime
 
 class TaskAdapter(logging.LoggerAdapter):
-    """
-    This Logger adapter adds the kwargs 
-    from init extras to the kwargs extras.
+    """Logging adapter for tasks.
 
-    One of the handlers must have following method(s):
-        - read_as_df : read the log to a pandas dataframe
-        - query : 
-    
-    Usage:
-    ------
-        logger = logging.getLogger(__name__)
-        logger = TaskAdapter(logger, {"task": "mything"})
+    The adapter includes the name of the given 
+    task to the log records and allows reading
+    the log records if a handler with reading
+    capability is found.
+
+    Parameters
+    ----------
+    logger : logging.Logger
+        Logger the TaskAdapter is for.
+    task : Task, str
+        Task the adapter is for.
     """
-    def __init__(self, logger, task):
+    def __init__(self, logger:logging.Logger, task:Union['redengine.core.Task', str]):
         task_name = task.name if hasattr(task, 'name') else task
         super().__init__(logger, {"task_name": task_name})
 
@@ -32,18 +33,30 @@ class TaskAdapter(logging.LoggerAdapter):
         if not is_readable:
             warnings.warn("Task logger does not have ability to be read. Past history of the task cannot be utilized.")
 
-
     def process(self, msg, kwargs):
+        ""
         if "extra" not in kwargs:
             kwargs["extra"] = {}
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
     def get_records(self, **kwargs) -> Iterable[Dict]:
-        """This method is needed for the events to 
-        get the run records to determine if the task
-        is finished/still running/failed etc. in 
-        multiprocessing for example"""
+        """Get the log records of the task from the 
+        handlers of the logger.
+        
+        One of the handlers in the logger must 
+        have one of the methods:
+
+        - read()
+        - query(\*\*kwargs)
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Query arguments to filter the log records.
+
+        """
+        # TODO: Add examples in docstring
 
         task_name = self.extra["task_name"]
         handlers = self.logger.handlers
@@ -71,8 +84,17 @@ class TaskAdapter(logging.LoggerAdapter):
             warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
             return
 
-    def get_latest(self, action=None) -> dict:
-        "Get latest log record"
+    def get_latest(self, action:str=None) -> dict:
+        """Get latest log record. Note that this
+        is in the same order as in which the 
+        handler(s) return the log records.
+        
+        Parameters
+        ----------
+        action : str
+            Filtering with latest action of this
+            type.
+        """
         record = {}
         for record in self.get_records(action=action):
             pass # Iterating the generator till the end
@@ -81,9 +103,11 @@ class TaskAdapter(logging.LoggerAdapter):
 # For some reason the logging.Adapter is missing some
 # methods that are on logging.Logger
     def handle(self, *args, **kwargs):
+        "See `Logger.handle <https://docs.python.org/3/library/logging.html#logging.Logger.handle>`_"
         return self.logger.handle(*args, **kwargs)
 
     def addHandler(self, *args, **kwargs):
+        "See `Logger.addHandler <https://docs.python.org/3/library/logging.html#logging.Logger.addHandler>`_"
         return self.logger.addHandler(*args, **kwargs)
 
     def __eq__(self, o: object) -> bool:
@@ -91,6 +115,7 @@ class TaskAdapter(logging.LoggerAdapter):
         has_same_logger = self.logger == o.logger
         has_same_name = self.name == o.name
         return is_same_type and has_same_logger and has_same_name
+
 
 class TaskFilter(logging.Filter):
     """Filter only task related so one logger can be

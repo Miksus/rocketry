@@ -12,18 +12,55 @@ from ..formatters import CsvFormatter
 
 
 class CsvHandler(FileHandler):
+    """A handler class which writes the log records
+    to a CSV file in which the records can be read.
+
+    A subclass of `logging.FileHandler <https://docs.python.org/3/library/logging.handlers.html#filehandler>`_.
+
+    Parameters
+    ----------
+    filename : path-like
+        CSV file used for writing the records.
+    delay : bool
+        If True, the CSV file and the headers
+        are created and opened when the handler 
+        is first time used. Otherwise these are
+        done at the creation of the handler, 
+        by default True
+    fields : list
+        List of attributes in logging.LogRecord
+        which are written in this order to the CSV
+        file. By default, uses CsvFormatter.fields
+    headers : list
+        Names of the columns/headers in the CSV
+        file. Should have same length as the fields.
+        By default uses the names of the fields.
+    kwds_csv : dict
+        Keyword arguments for 
+    make_dir : bool
+        If True, the directory where the CSV file
+        is, is also created, by default False
+    *args : tuple
+        See `logging.FileHandler <https://docs.python.org/3/library/logging.handlers.html#filehandler>`_
+    **kwargs : tuple
+        See `logging.FileHandler <https://docs.python.org/3/library/logging.handlers.html#filehandler>`_
+
+
+    Examples
+    --------
+
+    >>> from redengine.log import CsvHandler
+    >>> handler = CsvHandler(
+    ...     'logfile.csv', 
+    ...     fields=['asctime', 'message', 'level'], 
+    ...     headers=['timestamp', 'log_message', 'log_level']
+    ... ) # doctest: +SKIP
     """
-    Logging handler for storing the log records to a CSV
-    file. The attributes of the LogRecord represent the
-    cells in the CSV file.
-    """
+
     default_formatter = CsvFormatter()
 
     # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
     def __init__(self, filename, *args, delay=True, fields=None, headers=None, kwds_csv=None, make_dir=False, **kwargs):
-        """
-        Open the specified file and use it as the stream for logging.
-        """
         if make_dir and not delay:
             # We need to create the dir before opening
             # the stream
@@ -65,7 +102,7 @@ class CsvHandler(FileHandler):
         super().emit(record)
 
     def create_dir(self):
-        "Create directory where the log file is"
+        "Create directory where the log file is."
         filename = self.baseFilename
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
 

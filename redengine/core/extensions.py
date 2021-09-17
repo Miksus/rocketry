@@ -66,7 +66,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
     ...         ... # What the extension does.
     ...
     ...     def __repr__(self):
-    ...         return f'MyExtension({self.thing})'
+    ...         return f"MyExtension('{self.thing}')"
     ...
     >>> from redengine.config import parse_session
     >>> session = parse_session({
@@ -74,8 +74,8 @@ class BaseExtension(metaclass=_ExtensionMeta):
     ...         {"thing": "hat", 'name': 'my_instance'}
     ...     ]
     ... })
-    >>> session.extensions['myextensions']
-    {'my_instance': MyExtension('thing')}
+    >>> session.extensions
+    {'myextensions': {'my_instance': MyExtension('hat')}}
     """
     session: 'Session'
     __parsekey__: str

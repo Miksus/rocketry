@@ -4,14 +4,33 @@ from logging import Formatter, LogRecord
 import csv
 import io
 from logging import Formatter
+from typing import Callable, Dict, List
 
 class AttributeFormatter(Formatter):
-    """Formatter but instead of generating a string,
-    the logging items are set to the record for the 
-    handler to use.
+    """Format the log record to a row 
+    in CSV file.
+
+    Parameters
+    ----------
+    has_default : bool
+        If True, adds the exception attributes
+        with None if no exceptions.
+    include : List[str]
+        List of attribute names that are filtered.
+    exclude : List[str]
+        List of attribute names that are fitered out. 
+    attr_formats : Dict[str, Callable]
+        Dictionary of function for formatting the 
+        attribute values.
+    *args : tuple
+        See `logging.Formatter <https://docs.python.org/3/library/logging.html#formatter-objects>`_
+    **kwargs : tuple
+        See `logging.Formatter <https://docs.python.org/3/library/logging.html#formatter-objects>`_
+
+
     """
 
-    def __init__(self, *args, has_default=False, include=None, exclude=None, attr_formats=None, **kwargs):
+    def __init__(self, *args, has_default:bool=False, include:List[str]=None, exclude:List[str]=None, attr_formats:Dict[str, Callable]=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.has_default = has_default
         self.include = include
