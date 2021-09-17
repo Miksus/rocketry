@@ -24,6 +24,8 @@ class MongoHandler(Handler):
     collection : pymongo.collection.Collection
         Database collection where the records
         are saved.
+    **kwargs : dict
+        Passed to logging.Handler.
 
     Examples
     --------
@@ -33,6 +35,7 @@ class MongoHandler(Handler):
     >>> client = pymongo.MongoClient('mongodb://localhost:27020') # doctest: +SKIP
     >>> handler = MongoHandler(client['mydb']['mycol']) # doctest: +SKIP
     """
+    
     # https://github.com/python/cpython/blob/aa92a7cf210c98ad94229f282221136d846942db/Lib/logging/__init__.py#L1119
     def __init__(self, collection:'Collection', **kwargs):
         super().__init__(**kwargs)
