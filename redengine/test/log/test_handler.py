@@ -196,24 +196,6 @@ class TestMongoHandler(HandlerTestBase):
         pytest.importorskip("pymongo")
 
     @pytest.fixture(scope="function")
-    def collection2(self):
-        
-        import pymongo
-        import yaml
-        with open("redengine/test/private.yaml", 'r') as f:
-            conf = yaml.load(f)
-        conn_str = conf["mongodb"]["conn_str"]
-        client = pymongo.MongoClient(conn_str)
-
-        collection = client["pytest"][type(self).__name__]
-
-        # Empty the collection
-        collection.delete_many({})
-
-        yield collection
-
-
-    @pytest.fixture(scope="function")
     def handler(self, collection, logger):
         handler = MongoHandler(collection)
         logger.addHandler(handler)
