@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import List, Dict
 from dateutil.parser import parse as parse_datetime
 
+from copy import copy
+
 
 class MemoryHandler(Handler):
     """A handler class which stores the log records
@@ -42,7 +44,8 @@ class MemoryHandler(Handler):
         self.store_as = store_as
         
     def emit(self, record:logging.LogRecord):
-        msg = self.format(record)
+        record = copy(record)
+        record = self.format(record)
 
         if self.store_as == "record":
             self.records.append(record)

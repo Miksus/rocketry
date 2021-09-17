@@ -9,6 +9,7 @@ import sys
 import pytest
 
 from redengine.log import QueueHandler, MemoryHandler, CsvHandler, MongoHandler
+from redengine.log import AttributeFormatter
 
 class HandlerTestBase:
 
@@ -41,6 +42,16 @@ class TestMemoryhandler(HandlerTestBase):
         assert "something" == record.myextra
         assert 1629113147 < record.created
         assert record.exc_text is None
+
+    def test_info_with_attr_formatter(self, handler, logger):
+        handler.formatter = AttributeFormatter(include=["myextra", "message"])
+
+        logger.info("a log", extra={"myextra": "something", "not_needed": 1})
+        assert isinstance(handler.records, list)
+        assert 1 == len(handler.records)
+
+        record = handler.records[0]
+        assert {"message": "a log", "myextra": "something"} == vars(record)
 
     def test_exception(self, handler, logger):
 
