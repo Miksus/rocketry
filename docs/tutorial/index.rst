@@ -6,7 +6,8 @@ Tutorials
    :caption: Contents:
 
    quick_start
-   configurations
-   conditions
+   session_config
    tasks
+   conditions
+   extensions
 

@@ -1,21 +1,31 @@
+.. _conditions-intro:
+
 Writing conditions
 ==================
 
 Conditions are vital part of Red Engine system
 as they are responsible of determining when a 
 task may start. They also can be used to determine
-when the session will end or when a task will be killed.
+when the session will end or when a task should be 
+killed.
 
-Under the hood, there are condition objects 
-which states are inspected from the magic method 
-``__bool__`` and which can be combined using logical
-operations. On top of this, there has been built 
-more intuitive syntax to compose these objects.
+In more abstract sense, conditions are statements 
+that are either true or false, such as "the clock is 
+half past six", "the task has run today" or "the 
+task has failed at least three times". Under the hood,
+the truthness of these condition objects are inspected 
+using the magic method ``__bool__``. On top, Red Engine 
+has intuitive parsing syntax to write the conditions 
+in as human readable form as practical. This syntax can 
+be utilized, for example, in the ``start_cond`` or 
+``end_cond`` in the task arguments. 
 
-This syntax is used, for example, in the ``start_cond``
-section of a task in ``tasks.yaml`` files consumed by 
-the YAMLTaskLoader. 
+This built-in condition parsing syntax is used, for example, 
+in the  section of a task in ``tasks.yaml`` 
+files consumed by the YAMLTaskLoader. 
 
+See :ref:`creating-task` to see how these can be passed to 
+a task.
 
 Run the task on specific times
 ------------------------------
@@ -92,3 +102,20 @@ Some examples:
 - Run once when either: 'scraper-1' and 'transformer-1' succeeded or 'scraper-2' and 'transformer-2' succeeded
     - | ``(after task 'scraper-1' succeeded & after task 'transformer-1' succeeded)``
       | ``| (after task 'scraper-2' succeeded & after task 'transformer-2' succeeded)``
+- Run
+    - | ``daily & (~task 'critical-task-1' has failed today & ~task 'critical-task-2' has failed today)``
+
+
+
+.. These are not displayed (testing the examples)
+
+.. testcode::
+   :hide:
+
+   from redengine.parse import parse_condition
+   print(repr(parse_condition("daily & (~task 'critical-task-1' has failed today & ~task 'critical-task-2' has failed today)")))
+
+.. testoutput::
+   :hide:
+
+   (TaskExecutable(task=None, period=TimeOfDay(None, None)) & ~TaskFailed(task='critical-task-1', period=TimeOfDay(None, None)) & ~TaskFailed(task='critical-task-2', period=TimeOfDay(None, None)))

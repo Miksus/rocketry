@@ -1,5 +1,16 @@
-String Parsing
-==============
+Condition Parsing
+=================
+
+Conditions for when a task can start, when a task 
+should stop or when the system should be shut down
+can be formed from intuitive strings. This section
+lists different ways to compose such strings for 
+different needs.
+
+See :ref:`creating-task` for how to utilize
+these strings in starting or ending conditions 
+of tasks.
+
 
 Condition
 ---------
@@ -21,12 +32,63 @@ Time related
     >>> parse_condition('time of day before 15:00')
     IsPeriod(period=TimeOfDay(None, '15:00'))
 
+
 Task related
 ------------
 
-The main purpose of these conditions are to provide convenient way
-to set a task to run once in a specific interval (ie. day). The syntax is meant to
-be as human readable as possible thus it is not as pure in sense of condition logic.
+Inspect if a task has started/failed/succeeded/terminated/inacted:
+
+    >>> parse_condition("task 'other' has started")
+    TaskStarted(task='other')
+
+    >>> parse_condition("task 'other' has succeeded")
+    TaskSucceeded(task='other')
+
+    >>> parse_condition("task 'other' has failed")
+    TaskFailed(task='other')
+
+    >>> parse_condition("task 'other' has finished")
+    TaskFinished(task='other')
+
+    >>> parse_condition("task 'other' has terminated")
+    TaskTerminated(task='other')
+
+    >>> parse_condition("task 'other' has inacted")
+    TaskInacted(task='other')
+
+
+All of these also accepts passing the timespan:
+
+    >>> parse_condition("task 'other' has succeeded this hour")
+    TaskSucceeded(task='other', period=TimeOfHour(None, None))
+
+    >>> parse_condition("task 'other' has succeeded today")
+    TaskSucceeded(task='other', period=TimeOfDay(None, None))
+
+    >>> parse_condition("task 'other' has succeeded this week")
+    TaskSucceeded(task='other', period=TimeOfWeek(None, None))
+
+    >>> parse_condition("task 'other' has succeeded this month")
+    TaskSucceeded(task='other', period=TimeOfMonth(None, None))
+
+Or specify the before/between/after:
+
+    >>> parse_condition("task 'other' has succeeded today after 10:00")
+    TaskSucceeded(task='other', period=TimeOfDay('10:00', None))
+
+    >>> parse_condition("task 'other' has succeeded today before 14:00")
+    TaskSucceeded(task='other', period=TimeOfDay(None, '14:00'))
+
+    >>> parse_condition("task 'other' has succeeded today between 10:00 and 14:00")
+    TaskSucceeded(task='other', period=TimeOfDay('10:00', '14:00'))
+
+
+There are also conditions meant for building common starting condition mechanism out of the box
+like "run a task once a day" or "run a task after another task succeeded".
+These conditions are not as pure as others in terms of syntax but they aim for convenience. 
+One should not use these conditions elsewhere than setting starting conditions for tasks.
+Note that the ``task`` argument is supplied automatically to the conditions when the condition 
+is assigned to a task.
 
     >>> # Check if the task (not yet declared) has not run between 10 AM and 3 PM. 
     >>> # Useful to set a task to run daily/weekly/monthly.
@@ -34,8 +96,8 @@ be as human readable as possible thus it is not as pure in sense of condition lo
     TaskExecutable(task=None, period=TimeOfDay('10:00', '15:00'))
 
     >>> # Check if the task (not yet declared) has not run after another task named 'other'
-    >>> # Useful to set a task run after another has succeeded.
-    >>> parse_condition("after 'other' succeeded")
+    >>> # Useful to set a task to run after another has succeeded.
+    >>> parse_condition("after task 'other' succeeded")
     DependSuccess(task=None, depend_task='other')
 
 

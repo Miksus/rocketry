@@ -9,17 +9,16 @@ Base class
 Builtin task classes
 --------------------
 .. autoclass:: redengine.tasks.FuncTask
-   :members:
 
 .. autoclass:: redengine.tasks.PyScript
-   :members:
+
+.. autoclass:: redengine.tasks.CommandTask
 
 Loaders
 -------
 
 .. autoclass:: redengine.tasks.loaders.YAMLLoader
-   :members:
+
 .. autoclass:: redengine.tasks.loaders.YAMLTaskLoader
-   :members:
+
 .. autoclass:: redengine.tasks.loaders.YAMLExtensionLoader
-   :members:

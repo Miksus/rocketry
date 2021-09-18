@@ -50,4 +50,3 @@ Now you already have a working scheduler system. Just launch it:
 
    python main.py
 
-
