@@ -34,7 +34,7 @@ def test_loader_multiple_times(tmpdir, session):
               - task-2
             interval: 'time of day between 12:00 and 16:00'
         """))
-        finder.execute_action()
+        finder.execute()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-1"]
 
         delete_file(root / "extensions.yaml")
@@ -56,7 +56,7 @@ def test_loader_multiple_times(tmpdir, session):
               - task-2
             interval: 'time of day between 12:00 and 16:00'
         """))
-        finder.execute_action()
+        finder.execute()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-1", "my-sequence-2", "my-sequence-3"]
 
         delete_file(root / "extensions.yaml")
@@ -73,11 +73,11 @@ def test_loader_multiple_times(tmpdir, session):
               - task-2
             interval: 'time of day between 12:00 and 16:00'
         """))
-        finder.execute_action()
+        finder.execute()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-2", "my-sequence-3"]
         
         delete_file(root / "extensions.yaml")
-        finder.execute_action()
+        finder.execute()
         assert [] == list(session.extensions["sequences"].keys())
 
 def test_loader(tmpdir, session):
@@ -97,7 +97,7 @@ def test_loader(tmpdir, session):
               - task-2
             interval: 'time of day between 12:00 and 16:00'
         """))
-        finder.execute_action()
+        finder.execute()
 
         seq = session.extensions["sequences"]["my-sequence-1"]
         assert [task1, task2] == seq.tasks

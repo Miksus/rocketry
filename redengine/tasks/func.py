@@ -31,7 +31,7 @@ class FuncTask(Task):
         self.func = func
         super().__init__(**kwargs)
 
-    def execute_action(self, **kwargs):
+    def execute(self, **kwargs):
         "Run the actual, given, task"
         return self.func(**kwargs)
 

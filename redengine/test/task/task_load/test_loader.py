@@ -41,7 +41,7 @@ def test_loader(tmpdir, session):
               - task-2
             interval: 'time of day between 12:00 and 16:00'
         """))
-        finder.execute_action()
+        finder.execute()
 
         seq = session.extensions["sequences"]["my-sequence-1"]
         assert ["task-1", "task-2"] == [t.name for t in seq.tasks]

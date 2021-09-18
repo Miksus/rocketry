@@ -43,7 +43,7 @@ class PyScript(Task):
         self.sys_paths = sys_paths
         super().__init__(**kwargs)
 
-    def execute_action(self, **params):
+    def execute(self, **params):
 
         task_func = self.get_task_func()
         output = task_func(**params)

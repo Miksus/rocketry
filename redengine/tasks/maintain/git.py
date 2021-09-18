@@ -20,7 +20,7 @@ class _GitTask(Task):
 
 class GitFetch(_GitTask):
     # Tested (manually)
-    def execute_action(self, git_repo=None, **kwargs):
+    def execute(self, git_repo=None, **kwargs):
         # Requires gitpython
         from git import Repo
         path = self.get_repo_root(git_repo)
@@ -35,7 +35,7 @@ class GitPull(_GitTask):
         self.branch = branch
         super().__init__(**kwargs)
 
-    def execute_action(self, git_repo=None, **kwargs):
+    def execute(self, git_repo=None, **kwargs):
         # Requires gitpython
         from git import Repo
         path = self.get_repo_root(git_repo)

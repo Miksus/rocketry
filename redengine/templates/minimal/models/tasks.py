@@ -9,6 +9,6 @@ class MyTask(Task):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def execute_action(self, *args, **kwargs):
+    def execute(self, *args, **kwargs):
         # # What the task executes.
         pass

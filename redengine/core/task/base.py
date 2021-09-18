@@ -146,7 +146,7 @@ class Task(metaclass=_TaskMeta):
 
     >>> from redengine.core import Task
     >>> class MyTask(Task):
-    ...     def execute_action(self):
+    ...     def execute(self):
     ...         ... # What the task does.
     ...         return ...
 
@@ -403,7 +403,7 @@ class Task(metaclass=_TaskMeta):
             params = Parameters(params) | self.parameters
             params = params.materialize()
 
-            output = self.execute_action(**params)
+            output = self.execute(**params)
 
         except (SchedulerRestart, SchedulerExit):
             # SchedulerRestart is considered as successful task
@@ -575,7 +575,7 @@ class Task(metaclass=_TaskMeta):
     def prefilter_params(self, params:Parameters):
         """Filter the parameters before passing them to the processes or threads
         if parallerized"""
-        sig = inspect.signature(self.execute_action)
+        sig = inspect.signature(self.execute)
         kw_args = [
             val.name
             for name, val in sig.parameters.items()
@@ -594,12 +594,12 @@ class Task(metaclass=_TaskMeta):
         if parallerized"""
         return params
 
-    def execute_action(self, *args, **kwargs):
+    def execute(self, *args, **kwargs):
         """Run the actual task. Override this.
         
         Parameters are materialized to the positional and
         keyword arguments."""
-        raise NotImplementedError(f"Method 'execute_action' not implemented to {type(self)}")
+        raise NotImplementedError(f"Method 'execute' not implemented to {type(self)}")
 
     def process_failure(self, exception):
         """This method is executed after a failure of the task. 
@@ -900,7 +900,7 @@ class Task(metaclass=_TaskMeta):
     @property
     def thread_terminate(self) -> threading.Event:
         """threading.Event: Event to signal terminating the threaded task.
-        This property should be used by the execute_action of the task."""
+        This property should be used by the execute of the task."""
         # Readonly "attribute"
         return self._thread_terminate
 

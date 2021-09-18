@@ -24,7 +24,7 @@ class YAMLLoaderBase(Task):
 
         self.delay = pd.Timedelta(delay).total_seconds()
 
-    def execute_action(self):
+    def execute(self):
         if self.execution == "main":
             self.parse_items()
         else:
@@ -74,7 +74,7 @@ class YAMLLoader(YAMLLoaderBase):
     """
     default_glob = '**/conftask.yaml'
 
-    def execute_action(self):
+    def execute(self):
         self.parse_items()
 
     def parse_file(self, path):

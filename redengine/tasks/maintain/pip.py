@@ -8,14 +8,14 @@ import subprocess
 
 class PipInstall(Task):
 
-    # Note: __init__ contains task specific params and execute_action session specific
+    # Note: __init__ contains task specific params and execute session specific
     def __init__(self, requirements=None, package=None, options=None, **kwargs):
         self.requirements = requirements
         self.packages = [package] if isinstance(package, str) else package
         self.options = options
         super().__init__(**kwargs)
 
-    def execute_action(self, interpreter=None, root=None, **kwargs):
+    def execute(self, interpreter=None, root=None, **kwargs):
                         
         if interpreter is None:
             interpreter = sys.executable

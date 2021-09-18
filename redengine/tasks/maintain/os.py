@@ -8,7 +8,7 @@ class Restart(Task):
         super().__init__(**kwargs)
         self.execution = "main"
 
-    def execute_action(self, **kwargs):
+    def execute(self, **kwargs):
         raise SchedulerRestart()
 
     def get_default_name(self):
@@ -21,7 +21,7 @@ class ShutDown(Task):
         super().__init__(**kwargs)
         self.execution = "main"
 
-    def execute_action(self, **kwargs):
+    def execute(self, **kwargs):
         raise SchedulerExit()
 
     def get_default_name(self):

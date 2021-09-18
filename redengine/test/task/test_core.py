@@ -4,7 +4,7 @@ from redengine.core import Task
 class DummyTask(Task):
     __register__ = False
 
-    def execute_action(self, *args, **kwargs):
+    def execute(self, *args, **kwargs):
         return 
 
 

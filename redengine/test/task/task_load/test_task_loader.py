@@ -63,7 +63,7 @@ def test_find_multiple_times(tmpdir, session):
             class: PyScript
             path: 'something.py'
         """)
-        finder.execute_action()
+        finder.execute()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1"]
 
         delete_file(root / "tasks.yaml")
@@ -75,7 +75,7 @@ def test_find_multiple_times(tmpdir, session):
             class: PyScript
             path: 'something.py'
         """)
-        finder.execute_action()
+        finder.execute()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-1", "mytask-2"]
 
         delete_file(root / "tasks.yaml")
@@ -84,7 +84,7 @@ def test_find_multiple_times(tmpdir, session):
             class: PyScript
             path: 'something.py'
         """)
-        finder.execute_action()
+        finder.execute()
         assert list(session.tasks.keys()) == ["YAMLTaskLoader", "mytask-2"]
 
 class TestParseTasks:
@@ -228,7 +228,7 @@ class TestFindTasks:
                 path.write_text(cont)       
 
             finder = YAMLTaskLoader(path="project", execution="main")
-            finder.execute_action()
+            finder.execute()
             parsed_tasks = [task for task in session.tasks.values() if task is not finder]
 
             expected_tasks = get_expected()
