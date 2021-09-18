@@ -36,7 +36,11 @@ class MemoryHandler(Handler):
         
     def emit(self, record:logging.LogRecord):
         record = copy(record)
-        record = self.format(record)
+        msg = self.format(record)
+        if isinstance(msg, (dict, logging.LogRecord)):
+            record = msg
+        else:
+            record.formatted_message = msg
 
         if self.store_as == "record":
             self.records.append(record)
