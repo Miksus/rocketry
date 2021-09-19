@@ -33,7 +33,10 @@ def log_task_record(task, now, action, start_time=None):
     if action == "run":
         start_time = now
     else:
-        start_time = datetime.datetime.min if start_time is None else pd.Timestamp(start_time).to_pydatetime()
+        if start_time is None:
+            start_time = task.last_run
+        else:
+            start_time = pd.Timestamp(start_time).to_pydatetime()
 
 
     record = logging.LogRecord(
