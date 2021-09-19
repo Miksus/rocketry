@@ -67,6 +67,14 @@ class PipingBase:
             log_task_record(task=tasks[-1], action="run", now=self.get_next_time())
             log_task_record(task=tasks[-1], action="fail", now=self.get_next_time())
 
+        # Mutliline
+        elif request.param == "last line success (multi)":
+            for task in tasks:
+                log_task_record(task=task, action="run", now=self.get_next_time())
+                log_task_record(task=task, action="success", now=self.get_next_time())
+            for task in tasks:
+                log_task_record(task=task, action="run", now=self.get_next_time())
+                log_task_record(task=task, action="success", now=self.get_next_time())
         else:
             raise ValueError(f"Invalid param value: {request.param}")
         return tasks
@@ -88,7 +96,16 @@ class SequenceBase(PipingBase):
         assert bool(tasks[1])
         for task in tasks[2:]:
             assert not bool(task)
-        
+
+    def test_runnable_second_instant(self, sequence, tasks, mock_datetime_now):
+        log_task_record(task=tasks[0], action="run", now="2021-06-01 09:30:00")
+        log_task_record(task=tasks[0], action="success", now="2021-06-01 09:30:00")
+        mock_datetime_now("2021-06-01 10:00:00")
+        assert not bool(tasks[0])
+        assert bool(tasks[1])
+        for task in tasks[2:]:
+            assert not bool(task)
+
     def test_runnable_third(self, sequence, tasks, mock_datetime_now):
         # Test third task just in case 
         log_task_record(task=tasks[0], action="run", now="2021-06-01 09:30:00")
@@ -111,8 +128,35 @@ class SequenceBase(PipingBase):
         for task in tasks:
             assert not bool(task)
 
+    def test_multiple(self, sequence, tasks, mock_datetime_now):
+        mock_datetime_now("2021-06-01 10:00:00")
+        assert bool(tasks[0])
+        for task in tasks[1:]:
+            assert not bool(task)
 
-@pytest.mark.parametrize("tasks", ["no previous runs", "last line success", "last line fail", "last line last unrun", "last line last fail"], indirect=True)
+        log_task_record(task=tasks[0], action="run", now="2021-06-01 09:30:00")
+        log_task_record(task=tasks[0], action="success", now="2021-06-01 09:30:00")
+        mock_datetime_now("2021-06-01 10:00:00")
+        assert not bool(tasks[0])
+        assert bool(tasks[1])
+        for task in tasks[2:]:
+            assert not bool(task)
+
+        log_task_record(task=tasks[1], action="run", now="2021-06-01 09:31:00")
+        log_task_record(task=tasks[1], action="success", now="2021-06-01 09:32:00")
+        mock_datetime_now("2021-06-01 10:03:00")
+
+        assert not bool(tasks[0])
+        assert not bool(tasks[1])
+        assert bool(tasks[2])
+        for task in tasks[3:]:
+            assert not bool(task)
+
+@pytest.mark.parametrize("tasks", [
+    "no previous runs", 
+    "last line success", "last line fail", "last line last unrun", "last line last fail", 
+    "last line success (multi)"
+], indirect=True)
 class TestWithInterval(SequenceBase):
 
     @pytest.fixture
@@ -126,7 +170,11 @@ class TestWithInterval(SequenceBase):
         assert not bool(tasks[1])
 
 
-@pytest.mark.parametrize("tasks", ["no previous runs", "last line success", "last line fail", "last line last fail"], indirect=True) # , "last unrun"
+@pytest.mark.parametrize("tasks", [
+    "no previous runs", 
+    "last line success", "last line fail", "last line last fail", 
+    "last line success (multi)"
+], indirect=True) # , "last unrun"
 class TestWithoutInterval(SequenceBase):
 
     @pytest.fixture
@@ -141,7 +189,6 @@ class TestWithoutInterval(SequenceBase):
 
 
 # Other related tests
-
 @pytest.mark.parametrize("get_pipe", [
     pytest.param(
         lambda: Sequence(tasks=["task1", "task2"], interval="time of day between 10:00 and 16:00"),
