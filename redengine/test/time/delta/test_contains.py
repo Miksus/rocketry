@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from redengine.core.time import (
     TimeDelta
@@ -54,3 +54,10 @@ def test_not_in_offset(dt, dt_ref, offset):
     time = TimeDelta(offset)
     time.reference = dt_ref
     assert dt not in time
+
+
+def test_reference_now():
+    time = TimeDelta("10 seconds")
+    assert datetime.now() in time
+    assert (datetime.now() - timedelta(0, 5, 0)) in time
+    assert (datetime.now() - timedelta(0, 11, 0)) not in time

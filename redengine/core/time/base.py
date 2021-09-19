@@ -1,4 +1,5 @@
 import datetime
+import time
 import pandas as pd
 # TODO: Way to calculate how much time (ie. seconds) to next event
 
@@ -200,6 +201,9 @@ class TimeDelta(TimePeriod):
         future [str]: the amount of time the Timedelta is from reference point to future
     """
     _type_name = "delta"
+
+    reference: datetime.datetime
+
     def __init__(self, past=None, future=None, kws_past=None, kws_future=None):
 
         past = 0 if past is None else past
@@ -218,10 +222,9 @@ class TimeDelta(TimePeriod):
     @abstractmethod
     def __contains__(self, dt):
         "Check whether the datetime is in "
-        if not hasattr(self, "reference"):
-            raise AttributeError("TimeDelta requires reference point to compare whether a datetime is in the period.")
-        start = self.reference - abs(self.past)
-        end = self.reference + abs(self.future)
+        reference = getattr(self, "reference", datetime.datetime.fromtimestamp(time.time()))
+        start = reference - abs(self.past)
+        end = reference + abs(self.future)
         return start <= dt <= end
 
     def rollback(self, dt):
