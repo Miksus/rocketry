@@ -30,16 +30,17 @@ class TimeOfMinute(AnchoredInterval):
 
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
-        res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?(?P<nanosecond>[0-9]+)?", value, flags=re.IGNORECASE)
+        res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?(?P<nanosecond>[0-9]+)?", s, flags=re.IGNORECASE)
         if res:
-            res["microsecond"] = res["microsecond"].ljust(6, "0")
+            if res["microsecond"] is not None:
+                res["microsecond"] = res["microsecond"].ljust(6, "0")
             return to_nanoseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
 
-        res = re.search(r"(?P<n>[1-4] ?(quarter|q))", value, flags=re.IGNORECASE)
+        res = re.search(r"(?P<n>[1-4] ?(quarter|q))", s, flags=re.IGNORECASE)
         if res:
             # ie. "1 quarter"
             n_quarters = res["n"]
-            return self._scope_max / 4 * n_quarters
+            return (self._scope_max + 1) / 4 * n_quarters - 1
 
 
 class TimeOfHour(AnchoredInterval):
@@ -68,7 +69,7 @@ class TimeOfHour(AnchoredInterval):
         if res:
             # ie. "1 quarter"
             n_quarters = int(res["n"])
-            return self._scope_max / 4 * n_quarters
+            return (self._scope_max + 1) / 4 * n_quarters - 1
 
 
 class TimeOfDay(AnchoredInterval):
