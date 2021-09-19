@@ -14,89 +14,13 @@ class TriggerCluster(Any):
         self.subconditions = list(triggers)
         self.task = task
         self._last_check = (None, None, None)
-        self._queue = []
     
     def __bool__(self):
-
-        has_changed = self.has_changed()
-        if has_changed:
-            self.trigger()
-            self.change()
-
         triggers = self.subconditions
         for trigger in triggers:
             if bool(trigger):
-                if has_changed:
-                    # Pretrigger, the trigger should be triggered
-                    # when something changes next time
-                    self.add_queue(trigger)
                 return True
         return False
-
-    def has_changed(self):
-        """Whether the status of the task has changed 
-        or not."""
-        last_run = self.task.last_run
-        last_success = self.task.last_success
-        last_fail = self.task.last_fail
-        return self._last_check != (last_run, last_fail, last_success)
-
-    def change(self):
-        last_run = self.task.last_run
-        last_success = self.task.last_success
-        last_fail = self.task.last_fail
-        self._last_check = (last_run, last_fail, last_success)
-
-    def trigger(self):
-        "Trigger trigger(s)"
-
-        # TODO: Some triggers trigger depending on what changed
-        # trigger_on_succes, trigger_on_run, trigger_on_fail
-        # Also need to make sure the new run/success/fail happened
-        # on the trigger's interval (otherwise should not be triggered) (Hmm, maybe the new logic handles this)
-
-        last_run = self.task.last_run
-        if self._queue:
-            trigger = self._queue.pop(0)
-        else:
-            trigger = next(iter(self.triggers))
-        
-        trigger.trigger()
-        
-    def trigger(self):
-        "Trigger trigger(s)"
-
-        # TODO: Some triggers trigger depending on what changed
-        # trigger_on_succes, trigger_on_run, trigger_on_fail
-        # Also need to make sure the new run/success/fail happened
-        # on the trigger's interval (otherwise should not be triggered) (Hmm, maybe the new logic handles this)
-        run_changed = self._last_check[0] != self.task.last_run
-        success_changed = self._last_check[1] != self.task.last_success
-        fail_changed = self._last_check[2] != self.task.last_fail
-
-        if run_changed:
-            for n, trigger in enumerate(self._queue):
-                if trigger.trigger_on == "run":
-                    trigger.trigger()
-                    del self._queue[n]
-                    break
-
-        if success_changed:
-            for n, trigger in enumerate(self._queue):
-                if trigger.trigger_on == "success":
-                    trigger.trigger()
-                    del self._queue[n]
-                    break
-            
-        if fail_changed:
-            for n, trigger in enumerate(self._queue):
-                if trigger.trigger_on == "fail":
-                    trigger.trigger()
-                    del self._queue[n]
-                    break
-
-    def add_queue(self, trigger):
-        self._queue.append(trigger)
 
     def delete_trigger(self, trigger):
         self.subconditions = [
@@ -127,7 +51,7 @@ class BaseTrigger(BaseCondition):
         self.depend_trigger = depend_trigger
 
     def __bool__(self):
-        return not self.is_triggered() and not self.has_running() and self.is_active()
+        return not self.has_running() and self.is_active() # not self.is_triggered() and 
 
     def is_first(self):
         "Check if the trigger is first of the pipe/sequence"
@@ -245,18 +169,6 @@ class IntervalTrigger(BaseTrigger):
             and ((not self.is_first() and self.has_line_started()) or self.is_first())
         )
 
-    def is_triggered(self):
-        "Whether the trigger has been marked to have fired (but not necessarily completed)"
-        # TODO: If no interval, is_triggered should probably be: self.depend_trigger.task.last_success <= self._triggered_interval.start
-        last_trigger_interval = self._triggered_interval
-        now = datetime.datetime.fromtimestamp(time.time())
-        curr_interval = self.interval.rollback(now)
-        return curr_interval.left == last_trigger_interval.left
-
-    def trigger(self, dt):
-        "TriggerCluster should call this"
-        self._triggered_interval = self.interval.rollback(dt).start
-
     def has_line_started(self):
         now = datetime.datetime.fromtimestamp(time.time())
         triggers = self.parent.triggers
@@ -326,151 +238,3 @@ class PulseTrigger(BaseTrigger):
             last_run = self.task.last_run or datetime.datetime.min
             depend_last_success = depend_trigger.task.last_success or datetime.datetime.min
             return depend_last_success > last_run
-
-    def is_triggered(self):
-        "Whether the trigger has been marked to have fired (but not necessarily completed)"
-        last_trigger_interval = self._triggered_time
-        if last_trigger_interval is None:
-            return False
-        last_run = self.task.last_run
-        return last_trigger_interval == last_run
-
-    def trigger(self, dt):
-        "TriggerCluster should call this"
-        self._triggered_time = dt
-
-
-# OLD
-class TriggerOld(BaseCondition):
-
-    # TODO: The finishing of the trigger needs to be recorded
-    # some way
-
-    # TODO: new function: ready() -> bool
-    # Determines whether the current trigger is 
-
-    _mark_trigger: datetime.datetime # Task run that has been attributed to this trigger
-
-    def __init__(self, task, parent, depend_trigger:'Trigger'):
-        self.task = task
-        self.parent = parent
-        self.depend_trigger = depend_trigger
-        self._triggered_interval = pd.Interval(pd.Timestamp.min, pd.Timestamp.min)
-
-    def __bool__(self):
-        # TODO: Remove is_depend_ready and merge with is_active
-        return not self.is_triggered() and self.is_active() and self.is_depend_ready()
-
-    def is_active(self):
-        if self.has_interval():
-            now = datetime.datetime.fromtimestamp(time.time())
-            return now in self.interval
-        else:
-            # Check current task has not succeeded after dependent
-            return self.is_active_depend_ready()
-
-    def _is_active_depend_ready_interval(self):
-        pass
-
-    def _is_active_depend_ready_no_interval(self):
-        "True if depend task has succeeded and current has not"
-        # TODO: If first logic
-        last_success = self.task.last_success
-        depend_last_success = self.depend_trigger.task.last_success
-        depend_last_fail = self.depend_trigger.task.last_fail
-
-        if self.is_first():
-            depend_trigger = self.parent.get_last_run()
-
-            return (
-                # Last one finished (fail or success) --> start new sequence
-                depend_trigger.is_last() and (depend_trigger.task.status == "fail" or depend_trigger.task.status == "success")
-            ) or (
-                # The sequence failed somewhere in between --> start new sequence
-                not depend_trigger.is_last() and depend_trigger.task.status == "fail"
-            )
-        else:
-            depend_trigger = self.depend_trigger
-            last_run = self.task.last_run or datetime.datetime.min
-            depend_last_success = depend_trigger.task.last_success or datetime.datetime.min
-            return depend_last_success > last_run
-
-    def is_depend_ready(self):
-        # TODO: Possibly merge this with active (remove this)
-        is_first = self.is_first()
-        has_interval = self.has_interval()
-        if not has_interval:
-            return True
-
-        if not is_first:
-            return self.depend_trigger.is_ready()
-        elif is_first:
-            return True
-
-    def is_ready(self):
-        "Whether the trigger has completed"
-        interval = self.interval
-        last_success = self.task.last_success
-        if last_success is None:
-            # Has never succeeded (yet)
-            return False
-        elif interval is None:
-            # TODO! Not sure about this
-            # Has no interval thus is ready only if
-            # current has succeeded after dependent
-            last_run = self.task.last_run
-            last_fail = self.task.last_fail or datetime.datetime.min
-            is_task_succeeded = last_run <= last_success and last_fail <= last_success
-            
-            if not is_task_succeeded:
-                return False
-
-            # Next we test the task has succeeded after previous success
-            depend_trigger = self.depend_trigger
-            if depend_trigger is None:
-                # No previous task and current has succeeded
-                # --> The trigger has completed
-                return True
-
-            is_prev_succeeded_before = (
-                last_success >= self.depend_trigger.task.last_success 
-                if self.depend_trigger.task.last_success is not None
-                else False # Prev task has not succeeded yet but current has succeeded --> not completed
-            )
-            return is_prev_succeeded_before
-        now = datetime.datetime.fromtimestamp(time.time())
-        return last_success in interval.rollback(now)
-
-    def is_triggered(self):
-        "Whether the trigger has been marked to have fired (but not necessarily completed)"
-        # TODO: If no interval, is_triggered should probably be: self.depend_trigger.task.last_success <= self._triggered_interval.start
-        last_trigger_interval = self._triggered_interval
-        now = datetime.datetime.fromtimestamp(time.time())
-        curr_interval = self.interval.rollback(now)
-        return curr_interval.start == last_trigger_interval.start
-
-    def is_first(self):
-        "Check if the trigger is first of the pipe/sequence"
-        return self.parent.triggers[0] is self
-
-    def is_last(self):
-        return self.parent.triggers[-1] is self
-
-    def is_success(self):
-        "Latest run has succeeded"
-        return self.task.status == "success"
-
-    def has_interval(self):
-        return self.interval is not None
-
-    def trigger(self, dt):
-        "TriggerCluster should call this"
-        self._triggered_interval = self.interval.rollback(dt).start
-
-    @property
-    def interval(self):
-        interval = self.parent.interval
-        if interval:
-            return interval
-        else:
-            return 
