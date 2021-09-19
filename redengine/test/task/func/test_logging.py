@@ -121,29 +121,42 @@ def test_without_handlers(tmpdir, session):
         logger.handlers = []
         logger.propagate = False
 
-        task = FuncTask(
-            lambda : None, 
-            name="task 1",
-            start_cond="always true",
-            logger="redengine.task.test",
-            execution="main",
-        )
+        with pytest.warns(UserWarning) as warns:
+            task = FuncTask(
+                lambda : None, 
+                name="task 1",
+                start_cond="always true",
+                logger="redengine.task.test",
+                execution="main",
+            )
+        
+        # Test warnings
+        assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
+        assert str(warns[1].message) == "Task 'task 1' logger is not readable. Latest run unknown."
+        assert str(warns[2].message) == "Task 'task 1' logger is not readable. Latest success unknown."
+        assert str(warns[3].message) == "Task 'task 1' logger is not readable. Latest fail unknown."
+        assert str(warns[4].message) == "Task 'task 1' logger is not readable. Latest terminate unknown."
+
         task()
         # Cannot know the task.status as there is no log about it
-        assert task.status is None
+        with pytest.warns(UserWarning) as warns:
+            assert task.status is None
+        assert str(warns[0].message) == "Task 'task 1' logger is not readable. Status unknown."
 
         session.config["force_status_from_logs"] = False
-        task = FuncTask(
-            lambda : None, 
-            name="task 2",
-            start_cond="always true",
-            logger="redengine.task.test",
-            execution="main",
-        )
+        with pytest.warns(UserWarning) as warns:
+            task = FuncTask(
+                lambda : None, 
+                name="task 2",
+                start_cond="always true",
+                logger="redengine.task.test",
+                execution="main",
+            )
+        assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 2' does not have ability to be read. Past history of the task cannot be utilized."
+
         task()
         # Can know the task.status as stored in a variable
         assert task.status == "success"
-
 
 @pytest.mark.parametrize("method",
     [
