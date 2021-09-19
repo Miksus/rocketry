@@ -250,9 +250,10 @@ class Task(metaclass=_TaskMeta):
         self._set_default_task()
 
         # Caches
+        self._last_run = self._get_last_action_from_log("run")
         self._last_success = self._get_last_action_from_log("success")
         self._last_fail = self._get_last_action_from_log("fail")
-        self._last_run = self._get_last_action_from_log("run")
+        self._last_terminate = self._get_last_action_from_log("terminate")
 
     @property
     def start_cond(self):
@@ -851,6 +852,11 @@ class Task(metaclass=_TaskMeta):
     def last_run(self):
         """datetime.datetime: The lastest timestamp when the task ran."""
         return self._get_last_action("run")
+
+    @property
+    def last_terminate(self):
+        """datetime.datetime: The lastest timestamp when the task ran."""
+        return self._get_last_action("terminate")
 
     def _get_last_action(self, action):
         cache_attr = f"_last_{action}"
