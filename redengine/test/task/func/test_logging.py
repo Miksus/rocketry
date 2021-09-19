@@ -216,6 +216,7 @@ def test_process_no_double_logging(tmpdir, session):
                 actual_actions.append(record.action)
 
         # If fails here, double logging caused by creating too many records
+        # Obseved to fail rarely with py36 (c2f0368ffa56c5b8933f1afa2917f2be1555fb7a)
         assert len(records) >= 2 # Testing not too few records (else not double logging bug)
         assert (
             ["run", "success"] == [rec.action for rec in records]
