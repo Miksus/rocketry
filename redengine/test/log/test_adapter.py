@@ -14,7 +14,7 @@ from redengine.core.log import TaskAdapter
 class AdapterTestBase:
     def test_get_records(self, handler, adapter):
 
-        adapter.logger.addHandler(handler)
+        #adapter.logger.addHandler(handler)
 
         task_start = datetime.datetime(2021, 1, 1)
         task_end = datetime.datetime.now()
@@ -38,7 +38,7 @@ class AdapterTestBase:
         assert runtime == record["runtime"]
 
     def test_get_records_exc(self, handler, adapter, tmpdir):
-        adapter.logger.addHandler(handler)
+        #adapter.logger.addHandler(handler)
 
         task_start = datetime.datetime(2021, 1, 1)
         task_end = datetime.datetime.now()
@@ -71,10 +71,11 @@ class AdapterTestBase:
         assert record["exc_text"].endswith("RuntimeError: Deliberate failure")
 
     @pytest.fixture(scope="function")
-    def adapter(self, request):
+    def adapter(self, request, handler):
         name = __name__ + "." + '.'.join(request.node.nodeid.split("::")[1:])
         logger = logging.getLogger(name)
         logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
 
         task_logger = TaskAdapter(logger, task="mytask")
         yield task_logger

@@ -71,7 +71,7 @@ def script_files(tmpdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def session():
-    session = Session(scheme="memory_logging", config={"debug": True})
+    session = Session(scheme="memory_logging", config={"debug": True}, delete_existing_loggers=True)
     redengine.session = session
     session.set_as_default()
     return session
@@ -152,7 +152,7 @@ def collection(request):
     import pymongo
     import yaml
     with open("redengine/test/private.yaml", 'r') as f:
-        conf = yaml.load(f)
+        conf = yaml.safe_load(f)
     conn_str = conf["mongodb"]["conn_str"]
     client = pymongo.MongoClient(conn_str)
 

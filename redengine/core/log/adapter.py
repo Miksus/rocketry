@@ -30,7 +30,8 @@ class TaskAdapter(logging.LoggerAdapter):
             hasattr(handler, "read") or hasattr(handler, "query")
             for handler in self.logger.handlers
         )
-        if not is_readable:
+        is_process_dummy = logger.name.endswith("_process")
+        if not is_readable and not is_process_dummy:
             warnings.warn("Task logger does not have ability to be read. Past history of the task cannot be utilized.")
 
     def process(self, msg, kwargs):
@@ -41,7 +42,7 @@ class TaskAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
     def get_records(self, **kwargs) -> Iterable[Dict]:
-        """Get the log records of the task from the 
+        r"""Get the log records of the task from the 
         handlers of the logger.
         
         One of the handlers in the logger must 

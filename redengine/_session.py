@@ -44,6 +44,11 @@ class Session:
         This is not much used by anything but 
         stored in the session if the user wants to 
         access them.
+    delete_existing_loggers : bool
+        If True, all loggers that match the 
+        session.config['basename'] are deleted (by 
+        default, deletes loggers starting with 
+        'redengine.task').
 
     """
 
@@ -66,7 +71,7 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None, kwds_scheduler=None):
+    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None, kwds_scheduler=None, delete_existing_loggers=False):
         # Set defaults
         config = {} if config is None else config
         tasks = {} if tasks is None else tasks
@@ -84,6 +89,13 @@ class Session:
         self.tasks = tasks
         self.parameters = parameters
         self.extensions = extensions
+
+        if delete_existing_loggers:
+            # Delete existing task loggers
+            # so that the old loggers won't
+            # interfere with the ones created 
+            # with schemes.
+            self.delete_task_loggers()
 
         kwds_scheduler = {} if kwds_scheduler is None else kwds_scheduler
         self.scheduler = Scheduler(session=self, **kwds_scheduler)
@@ -227,6 +239,13 @@ class Session:
             data = chain(data, logger.get_records(**kwargs))
         return data
         
+    def delete_task_loggers(self):
+        "Delete the "
+        loggers = logging.Logger.manager.loggerDict
+        for name in list(loggers):
+            if name.startswith(self.config["task_logger_basename"]):
+                del loggers[name]
+
     def clear(self):
         """Clear tasks, parameters etc. of the session"""
         #! TODO: Remove?

@@ -470,7 +470,12 @@ class Task(metaclass=_TaskMeta):
         #params = Parameters() if params is None else params
         #params = params | {"_thread_terminate_": self._thread_terminate}
         params = self.postfilter_params(params)
-        self.run_as_main(params=params, _log_running=False)
+        try:
+            self.run_as_main(params=params, _log_running=False)
+        except:
+            # We cannot rely the exception to main thread here
+            # thus we supress to prevent unnecessary warnings.
+            pass
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
@@ -512,15 +517,7 @@ class Task(metaclass=_TaskMeta):
         logger.handlers = []
         logger.addHandler(handler)
         try:
-            with warnings.catch_warnings():
-                # task.set_logger will warn that 
-                # we do not use two-way logger here 
-                # but that is not needed as running 
-                # the task itself does not require
-                # knowing the status of the task
-                # or other tasks
-                warnings.simplefilter("ignore")
-                self.logger = logger
+            self.logger = logger
             #task.logger.addHandler(
             #    logging.StreamHandler(sys.stdout)
             #)
