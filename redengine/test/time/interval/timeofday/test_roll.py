@@ -129,12 +129,12 @@ def test_rollforward(start, end, dt, roll_start, roll_end):
             pd.Timestamp("2020-01-01 12:00:00"),
             "10:00", "10:00",
             pd.Timestamp("2020-01-01 10:00:00"), pd.Timestamp("2020-01-01 12:00:00"),
-            id="Right of full interval", marks=pytest.mark.xfail),
+            id="Right of full interval"),
         pytest.param(
             pd.Timestamp("2020-01-01 09:00:00"),
             "10:00", "10:00",
             pd.Timestamp("2019-12-31 10:00:00"), pd.Timestamp("2020-01-01 09:00:00"),
-            id="Left of full interval", marks=pytest.mark.xfail),
+            id="Left of full interval"),
     ],
 )
 def test_rollback(start, end, dt, roll_start, roll_end):
