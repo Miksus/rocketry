@@ -36,6 +36,7 @@ def test_loader_multiple_times(tmpdir, session):
         """))
         finder.execute()
         assert list(session.extensions["sequences"].keys()) == ["my-sequence-1"]
+        assert "Sequence(tasks=['task-1', 'task-2'], interval=TimeOfDay('12:00', '16:00'))" == repr(session.extensions["sequences"]["my-sequence-1"])
 
         delete_file(root / "extensions.yaml")
         create_file(root / "extensions.yaml", dedent("""

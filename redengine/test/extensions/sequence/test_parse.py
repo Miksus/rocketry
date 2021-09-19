@@ -27,6 +27,7 @@ def test_parse(session):
     sequences = session.extensions["sequences"]
     assert isinstance(sequences["my-sequence-1"], Sequence)
     assert isinstance(sequences["my-sequence-2"], Sequence)
+    assert "Sequence(tasks=['mytask-1', 'mytask-2'], interval=None)" == repr(sequences["my-sequence-1"])
     
     # Test conditions
     task1 = session.tasks["mytask-1"]

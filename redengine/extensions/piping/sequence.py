@@ -89,3 +89,7 @@ class Sequence(BaseExtension):
         super().delete()
         for trigger in self.triggers:
             trigger.delete()
+
+    def __repr__(self):
+        task_names = [task.name for task in self.tasks]
+        return f'Sequence(tasks={task_names}, interval={repr(self.interval)})'
