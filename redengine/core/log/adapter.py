@@ -32,7 +32,7 @@ class TaskAdapter(logging.LoggerAdapter):
         )
         is_process_dummy = logger.name.endswith("_process")
         if not is_readable and not is_process_dummy:
-            warnings.warn("Task logger does not have ability to be read. Past history of the task cannot be utilized.")
+            warnings.warn(f"Logger '{logger.name}' for task '{self.task_name}' does not have ability to be read. Past history of the task cannot be utilized.")
 
     def process(self, msg, kwargs):
         ""
@@ -82,8 +82,7 @@ class TaskAdapter(logging.LoggerAdapter):
                 yield from records
                 break
         else:
-            warnings.warn(f"Logger {self.logger.name} is not readable. Cannot get history.")
-            return
+            raise AttributeError(f"Logger '{self.logger.name}' cannot be read. Missing readable handler.")
 
     def get_latest(self, action:str=None) -> dict:
         """Get latest log record. Note that this
@@ -117,6 +116,9 @@ class TaskAdapter(logging.LoggerAdapter):
         has_same_name = self.name == o.name
         return is_same_type and has_same_logger and has_same_name
 
+    @property
+    def task_name(self):
+        return self.extra['task_name']
 
 class TaskFilter(logging.Filter):
     """Filter only task related so one logger can be
