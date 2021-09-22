@@ -7,7 +7,7 @@ from pathlib import Path
 from redengine import Session
 from redengine.tasks import FuncTask
 from redengine.core import Task
-from redengine.tasks.loaders import YAMLExtensionLoader
+from redengine.tasks.loaders import ExtensionLoader
 from redengine.time import TimeOfDay
 #from redengine.core.task.base import Task
 #
@@ -24,7 +24,7 @@ def test_loader_multiple_times(tmpdir, session):
         FuncTask(lambda: None, name="task-2")
         root = Path(str(tmpdir)) / "project"
 
-        finder = YAMLExtensionLoader(path="project")
+        finder = ExtensionLoader(path="project")
         
         create_file(root / "extensions.yaml", dedent("""
         sequences:
@@ -88,7 +88,7 @@ def test_loader(tmpdir, session):
         task2 = FuncTask(lambda: None, name="task-2")
         root = Path(str(tmpdir)) / "project"
 
-        finder = YAMLExtensionLoader(path="project")
+        finder = ExtensionLoader(path="project")
         
         create_file(root / "extensions.yaml", dedent("""
         sequences:
@@ -101,5 +101,33 @@ def test_loader(tmpdir, session):
         finder.execute()
 
         seq = session.extensions["sequences"]["my-sequence-1"]
+        assert [task1, task2] == seq.tasks
+        assert TimeOfDay("12:00", "16:00") == seq.interval
+
+def test_loader_pattern(tmpdir, session):
+    with tmpdir.as_cwd() as old_dir:
+        # Create some dummy tasks
+        task1 = FuncTask(lambda: None, name="task-1")
+        task2 = FuncTask(lambda: None, name="task-2")
+        root = Path(str(tmpdir)) / "project"
+
+        finder = ExtensionLoader(path="project", name_pattern=r"dev[.].+")
+        
+        create_file(root / "extensions.yaml", dedent("""
+        sequences:
+          dev.my-sequence-1:
+            tasks:
+              - task-1
+              - task-2
+            interval: 'time of day between 12:00 and 16:00'
+          my-sequence-1:
+            tasks:
+              - task-1
+              - non-existent
+            interval: 'time of day between 12:00 and 16:00'
+        """))
+        finder.execute()
+
+        seq = session.extensions["sequences"]["dev.my-sequence-1"]
         assert [task1, task2] == seq.tasks
         assert TimeOfDay("12:00", "16:00") == seq.interval

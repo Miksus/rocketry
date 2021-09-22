@@ -3,12 +3,12 @@
 #import pytest
 import multiprocessing, itertools
 from pathlib import Path
-from redengine.tasks.loaders.yaml import YAMLTaskLoader
+from redengine.tasks.loaders import TaskLoader
 #
 from redengine import Session
 from redengine.tasks import FuncTask
 from redengine.core import Task, Scheduler
-from redengine.tasks.loaders import YAMLExtensionLoader, YAMLLoader
+from redengine.tasks.loaders import ExtensionLoader, SessionLoader
 from redengine.time import TimeOfDay
 from redengine.conditions import AlwaysTrue
 #from redengine.core.task.base import Task
@@ -37,12 +37,12 @@ def test_session(session, tmpdir):
         - name: 'task-2'
           path: 'something.py'
         """))
-        ext_loader = YAMLExtensionLoader(on_startup=True)
-        task_loader = YAMLTaskLoader(on_startup=True)
+        ext_loader = ExtensionLoader(on_startup=True)
+        task_loader = TaskLoader(on_startup=True)
 
         Scheduler(shut_cond=AlwaysTrue())
         session.start()
         assert ['run', 'success'] == [rec['action'] for rec in task_loader.logger.get_records()]
         assert ['run', 'success'] == [rec['action'] for rec in ext_loader.logger.get_records()]
-        assert ['YAMLExtensionLoader', 'YAMLTaskLoader', "task-1", "task-2"] == list(session.tasks.keys())
+        assert ['ExtensionLoader', 'TaskLoader', "task-1", "task-2"] == list(session.tasks.keys())
         assert ["my-sequence-1"] == list(session.extensions["sequences"].keys())
