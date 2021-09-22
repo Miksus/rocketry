@@ -815,7 +815,7 @@ class Task(metaclass=_TaskMeta):
             message = value[1]
         else:
             action = value
-            message = ""
+            message = f"Task '{self.name}' status: '{value}'"
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
         
