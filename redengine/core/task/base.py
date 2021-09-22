@@ -157,6 +157,7 @@ class Task(metaclass=_TaskMeta):
     use_instance_naming: bool = False
     permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: Tuple = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
+    fmt_log_message = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
 
@@ -763,7 +764,7 @@ class Task(metaclass=_TaskMeta):
 
     def log_failure(self):
         """Log that the task failed."""
-        self.status = "fail", f"Task '{self.name}' failed"
+        self.status = "fail"
 
     def log_success(self):
         """Make a log that the task succeeded."""
@@ -815,7 +816,7 @@ class Task(metaclass=_TaskMeta):
             message = value[1]
         else:
             action = value
-            message = f"Task '{self.name}' status: '{value}'"
+            message = self.fmt_log_message.format(action=action, task=self.name)
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
         
