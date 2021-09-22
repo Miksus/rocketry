@@ -9,7 +9,7 @@ Creating a tasks.yaml
 ---------------------
 
 In this part we focus on creating tasks using 
-``YAMLTaskLoader`` as that is the most convenient 
+``TaskLoader`` as that is the most convenient 
 way to set up Red Engine. This loader reads and parses 
 task configurations that are essentially list or dict 
 of tasks including their initiation arguments. 
@@ -38,8 +38,8 @@ Examples of list of task setups:
       name: 'my-task-2'
       ...
 
-When the ``YAMLTaskLoader`` parses a task configuration
-YAML, the class is determined from the key ``class`` and
+When the ``TaskLoader`` parses a task configuration, 
+the class is determined from the key ``class`` and
 this class is initiated using the other parameters. For example,
 in both of these files the "my-task-1" is initiated as 
 ``PyScript(name='my-task-1', ...)``. You can also set up all your

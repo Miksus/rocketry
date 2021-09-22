@@ -28,11 +28,11 @@ The ``.yaml`` file is structured in following way:
     tasks:
         # Session's tasks and their arguments. It is recommended 
         # to have mainly loaders here.
-        - class: YAMLTaskLoader
+        - class: TaskLoader
           path: 'tasks/'
           glob: '**/tasks.yaml' # File pattern of task conf file
           on_startup: True
-        - class: YAMLExtensionLoader
+        - class: ExtensionLoader
           path: 'tasks/'
           glob: '**/extensions.yaml' # File pattern of extension conf file
           on_startup: True
@@ -54,8 +54,8 @@ The ``.yaml`` file is structured in following way:
                     'memory_handler'
                 ]
 
-YAMLTaskLoader is a meta task that loads additional tasks to the session by going 
+TaskLoader is a meta task that loads additional tasks to the session by going 
 through all YAML configuration files. By default it looks for all YAML files 
-named as ``tasks.yaml``. YAMLExtensionLoader
+named as ``tasks.yaml``. ExtensionLoader
 on the other hand look for files ``extensions.yaml`` and these files configure the 
 extensions such as task pipelines.

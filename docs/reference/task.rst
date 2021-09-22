@@ -17,8 +17,8 @@ Builtin task classes
 Loaders
 -------
 
-.. autoclass:: redengine.tasks.loaders.YAMLLoader
+.. autoclass:: redengine.tasks.loaders.SessionLoader
 
-.. autoclass:: redengine.tasks.loaders.YAMLTaskLoader
+.. autoclass:: redengine.tasks.loaders.TaskLoader
 
-.. autoclass:: redengine.tasks.loaders.YAMLExtensionLoader
+.. autoclass:: redengine.tasks.loaders.ExtensionLoader

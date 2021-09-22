@@ -22,7 +22,7 @@ be utilized, for example, in the ``start_cond`` or
 
 This built-in condition parsing syntax is used, for example, 
 in the  section of a task in ``tasks.yaml`` 
-files consumed by the YAMLTaskLoader. 
+files consumed by the TaskLoader. 
 
 See :ref:`creating-task` to see how these can be passed to 
 a task.
