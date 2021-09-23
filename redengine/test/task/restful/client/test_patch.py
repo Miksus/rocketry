@@ -3,14 +3,12 @@ import tempfile
 
 import pytest
 
-from redengine.tasks.api.http import HTTPConnection
 from redengine.tasks import FuncTask
 from redengine import Scheduler, session
 from redengine.core import Parameters
 from redengine.parameters import Private
 
 from threading import Thread
-import requests
 import time, os, logging
 import json
 

@@ -5,7 +5,6 @@ from .utils import parse_url_parameters
 # For system info
 import pkg_resources
 import platform
-import psutil
 import sys
 
 rest_api = Blueprint(
@@ -54,7 +53,7 @@ def parameters(key=None):
 
     return ""
 
-@rest_api.route('/tasks', methods=['GET', "POST"])
+@rest_api.route('/tasks', methods=['GET']) # , "POST"
 @rest_api.route('/tasks/<name>', methods=['GET', "PATCH", "DELETE"])
 def tasks(name=None): 
     session = current_app.config["ATLAS_SESSION"]
@@ -63,18 +62,9 @@ def tasks(name=None):
         is_collection = name is None
         data = session.get_task(name) if not is_collection else session.tasks
         return jsonify(data)
-    elif request.method == "POST":
-        # Create a task
-        raise NotImplementedError("GET .../tasks is not implemented yet.")
-        data = request.get_json()
-        name = data.get("name", None)
-        
-        if name is None:
-            abort(400, "Task missing name.")
-        if name in session.tasks:
-            abort(409, "Task already exists.")
-
-        parse_task(data)
+    # elif request.method == "POST":
+    #     # Create a task
+    #     raise NotImplementedError("POST .../tasks is not implemented yet.")
 
     elif request.method == "PATCH":
         if name not in session.tasks:
@@ -88,8 +78,6 @@ def tasks(name=None):
                 setattr(task, attr, value)
     elif request.method == "DELETE":
         del session.tasks[name]
-        # TODO: Delete the task file if user defined PyScript
-
     return ""
 
 @rest_api.route('/logs/<type_>', methods=['GET'])
@@ -144,6 +132,7 @@ def shut_down():
 @rest_api.route('/info/<name>', methods=['GET'])
 def info(name=None): 
     "Get system info"
+    import psutil
 
     # Ideas to include: RAM usage, CPU usage, disk usage, disk free
 

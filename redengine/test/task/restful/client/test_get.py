@@ -4,18 +4,23 @@ import tempfile
 
 import pytest
 
-from redengine.tasks.api.http import HTTPConnection
 from redengine.tasks import FuncTask
 from redengine import Scheduler
 from redengine.parameters import Private
 
 from threading import Thread
-import requests
 import time, os, logging
 
 from dateutil.tz import tzlocal
 
 import pandas as pd
+
+try:
+    from redengine.tasks.api.http import HTTPConnection
+    import requests
+except ImportError:
+    # Cannot run these tests
+    pass
 
 def to_epoch(dt):
     # Hack as time.tzlocal() does not work for 1970-01-01

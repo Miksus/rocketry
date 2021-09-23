@@ -1,16 +1,20 @@
 import os
 import json
 import tempfile
+import time
+from threading import Thread
 
 import pytest
 
-from redengine.tasks.api.http import HTTPConnection
 from redengine.tasks import FuncTask
 from redengine.parameters import Parameters, Private
 
-from threading import Thread
-import requests
-import time
+try:
+    from redengine.tasks.api.http import HTTPConnection
+    import requests
+except ImportError:
+    # Cannot run these tests
+    pass
 
 def test_create_api(scheduler):
     # Going to tempdir to dump the log files there

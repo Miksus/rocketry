@@ -3,13 +3,11 @@ import tempfile
 
 import pytest
 
-from redengine.tasks.api.http import HTTPConnection
 from redengine import Scheduler, session
 from redengine.conditions import ParamExists
 from redengine.parameters import Private
 
 from threading import Thread
-import requests
 import time, os, logging
 
 from dateutil.tz import tzlocal
@@ -35,16 +33,22 @@ def scheduler(tmpdir, session):
 
 @pytest.fixture
 def api_port(tmpdir, session):
+    pytest.importorskip("flask")
     return 12700
 
 @pytest.fixture
 def api_task(api_port, session):
+    pytest.importorskip("flask")
+    from redengine.tasks.api.http import HTTPConnection
+
     session.config["http_api_host"] = '127.0.0.1'
     session.config["http_api_port"] = api_port # Just a random port
     return HTTPConnection(force_run=True)
 
 @pytest.fixture
 def client(tmpdir, api_task):
+    pytest.importorskip("flask")
+
     app = api_task.create_app()
     #db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
     app.config['TESTING'] = True
