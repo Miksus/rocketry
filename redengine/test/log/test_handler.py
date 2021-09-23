@@ -210,6 +210,27 @@ class TestMongoHandler(HandlerTestBase):
         assert 1629113147 < record["created"]
         assert record["exc_text"] is None
 
+    @pytest.mark.parametrize("from_", ['connection string', "collection", "collection (posarg)"])
+    def test_construct(self, mongo_conn_str, handler, logger, from_, collection):
+        if from_ == 'connection string':
+            col_name = collection.name
+            db_name = collection.database.name
+            handler = MongoHandler(client=mongo_conn_str, database=db_name, collection=col_name)
+        elif from_ == "collection":
+            handler = MongoHandler(collection=collection)
+        elif from_ == "collection (posarg)":
+            handler = MongoHandler(collection)
+        else:
+            raise ValueError(from_)
+
+        #handler.collection.delete_many({})
+        logger.info("a log")
+
+        record = handler.col_object.find_one()
+        assert "a log" == record["msg"]
+        assert 1629113147 < record["created"]
+        assert record["exc_text"] is None
+
     def test_exception(self, collection, handler, logger):
         try:
             raise RuntimeError("Deliberate failure")

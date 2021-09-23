@@ -142,21 +142,27 @@ def mock_pydatetime(mock_time, mock_datetime_now):
         mock_datetime_now(dt)
     return wrapper
 
-
+# Mongo Database
 @pytest.fixture(scope="function")
-def collection(request):
+def mongo_conn_str():
     pytest.importorskip("pymongo")
-    db_name = "pytest"
-    col_name = get_node_id(request)
-    
-    import pymongo
     import yaml
     with open("redengine/test/private.yaml", 'r') as f:
         conf = yaml.safe_load(f)
-    conn_str = conf["mongodb"]["conn_str"]
-    client = pymongo.MongoClient(conn_str)
+    return conf["mongodb"]["conn_str"]
 
-    collection = client[db_name][col_name]
+@pytest.fixture(scope="function")
+def mongo_client(mongo_conn_str):
+    import pymongo
+    return pymongo.MongoClient(mongo_conn_str)
+
+@pytest.fixture(scope="function")
+def collection(request, mongo_client):
+    
+    db_name = "pytest"
+    col_name = get_node_id(request)
+
+    collection = mongo_client[db_name][col_name]
 
     # Empty the collection
     collection.delete_many({})
