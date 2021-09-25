@@ -1,4 +1,5 @@
 
+from abc import abstractmethod
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from redengine.core.log import TaskAdapter
 from redengine.core.utils import is_pickleable
@@ -472,6 +473,7 @@ class Task(metaclass=_TaskMeta):
     def _run_as_thread(self, params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
+
         self.log_running()
         event.set()
         # Adding the _thread_terminate as param so the task can
@@ -551,14 +553,13 @@ class Task(metaclass=_TaskMeta):
             if return_queue:
                 return_queue.put((self.name, output))
 
-    def get_extra_params(self, params) -> Parameters:
+    def get_extra_params(self, params:Parameters) -> Parameters:
         """Get additional parameters from
         the session and extra for meta tasks
         including the task itself, session 
         and the thread terminate event.
         These parameters may or may not be used
         by the task.
-
 
         Included parameters:
 
@@ -579,8 +580,24 @@ class Task(metaclass=_TaskMeta):
         return Parameters(self.prefilter_params(session_params | passed_params | extra_params))# | task_params
 
     def prefilter_params(self, params:Parameters):
-        """Filter the parameters before passing them to the processes or threads
-        if parallerized"""
+        """Pre filter the parameters.
+        
+        This method filters the task parameters before 
+        a thread or a process is created. This method 
+        always called in the main process and in the 
+        main thread. Therefore, one can filter here the 
+        parameters that are problematic to pass to a 
+        thread or process. 
+
+        Parameters
+        ----------
+        params : redengine.core.Parameters
+
+        Returns
+        -------
+        Parameters : dict, redengine.core.Parameters
+            Filtered parameters.
+        """
         sig = inspect.signature(self.execute)
         kw_args = [
             val.name
@@ -596,16 +613,34 @@ class Task(metaclass=_TaskMeta):
         }
 
     def postfilter_params(self, params:Parameters):
-        """Filter the parameters after passing them to the processes or threads
-        if parallerized"""
+        """Post filter the parameters.
+        
+        This method filters the task parameters after 
+        a thread or a process is created. This method 
+        called in the child process, if ``execution='process'``, 
+        or in the child thread ``execution='thread'``.
+        For ``execution='main'``, overriding this method
+        does not have much impact over overriding 
+        ``prefilter_params``.
+
+        Parameters
+        ----------
+        params : redengine.core.Parameters
+
+        Returns
+        -------
+        Parameters : dict, redengine.core.Parameters
+            Filtered parameters.
+        """
         return params
 
+    @abstractmethod
     def execute(self, *args, **kwargs):
         """Run the actual task. Override this.
         
-        Parameters are materialized to the positional and
-        keyword arguments."""
-        raise NotImplementedError(f"Method 'execute' not implemented to {type(self)}")
+        Parameters are materialized to keyword arguments.
+        """
+        raise NotImplementedError(f"Method 'execute' not implemented to {type(self)}.")
 
     def process_failure(self, exception):
         """This method is executed after a failure of the task. 

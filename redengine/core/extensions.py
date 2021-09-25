@@ -29,14 +29,24 @@ class _ExtensionMeta(type):
         return cls
 
 class BaseExtension(metaclass=_ExtensionMeta):
-    """ Base for all extensions that are registered
+    """Base for all extensions that are registered
     to the sessions and are parsable in configs.
 
-    Extension is an external class that extends the
-    existing behaviour of Redengine but does not 
-    much interfer with it by default. They are also
-    stored if one needs to access them on scheduler
-    run time.
+    An extension is an external components that 
+    extends the existing behaviour of Red Engine.
+    They are stored in the session objects so 
+    that they are accessible from other extensions
+    and tasks.
+    
+    An extension could be:
+    
+        - A pipeline: adds conditions to all given tasks 
+          so that they are executed one after another.
+        - A task group: so that some attributes of a 
+          set of tasks can be changed at once. 
+        - Named resources: sets additional parameters to
+          given tasks.
+
 
     Warnings
     ---------
@@ -51,6 +61,17 @@ class BaseExtension(metaclass=_ExtensionMeta):
     session : redengine.Session
         Session object for which the extension is for.
 
+    Notes
+    -----
+    Red Engine also has hooks that are simpler way to extend
+    the framework.
+
+    List of hooks:
+
+        - redengine.core.Task.hook_init
+        - redengine.core.Scheduler.hook_startup
+        - redengine.core.Scheduler.hook_cycle
+        - redengine.core.Scheduler.hook_shutdown
 
     Examples
     --------
@@ -76,6 +97,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
     ... })
     >>> session.extensions
     {'myextensions': {'my_instance': MyExtension('hat')}}
+
     """
     session: 'Session'
     __parsekey__: str
@@ -97,7 +119,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
         """This is executed when the extension instance 
         is parsed/created.
 
-        Override for custom extension logic in parse time.
+        Override for custom logic in parse time.
         """
 
     @classmethod
@@ -116,5 +138,5 @@ class BaseExtension(metaclass=_ExtensionMeta):
     def delete(self):
         """Delete the extension from the session.
         
-        Override for custom extension deletion logic."""
+        Override for custom deletion logic."""
         del self.session.extensions[self.__parsekey__][self.name]

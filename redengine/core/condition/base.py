@@ -24,17 +24,22 @@ class _ConditionMeta(type):
 
 
 class BaseCondition(metaclass=_ConditionMeta):
-    """Condition is a thing/occurence that should happen in order to something happen
+    """A condition is a thing/occurence that should happen in 
+    order to something happen.
 
-    In scheduler's point of view the occurence/thing could be:
-        - A job must be run
-        - Current time of day should be afternoon
-        - Must have enough RAM
-    And the thing to happen when the condition is true could be:
-        - Task is run
-        - Task is killed
-        - Scheduler is killed
-        - Scheduler is maintained
+    Conditions are used to determine whether a task can be started,
+    a task should be terminated or the scheduler should shut 
+    down. Conditions are either true or false.
+
+    A condition could answer for any of the following questions:
+        - Current time is as specified (ie. Monday afternoon).
+        - A given task has already run.
+        - The machine has at least a given amount of RAM.
+        - A specific file exists.
+
+    Each condition should have the method ``__bool__`` specified
+    as minimum. This method should return ``True`` or ``False``
+    depending on whether the condition holds or does not hold.  
 
     Examples
     --------
@@ -76,8 +81,9 @@ class BaseCondition(metaclass=_ConditionMeta):
     __register__ = False
 
     @abstractmethod
-    def __bool__(self):
-        pass
+    def __bool__(self) -> bool:
+        """Check whether the condition holds.
+        Override this method."""
 
     def __and__(self, other):
         # self & other
@@ -106,7 +112,7 @@ class BaseCondition(metaclass=_ConditionMeta):
         if hasattr(self, "_str"):
             return self._str
         else:
-            raise AttributeError
+            raise AttributeError(f"Condition {type(self)} is missing __str__.")
 
 
 class _ConditionContainer:

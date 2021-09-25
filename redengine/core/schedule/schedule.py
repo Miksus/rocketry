@@ -283,8 +283,8 @@ class Scheduler:
         run_duration = datetime.datetime.fromtimestamp(time.time()) - task.last_run
         return run_duration > timeout
 
-    def is_task_runnable(self, task):
-        """Whether the task should be run."""
+    def is_task_runnable(self, task:Task):
+        """Inspect whether the task should be run."""
         #! TODO: Can this be put to the Task?
         if task.execution == "process":
             is_not_running = not task.is_alive()
