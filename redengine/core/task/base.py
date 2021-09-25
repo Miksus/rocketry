@@ -10,6 +10,7 @@ from .utils import get_execution, get_dependencies
 from redengine.conditions import DependSuccess
 from redengine.core.parameters import Parameters
 from redengine.core.meta import _register
+from redengine.core.hook import _Hooker
 
 import os, time
 import platform
@@ -204,6 +205,9 @@ class Task(metaclass=_TaskMeta):
                 on_startup=False, on_shutdown=False,
                 on_exists=None):
 
+        hooker = _Hooker(self.init_hooks)
+        hooker.prerun(self)
+
         self.session = self.session if session is None else session
 
         self.set_name(name, on_exists=on_exists)
@@ -255,6 +259,9 @@ class Task(metaclass=_TaskMeta):
         self._last_success = self._get_last_action_from_log("success")
         self._last_fail = self._get_last_action_from_log("fail")
         self._last_terminate = self._get_last_action_from_log("terminate")
+
+        # Hooks
+        hooker.postrun()
 
     @property
     def start_cond(self):
@@ -917,6 +924,68 @@ class Task(metaclass=_TaskMeta):
     def lock(self):
         #! TODO: Is this needed?
         return self._lock
+
+# Hooks
+    init_hooks = []
+
+    @classmethod
+    def hook_init(cls, func:Callable) -> Callable:
+        """Hook task initiation (:class:`Task.__init__ <redengine.core.Task>`)
+        with a custom function or generator.
+        
+        Examples
+        --------
+
+        .. testcode::
+            :hide:
+
+            cleanup()
+
+        .. doctest::
+
+            >>> from redengine.core import Task
+            >>> @Task.hook_init
+            ... def do_things(task):
+            ...     "This is executed when any task of any type is created"
+            ...     print("Init hook was executed.")
+
+            >>> from redengine.tasks import FuncTask
+            >>> mytask = FuncTask(lambda: None)
+            Init hook was executed.
+
+        .. testcode::
+            :hide:
+            
+            cleanup()
+
+        .. doctest::
+
+            >>> from redengine.core import Task
+            >>> @Task.hook_init
+            ... def do_things(task):
+            ...     "This is executed when any task of any type is created"
+            ...     print("Task's __init__ is called.")
+            ...     # Note that we are missing some attributes like 'task.name'
+            ...     # as those are not yet set.
+            ...
+            ...     yield
+            ...
+            ...     # Now we have everything that is set in Task.__init__
+            ...     print("Task's __init__ is completed.")
+
+            >>> from redengine.tasks import FuncTask
+            >>> mytask = FuncTask(lambda: None)
+            Task's __init__ is called.
+            Task's __init__ is completed.
+
+
+        .. testcode::
+            :hide:
+            
+            cleanup()
+        """
+        cls.init_hooks.append(func)
+        return func
 
 # Other
     @property

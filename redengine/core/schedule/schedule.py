@@ -4,7 +4,7 @@
 from multiprocessing import Process, cpu_count
 import multiprocessing
 from redengine.core.condition.base import BaseCondition
-from typing import List, Optional
+from typing import Callable, List, Optional
 # from redengine.tasks.maintain.os import ShutDown
 import threading
 
@@ -30,7 +30,7 @@ from redengine.core.exceptions import SchedulerRestart, SchedulerExit
 from redengine.core.utils import is_pickleable
 from redengine.core.condition import set_statement_defaults, AlwaysFalse
 from redengine.core.parameters import Parameters
-
+from redengine.core.hook import _Hooker
 
 class Scheduler:
     """Multiprocessing scheduler
@@ -178,6 +178,10 @@ class Scheduler:
         """Run a cycle of tasks."""
         tasks = self.tasks
         self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
+        # Running hooks
+        hooker = _Hooker(self.cycle_hooks)
+        hooker.prerun(self)
+
         for task in tasks:
             with task.lock:
                 self.handle_logs()
@@ -197,6 +201,9 @@ class Scheduler:
                     # Terminate the task
                     self.terminate_task(task)
 
+        # Running hooks
+        hooker.postrun()
+        
         self.n_cycles += 1
 
     def run_task(self, task:Task, *args, extra_params=None, **kwargs):
@@ -370,7 +377,8 @@ class Scheduler:
     def _setup(self):
         """Set up the scheduler."""
         #self.setup_listener()
-        self.logger.info(f"Setting up...", extra={"action": "setup"})
+        hooker = _Hooker(self.startup_hooks)
+        hooker.prerun(self)
 
         self.n_cycles = 0
         self.startup_time = datetime.datetime.now()
@@ -385,6 +393,7 @@ class Scheduler:
                 if self.is_task_runnable(task):
                     self.run_task(task)
 
+        hooker.postrun()
         self.logger.info(f"Setup complete.")
 
     def has_free_processors(self) -> bool:
@@ -406,7 +415,6 @@ class Scheduler:
         set_statement_defaults(cond, _scheduler_=self)
         self._shut_cond = cond
         
-
     def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         wait_for_finish = not self.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
@@ -454,6 +462,9 @@ class Scheduler:
         """
         
         self.logger.info(f"Beginning shutdown sequence...")
+        hooker = _Hooker(self.shutdown_hooks)
+        hooker.prerun(self)
+
         # Make sure the tasks run if start_cond not set
         for task in self.tasks:
             if task.on_shutdown:
@@ -468,6 +479,9 @@ class Scheduler:
         self.logger.info(f"Shutting down tasks...")
         self._shut_down_tasks(traceback, exception)
         self.wait_task_alive() # Wait till all tasks' threads and processes are dead
+
+        # Running hooks
+        hooker.postrun()
 
         self.is_alive = False
         self.logger.info(f"Shutdown completed. Good bye.")
@@ -564,3 +578,85 @@ class Scheduler:
         tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
         tb_string = ''.join(tb)
         self.logger.debug(f"Task {task} failed: \n{tb_string}")
+
+# Hooks
+    startup_hooks = []
+    shutdown_hooks = []
+    cycle_hooks = []
+
+    @classmethod
+    def hook_startup(cls, func:Callable):
+        """Hook scheduler startup (:func:`Scheduler.startup <redengine.core.Scheduler.startup>`)
+        with a custom function or generator.
+        
+        Examples
+        --------
+
+        .. doctest::
+
+            >>> from redengine.core import Scheduler
+            >>> @Scheduler.hook_startup
+            ... def do_things(scheduler):
+            ...     print("Scheduler is starting up.")
+
+
+        .. doctest::
+
+            >>> from redengine.core import Scheduler
+            >>> @Scheduler.hook_startup
+            ... def do_things(scheduler):
+            ...     print("Scheduler is starting up.")
+            ...     yield
+            ...     print("Scheduler started up.")
+
+        """
+        cls.startup_hooks.append(func)
+        return func
+
+    @classmethod
+    def hook_shutdown(cls, func:Callable):
+        """Hook scheduler shutdown (:func:`Scheduler.shut_down <redengine.core.Scheduler.shut_down>`)
+        with a custom function or generator.
+        
+        Examples
+        --------
+
+        >>> from redengine.core import Scheduler
+        >>> @Scheduler.hook_shutdown  # doctest: +SKIP
+        ... def do_things(scheduler):
+        ...     print("Scheduler is shutting down.")
+
+        >>> from redengine.core import Scheduler
+        >>> @Scheduler.hook_shutdown  # doctest: +SKIP
+        ... def do_things(scheduler):
+        ...     print("Scheduler is shutting down.")
+        ...     yield
+        ...     print("Scheduler is shut down.")
+
+        """
+        cls.shutdown_hooks.append(func)
+        return func
+
+    @classmethod
+    def hook_cycle(cls, func:Callable):
+        """Hook scheduler shutdown (:func:`Scheduler.run_cycle <redengine.core.Scheduler.run_cycle>`)
+        with a custom function or generator.
+        
+        Examples
+        --------
+
+        >>> from redengine.core import Scheduler
+        >>> @Scheduler.hook_cycle  # doctest: +SKIP
+        ... def do_things(scheduler):
+        ...     print("Scheduler is starting a cycle.")
+
+        >>> from redengine.core import Scheduler
+        >>> @Scheduler.hook_cycle  # doctest: +SKIP
+        ... def do_things(scheduler):
+        ...     print("Scheduler is starting a cycle.")
+        ...     yield
+        ...     print("Scheduler finished a cycle.")
+
+        """
+        cls.cycle_hooks.append(func)
+        return func
