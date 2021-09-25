@@ -1,24 +1,32 @@
 
-from werkzeug.serving import make_server
 
-from flask import Blueprint, render_template, abort, request, jsonify, Flask
-from flask.json import JSONEncoder
-import jwt
 
 from redengine.parse import parse_task
 from redengine.core import Task, Parameters
+from redengine._pkg import raise_for_missing_imports
 
 from redengine.pybox.network import get_ip
-from .routes import rest_api
-from .models import RedengineJSONEncoder
+
 
 from threading import Thread
 import time
 import platform
-import requests
 import pandas as pd
-from .utils import check_route_access
 
+try:
+    # optional dependencies
+    from werkzeug.serving import make_server
+    from flask import Blueprint, render_template, abort, request, jsonify, Flask
+    from flask.json import JSONEncoder
+    import jwt
+    import requests
+except ImportError:
+    pass
+else:
+    # If optional found, we can import rest required
+    from .routes import rest_api
+    from .models import RedengineJSONEncoder
+    from .utils import check_route_access
 
 class HTTPConnection(Task):
     """HTTP Rest API for a scheduler runtime communication
@@ -42,6 +50,8 @@ class HTTPConnection(Task):
     permanent_task = True
 
     def __init__(self, delay="1 second", **kwargs):
+        raise_for_missing_imports("werkzeug", "flask", "jwt", "requests")
+
         super().__init__(**kwargs)
         self.execution = "thread"
         self.delay = pd.Timedelta(delay).total_seconds()
