@@ -139,14 +139,14 @@ class Scheduler:
         self.is_alive = True
         exception = None
         try:
-            self._setup()
+            self.startup()
 
             while not bool(self.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
 
                 self._hibernate()
-                self._run_cycle()
+                self.run_cycle()
 
                 # self.maintain()
         except SystemExit as exc:
@@ -172,12 +172,21 @@ class Scheduler:
         else:
             self.logger.info('Purpose completed. Shutting down...', extra={"action": "shutdown"})
         finally:
-            self._shut_down(exception=exception)
+            self.shut_down(exception=exception)
 
-    def _run_cycle(self):
-        """Run a cycle of tasks."""
+    def run_cycle(self):
+        """Run one round of tasks.
+        
+        Each task is inspected and in case their starting condition
+        is fulfilled, they are run.  A task can be running once at 
+        any given time (in other words, multiple paraller execution 
+        of a single task is not supported at the moment). Tasks that 
+        are running but their termination condition is fulfilled are 
+        terminated.
+        """
         tasks = self.tasks
-        self.logger.debug(f"Beginning cycle. Running {len(tasks)} tasks...", extra={"action": "run"})
+        self.logger.debug(f"Beginning cycle with {len(tasks)} tasks...", extra={"action": "run"})
+
         # Running hooks
         hooker = _Hooker(self.cycle_hooks)
         hooker.prerun(self)
@@ -206,7 +215,7 @@ class Scheduler:
         
         self.n_cycles += 1
 
-    def run_task(self, task:Task, *args, extra_params=None, **kwargs):
+    def run_task(self, task:Task, *args, **kwargs):
         """Run a given task"""
         start_time = datetime.datetime.fromtimestamp(time.time())
 
@@ -301,8 +310,8 @@ class Scheduler:
         else:
             raise NotImplementedError(task.execution)
 
-    def is_out_of_condition(self, task):
-        """Whether the task should be terminated."""
+    def is_out_of_condition(self, task:Task):
+        """Inspect whether the task should be terminated."""
         #! TODO: Can this be put to the Task?
         if not task.is_alive():
             # NOTE:
@@ -316,7 +325,7 @@ class Scheduler:
         else:
             return bool(task.end_cond) or not bool(task.run_cond)
             
-    def handle_logs(self, timeout=0.01):
+    def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
         queue = self._log_queue
@@ -374,9 +383,13 @@ class Scheduler:
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
 
-    def _setup(self):
-        """Set up the scheduler."""
+    def startup(self):
+        """Start up the scheduler.
+        
+        Starting up includes setting up attributes and
+        running tasks that have ``on_startup`` as ``True``."""
         #self.setup_listener()
+        self.logger.info(f"Starting up...", extra={"action": "setup"})
         hooker = _Hooker(self.startup_hooks)
         hooker.prerun(self)
 
@@ -450,15 +463,20 @@ class Scheduler:
         while self.n_alive > 0:
             time.sleep(0.005)
 
-    def _shut_down(self, traceback=None, exception=None):
-        """Shut down the scheduler
-        This method is meant to controllably close the
-        scheduler in case the scheduler crashed (with 
-        Python exception) to properly inform the maintainer
-        and log the event.
-
-        Also responsible of restarting the scheduler if
-        ordered.
+    def shut_down(self, traceback=None, exception=None):
+        """Shut down the scheduler.
+        
+        Shutting down includes running tasks that have 
+        ``on_shutdown`` as ``True``, handling the 
+        shutting down of already running tasks and 
+        restarting the scheduler in case restart was
+        called.
+        
+        If non fatal exception was raised and ``instant_shutdown``
+        is ``False``, remaining running tasks are waited to finish.
+        Else all the tasks are terminated. If ``instant_shutdown``
+        is ``True``, the scheduler won't wait for the terminated 
+        tasks to finish their termination.
         """
         
         self.logger.info(f"Beginning shutdown sequence...")
@@ -478,7 +496,9 @@ class Scheduler:
 
         self.logger.info(f"Shutting down tasks...")
         self._shut_down_tasks(traceback, exception)
-        self.wait_task_alive() # Wait till all tasks' threads and processes are dead
+
+        if not self.instant_shutdown:
+            self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
         # Running hooks
         hooker.postrun()
@@ -535,7 +555,7 @@ class Scheduler:
         else:
             self._flag_enabled.set()
 
-    def shut_down(self):
+    def set_shut_down(self):
         """Shut down the scheduler. Useful to shut down the 
         scheduler in a controller task."""
         self.on_hold = False # In case was set to wait

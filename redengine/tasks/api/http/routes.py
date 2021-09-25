@@ -123,7 +123,7 @@ def shut_down():
     "Shutdown scheduler"
     # TODO: Test
     session = current_app.config["ATLAS_SESSION"]
-    session.scheduler.shut_down()
+    session.scheduler.set_shut_down()
     return ""
 
 
