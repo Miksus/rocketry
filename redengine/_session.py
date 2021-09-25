@@ -58,6 +58,7 @@ class Session:
     parameters: Parameters
     scheduler: Scheduler
 
+    cls_scheduler = Scheduler
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
@@ -98,7 +99,7 @@ class Session:
             self.delete_task_loggers()
 
         kwds_scheduler = {} if kwds_scheduler is None else kwds_scheduler
-        self.scheduler = Scheduler(session=self, **kwds_scheduler)
+        self.scheduler = self.cls_scheduler(session=self, **kwds_scheduler)
         if scheme is not None:
             is_list_of_schemes = not isinstance(scheme, str)
             if is_list_of_schemes:
