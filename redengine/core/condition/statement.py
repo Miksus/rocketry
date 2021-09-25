@@ -200,6 +200,13 @@ class Comparable(Statement):
     **kwargs : dict
         See ``Statement``.
     """
+    _comp_attrs = ("_eq_", "_ne_", "_lt_", "_gt_", "_le_", "_ge_")
+    def __init__(self, *args, **kwargs):
+        kwargs = {
+            key: int(val) if key in self._comp_attrs else val
+            for key, val in kwargs.items()
+        }
+        super().__init__(*args, **kwargs)
 
     def _to_bool(self, res):
         if isinstance(res, bool):
@@ -209,7 +216,7 @@ class Comparable(Statement):
 
         comps = {
             f"_{comp}_": self.kwargs[comp]
-            for comp in ("_eq_", "_ne_", "_lt_", "_gt_", "_le_", "_ge_")
+            for comp in self._comp_attrs
             if comp in self.kwargs
         }
         if not comps:

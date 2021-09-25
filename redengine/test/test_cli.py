@@ -30,6 +30,7 @@ def test_minimal(tmpdir):
         
         module = load_module("myproject/main.py")
         session = module.session
+        session.set_as_default()
         
         # Make almost instant shutdown
         session.scheduler.shut_cond = SchedulerCycles() == 1

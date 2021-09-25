@@ -1,4 +1,5 @@
 
+from redengine.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from redengine.parse.condition import parse_condition
 from redengine.conditions import (
     AlwaysTrue, AlwaysFalse, 
@@ -90,6 +91,13 @@ cases_task = [
     pytest.param("after task 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
 ]
 
+cases_scheduler = [
+    pytest.param("scheduler has more than 3 cycles", SchedulerCycles(_gt_=3), id="scheduler cycles greater than"),
+    pytest.param("scheduler has less than 3 cycles", SchedulerCycles(_lt_=3), id="scheduler cycles less than"),
+    pytest.param("scheduler started 20 minutes ago", SchedulerStarted(period=TimeDelta("20 minutes")), id="scheduler started in"),
+    pytest.param("scheduler has run over 20 minutes", Not(SchedulerStarted(period=TimeDelta("20 minutes"))), id="scheduler run over"),
+]
+
 for (cls, action), (str_time, period) in itertools.product(
     [
         (TaskSucceeded, "succeeded"), 
@@ -138,7 +146,7 @@ cases_misc = [
 
 
 # All cases
-cases = cases_logical + cases_task + cases_time + cases_misc
+cases = cases_logical + cases_task + cases_time + cases_misc + cases_scheduler
 
 @pytest.mark.parametrize(
     "cond_str,expected", cases

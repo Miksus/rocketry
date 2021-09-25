@@ -10,7 +10,7 @@ from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
 true = AlwaysTrue()
 false = AlwaysFalse()
 
-def _from_period_task_has(cls, span_type=None, task=None, **kwargs):
+def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
     from redengine.time.construct import get_full_cycle, get_between, get_after, get_before
     from redengine.time import TimeDelta
 
@@ -25,8 +25,15 @@ def _from_period_task_has(cls, span_type=None, task=None, **kwargs):
 
         "past": TimeDelta,
     }[span_type]
+
+    task = kwargs.pop("task", None)
     period = period_func(**kwargs)
-    return cls(task=task, period=period)
+
+    cls_kwargs = {"task": task} if task is not None else {}
+    if inverse:
+        return Not(cls(period=period, **cls_kwargs))
+    else:
+        return cls(period=period, **cls_kwargs)
 
 
 def _set_is_period_parsing():
@@ -68,5 +75,17 @@ def _set_task_has_parsing():
                 re.compile(fr"task '(?P<task>.+)' has {action} (in )?past (?P<past>.+)"): partial(func, span_type='past'),
             }
         )
+
+def _set_scheduler_parsing():
+    cls = SchedulerStarted
+    func = partial(_from_period_task_has, cls=cls)
+    PARSERS.update(
+        {
+            re.compile(fr"scheduler has run over (?P<past>.+)"): partial(func, span_type='past', inverse=True),
+            re.compile(fr"scheduler started (?P<past>.+) ago"): partial(func, span_type='past'),
+        }
+    )
+
 _set_is_period_parsing()
 _set_task_has_parsing()
+_set_scheduler_parsing()
