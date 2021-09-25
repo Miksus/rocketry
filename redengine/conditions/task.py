@@ -309,7 +309,7 @@ class TaskExecutable(Historical):
             return self._str
         task = self.kwargs["task"]
         period = self.period
-        return f"task '{task}' {self.period} "
+        return f"task '{task}' {self.period}"
 
     @classmethod
     def _from_period(cls, span_type=None, **kwargs):
