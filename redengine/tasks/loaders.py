@@ -1,4 +1,5 @@
 
+import importlib
 from typing import Union
 from redengine.core.task.base import Task
 from redengine.tasks import PyScript
@@ -12,6 +13,7 @@ from pathlib import Path
 import time
 import logging
 import re
+import os, sys
 
 class LoaderBase(Task):
     __register__ = False
@@ -41,8 +43,9 @@ class LoaderBase(Task):
     def load_items(self):
         prev_found_items = self.found_items.copy()
         self.found_items = []
-        for conf_path in Path(self.path).glob(self.glob):
-            self.load_file(conf_path)
+        root = Path(self.path)
+        for conf_path in root.glob(self.glob):
+            self.load_file(conf_path, root=root)
 
         # Delete tasks 
         deleted_items = [old_item for old_item in prev_found_items if old_item not in self.found_items]
@@ -61,7 +64,7 @@ class ContentLoader(LoaderBase):
         ".yaml": read_yaml,
     }
 
-    def load_file(self, path):
+    def load_file(self, path, root):
         conf = self.read_file(path)
         return self.parse_content(conf, path=path)
 
@@ -323,11 +326,22 @@ class PyLoader(LoaderBase):
     default_glob = '**/tasks.py'
     default_priority = 40
 
-    def load_file(self, file):
+    def load_file(self, file, root):
         extension = Path(file).suffix
         if extension != ".py":
             raise KeyError(f"No parsing for file type {file}")
-        return PyScript.get_module(file)
+        
+        root_path = str(root.absolute())
+        if root_path not in sys.path:
+            sys.path.append(root_path)
+        imp_path = self.to_import_path(file.relative_to(root))
+        importlib.import_module(imp_path)
+        pass
+        #return PyScript.get_module(file)
 
     def delete_item(self, item):
         pass
+
+    def to_import_path(self, file:Path):
+        #file = file.relative_to(root)
+        return '.'.join(file.with_suffix("").parts)

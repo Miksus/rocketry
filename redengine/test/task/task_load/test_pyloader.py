@@ -56,7 +56,7 @@ class TestTasks:
         {
             "id": "Simple task",
             "file": {
-                "path": "project/tasks.py",
+                "path": "project/pyloader_test1/tasks.py",
                 "content": """
                 from redengine.tasks import FuncTask
 
@@ -66,13 +66,13 @@ class TestTasks:
                 """,
             },
             "get_expected": lambda: [
-                FuncTask(func=lambda: "mytask", name="tasks.py:mytask", session=Session())
+                FuncTask(func=lambda: "mytask", name="pyloader_test1.tasks:mytask", session=Session())
             ]
         },
         {
             "id": "Tasks with arguments",
             "file": {
-                "path": "project/tasks.py",
+                "path": "project/pyloader_test2/tasks.py",
                 "content": """
                 from redengine.tasks import FuncTask
                 from redengine.conditions import true
@@ -118,8 +118,8 @@ class TestTasks:
                     expected_task.session = session
                     # We use convention: expected task's func should return name of the func
                     assert actual_task.func.__name__ == expected_task.func()
-                    expected_task.func = None
-                    actual_task.func = None
+                    expected_task._func = None
+                    actual_task._func = None
                     asset_task_equal(actual_task, expected_task)
             else:
                 # session is of course different, forcing the same
