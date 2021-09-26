@@ -65,5 +65,5 @@ class RedengineJSONEncoder(JSONEncoder):
         return {**attrs, **props, **extra}
 
     def format_params(self, params):
-        return params.represent()
+        return params.materialize()
 

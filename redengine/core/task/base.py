@@ -411,7 +411,7 @@ class Task(metaclass=_TaskMeta):
         status = None
         try:
             params = Parameters(params) | self.parameters
-            params = params.materialize()
+            params = params.materialize(task=self)
 
             output = self.execute(**params)
 
@@ -462,6 +462,9 @@ class Task(metaclass=_TaskMeta):
 
     def run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
+
+        params = params.pre_materialize(task=self)
+
         self.thread_terminate.clear()
 
         event_is_running = threading.Event()
@@ -490,6 +493,8 @@ class Task(metaclass=_TaskMeta):
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
+
+        params = params.pre_materialize(task=self)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         log_queue = self.session.scheduler._log_queue #multiprocessing.Queue(-1)
@@ -577,7 +582,9 @@ class Task(metaclass=_TaskMeta):
         #task_params = Parameters(self.parameters)
         extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
 
-        return Parameters(self.prefilter_params(session_params | passed_params | extra_params))# | task_params
+        params = Parameters(self.prefilter_params(session_params | passed_params | extra_params))
+
+        return params
 
     def prefilter_params(self, params:Parameters):
         """Pre filter the parameters.

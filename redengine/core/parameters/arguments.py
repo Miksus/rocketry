@@ -1,29 +1,91 @@
 
+from typing import Any, TYPE_CHECKING
+from abc import abstractmethod
 
-class Argument:
-    "Argument is one parameter for a task that may or may not be materialized"
-    def __init__(self, value):
-        self._value = value
+if TYPE_CHECKING:
+    import redengine
+
+class BaseArgument:
+    """Base class for Arguments.
     
-    def get_value(self):
-        return self._value
+    Argument is a wrapper for value that can be 
+    passed to a task. The value can be formulated
+    on the fly or it can be a constant variable.
 
-    def get_repr(self):
-        "Get representation of the value"
-        return self._value
+    Examples
+    --------
+
+    Minimum example:
+
+    >>> from redengine.core import BaseArgument
+    >>> class MyArgument(BaseArgument):
+    ...     def __init__(self, value):
+    ...         self.value = value
+    ...
+    ...     def get_value(self):
+    ...         value = self.value
+    ...         ... # Code that forms the argument value
+    ...         return value
+    ...
+    >>> from redengine.core import Parameters
+    >>> Parameters(myarg=MyArgument("value"))
+    Parameters(myarg=MyArgument('value'))
+
+    """
+    
+    @abstractmethod
+    def get_value(self, task:'redengine.core.Task'=None) -> Any:
+        """Get the actual value of the argument.
+        Override for custom behaviour.
+
+        Parameters
+        ----------
+        task : redengine.core.Task, optional
+            Task that requested the value of the argument.
+        """
+
+    def stage(self, task:'redengine.core.Task'=None) -> 'BaseArgument':
+        """Get (a copy of) the argument with a 
+        value that can be passed to child threads
+        or processes. Override for custom behaviour.
+
+        Example use cases:
+
+            - Save a complex object to disk and read 
+              it again later with ``get_value``.
+            - Shut a file buffer and reopen it when
+              in the child process/thread.
+            - Remove non-picklable attributes.
+
+        Parameters
+        ----------
+        task : redengine.core.Task, optional
+            Task that requested the value of the argument.
+
+        Notes
+        -----
+        It is advisable to copy the argument in order
+        not to interfere with the passing of the argument
+        in later situations.
+
+        Returns
+        -------
+        BaseArgument
+            Argument that is ready to be passed to a child
+            thread or process.
+        """
+        return self
 
     def __eq__(self, other):
-        if isinstance(other, Argument):
-            return self._value == other._value
+        if isinstance(other, BaseArgument):
+            return self.get_value() == other.get_value()
         else:
-            return self._value == other
+            return self.get_value() == other
 
-class Private(Argument):
-    "Argument that is not meant to be shown outside usage"
+    def __repr__(self):
+        cls_name = type(self).__name__
+        return f'{cls_name}({repr(self.get_value())})'
 
-    def get_repr(self):
-        # We override the repr with dummy
-        return "*****"
+    def __str__(self):
+        return str(self.get_value())
 
-    def get_value(self):
-        return self._value

@@ -5,7 +5,6 @@ import pytest
 
 from redengine import Scheduler
 from redengine.core import Parameters
-from redengine.parameters import Private
 
 from threading import Thread
 import time, os, logging

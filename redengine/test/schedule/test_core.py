@@ -1,13 +1,12 @@
 
 import redengine
 from redengine import Session
-from redengine.core import Scheduler
+from redengine.core import Scheduler, Task, Parameters
 from redengine.tasks import FuncTask
 from redengine.time import TimeDelta
-from redengine.core.task.base import Task
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from redengine.parameters import Parameters, Private
+from redengine.arguments import Private
 
 import pytest
 import pandas as pd

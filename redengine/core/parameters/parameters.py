@@ -1,23 +1,38 @@
 
 
 from collections.abc import Mapping
-from .arguments import Argument
+from typing import Callable, Type, Union, TYPE_CHECKING
+from functools import partial
+
+from .arguments import BaseArgument
 from redengine.core.utils import is_pickleable
 from redengine.pybox.io import read_yaml
 
-class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
+if TYPE_CHECKING:
+    import redengine
 
+class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
     """Parameter set for tasks.
 
-    Parameter set is a mapping (similar as dictionary).
+    Parameter set is a mapping (like dictionary).
     The parameter set materializes the arguments so that
-    those can be inputted to the tasks.
+    those can be passed to the tasks.
+
+    Parameters
+    ----------
+    _param : dict, Parameters, optional
+        Arguments.
+    type_ : Type, optional
+        Type of Argument the keyword arguments are
+        turned into.
+    **params : dict
+        Arguments.
     """
-    #! TODO: Do we need extra class for Parameters?
 
     _params: dict
+    session: 'redengine.Session'
 
-    def __init__(self, _param:dict=None, type_=None, **params):
+    def __init__(self, _param:Union[dict, 'Parameters']=None, type_:Type[BaseArgument]=None, **params):
         if _param is not None:
             # We get original values if _param has Private or other arguments that are 
             # hidden
@@ -47,30 +62,32 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def __getitem__(self, item):
         "Materializes the parameters and hide private"
         value = self._params[item]
-        return value if not isinstance(value, Argument) else value.get_repr()
+        return value if not isinstance(value, BaseArgument) else value.get_value()
 
-    def materialize(self):
-        """Materialize the parameters and include private
-        Should only be used when absolute necessary (by 
-        the task)
+    def pre_materialize(self, *args, **kwargs):
+        """Turn arguments to their values before passed
+        to child processes/threads. 
+        """
+        self._params = {
+            key: 
+                value 
+                if not isinstance(value, BaseArgument)
+                else value.stage(*args, **kwargs)
+            for key, value in self._params.items()
+        }
+        return self
+
+    def materialize(self, *args, **kwargs):
+        """Turn arguments to their values (after passed
+        to child processes/threads). These should be their
+        final values.
         """
         
         return {
             key: 
                 value 
-                if not isinstance(value, Argument) 
-                else value.get_value()
-            for key, value in self._params.items()
-        }
-
-    def represent(self):
-        """Materialize the parameters but hide private
-        """
-        return {
-            key: 
-                value 
-                if not isinstance(value, Argument) 
-                else value.get_repr()
+                if not isinstance(value, BaseArgument) 
+                else value.get_value(*args, **kwargs)
             for key, value in self._params.items()
         }
 
@@ -81,6 +98,11 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def update(self, params):
         params = params._params if isinstance(params, Parameters) else params
         self._params.update(params)
+
+    def __repr__(self):
+        cls_name = type(self).__name__
+        params = ', '.join(f'{name}={repr(arg)}' for name, arg in self._params.items())
+        return f'{cls_name}({params})'
 
     def __or__(self, other):
         "| operator is union"
@@ -122,6 +144,9 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
 
     def items(self):
         return self._params.items()
+
+    def keys(self):
+        return self._params.keys()
 
     def clear(self):
         "Empty the parameters"

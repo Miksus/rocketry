@@ -7,7 +7,6 @@ from threading import Thread
 import pytest
 
 from redengine.tasks import FuncTask
-from redengine.parameters import Parameters, Private
 
 try:
     from redengine.tasks.api.http import HTTPConnection

@@ -11,7 +11,6 @@ from redengine.time import TimeDelta
 from redengine.core.task.base import Task
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from redengine.parameters import Parameters, Private
 
 import pytest
 import pandas as pd

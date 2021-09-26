@@ -6,7 +6,6 @@ import pytest
 from redengine.tasks import FuncTask
 from redengine import Scheduler, session
 from redengine.core import Parameters
-from redengine.parameters import Private
 
 from threading import Thread
 import time, os, logging

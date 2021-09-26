@@ -1,7 +1,5 @@
 
-
-from redengine.core import Parameters
-from redengine.parameters import Private
+from redengine.arguments import Private
 
 from redengine import Scheduler
 from redengine.tasks import FuncTask
