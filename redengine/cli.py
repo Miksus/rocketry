@@ -1,4 +1,5 @@
 import argparse
+import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -11,11 +12,32 @@ TEMPLATE_DIR = PKG_ROOT / "templates"
 
 TEMPLATE_OPTIONS = [folder.name for folder in TEMPLATE_DIR.glob("*/")]
 
+def render(cont:str, variables:dict):
+    for repl, val in variables.items():
+        cont = cont.replace(repl, val)
+    return cont
+
 def start_project(target, template):
+    target = Path(target)
     source = TEMPLATE_DIR / template
     if not source.is_dir():
         raise OSError(f"Template '{template}' does not exists. Full list: {TEMPLATE_OPTIONS}")
-    copy_tree(str(source), str(target))
+    if target.is_dir():
+        raise OSError(f"Target already exists.")
+
+    variables = {
+        "<TARGET>": target.name,
+        "<TIMENOW>": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    for file in source.glob("**/*.*"):
+        new_file = target / file.relative_to(source)
+        new_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(new_file, "w") as tgt:
+            with open(file, "r") as src:
+                content = src.read()
+                content = render(content, variables=variables)
+                tgt.write(content)
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(prog='Redengine', description="Scheduling framework.")
