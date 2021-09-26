@@ -121,7 +121,11 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
         kwargs = filter_keyword_args(_func, session=self.session)
         arg = FuncArg(_func, **kwargs)
         self[key] = arg
-        return arg
+
+        # NOTE, we return the func for not to anger the picking
+        # gods. We are in deep shit with subprocesses otherwise.
+        # See: https://bugs.python.org/issue1121475
+        return _func
 
     def __repr__(self):
         cls_name = type(self).__name__
