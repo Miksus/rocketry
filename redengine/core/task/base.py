@@ -60,6 +60,9 @@ class Task(metaclass=_TaskMeta):
         should have unique name. If None, the
         return value of Task.get_default_name() 
         is used instead.
+    description : str, optional
+        Description of the task. This is purely
+        for task documentation purpose.
     start_cond : BaseCondition, optional
         Condition that when True the task
         is to be started, by default AlwaysFalse()
@@ -201,7 +204,7 @@ class Task(metaclass=_TaskMeta):
                 start_cond=None, run_cond=None, end_cond=None, 
                 dependent=None, timeout=None, priority=None, 
                 on_success=None, on_failure=None, on_finish=None, 
-                name=None, logger=None, daemon=None,
+                name=None, description=None, logger=None, daemon=None,
                 execution="process", disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False,
                 on_exists=None):
@@ -212,6 +215,7 @@ class Task(metaclass=_TaskMeta):
         self.session = self.session if session is None else session
 
         self.set_name(name, on_exists=on_exists)
+        self.description = description
         self.logger = logger
         
         self.status = None
