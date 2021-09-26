@@ -11,6 +11,8 @@ import importlib
 import subprocess
 import re
 
+from functools import partial
+
 
 class FuncTask(Task):
     """Task that executes a function or callable.
@@ -27,9 +29,18 @@ class FuncTask(Task):
     """
     func: Callable
 
-    def __init__(self, func, **kwargs):
+    def __init__(self, func=None, **kwargs):
         self.func = func
         super().__init__(**kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.func is None:
+            # Called as decorator, finishing up setting 
+            # the task
+            self.func = args[0]
+            return self
+        else:
+            return super().__call__(*args, **kwargs)
 
     def execute(self, **kwargs):
         "Run the actual, given, task"
