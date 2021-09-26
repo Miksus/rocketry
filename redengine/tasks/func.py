@@ -26,19 +26,59 @@ class FuncTask(Task):
     **kwargs : dict
         See :py:class:`redengine.core.Task`
 
+
+    Examples
+    --------
+
+    **Via decorator:**
+
+    >>> from redengine.tasks import FuncTask
+    >>> @FuncTask(name='my-func-task', start_cond="daily")
+    ... def myfunc():
+    ...     ...
+
+    If the ``name`` is not defined, the name will be in form
+    ``path.to.module:myfunc``.
+
+    Note that ``FuncTask`` with defaults can also be 
+    initiated with simply: 
+
+    >>> from redengine.tasks import FuncTask
+    >>> @FuncTask
+    ... def myfunc():
+    ...     ...
+
+    However, if initiated this way, the task cannot be parallerized 
+    to child processes (``execution='process'``) due to constrains in 
+    pickling.
     """
     func: Callable
 
     def __init__(self, func=None, **kwargs):
+        if func is None:
+            # FuncTask was probably called like:
+            # @FuncTask(...)
+            # def myfunc(...): ...
+
+            # We initiate the class lazily by creating
+            # almost empty shell class that is populated
+            # in next __call__ (which should occur immediately)
+            self._delayed_kwargs = kwargs
+            return 
         self.func = func
         super().__init__(**kwargs)
 
     def __call__(self, *args, **kwargs):
-        if self.func is None:
-            # Called as decorator, finishing up setting 
-            # the task
-            self.func = args[0]
-            return self
+        if not hasattr(self, "_func"):
+            func = args[0]
+            self.func = func
+            super().__init__(**self._delayed_kwargs)
+            del self._delayed_kwargs
+
+            # Note that we must return the function or 
+            # we are in deep shit with multiprocessing
+            # (or pickling the function).
+            return func
         else:
             return super().__call__(*args, **kwargs)
 
@@ -119,4 +159,7 @@ class FuncTask(Task):
             # Should be in form 'mypackage.mymodule:myfunc'
             module = importlib.import_module(import_name)
             func = getattr(module, func_name)
+
+        if not callable(func):
+            raise TypeError(f"FuncTask's function must be callable. Got: {type(func)}")
         self._func = func
