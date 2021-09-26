@@ -27,6 +27,11 @@ from task_helpers import wait_till_task_finish
             "fail", 
             RuntimeError,
             id="Failure"),
+        pytest.param(
+            "scripts/syntax_error_script.py", 
+            "fail", 
+            SyntaxError,
+            id="Import failure"),
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):

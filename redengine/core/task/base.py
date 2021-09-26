@@ -355,7 +355,6 @@ class Task(metaclass=_TaskMeta):
         params = self.get_extra_params(params)
         # Run the actual task
         if self.execution == "main":
-            params = self.postfilter_params(params)
             self.run_as_main(params=params, **kwargs)
             if _IS_WINDOWS:
                 #! TODO: This probably is now solved
@@ -410,6 +409,7 @@ class Task(metaclass=_TaskMeta):
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
         try:
+            params = self.postfilter_params(params)
             params = Parameters(params) | self.parameters
             params = params.materialize(task=self)
 
@@ -544,7 +544,6 @@ class Task(metaclass=_TaskMeta):
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
 
-        params = self.postfilter_params(params)
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task

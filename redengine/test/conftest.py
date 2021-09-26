@@ -67,6 +67,7 @@ def script_files(tmpdir):
     copy_file_to_tmpdir(tmpdir, source_file="failing_script.py", target_path="scripts/failing_script.py")
     copy_file_to_tmpdir(tmpdir, source_file="parameterized_script.py", target_path="scripts/parameterized_script.py")
     copy_file_to_tmpdir(tmpdir, source_file="parameterized_kwargs_script.py", target_path="scripts/parameterized_kwargs_script.py")
+    copy_file_to_tmpdir(tmpdir, source_file="syntax_error_script.py", target_path="scripts/syntax_error_script.py")
 
 
 @pytest.fixture(scope="function", autouse=True)
