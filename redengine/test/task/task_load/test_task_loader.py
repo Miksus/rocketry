@@ -198,7 +198,7 @@ class TestParseTasks:
 
             kwargs = {} if kwargs is None else kwargs
             finder = TaskLoader(path="project", execution="main", **kwargs)
-            parsed_task = finder.parse_file(file["path"])
+            parsed_task = finder.load_file(file["path"])
 
             expected_task = get_expected()
 
@@ -214,7 +214,7 @@ class TestParseTasks:
 
 
 
-class TestFindTasks:
+class TestParseTasks:
     argnames = ["files", "get_expected"]
     scenarios = [
         {

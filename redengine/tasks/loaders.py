@@ -1,5 +1,4 @@
 
-
 from typing import Union
 from redengine.core.task.base import Task
 from redengine.tasks import PyScript
@@ -16,7 +15,7 @@ import re
 
 class LoaderBase(Task):
     __register__ = False
-    default_glob = '**/*.yaml'
+    default_glob = None
 
     file_parsers = {
         ".yaml": read_yaml,
@@ -33,17 +32,17 @@ class LoaderBase(Task):
 
     def execute(self):
         if self.execution == "main":
-            self.parse_items()
+            self.load_items()
         else:
             while not self.thread_terminate.is_set():
-                self.parse_items()
+                self.load_items()
                 time.sleep(self.delay)
 
-    def parse_items(self):
+    def load_items(self):
         prev_found_items = self.found_items.copy()
         self.found_items = []
         for conf_path in Path(self.path).glob(self.glob):
-            self.parse_file(conf_path)
+            self.load_file(conf_path)
 
         # Delete tasks 
         deleted_items = [old_item for old_item in prev_found_items if old_item not in self.found_items]
@@ -53,7 +52,16 @@ class LoaderBase(Task):
     def get_default_name(self):
         return type(self).__name__
 
-    def parse_file(self, path):
+
+class ContentLoader(LoaderBase):
+    __register__ = False
+    default_glob = "**/*.yaml"
+
+    file_parsers = {
+        ".yaml": read_yaml,
+    }
+
+    def load_file(self, path):
         conf = self.read_file(path)
         return self.parse_content(conf, path=path)
 
@@ -65,7 +73,7 @@ class LoaderBase(Task):
         return self.file_parsers[extension](file)
 
 
-class SessionLoader(LoaderBase):
+class SessionLoader(ContentLoader):
     """Task that searches other tasks from 
     a directory. All matched files are
     read and the contents are parsed.
@@ -97,7 +105,7 @@ class SessionLoader(LoaderBase):
     default_glob = '**/conftask.yaml'
 
     def execute(self):
-        self.parse_items()
+        self.load_items()
 
     def parse_content(self, conf, path):
         root = Path(path).parent.absolute()
@@ -111,7 +119,7 @@ class SessionLoader(LoaderBase):
         pass
 
 
-class TaskLoader(LoaderBase):
+class TaskLoader(ContentLoader):
     """Task that searches other tasks from 
     a directory. All matched files are
     read and the contents are parsed.
@@ -206,7 +214,7 @@ class TaskLoader(LoaderBase):
         self.session.tasks[item].delete()
 
 
-class ExtensionLoader(LoaderBase):
+class ExtensionLoader(ContentLoader):
     """Task that searches extensions from 
     a directory. All matched files are
     read and the contents are parsed.
@@ -284,3 +292,42 @@ class ExtensionLoader(LoaderBase):
     def delete_item(self, item):
         cls_key, name = item
         self.session.extensions[cls_key][name].delete()
+
+
+class PyLoader(LoaderBase):
+    """Task that searches Python source files matching 
+    a given patterns from a given directory. All matched 
+    files are simply loaded.
+
+    Parameters
+    ----------
+    path : path-like
+        Path to the directory that is searched for the
+        objects.
+    glob : str, default="\\*\\*/tasks.py"
+        Unix pattern that is used to identify the files
+        that are loaded.
+    delay : str
+        Time delay after each cycle of going through the 
+        found files. Only usable if ``execution='thread'``
+    **kwargs : dict
+        See :py:class:`redengine.core.Task`
+
+    Notes
+    -----
+    ``execution`` can have only values ``main`` and ``thread``.
+    Subprocesses cannot change the state of the session tasks in
+    the main thread.
+
+    """
+    default_glob = '**/tasks.py'
+    default_priority = 40
+
+    def load_file(self, file):
+        extension = Path(file).suffix
+        if extension != ".py":
+            raise KeyError(f"No parsing for file type {file}")
+        return PyScript.get_module(file)
+
+    def delete_item(self, item):
+        pass
