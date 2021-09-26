@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from redengine.core.log import TaskAdapter
-from redengine.core.utils import is_pickleable
+from redengine.core.utils import is_pickleable, filter_keyword_args
 from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from redengine.log import QueueHandler
 
@@ -605,19 +605,7 @@ class Task(metaclass=_TaskMeta):
         Parameters : dict, redengine.core.Parameters
             Filtered parameters.
         """
-        sig = inspect.signature(self.execute)
-        kw_args = [
-            val.name
-            for name, val in sig.parameters.items()
-            if val.kind in (
-                inspect.Parameter.POSITIONAL_OR_KEYWORD, # Normal argument
-                inspect.Parameter.KEYWORD_ONLY # Keyword argument
-            )
-        ]
-        return {
-            key: val for key, val in params.items()
-            if key in kw_args
-        }
+        return filter_keyword_args(self.execute, params)
 
     def postfilter_params(self, params:Parameters):
         """Post filter the parameters.

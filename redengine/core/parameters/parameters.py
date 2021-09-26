@@ -7,6 +7,7 @@ from functools import partial
 from .arguments import BaseArgument
 from redengine.core.utils import is_pickleable
 from redengine.pybox.io import read_yaml
+from redengine.core.utils import filter_keyword_args
 
 if TYPE_CHECKING:
     import redengine
@@ -98,6 +99,29 @@ class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would wor
     def update(self, params):
         params = params._params if isinstance(params, Parameters) else params
         self._params.update(params)
+
+    def param_func(self, _func:Callable=None, *, key:str=None):
+        """Add a function as an argument to the parameters.
+
+        Parameters
+        ----------
+        _func : Callable
+            Function to form the argument from.
+        key : str, optional
+            Key or the name of the argument, 
+            by default the name of the function
+        """
+        from redengine.arguments import FuncArg
+        if _func is None:
+            return partial(self.param_func, key=key)
+
+        if key is None:
+            key = _func.__name__
+
+        kwargs = filter_keyword_args(_func, session=self.session)
+        arg = FuncArg(_func, **kwargs)
+        self[key] = arg
+        return arg
 
     def __repr__(self):
         cls_name = type(self).__name__
