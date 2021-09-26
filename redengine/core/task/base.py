@@ -483,7 +483,6 @@ class Task(metaclass=_TaskMeta):
         # get the signal for termination
         #params = Parameters() if params is None else params
         #params = params | {"_thread_terminate_": self._thread_terminate}
-        params = self.postfilter_params(params)
         try:
             self.run_as_main(params=params, _log_running=False)
         except:
