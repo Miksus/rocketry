@@ -90,7 +90,6 @@ class PyScript(Task):
 
     def get_task_func(self):
         
-        
         if not hasattr(self, "_task_func"):
             # Add dir of self.path to sys.path so importing from that dir works
             pkg_path = find_package_root(self.path)
@@ -111,15 +110,19 @@ class PyScript(Task):
         if pkg_path:
             name = '.'.join(
                 path
-                .with_suffix('') # path/to/file/myfile.py --> path/to/file/myfile
+                .with_suffix('') # path/to/file/myfile.py --> path.to.file.myfile
                 .parts[len(pkg_path.parts):] # root/myproject/pkg/myfile.py --> myproject.pkg.myfile
             )
         else:
-            name = path.name
+            name = Path(path).name
 
         spec = importlib.util.spec_from_file_location(name, path)
         task_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(task_module)
+
+        try:
+            spec.loader.exec_module(task_module)
+        except Exception as exc:
+            raise ImportError(f"Importing the file '{path}' failed.") from exc
         return task_module
 
     @property
