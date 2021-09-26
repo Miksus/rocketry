@@ -11,7 +11,7 @@ import redengine
 from redengine import Session
 
 from redengine.core.task.base import Task
-
+from redengine.core.hook import clear_hooks
 
 import logging
 from importlib import reload
@@ -75,6 +75,9 @@ def session():
     session = Session(scheme="memory_logging", config={"debug": True}, delete_existing_loggers=True)
     redengine.session = session
     session.set_as_default()
+
+    # Clear hooks
+    clear_hooks()
     return session
 
 @pytest.fixture(scope="session", autouse=True)
