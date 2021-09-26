@@ -1,8 +1,8 @@
 
 import yaml
-from redengine.core.parameters import Argument
+from redengine.core.parameters import BaseArgument
 
-class FuncArg(Argument):
+class FuncArg(BaseArgument):
     "Argument of which value is determined by a function"
     def __init__(self, func, **kwargs):
         self.func = func
@@ -11,7 +11,7 @@ class FuncArg(Argument):
     def get_value(self):
         return self.func(**self.kwargs)
 
-class YamlArg(Argument):
+class YamlArg(BaseArgument):
 
     def __init__(self, path, items=None):
         self.path = path
@@ -23,8 +23,8 @@ class YamlArg(Argument):
             cont = yaml.safe_load(file)
         
         for item in self.items:
-            if isinstance(item, Argument):
-                item = item.materialize()
+            if isinstance(item, BaseArgument):
+                item = item.get_value()
             cont = cont[item]
 
         return cont
