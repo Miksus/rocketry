@@ -4,7 +4,16 @@ from redengine.core.parameters import BaseArgument
 
 
 class YamlArg(BaseArgument):
+    """Argument which value is the return value
+    of a function.
 
+    Parameters
+    ----------
+    path : path-like
+        Path to the YAML file
+    items : tuple
+        Location of the YAML item.
+    """
     def __init__(self, path, items=None):
         self.path = path
         self.items = [] if items is None else items

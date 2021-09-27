@@ -8,7 +8,19 @@ class Arg(BaseArgument):
     Parameters
     ----------
     value : Any
-        Value of the argument
+        Value of the argument.
+
+    Examples
+    --------
+
+    .. doctest:: arg
+
+        >>> from redengine.arguments import Arg
+        >>> Arg.put_session(my_param_1=1, my_param_2=2)
+
+        >>> from redengine import session
+        >>> session.parameters
+        Parameters(my_param_1=Arg(1), my_param_2=Arg(2))
     """
     def __init__(self, value:Any):
         self._value = value
@@ -22,8 +34,8 @@ class Arg(BaseArgument):
             cls.session.parameters[name] = cls(value)
 
 class FuncArg(BaseArgument):
-    """Argument which value is the return value
-    of a function.
+    """An argument which value is defined by the 
+    return value of given function.
 
     Parameters
     ----------
@@ -33,6 +45,42 @@ class FuncArg(BaseArgument):
         Positional arguments passed to func.
     **kwargs : dict
         Keyword arguments passed to func.
+
+    Examples
+    --------
+
+    .. doctest:: funcarg
+
+        >>> from redengine.arguments import FuncArg
+
+    FuncArg can also set arguments directly to 
+    ``session.parameters``. For example by decorating 
+    a function:
+
+    .. doctest:: funcarg
+
+        >>> @FuncArg.put_session()
+        ... def myarg1():
+        ...     ...
+
+    Note that the name of the argument in 
+    ``session.parameters`` is the name of the 
+    function ("myarg1"). The name can also
+    be passed:
+
+    .. doctest:: funcarg
+
+        >>> @FuncArg.put_session("myarg2")
+        ... def myfunc(session):
+        ...     ... # FuncArgs can also operate on session
+
+    The ``session.parameters`` were updated.
+
+    .. doctest:: funcarg
+
+        >>> from redengine import session
+        >>> session.parameters
+        Parameters(myarg1=FuncArg(myarg1), myarg2=FuncArg(myfunc))
     """
     def __init__(self, func:Callable, *args, **kwargs):
         self.func = func

@@ -55,6 +55,10 @@ class LoaderBase(Task):
     def get_default_name(self):
         return type(self).__name__
 
+    def __repr__(self):
+        cls_name = type(self).__name__
+        return f'{cls_name}(path={repr(self.path)}, glob={repr(self.glob)}, execution={repr(self.execution)}, name={repr(self.name)}, ...)'
+
 
 class ContentLoader(LoaderBase):
     __register__ = False
@@ -94,6 +98,44 @@ class SessionLoader(ContentLoader):
         found files. Only usable if ``execution='thread'``
     **kwargs : dict
         See :py:class:`redengine.core.Task`
+
+    Examples
+    --------
+
+    Example of a loaded file, conftask.yaml:
+
+    .. code-block:: yaml
+
+        scheduler:
+            # Passed to redengine.core.Scheduler(...)
+            ...
+
+        parameters:
+            # Passed to redengine.core.Parameters(...)
+            env: 'dev'
+
+        tasks:
+            - class: TaskLoader
+              ...  # Passed to redengine.tasks.loaders.TaskLoader(...)
+            - class: PyScript
+              name: 'my-task-1'
+              ... # Passed to redengine.tasks.PyScript(...)
+
+        logging:
+            clear_existing: True
+            version: 1
+            disable_existing_loggers: True
+            formatters:
+                ...
+            handlers:
+                ...
+            loggers:
+                ...
+
+    Then create a loader:
+
+    >>> from redengine.tasks.loaders import SessionLoader
+    >>> loader = SessionLoader(glob="**/conftask.yaml")
 
     Notes
     -----
@@ -145,6 +187,33 @@ class TaskLoader(ContentLoader):
         by default no filtering based on name
     **kwargs : dict
         See :py:class:`redengine.core.Task`
+
+    Examples
+    --------
+
+    Example of a loaded file, tasks.yaml:
+
+    .. code-block:: yaml
+
+        my-task-1:
+            path: 'funcs.py'
+            func: 'main'
+            start_cond: 'every 10 seconds'
+            execution: 'main'
+            
+        my-task-2:
+            path: 'funcs.py'
+            func: 'do_things'
+            execution: 'process'
+
+    Note that file ``funcs.py`` with functions ``do_things`` 
+    and ``main`` should exists in the same directory as where
+    this YAML file is in order to the loader to work.
+
+    Then create a loader:
+
+    >>> from redengine.tasks.loaders import TaskLoader
+    >>> loader = TaskLoader(glob="**/tasks.yaml")
 
     Notes
     -----
@@ -241,6 +310,30 @@ class ExtensionLoader(ContentLoader):
     **kwargs : dict
         See :py:class:`redengine.core.Task`
 
+    Examples
+    --------
+
+    Example of a loaded file, extensions.yaml:
+
+    .. code-block:: yaml
+
+        sequences:
+            my-sequence-1:
+                tasks:
+                - 'my-task-1'
+                - 'my-task-2'
+                interval: 'every 10 seconds'
+            my-sequence-2:
+                tasks:
+                - 'my-task-3'
+                - 'my-task-4'
+                - 'my-task-5'
+
+    Then create a loader:
+
+    >>> from redengine.tasks.loaders import ExtensionLoader
+    >>> loader = PyLoader(glob="**/extensions.yaml")
+
     Notes
     -----
     ``execution`` can have only values ``main`` and ``thread``.
@@ -300,7 +393,7 @@ class ExtensionLoader(ContentLoader):
 class PyLoader(LoaderBase):
     """Task that searches Python source files matching 
     a given patterns from a given directory. All matched 
-    files are simply loaded.
+    files are simply imported.
 
     Parameters
     ----------
@@ -315,6 +408,39 @@ class PyLoader(LoaderBase):
         found files. Only usable if ``execution='thread'``
     **kwargs : dict
         See :py:class:`redengine.core.Task`
+
+    Examples
+    --------
+
+    Example of a loaded file, tasks.py:
+
+    .. code-block:: python
+
+       from redengine.tasks import FuncTask
+       from redengine.arguments import FuncArg
+
+       # Some tasks
+       @FuncTask(name="my_task_1", start_cond="daily between 08:00 and 15:00")
+       def myfunc(my_param):
+           ...
+
+       @FuncTask(start_cond="daily between 08:00 and 15:00")
+       def my_task_2(my_param):
+           ...
+         
+       # Some arguments
+       @FuncArg('my_param_1')
+       def myarg():
+           ...
+
+       @FuncArg('my_param')
+       def my_param_2():
+           ...
+
+    Then create a loader:
+
+    >>> from redengine.tasks.loaders import PyLoader
+    >>> loader = PyLoader(glob="**/tasks.py")
 
     Notes
     -----

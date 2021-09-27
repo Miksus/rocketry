@@ -27,6 +27,16 @@ class CommandTask(Task):
         Keyword arguments to be passed to subprocess.Popen
     **kwargs : dict
         See :py:class:`redengine.core.Task`
+
+    Examples
+    --------
+
+    >>> from redengine.tasks import CommandTask
+    >>> task = CommandTask("python -m pip install redengine", name="my_cmd_task")
+
+    Or list of commands:
+
+    >>> task = CommandTask(["python", "-m", "pip", "install", "redengine"], name="my_cmd_task")
     """
     timeout = None
 

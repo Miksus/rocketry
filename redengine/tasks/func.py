@@ -30,27 +30,33 @@ class FuncTask(Task):
     Examples
     --------
 
+    >>> from redengine.tasks import FuncTask
+    >>> def myfunc():
+    ...     ...
+    >>> task = FuncTask(myfunc, name="my_func_task_1")
+
     **Via decorator:**
 
     >>> from redengine.tasks import FuncTask
-    >>> @FuncTask(name='my-func-task', start_cond="daily")
+    >>> @FuncTask(name='my_func_task_2', start_cond="daily")
     ... def myfunc():
     ...     ...
 
     If the ``name`` is not defined, the name will be in form
     ``path.to.module:myfunc``.
 
-    Note that ``FuncTask`` with defaults can also be 
-    initiated with simply: 
 
-    >>> from redengine.tasks import FuncTask
-    >>> @FuncTask
+    Warnings
+    --------
+    Creating the task this way is not recommended:
+
+    >>> @FuncTask  # doctest: +SKIP
     ... def myfunc():
     ...     ...
 
-    However, if initiated this way, the task cannot be parallerized 
-    to child processes (``execution='process'``) due to constrains in 
-    pickling.
+    Even though the task is created (with defaults),
+    the task cannot be executed in child process due
+    to pickling issues. 
     """
     func: Callable
 
