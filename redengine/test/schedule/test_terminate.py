@@ -1,19 +1,14 @@
 
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-from redengine.time import TimeDelta
-from redengine.core.task.base import Task
-from redengine.core.exceptions import TaskTerminationException
-from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
+import time
+import os
 
 import pytest
 import pandas as pd
 
-import logging
-import sys
-import time
-import os
-import multiprocessing
+from redengine.core import Scheduler
+from redengine.tasks import FuncTask
+from redengine.core.exceptions import TaskTerminationException
+from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue
 
 def run_slow():
     time.sleep(0.2)

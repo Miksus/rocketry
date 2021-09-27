@@ -1,4 +1,11 @@
 
+import logging
+from typing import List, Tuple
+
+import pytest
+import pandas as pd
+from dateutil.tz import tzlocal
+
 from redengine.conditions import (
     TaskStarted, 
 
@@ -6,27 +13,13 @@ from redengine.conditions import (
     TaskFailed, 
     TaskSucceeded,
 
-    TaskExecutable,
-
-    DependFinish,
-    DependFailure,
-    DependSuccess,
     TaskRunning
 )
 from redengine.time import (
     TimeDelta, 
     TimeOfDay
 )
-
 from redengine.tasks import FuncTask
-
-import pytest
-import pandas as pd
-from dateutil.tz import tzlocal
-
-import logging
-import time
-from typing import List, Tuple
 
 def to_epoch(dt):
     # Hack as time.tzlocal() does not work for 1970-01-01

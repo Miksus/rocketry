@@ -3,7 +3,7 @@
 Test generic logging functionalities of the custom handlers
 """
 
-import multiprocessing, queue, logging, csv
+import logging
 from logging import LogRecord
 from sys import exc_info
 import pytest

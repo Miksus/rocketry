@@ -2,7 +2,6 @@
 from redengine.extensions import Sequence
 from redengine.extensions.piping import TriggerCluster
 from redengine.conditions import All
-from redengine.tasks import FuncTask
 from redengine.config import parse_dict
 
 def test_parse(session):

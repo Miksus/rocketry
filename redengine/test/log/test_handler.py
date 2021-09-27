@@ -3,14 +3,12 @@
 Test generic logging functionalities of the custom handlers
 """
 
-import multiprocessing, queue, logging, csv
-from sys import exc_info
-import sys
+import queue, logging, csv
+
 import pytest
 
 from redengine.log import QueueHandler, MemoryHandler, CsvHandler, MongoHandler
 from redengine.log import AttributeFormatter
-
 class HandlerTestBase:
 
     @pytest.fixture(scope="function", autouse=True)

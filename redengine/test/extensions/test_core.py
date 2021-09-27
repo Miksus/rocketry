@@ -1,8 +1,8 @@
 
+import pytest
+
 from redengine.extensions import BaseExtension
 from redengine.config import parse_dict
-
-import pytest
 
 @pytest.mark.parametrize("global_session", [True, False], ids=["global session", "local session"])
 @pytest.mark.parametrize(

@@ -1,8 +1,8 @@
 
+import pytest
+
 from redengine.arguments import FuncArg, Arg
 from redengine import Session
-
-import pytest
 
 def test_arg(session):
     Arg.put_session(my_param_1=1, my_param_2=2)

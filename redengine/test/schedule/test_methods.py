@@ -5,18 +5,15 @@ only some parts of the scheduler (like
 executing one task)
 """
 
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-from redengine.time import TimeDelta
-from redengine.core.task.base import Task
-from redengine.core.exceptions import TaskInactionException
-from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
+import time
 
 import pytest
 import pandas as pd
 
-import time
-
+from redengine.core import Scheduler
+from redengine.tasks import FuncTask
+from redengine.core.exceptions import TaskInactionException
+from redengine.conditions import AlwaysFalse
 
 def run_failing():
     raise RuntimeError("Task failed")

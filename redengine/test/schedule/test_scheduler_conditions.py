@@ -3,9 +3,6 @@ from redengine.core import Scheduler
 from redengine.time import TimeDelta
 from redengine.conditions import SchedulerCycles, SchedulerStarted
 
-import pytest
-
-
 def test_scheduler_started(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 

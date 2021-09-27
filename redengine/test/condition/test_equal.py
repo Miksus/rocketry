@@ -1,12 +1,11 @@
 
+import pytest
+
 from redengine.conditions import (
     AlwaysTrue, AlwaysFalse, 
     All, Any, Not,
-    TaskFailed, TaskFinished, TaskRunning, TaskStarted, TaskSucceeded,
-    DependSuccess
+    TaskFinished, TaskRunning,
 )
-import pytest
-
 
 @pytest.mark.parametrize(
     "get_cond",

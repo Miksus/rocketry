@@ -1,12 +1,10 @@
 
+import pytest
+
 from redengine.conditions import (
     true, false, 
-    ParamExists,
     All, Any, Not
 )
-from redengine.core.condition import Statement, Comparable, Historical
-
-import pytest
 
 @pytest.mark.parametrize("actual,expected",
     [

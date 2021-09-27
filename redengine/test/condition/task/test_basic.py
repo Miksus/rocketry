@@ -1,32 +1,17 @@
-from redengine.conditions import (
-    TaskStarted, 
 
+import pytest
+
+from redengine.conditions import (
     TaskFinished, 
     TaskFailed, 
     TaskSucceeded,
-
-    TaskExecutable,
 
     DependFinish,
     DependFailure,
     DependSuccess
 )
-from redengine.time import (
-    TimeDelta, 
-    TimeOfDay
-)
-
 from redengine.core.task import Task
-from redengine.core import Scheduler
 from redengine.tasks import FuncTask
-
-import pytest
-import pandas as pd
-from dateutil.tz import tzlocal
-
-import logging
-import time
-import datetime
 
 Task.use_instance_naming = True
 

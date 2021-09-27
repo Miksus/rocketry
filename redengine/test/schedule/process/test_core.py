@@ -1,19 +1,12 @@
 
+import multiprocessing
+
+import pandas as pd
+
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
 from redengine.time import TimeDelta
-from redengine.core.task.base import Task
-from redengine.core.exceptions import TaskInactionException
-from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-
-import pandas as pd
-import pytest
-
-import logging
-import sys
-import time
-import os
-import multiprocessing
+from redengine.conditions import SchedulerStarted, TaskStarted, AlwaysTrue
 
 def run_succeeding():
     pass

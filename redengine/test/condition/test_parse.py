@@ -1,4 +1,8 @@
 
+import itertools
+
+import pytest
+
 from redengine.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from redengine.parse.condition import parse_condition
 from redengine.conditions import (
@@ -25,9 +29,6 @@ from redengine.time import (
     TimeOfWeek,
     TimeOfMonth
 )
-
-import pytest
-import itertools
 
 cases_time = [
     pytest.param("hourly",  TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),

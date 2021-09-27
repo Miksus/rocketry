@@ -1,19 +1,12 @@
 
+import logging
+import datetime
+import traceback
+
 import pytest
 
 from redengine.config import get_default
 from redengine.core.log import TaskAdapter
-
-from redengine.core import Scheduler
-from redengine.conditions import AlwaysFalse
-from redengine.log import CsvHandler
-
-from textwrap import dedent
-
-import sys
-import logging
-import datetime
-import traceback
 
 @pytest.mark.parametrize(
     "logging_scheme", ['csv_logging', 'memory_logging']

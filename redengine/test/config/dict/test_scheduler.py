@@ -1,16 +1,12 @@
 
-from redengine.config import parse_dict
-
-from redengine.core import Scheduler, Scheduler
-from redengine.parse import parse_condition
-
-from redengine.conditions import AlwaysFalse
-from redengine import Session
-
+import sys
 from textwrap import dedent
 
-import sys
 import pytest
+
+from redengine.config import parse_dict
+from redengine.parse import parse_condition
+from redengine import Session
 
 @pytest.fixture(autouse=True)
 def set_sys_path(tmpdir):

@@ -1,31 +1,18 @@
 
-from redengine.conditions import (
-    TaskStarted, 
-
-    TaskFinished, 
-    TaskFailed, 
-    TaskSucceeded,
-
-    TaskExecutable,
-
-    DependFinish,
-    DependFailure,
-    DependSuccess
-)
-from redengine.time import (
-    TimeDelta, 
-    TimeOfDay
-)
-
-from redengine.tasks import FuncTask
+import logging
 
 import pytest
 import pandas as pd
 from dateutil.tz import tzlocal
 
-import logging
-import time
-
+from redengine.conditions import (
+    TaskExecutable,
+)
+from redengine.time import (
+    TimeDelta, 
+    TimeOfDay
+)
+from redengine.tasks import FuncTask
 
 @pytest.mark.parametrize(
     "get_condition,logs,time_after,outcome",

@@ -1,9 +1,10 @@
+
+import pytest
+
 from redengine.conditions import (
     true, false, ParamExists,
 )
 from redengine.core.condition import Statement, Comparable, Historical
-
-import pytest
 
 def test_true():
     assert bool(true)

@@ -1,3 +1,6 @@
+
+import datetime
+
 from redengine.conditions import (
     SchedulerStarted,
     SchedulerCycles
@@ -6,18 +9,6 @@ from redengine.time import (
     TimeDelta, 
     TimeOfDay
 )
-
-from redengine.core.task import Task
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-
-import pytest
-import pandas as pd
-from dateutil.tz import tzlocal
-
-import logging
-import time
-import datetime
 
 def test_scheduler_cycles(session):
 

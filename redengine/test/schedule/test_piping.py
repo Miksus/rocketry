@@ -1,17 +1,12 @@
 
-from redengine.tasks import FuncTask
-from redengine.core import Task, Scheduler
-from redengine.conditions import SchedulerCycles, TaskFinished, TaskStarted, DependSuccess
-
+import time
 
 import pytest
 import pandas as pd
 
-import logging
-import sys
-import time
-import os
-
+from redengine.tasks import FuncTask
+from redengine.core import Scheduler
+from redengine.conditions import TaskStarted, DependSuccess
 
 def run_failing():
     raise RuntimeError("Task failed")

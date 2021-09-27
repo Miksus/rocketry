@@ -1,8 +1,8 @@
 
+import pytest
+
 from redengine.core import Parameters
 from redengine.arguments import Private
-
-import pytest
 
 @pytest.mark.parametrize(
     "get_param,mater,repr",

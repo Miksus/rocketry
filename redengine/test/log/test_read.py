@@ -3,11 +3,12 @@
 Test Redengine specific reading functionality of the handlers
 """
 
+import logging, time
+from pathlib import Path
+
 from _pytest.fixtures import fixture
 import pytest
-import logging, time
-import datetime
-from pathlib import Path
+
 from redengine.log import MemoryHandler, CsvHandler, MongoHandler
 
 class ReadTestBase:

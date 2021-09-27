@@ -1,18 +1,8 @@
 from redengine.conditions import (
-    TaskStarted, 
-
     TaskFinished, 
-    TaskFailed, 
-    TaskSucceeded,
-
-    DependFinish,
-    DependFailure,
-    DependSuccess
 )
-from redengine.core import Scheduler
 from redengine.tasks import FuncTask
 
-import pytest
 def run_task(fail=False):
     print("Running func")
     if fail:

@@ -1,14 +1,12 @@
-from redengine.parse.condition import parse_condition_string
-from _pytest.fixtures import fixture
-from redengine.extensions import Sequence
-from redengine.extensions.piping import TriggerCluster
-from redengine.conditions import All
-from redengine.tasks import FuncTask
-from redengine.config import parse_dict
-
-from log_helpers import log_task_record # From /test/helpers/log_helpers
 
 import pytest
+
+from redengine.parse.condition import parse_condition_string
+from redengine.extensions import Sequence
+from redengine.conditions import All
+from redengine.tasks import FuncTask
+
+from log_helpers import log_task_record # From /test/helpers/log_helpers
 
 def test_other_conditions(session, mock_datetime_now):
     "Test that the task's condition is indeed as All(other_conds, TriggerCLuster())"

@@ -1,9 +1,8 @@
-from redengine.core import Parameters
-from redengine.arguments import Private
 
 import pytest
 
-
+from redengine.core import Parameters
+from redengine.arguments import Private
 
 @pytest.mark.parametrize(
     "a,b,union",

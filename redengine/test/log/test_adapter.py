@@ -3,10 +3,12 @@
 Test TaskAdapter as it is used in Redengine
 """
 
-import pytest
 import logging, time
 import datetime
 from pathlib import Path
+
+import pytest
+
 from redengine.log import MemoryHandler, CsvHandler, MongoHandler
 from redengine.log import AttributeFormatter
 from redengine.core.log import TaskAdapter

@@ -1,28 +1,21 @@
 
-import redengine
-from redengine import Session
-from redengine.core import Scheduler, Task, Parameters
-from redengine.tasks import FuncTask
-from redengine.time import TimeDelta
-from redengine.core.exceptions import TaskInactionException
-from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-from redengine.arguments import Private
-
-import pytest
-import pandas as pd
-
-import logging
-import sys, datetime
+import datetime
 import time
 import os, re
 import multiprocessing
 
-# TODO:
-#   Test maintainer task 
-#   Test parametrization (parameter passing)
-#   Test scheduler crashing
+import pytest
+import pandas as pd
 
-# Task funcs
+import redengine
+from redengine import Session
+from redengine.core import Scheduler, Parameters
+from redengine.tasks import FuncTask
+from redengine.time import TimeDelta
+from redengine.core.exceptions import TaskInactionException
+from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
+from redengine.arguments import Private
+
 def run_failing():
     raise RuntimeError("Task failed")
 
