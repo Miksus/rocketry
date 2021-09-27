@@ -1,10 +1,6 @@
 Conditions
 ==========
 
-Base class
-----------
-.. autoclass:: redengine.core.BaseCondition
-   :members:
 
 Task related conditions
 -----------------------

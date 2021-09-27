@@ -1,6 +1,8 @@
 Welcome to :red:`Red` Engine's documentation!
 =============================================
 
+Too lazy to read? :ref:`Get started then. <getting-started>`
+
 Red Engine is a Python scheduling library made for 
 humans. The goal is to make scheduling tasks
 as intuitive and convenient as possible while providing 
@@ -8,7 +10,7 @@ the maximum amount of customization.
 
 Some core features of :red:`Red` Engine include:
 
-- **Easy setup:** Yse a premade setup and focus on building your project.
+- **Easy setup:** Use a premade setup and focus on building your project.
 - **Condition parsing:** Scheduling tasks can be done with human readable statements.
 - **Parametrization:** Tasks consume session specific or task specific parameters depending on what they need.
 - **Extendability:** Almost everything is made for customization. Even tasks can modify the scheduler.
@@ -51,7 +53,7 @@ Philosophy
 
    tutorial/index
    reference/index
-   extending
+
 
 
 Indices and tables

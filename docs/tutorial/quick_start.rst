@@ -1,5 +1,7 @@
-Getting Started
-===============
+.. _getting-started:
+
+Quick start
+===========
 
 Install the package from Pip:
 
@@ -14,8 +16,18 @@ Generate a quick setup to directory `myproject` that will get you started.
 
    python -m redengine create myproject
 
+Now you already have a working scheduler system. Just launch it:
 
-This will create a project directory for your tasks. The structure is as follows:
+.. code-block:: console
+
+   python myproject/main.py
+
+
+What you got?
+-------------
+
+The ``redengine create`` command created a project directory for your tasks. 
+The structure is as follows:
 
 | my_project/
 | ├── tasks/
@@ -42,11 +54,3 @@ You can freely edit the files. In general:
 - ``conf.yaml``: Session configuration. 
 - ``main.py``: Launcher for the scheduling session. Run this to start the scheduler.
 - ``models/``: Put your extensions of Red Engine here.
-
-
-Now you already have a working scheduler system. Just launch it:
-
-.. code-block:: console
-
-   python main.py
-

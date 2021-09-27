@@ -40,6 +40,17 @@ rst_prolog = """
 
 """
 
+doctest_global_setup = '''
+def cleanup():
+    from redengine import Session
+    from redengine.core.hook import clear_hooks
+    clear_hooks()
+    session = Session()
+    session.set_as_default()
+    session.config['use_instance_naming'] = True
+
+'''
+
 # Extension settings
 
 napoleon_google_docstring = True

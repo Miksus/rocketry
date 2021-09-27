@@ -10,4 +10,5 @@ Tutorials
    tasks
    conditions
    extensions
-
+   hooks
+   subclassing

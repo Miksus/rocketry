@@ -1,11 +1,6 @@
 Tasks
 =====
 
-Base class
-----------
-.. autoclass:: redengine.core.Task
-   :members:
-
 Builtin task classes
 --------------------
 .. autoclass:: redengine.tasks.FuncTask
@@ -16,6 +11,8 @@ Builtin task classes
 
 Loaders
 -------
+
+.. autoclass:: redengine.tasks.loaders.PyLoader
 
 .. autoclass:: redengine.tasks.loaders.SessionLoader
 
