@@ -25,10 +25,7 @@ def _set_default(cond, **kwargs):
             _set_statement_default(sub_cond, **kwargs)
     
 def set_statement_defaults(cond, **kwargs):
-    #cond = deepcopy(cond)
     _set_default(cond, **kwargs)
-    #return cond
-
 
 def set_defaults(condition, task=None, scheduler=None):
     "Set tasks/scheduler to the condition cluster where those are used and not yet specified like in case where task is given by the task where the condition belongs to"

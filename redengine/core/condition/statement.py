@@ -113,8 +113,6 @@ class Statement(BaseCondition):
                 raise
             return False
 
-        #logger.debug(f"Statement {str(self)} status: {status}")
-
         return status
 
     @abstractmethod
