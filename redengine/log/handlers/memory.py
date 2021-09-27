@@ -1,13 +1,7 @@
 
 import logging
-import csv
-import io
-import os
-from logging import Formatter, FileHandler, Handler, LogRecord
-from pathlib import Path
+from logging import Handler
 from typing import List, Dict
-from dateutil.parser import parse as parse_datetime
-
 from copy import copy
 
 

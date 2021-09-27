@@ -1,12 +1,10 @@
 import datetime
 import time
-import pandas as pd
-# TODO: Way to calculate how much time (ie. seconds) to next event
-
 from abc import abstractmethod
 from typing import Callable, Dict, List, Pattern, Union
-import inspect
 import itertools
+
+import pandas as pd
 
 from redengine.core.meta import _add_parser
 

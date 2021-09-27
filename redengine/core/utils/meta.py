@@ -4,13 +4,6 @@ import inspect
 
 # Copied from redengine.pybox\meta\func\func.py
 
-def has_args(func):
-    s = inspect.signature(func)
-    return any(is_args(param) for param in s.parameters.values())
-
-def has_kwargs(func):
-    return any(is_kwargs(param) for param in s.parameters.values())
-
 def filter_keyword_args(_func, _params:dict=None, **kwargs):
     """Filter only keyword arguments that the 
     function requires."""

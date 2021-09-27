@@ -1,36 +1,26 @@
 
-
-
-from multiprocessing import Process, cpu_count
+from multiprocessing import cpu_count
 import multiprocessing
-from redengine.core.condition.base import BaseCondition
-from typing import Callable, List, Optional
-# from redengine.tasks.maintain.os import ShutDown
+from typing import Callable, Optional
 import threading
-
 import traceback
-import warnings
 import time
 import sys, os, subprocess
 import logging
-from logging.handlers import QueueHandler
 import datetime
 import platform
-from pathlib import Path
-from copy import deepcopy, copy
+from copy import copy
 from queue import Empty
 
 import pandas as pd
 
+from redengine.core.condition import BaseCondition, set_statement_defaults, AlwaysFalse
 from redengine.core.task import Task
-from redengine.core.log import FilterAll
-
-from redengine.core.exceptions import SchedulerRestart, SchedulerExit
-
-from redengine.core.utils import is_pickleable
-from redengine.core.condition import set_statement_defaults, AlwaysFalse
 from redengine.core.parameters import Parameters
+from redengine.core.exceptions import SchedulerRestart, SchedulerExit
+from redengine.core.utils import is_pickleable
 from redengine.core.hook import _Hooker
+
 
 class Scheduler:
     """Multiprocessing scheduler

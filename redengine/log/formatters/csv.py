@@ -1,8 +1,6 @@
-from logging import Formatter, LogRecord
-
+from logging import Formatter
 import csv
 import io
-from logging import Formatter
 
 
 class CsvFormatter(Formatter):

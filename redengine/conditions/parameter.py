@@ -1,8 +1,7 @@
 
 import re
 
-from typing import Mapping
-from redengine.core.condition import Statement, Historical, Comparable, BaseCondition
+from redengine.core.condition import BaseCondition
 
 
 class IsEnv(BaseCondition):

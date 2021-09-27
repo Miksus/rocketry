@@ -1,14 +1,8 @@
 
+from typing import Callable, Dict, Pattern, Union
 
-
-import re
-from typing import Callable, Dict, Optional, Pattern, Union
-from ..utils import Parser, ParserError
+from ..utils import ParserError
 from redengine.core.condition.base import PARSERS, BaseCondition
-from typing import Pattern
-
-# TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
-
 
 CONDITION_PARSERS = []
 

@@ -6,7 +6,7 @@ from . import schedule
 from . import condition
 
 from .parameters import Parameters, BaseArgument
-from .task import Task
 from .schedule import Scheduler
+from .task import Task
 from .condition import BaseCondition
 from .extensions import BaseExtension

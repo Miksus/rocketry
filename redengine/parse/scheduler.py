@@ -1,7 +1,6 @@
 
-from .utils import ParserPicker, DictInstanceParser
+from .utils import DictInstanceParser
 from .task import parse_tasks
-
 from redengine.core.parameters import Parameters
 from redengine.core import Scheduler
 

@@ -1,19 +1,18 @@
 
 import importlib
 from typing import Union
+from pathlib import Path
+import time
+import re
+import sys
+
+import pandas as pd
+
 from redengine.core.task.base import Task
-from redengine.tasks import PyScript
 from redengine.parse import parse_task, parse_session
 from redengine.pybox.io import read_yaml
 from redengine import extensions
 
-import pandas as pd
-
-from pathlib import Path
-import time
-import logging
-import re
-import os, sys
 
 class LoaderBase(Task):
     __register__ = False

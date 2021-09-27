@@ -1,15 +1,13 @@
 
 
 from datetime import datetime
-import re
 from typing import Union
-import dateutil
-import calendar
 from abc import abstractmethod
 
 import pandas as pd
+
 from .utils import to_nanoseconds, timedelta_to_str, to_dict
-from .base import TimeCycle, TimeInterval
+from .base import TimeInterval
 
 
 class AnchoredInterval(TimeInterval):

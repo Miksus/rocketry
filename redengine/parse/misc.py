@@ -1,13 +1,11 @@
 
+from logging.config import dictConfig
+
 from redengine.core import Task
 
 from .condition import parse_condition
-from .task import parse_task
 from redengine.conditions import AlwaysFalse, DependSuccess
 
-from .utils import ParserPicker, DictInstanceParser
-
-from logging.config import dictConfig
 
 def _create_sequence(tasks, start_cond=None):
     session = Task.session # TODO: Get somewhere else the session

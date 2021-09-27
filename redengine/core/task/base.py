@@ -1,39 +1,32 @@
 
-from abc import abstractmethod
-from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
-from redengine.core.log import TaskAdapter
-from redengine.core.utils import is_pickleable, filter_keyword_args
-from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
-from redengine.log import QueueHandler
-
-from .utils import get_execution, get_dependencies
-
-from redengine.conditions import DependSuccess
-from redengine.core.parameters import Parameters
-from redengine.core.meta import _register
-from redengine.core.hook import _Hooker
-
-import os, time
-import platform
-import logging
-import inspect
-import warnings
+import time
 import datetime
-from typing import Callable, List, Dict, Union, Tuple, Type, Optional
+import logging
+import platform
+from itertools import count
+import warnings
+from copy import copy
+from abc import abstractmethod
+from typing import Callable, List, Dict, Union, Tuple, Optional
 import multiprocessing
 import threading
 from queue import Empty
 
-from functools import wraps
-from copy import copy
-from itertools import count
-
 import pandas as pd
 
+from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
+from redengine.core.parameters import Parameters
+from redengine.core.log import TaskAdapter
+from redengine.core.utils import is_pickleable, filter_keyword_args
+from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
+from redengine.core.meta import _register
+from redengine.core.hook import _Hooker
+from redengine.log import QueueHandler
+
+from .utils import get_execution, get_dependencies
+
 CLS_TASKS = {}
-
 _IS_WINDOWS = platform.system()
-
 
 class _TaskMeta(type):
     def __new__(mcs, name, bases, class_dict):
@@ -305,6 +298,7 @@ class Task(metaclass=_TaskMeta):
 
     @dependent.setter
     def dependent(self, tasks:list):
+        from redengine.conditions import DependSuccess
         # tasks: List[str]
         if not tasks:
             # TODO: Remove dependent parts

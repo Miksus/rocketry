@@ -1,9 +1,5 @@
 
 from logging import Formatter, LogRecord
-
-import csv
-import io
-from logging import Formatter
 from typing import Callable, Dict, List
 
 class AttributeFormatter(Formatter):

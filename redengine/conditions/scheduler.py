@@ -1,11 +1,8 @@
 
-from redengine.core.task import base
-from redengine.core.condition import Statement, Comparable, Historical
-
-import numpy as np
 import re
 
-# Scheduler related (useful only for maintaining or shutdown)
+from redengine.core.condition import Comparable, Historical
+
 
 class SchedulerCycles(Comparable):
     """Condition for whether the scheduler have had

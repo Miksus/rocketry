@@ -1,9 +1,9 @@
 
-from redengine.core.task import Task
-
 import sys
 from pathlib import Path
 import subprocess
+
+from redengine.core.task import Task
 
 
 class PipInstall(Task):

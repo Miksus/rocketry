@@ -1,17 +1,10 @@
 
-import logging
-import csv
-import io
-import os
 import copy
-from logging import Formatter, FileHandler, Handler, LogRecord
-from pathlib import Path
-from typing import List, Dict, Mapping, Union
-from dateutil.parser import parse as parse_datetime
+from logging import Handler, LogRecord
+from typing import List, Dict, Mapping, Union, TYPE_CHECKING
 
 from ..formatters import AttributeFormatter
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pymongo.collection import Collection
     from pymongo.mongo_client import MongoClient

@@ -6,20 +6,16 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-from redengine.conditions import Any
-from redengine.core import BaseExtension
-from typing import Iterable, List, Dict, Type, Union
-from pathlib import Path
+from typing import Iterable, Dict, Type, Union
 from itertools import chain
-import pandas as pd
 
+import redengine
+from redengine.core import BaseExtension
 from redengine.core.log import TaskAdapter
 from redengine.core import Scheduler, Task, BaseCondition, Parameters, BaseArgument
-from redengine.core import condition
-
-from redengine.log import CsvHandler, CsvFormatter
+from redengine.conditions import Any
 from redengine.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
-import redengine
+
 
 class Session:
     """Collection of the scheduler objects.

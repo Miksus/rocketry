@@ -1,12 +1,13 @@
 
+import importlib
+from pathlib import Path
+
 from .utils import ParserPicker, DictInstanceParser
 from .condition import parse_condition
-from .utils import _get_session, instances
+from .utils import instances
 
 from redengine.core.task.base import CLS_TASKS
 
-import importlib
-from pathlib import Path
 
 def _get_task(*args, session=None, **kwargs):
     "Wrapper of session.get_task to overcome circular import"

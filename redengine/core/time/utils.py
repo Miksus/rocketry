@@ -1,6 +1,4 @@
 
-import datetime
-
 # Conversions
 def to_dict(dt):
     return {

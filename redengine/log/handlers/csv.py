@@ -1,12 +1,9 @@
 
-import logging
 import csv
-import io
 import os
-from logging import Formatter, FileHandler, Handler, LogRecord
+from logging import FileHandler
 from pathlib import Path
 from typing import List, Dict
-from dateutil.parser import parse as parse_datetime
 
 from ..formatters import CsvFormatter
 

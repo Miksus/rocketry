@@ -39,7 +39,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
     and tasks.
     
     An extension could be:
-    
+
         - A pipeline: adds conditions to all given tasks 
           so that they are executed one after another.
         - A task group: so that some attributes of a 
@@ -63,7 +63,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
 
     Notes
     -----
-    Red Engine also has hooks that are simpler way to extend
+    Red Engine also has :ref:`hooks <hooks>`. that are simpler way to extend
     the framework.
 
     List of hooks:

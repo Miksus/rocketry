@@ -1,6 +1,5 @@
 
-from redengine.core.task import base
-from redengine.core.time import StaticInterval, Any, All
+from redengine.core.time import StaticInterval, All
 from redengine.conditions import TaskFinished, TaskSucceeded
 
 def get_dependencies(task):

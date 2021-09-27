@@ -1,16 +1,8 @@
 
+from typing import Pattern
 
-
-import re
-from typing import Callable, Pattern
-from ..utils import Parser, ParserError
+from ..utils import ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
-
-# TODO: How to distinquise between the actual task and dependency? Modify the set_default_task
-
-
-
-from ..utils import Parser, ParserError
 
 def add_time_parser(d):
     """Add a parsing instruction to be used for parsing a 

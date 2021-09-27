@@ -1,7 +1,9 @@
 
 import os
-from redengine.core.task import Task
 from pathlib import Path
+
+from redengine.core.task import Task
+
 
 class _GitTask(Task):
     git_dir = ".git"

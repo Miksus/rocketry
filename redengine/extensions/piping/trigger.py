@@ -1,12 +1,13 @@
 
 import datetime
 import time
-from redengine.core.task.base import Task
 from typing import Tuple, Union
-from redengine.core import BaseCondition
-from redengine.conditions import Any, All, AlwaysFalse
 
 import pandas as pd
+
+from redengine.core import BaseCondition, Task
+from redengine.conditions import Any, All, AlwaysFalse
+
 
 class TriggerCluster(Any):
     

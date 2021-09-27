@@ -1,17 +1,13 @@
 
-from redengine.core.parameters.parameters import Parameters
-from typing import List, Optional, Union
-from redengine.core.task import Task
-
 from pathlib import Path
+from typing import List, Optional, Union
 import inspect
 import importlib
-import subprocess
-import re
 import sys
 
+from redengine.core.parameters.parameters import Parameters
+from redengine.core.task import Task
 from redengine.pybox.pkg import find_package_root
-
 
 class PyScript(Task):
     """Task that executes a Python script.  

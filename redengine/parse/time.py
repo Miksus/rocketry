@@ -2,7 +2,7 @@
 #from redengine.core.time.base import CLS
 from ._time import parse_time_string
 
-from .utils import ParserPicker, DictInstanceParser
+from .utils import ParserPicker
 
 def _parse_time_string(s:str):
     time = parse_time_string(s)

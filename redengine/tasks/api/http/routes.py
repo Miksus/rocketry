@@ -1,11 +1,12 @@
 
-from flask import Blueprint, render_template, abort, request, jsonify, abort, current_app
-from .utils import parse_url_parameters
-
 # For system info
 import pkg_resources
 import platform
 import sys
+
+from flask import Blueprint, abort, request, jsonify, abort, current_app
+
+from .utils import parse_url_parameters
 
 rest_api = Blueprint(
     'api', 

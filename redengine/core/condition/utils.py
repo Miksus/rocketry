@@ -1,13 +1,7 @@
 
-from .statement import Statement
-from .base import BaseCondition
-
-from copy import copy
-
-
 from collections.abc import Iterable
-from copy import deepcopy
 
+from .statement import Statement
 
 def _has_sub_conditions(obj):
     return isinstance(obj, Iterable)

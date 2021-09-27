@@ -1,8 +1,7 @@
 
-from .base import Statement
-
-import os
 from pathlib import Path
+
+from .base import Statement
 
 # IO related
 @Statement()

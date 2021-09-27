@@ -1,13 +1,11 @@
 
-from redengine.core.task import base
+import re, time
+import datetime
+
 from redengine.core.condition import Statement, Historical, Comparable
 from redengine.core.time import TimeDelta
 from .time import IsPeriod
 from redengine.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
-
-import os, re, time
-import datetime
-import numpy as np
 
 
 class TaskStarted(Historical, Comparable):

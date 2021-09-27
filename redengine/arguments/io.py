@@ -1,7 +1,7 @@
 
 import yaml
-from redengine.core.parameters import BaseArgument
 
+from redengine.core.parameters import BaseArgument
 
 class YamlArg(BaseArgument):
     """Argument which value is the return value

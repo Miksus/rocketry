@@ -1,15 +1,12 @@
 
-from .trigger import TriggerCluster
-#from .pipe import Pipe
 from typing import List
 import datetime
-from redengine.core import BaseCondition
+
 from redengine.core import BaseExtension
-from redengine.conditions import Any, All, AlwaysFalse
+from redengine.conditions import AlwaysFalse
 from redengine.parse import parse_time, parse_task
 from redengine.core.time import TimePeriod
 from redengine.core import Task
-
 from .trigger import TriggerCluster, IntervalTrigger, PulseTrigger, BaseTrigger
 
 

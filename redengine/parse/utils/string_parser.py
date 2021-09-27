@@ -1,10 +1,11 @@
 
-from typing import Callable, Dict, Any, List
+import re
+
+from typing import Callable, Dict, List
 
 from redengine.pybox.string.parse import ClosureParser
 from redengine.pybox.container.visitor import Visitor
 
-import re
 
 class InstructionParser:
 

@@ -1,10 +1,9 @@
-from redengine.time import TimeOfDay, TimeOfWeek, TimeDelta
-from redengine.time.construct import get_full_cycle, get_between, get_after, get_before
-
-from redengine.core.condition.base import TimeCondition, BaseCondition
 
 import datetime
-import re
+
+from redengine.time import TimeOfDay, TimeOfWeek, TimeDelta
+from redengine.time.construct import get_full_cycle, get_between, get_after, get_before
+from redengine.core.condition.base import TimeCondition, BaseCondition
 
 class IsPeriod(BaseCondition):
     """Condition for checking whether current time

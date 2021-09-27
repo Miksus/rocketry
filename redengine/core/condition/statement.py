@@ -1,17 +1,15 @@
 
+import logging
 from copy import copy
 from functools import partial
 from abc import abstractmethod
 import datetime
-from typing import Optional
-from redengine.core.time.base import TimePeriod
 import time
+from typing import Optional
 
-import numpy as np
-
+from redengine.core.time.base import TimePeriod
 from .base import BaseCondition
 
-import logging
 logger = logging.getLogger(__name__)
 
 

@@ -2,10 +2,10 @@
 import logging
 import warnings
 import datetime
-
-import pandas as pd
 from typing import Iterable, List, Dict, Union
+
 from dateutil.parser import parse as _parse_datetime
+import pandas as pd
 
 class TaskAdapter(logging.LoggerAdapter):
     """Logging adapter for tasks.

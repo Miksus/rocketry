@@ -1,10 +1,12 @@
 from functools import partial
-from redengine.core.condition import PARSERS, CLS_CONDITIONS
+
 from .task import *
 from .scheduler import *
 from .time import *
 from .git import *
 from .parameter import ParamExists, IsEnv
+
+from redengine.core.condition import PARSERS, CLS_CONDITIONS
 from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
 
 true = AlwaysTrue()
