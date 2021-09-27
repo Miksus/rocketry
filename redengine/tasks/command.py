@@ -26,11 +26,11 @@ class CommandTask(Task):
     --------
 
     >>> from redengine.tasks import CommandTask
-    >>> task = CommandTask("python -m pip install redengine", name="my_cmd_task")
+    >>> task = CommandTask("python -m pip install redengine", name="my_cmd_task_1")
 
     Or list of commands:
 
-    >>> task = CommandTask(["python", "-m", "pip", "install", "redengine"], name="my_cmd_task")
+    >>> task = CommandTask(["python", "-m", "pip", "install", "redengine"], name="my_cmd_task_2")
     """
     timeout = None
 
