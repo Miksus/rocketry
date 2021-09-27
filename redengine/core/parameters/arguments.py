@@ -32,6 +32,7 @@ class BaseArgument:
     Parameters(myarg=MyArgument('value'))
 
     """
+    session: 'redengine.Session'
     
     @abstractmethod
     def get_value(self, task:'redengine.core.Task'=None) -> Any:
@@ -89,3 +90,11 @@ class BaseArgument:
     def __str__(self):
         return str(self.get_value())
 
+    @classmethod
+    def put_session(cls, *args, **kwargs):
+        """Put the argument(s) to session's 
+        parameters.
+
+        Override this with custom logic.
+        """
+        raise NotImplementedError(f"Method 'put_session' not implemented for {cls}.")

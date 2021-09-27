@@ -14,7 +14,7 @@ from itertools import chain
 import pandas as pd
 
 from redengine.core.log import TaskAdapter
-from redengine.core import Scheduler, Task, BaseCondition, Parameters
+from redengine.core import Scheduler, Task, BaseCondition, Parameters, BaseArgument
 from redengine.core import condition
 
 from redengine.log import CsvHandler, CsvFormatter
@@ -283,3 +283,4 @@ class Session:
         Parameters.session = self
         BaseExtension.session = self
         redengine.session = self
+        BaseArgument.session = self
