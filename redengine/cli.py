@@ -1,11 +1,7 @@
+
 import argparse
 import datetime
 from pathlib import Path
-from typing import Optional
-
-from redengine import Scheduler
-
-from distutils.dir_util import copy_tree
 
 PKG_ROOT = Path(__file__).parent
 TEMPLATE_DIR = PKG_ROOT / "templates"
