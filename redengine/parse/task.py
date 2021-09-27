@@ -6,7 +6,7 @@ from .utils import ParserPicker, DictInstanceParser
 from .condition import parse_condition
 from .utils import instances
 
-from redengine.core.task.base import CLS_TASKS
+from redengine.core.task import CLS_TASKS
 
 
 def _get_task(*args, session=None, **kwargs):

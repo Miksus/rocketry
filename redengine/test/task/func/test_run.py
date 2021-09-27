@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 
 from redengine.tasks import FuncTask
-from redengine.core.task.base import Task
+from redengine.core.task import Task
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import AlwaysFalse, AlwaysTrue
 

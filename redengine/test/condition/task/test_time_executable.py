@@ -199,7 +199,7 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
             log_created = to_epoch(pd.Timestamp(log_time, tz=tzlocal()))
             record = logging.LogRecord(
                 # The content here should not matter for task status
-                name='redengine.core.task.base', level=logging.INFO, lineno=1, 
+                name='redengine.core.task', level=logging.INFO, lineno=1, 
                 pathname='d:\\Projects\\redengine\\redengine\\core\\task\\base.py',
                 msg="Logging of 'task'", args=(), exc_info=None,
             )

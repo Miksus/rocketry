@@ -8,7 +8,7 @@ import sys
 
 import pandas as pd
 
-from redengine.core.task.base import Task
+from redengine.core import Task
 from redengine.parse import parse_task, parse_session
 from redengine.pybox.io import read_yaml
 from redengine import extensions

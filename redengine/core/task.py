@@ -23,7 +23,7 @@ from redengine.core.meta import _register
 from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler
 
-from .utils import get_execution, get_dependencies
+from .utils.task_utils import get_execution, get_dependencies
 
 CLS_TASKS = {}
 _IS_WINDOWS = platform.system()

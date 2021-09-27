@@ -219,7 +219,7 @@ def test_logs(client, logs, query_url, expected_logs, session):
         log_created = to_epoch(pd.Timestamp(asctime, tz=tzlocal()))
         record = logging.LogRecord(
             # The content here should not matter for task status
-            name='redengine.core.task.base', level=logging.INFO, lineno=1, 
+            name='redengine.core.task', level=logging.INFO, lineno=1, 
             pathname='d:\\Projects\\redengine\\redengine\\core\\task\\base.py',
             msg="Logging of 'task'", args=(), exc_info=None,
         )

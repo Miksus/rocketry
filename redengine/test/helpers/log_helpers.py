@@ -40,7 +40,7 @@ def log_task_record(task, now, action, start_time=None):
 
     record = logging.LogRecord(
         # The content here should not matter for task status
-        name='redengine.core.task.base', level=logging.INFO, lineno=1, 
+        name='redengine.core.task', level=logging.INFO, lineno=1, 
         pathname='redengine\\redengine\\core\\task\\base.py',
         msg=msg, args=(), exc_info=exc_info,
     )
