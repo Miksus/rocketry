@@ -1,13 +1,9 @@
 
-from datetime import datetime
-
+import pytest
+import pandas as pd
 from redengine.core.time import (
     TimeDelta
 )
-
-import pandas as pd
-import pytest
-
 
 @pytest.mark.parametrize(
     "dt,past,future,roll_start,roll_end",

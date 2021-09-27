@@ -1,12 +1,9 @@
 
 from datetime import datetime, timedelta
-
+import pytest
 from redengine.core.time import (
     TimeDelta
 )
-
-import pytest
-
 
 @pytest.mark.parametrize(
     "dt,dt_ref,offset",

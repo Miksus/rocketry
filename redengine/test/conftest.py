@@ -1,20 +1,17 @@
 
-import pytest
-
-from pathlib import Path
+import datetime
+import logging
 import os
 import sys
-import datetime, time
+import time
+from pathlib import Path
+
+import pytest
 from dateutil.parser import parse as parse_datetime
 
 import redengine
 from redengine import Session
-
-from redengine.core.task.base import Task
 from redengine.core.hook import clear_hooks
-
-import logging
-from importlib import reload
 
 # add helpers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))

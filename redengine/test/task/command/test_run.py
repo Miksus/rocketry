@@ -1,15 +1,10 @@
 
-from redengine.core.parameters.parameters import Parameters
-import time
-import multiprocessing
 from pathlib import Path
 import platform
 
-from redengine.tasks import CommandTask
-
-import pandas as pd
 import pytest
-from textwrap import dedent
+
+from redengine.tasks import CommandTask
 
 from task_helpers import wait_till_task_finish
 

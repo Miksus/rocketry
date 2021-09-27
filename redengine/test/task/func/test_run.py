@@ -1,17 +1,16 @@
 
 import pytest
-import time
-import multiprocessing
 
-from redengine.core import Scheduler
+import pandas as pd
+
 from redengine.tasks import FuncTask
 from redengine.core.task.base import Task
 from redengine.core.exceptions import TaskInactionException
-from redengine.conditions import AlwaysFalse, AlwaysTrue, Any
+from redengine.conditions import AlwaysFalse, AlwaysTrue
 
 from task_helpers import wait_till_task_finish
 
-import pandas as pd
+
 
 Task.use_instance_naming = True
 

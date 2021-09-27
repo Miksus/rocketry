@@ -1,12 +1,9 @@
 
 from datetime import datetime
-
+import pytest
 from redengine.time.interval import (
     TimeOfDay
 )
-
-import pytest
-
 
 @pytest.mark.parametrize(
     "dt,start,end",

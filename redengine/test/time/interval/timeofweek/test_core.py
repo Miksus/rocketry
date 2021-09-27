@@ -1,13 +1,10 @@
 
-
-from datetime import datetime
+import pytest
 import pandas as pd
 
 from redengine.time.interval import (
     TimeOfWeek
 )
-
-import pytest
 
 NS_IN_SECOND = 1e+9
 NS_IN_MINUTE = 1e+9 * 60

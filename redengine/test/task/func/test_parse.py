@@ -1,10 +1,9 @@
 
 import inspect
-from redengine.tasks import FuncTask
-from redengine.parse import parse_task
-
-from textwrap import dedent
 import sys
+from textwrap import dedent
+
+from redengine.parse import parse_task
 
 def test_parse_from_package(session, tmpdir):
     with tmpdir.as_cwd() as old_dir:

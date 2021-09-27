@@ -1,12 +1,11 @@
 
-from datetime import datetime
+import pytest
+import pandas as pd
 
 from redengine.core.time.base import (
     All, Any
 )
 from redengine.time.interval import TimeOfDay
-import pandas as pd
-import pytest
 
 @pytest.mark.parametrize(
     "dt,periods,roll_start,roll_end",

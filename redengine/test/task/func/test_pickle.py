@@ -1,11 +1,10 @@
 
-from redengine.tasks import FuncTask
-from redengine.core import Parameters, Scheduler
-from redengine.conditions import TaskFailed
-
 import pickle
 
 import pytest
+
+from redengine.tasks import FuncTask
+from redengine.conditions import TaskFailed
 
 def run_successful_func():
     print("Running func")

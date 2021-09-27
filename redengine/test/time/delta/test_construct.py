@@ -1,10 +1,9 @@
 
-
+import pytest
+import pandas as pd
 from redengine.core.time import (
     TimeDelta
 )
-import pytest
-import pandas as pd
 
 @pytest.mark.parametrize(
     "offset,expected",

@@ -1,7 +1,4 @@
 
-import re
-
-from redengine.core.time import PARSERS
 from redengine.time import (
     TimeOfWeek,
     TimeOfDay,

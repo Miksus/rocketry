@@ -1,9 +1,6 @@
 
-
-from redengine import Session
-from redengine.tasks import FuncTask, PyScript
-from redengine.core import Parameters, Scheduler, BaseCondition, Task
-from redengine.conditions import Any, All, AlwaysTrue, AlwaysFalse, Not
+from redengine.tasks import FuncTask
+from redengine.core import Parameters, Scheduler
 
 def test_get_task(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:

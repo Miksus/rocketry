@@ -1,19 +1,10 @@
 
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-from redengine.time import TimeDelta
-from redengine.core.task.base import Task
-from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskFinished, TaskStarted, AlwaysFalse, AlwaysTrue
-
 import pytest
 import pandas as pd
 
-import logging
-import sys
-import time
-import os
-import multiprocessing
-
+from redengine.core import Scheduler
+from redengine.tasks import FuncTask
+from redengine.conditions import TaskStarted, AlwaysTrue
 
 def run_failing():
     raise RuntimeError("Task failed")

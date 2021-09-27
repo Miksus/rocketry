@@ -1,16 +1,13 @@
 
-import datetime
 import calendar
+import re
 
-from redengine.core.time.base import TimeInterval
-
-from redengine.core.time.utils import to_dict, to_nanoseconds, timedelta_to_str
+import dateutil
+import pandas as pd
 
 from redengine.core.time.anchor import AnchoredInterval
-
-import pandas as pd
-import re
-import dateutil
+from redengine.core.time.base import TimeInterval
+from redengine.core.time.utils import timedelta_to_str, to_dict, to_nanoseconds
 
 
 class TimeOfMinute(AnchoredInterval):

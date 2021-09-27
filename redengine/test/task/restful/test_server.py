@@ -1,13 +1,10 @@
-import os
+
 import json
-import tempfile
 import time
-from threading import Thread
 
 import pytest
 
 from redengine.tasks import FuncTask
-
 try:
     from redengine.tasks.api.http import HTTPConnection
     import requests

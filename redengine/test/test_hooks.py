@@ -3,8 +3,6 @@ from redengine.core import Task, Scheduler
 from redengine.tasks import FuncTask
 from redengine.conditions import SchedulerCycles, true
 
-import time
-
 def test_task_init():
     timeline = []
 

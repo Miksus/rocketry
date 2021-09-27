@@ -1,12 +1,10 @@
 
+import pytest
 from datetime import datetime
 
 from redengine.time.interval import (
     TimeOfWeek
 )
-
-import pytest
-
 
 # TimeOfWeek
 # Year 2024 was chosen as it starts on monday

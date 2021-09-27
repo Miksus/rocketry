@@ -1,6 +1,6 @@
 
-from redengine.core.task import Task, CLS_TASKS
 import pytest
+from redengine.core.task import Task, CLS_TASKS
 
 @pytest.fixture(autouse=True)
 def setup():

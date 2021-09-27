@@ -1,14 +1,9 @@
 
-# TODO
-#import pytest
-import multiprocessing
-#
-from redengine.tasks import PyScript
-#from redengine.core.task.base import Task
-#
-import pandas as pd
-import pytest
 from textwrap import dedent
+import pytest
+import pandas as pd
+
+from redengine.tasks import PyScript
 
 from task_helpers import wait_till_task_finish
 

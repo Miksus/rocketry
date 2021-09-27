@@ -1,12 +1,10 @@
 
+import types
+
 import pytest
 
-from redengine.core import Scheduler
 from redengine.tasks import FuncTask
-from redengine.core.task.base import Task
-from redengine.conditions import AlwaysFalse, AlwaysTrue, DependSuccess, Any, Not
-
-import types
+from redengine.conditions import AlwaysFalse, AlwaysTrue, DependSuccess
 
 def test_construct(tmpdir, session):
 

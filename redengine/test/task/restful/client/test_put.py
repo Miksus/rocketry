@@ -1,20 +1,10 @@
 
-import tempfile
+import time
+import json
 
 import pytest
 
-from redengine import Scheduler
 from redengine.core import Parameters
-
-from threading import Thread
-import time, os, logging
-import json
-
-from dateutil.tz import tzlocal
-
-import pandas as pd
-
-# PUT: Update/replace
 
 @pytest.mark.parametrize(
     "existing,query_url,content,expected",

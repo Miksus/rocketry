@@ -1,21 +1,10 @@
 
-import tempfile
+import json
 
 import pytest
 
 from redengine.tasks import FuncTask
-from redengine import Scheduler, session
-from redengine.core import Parameters
-
-from threading import Thread
-import time, os, logging
-import json
-
-from dateutil.tz import tzlocal
-
-import pandas as pd
-
-# PATCH: Update/modify (disallow creation)
+from redengine import session
 
 @pytest.mark.parametrize(
     "make_tasks,query_url,content,expected_attrs",

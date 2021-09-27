@@ -1,33 +1,18 @@
 
-import datetime
-import tempfile
+import logging
 
 import pytest
-
-from redengine.tasks import FuncTask
-from redengine import Scheduler
-from redengine.arguments import Private
-
-from threading import Thread
-import time, os, logging
-
+import pandas as pd
 from dateutil.tz import tzlocal
 
-import pandas as pd
-
-try:
-    from redengine.tasks.api.http import HTTPConnection
-    import requests
-except ImportError:
-    # Cannot run these tests
-    pass
+from redengine.tasks import FuncTask
+from redengine.arguments import Private
 
 def to_epoch(dt):
     # Hack as time.tzlocal() does not work for 1970-01-01
     if dt.tz:
         dt = dt.tz_convert("utc").tz_localize(None)
     return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-
 
 @pytest.mark.parametrize(
     "make_tasks,query_url,expected_attrs",

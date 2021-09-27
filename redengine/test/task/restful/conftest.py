@@ -1,18 +1,10 @@
 
-import tempfile
+from threading import Thread
 
 import pytest
 
-from redengine import Scheduler, session
+from redengine import Scheduler
 from redengine.conditions import ParamExists
-
-from threading import Thread
-import time, os, logging
-
-from dateutil.tz import tzlocal
-
-import pandas as pd
-
 
 @pytest.fixture
 def scheduler(tmpdir, session):

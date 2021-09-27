@@ -1,21 +1,12 @@
 
-# TODO
-#import pytest
-import multiprocessing, itertools
 from pathlib import Path
-from redengine.tasks.loaders import TaskLoader
-#
-from redengine import Session
-from redengine.tasks import FuncTask
-from redengine.core import Task, Scheduler
-from redengine.tasks.loaders import ExtensionLoader, SessionLoader
-from redengine.time import TimeOfDay
-from redengine.conditions import AlwaysTrue
-#from redengine.core.task.base import Task
-#
-import pandas as pd
-import pytest
+
 from textwrap import dedent
+
+from redengine.tasks.loaders import TaskLoader
+from redengine.core import Scheduler
+from redengine.tasks.loaders import ExtensionLoader
+from redengine.conditions import AlwaysTrue
 
 from io_helpers import create_file, delete_file
 

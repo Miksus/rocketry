@@ -1,12 +1,10 @@
 
-
+import pytest
 from redengine.time.interval import (
     TimeOfDay,
     TimeOfMonth,
     TimeOfWeek
 )
-
-import pytest
 
 NS_IN_SECOND = 1e+9
 NS_IN_MINUTE = 1e+9 * 60

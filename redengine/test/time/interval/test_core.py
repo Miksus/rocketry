@@ -1,7 +1,6 @@
 
-from redengine.core.time.anchor import AnchoredInterval
-
 import pytest
+from redengine.core.time.anchor import AnchoredInterval
 
 # Test no unexpected errors in all
 @pytest.mark.parametrize("method", ["__str__", "__repr__"])

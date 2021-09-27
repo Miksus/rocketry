@@ -1,5 +1,5 @@
-from redengine.core import Task
 
+from redengine.core import Task
 
 class DummyTask(Task):
     __register__ = False

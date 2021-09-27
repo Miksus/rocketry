@@ -1,15 +1,12 @@
-from redengine.conditions import AlwaysFalse, AlwaysTrue
+
+import pytest
+
+from redengine.conditions import AlwaysFalse
 from redengine.tasks.maintain import ShutDown
 from redengine.tasks import FuncTask
 from redengine.core.exceptions import SchedulerExit
-import pytest
+from redengine.core import Scheduler
 
-from redengine.core import Scheduler, parameters
-from redengine.time import TimeDelta
-from redengine.conditions import SchedulerStarted, TaskStarted
-
-import pytest
-import logging
 def write_file(text):
     with open("test.txt", "a") as f:
         f.write(text)

@@ -1,14 +1,11 @@
 
+from pathlib import Path
+
+import pytest
 
 from redengine.core import Scheduler
 from redengine.parse import parse_task
 from redengine.tasks import FuncTask, PyScript, CommandTask
-
-from textwrap import dedent
-
-import sys
-import pytest
-from pathlib import Path
 
 @pytest.mark.parametrize(
     "obj,cls,attrs",

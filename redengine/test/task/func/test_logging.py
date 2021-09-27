@@ -3,12 +3,10 @@ import pytest
 import multiprocessing
 from queue import Empty
 
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-from redengine.core.task.base import Task
-from redengine.log import CsvHandler, MemoryHandler
-
 import pandas as pd
+
+from redengine.tasks import FuncTask
+from redengine.log import MemoryHandler
 
 def run_success():
     pass

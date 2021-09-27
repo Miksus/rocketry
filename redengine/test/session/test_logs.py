@@ -1,16 +1,11 @@
-from redengine.core import Scheduler
-from redengine.tasks import FuncTask
-from redengine.conditions import AlwaysTrue, TaskStarted
 
-
-import pandas as pd
-from typing import Generator
 from itertools import chain
 import datetime
 
 import pytest
+import pandas as pd
 
-import os
+from redengine.tasks import FuncTask
 
 def create_line_to_startup_file():
     with open("start.txt", "w") as file:

@@ -6,6 +6,8 @@ wrapper for periods.
 """
 
 import pytest
+import pandas as pd
+
 from redengine.time.interval import (
     TimeOfHour,
     TimeOfDay, 
@@ -14,7 +16,7 @@ from redengine.time.interval import (
     TimeOfYear,
 )
 from redengine.conditions import IsPeriod
-import pandas as pd
+
 
 true_cases = [
     # TimeOfHour
