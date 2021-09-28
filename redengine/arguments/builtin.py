@@ -18,7 +18,7 @@ class Arg(BaseArgument):
     .. doctest:: arg
 
         >>> from redengine.arguments import Arg
-        >>> Arg.put_session(my_param_1=1, my_param_2=2)
+        >>> Arg.to_session(my_param_1=1, my_param_2=2)
 
         >>> from redengine import session
         >>> session.parameters
@@ -31,7 +31,7 @@ class Arg(BaseArgument):
         return self._value
 
     @classmethod
-    def put_session(cls, **kwargs):
+    def to_session(cls, **kwargs):
         for name, value in kwargs.items():
             cls.session.parameters[name] = cls(value)
 
@@ -61,7 +61,7 @@ class FuncArg(BaseArgument):
 
     .. doctest:: funcarg
 
-        >>> @FuncArg.put_session()
+        >>> @FuncArg.to_session()
         ... def myarg1():
         ...     ...
 
@@ -72,7 +72,7 @@ class FuncArg(BaseArgument):
 
     .. doctest:: funcarg
 
-        >>> @FuncArg.put_session("myarg2")
+        >>> @FuncArg.to_session("myarg2")
         ... def myfunc(session):
         ...     ... # FuncArgs can also operate on session
 
@@ -105,7 +105,7 @@ class FuncArg(BaseArgument):
         return self.func(*self.args, **kwargs)
 
     @classmethod
-    def put_session(cls, name:str=None, *args, **kwargs):
+    def to_session(cls, name:str=None, *args, **kwargs):
         """Create FuncArg from decorator
         and put the argument to the session
         parameters."""
@@ -124,7 +124,7 @@ class FuncArg(BaseArgument):
             raise TypeError(
                 "Argument name should be a string or None. " 
                 f"Given: {type(name)}. "
-                "Perhaps forgot to close .put_session()?"
+                "Perhaps forgot to close .to_session()?"
             )
         return wrapper
 
