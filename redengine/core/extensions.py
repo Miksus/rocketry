@@ -103,17 +103,20 @@ class BaseExtension(metaclass=_ExtensionMeta):
     __parsekey__: str
     __register__ = False
 
-    def __init__(self, name:str=None, session:'Session'=None, **kwargs):
+    def __init__(self, *args, name:str=None, session:'Session'=None, **kwargs):
         self.session = session if session is not None else self.session
 
         parse_key = self.__parsekey__
+        name = str(id(name)) if name is None else name
         if parse_key not in self.session.extensions:
             self.session.extensions[parse_key] = {}
+        if name in self.session.extensions:
+            raise KeyError(f"Extension with name '{name}' aleady exists.")
         self.session.extensions[parse_key][name] = self
 
         self.name = name
 
-        self.at_parse(**kwargs)
+        self.at_parse(*args, **kwargs)
 
     def at_parse(self):
         """This is executed when the extension instance 
