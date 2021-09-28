@@ -110,9 +110,11 @@ class BaseExtension(metaclass=_ExtensionMeta):
         name = str(id(name)) if name is None else name
         if parse_key not in self.session.extensions:
             self.session.extensions[parse_key] = {}
-        if name in self.session.extensions:
+            
+        exts = self.session.extensions[parse_key]
+        if name in exts:
             raise KeyError(f"Extension with name '{name}' aleady exists.")
-        self.session.extensions[parse_key][name] = self
+        exts[name] = self
 
         self.name = name
 
