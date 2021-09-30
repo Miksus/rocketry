@@ -2,7 +2,7 @@
 import pytest
 
 from redengine.extensions import BaseExtension
-from redengine.config import parse_dict
+from redengine import Session
 
 @pytest.mark.parametrize("global_session", [True, False], ids=["global session", "local session"])
 @pytest.mark.parametrize(
@@ -63,9 +63,9 @@ def test_creation(session, config, global_session):
 
     assert {} == session.extensions
     if global_session:
-        parse_dict(config, session=session)
+        Session.from_dict(config, session=session)
     else:
-        session = parse_dict(config)
+        session = Session.from_dict(config)
 
     for ext_name in ("my-extension-1", "my-extension-2"):
         comp = session.extensions["_pytest_extension"][ext_name]

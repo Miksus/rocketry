@@ -6,16 +6,18 @@ about the scehuler/task/parameters etc.
 """
 
 import logging
-from typing import Iterable, Dict, Type, Union
+from pathlib import Path
+from redengine.pybox.io.read import read_yaml
+from typing import Iterable, Dict, List, Type, Union
 from itertools import chain
 
 import redengine
-from redengine.core import BaseExtension
+from redengine.core import BaseExtension, extensions, parameters
 from redengine.core.log import TaskAdapter
 from redengine.core import Scheduler, Task, BaseCondition, Parameters, BaseArgument
 from redengine.conditions import Any
 from redengine.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
-
+from redengine import parse
 
 class Session:
     """Collection of the scheduler objects.
@@ -68,15 +70,28 @@ class Session:
         "debug": False,
     }
 
-    def __init__(self, config:dict=None, tasks:dict=None, parameters:Parameters=None, extensions:dict=None, scheme:Union[str,list]=None, kwds_scheduler=None, delete_existing_loggers=False):
+    parser = parse.StaticParser({
+            "logging": parse.Field(parse.parse_logging, if_missing="ignore"),
+            "parameters": parse.Field(parse.parse_session_params, if_missing="ignore", types=(dict,)),
+            "tasks": parse.Field(parse.parse_tasks, if_missing="ignore", types=(dict, list)),
+            "scheduler": parse.Field(parse.parse_scheduler, if_missing="ignore"),
+            # Note that extensions are set in redengine.ext
+        },
+        on_extra="ignore", 
+    )
+
+    def __init__(self, 
+                 config:dict=None, 
+                 tasks:dict=None, 
+                 parameters:Parameters=None, 
+                 extensions:dict=None, 
+                 scheme:Union[str,list]=None, 
+                 as_default=True,
+                 kwds_scheduler=None, 
+                 delete_existing_loggers=False):
         # Set defaults
         config = {} if config is None else config
-        tasks = {} if tasks is None else tasks
-        parameters = (
-            Parameters() if parameters is None 
-            else Parameters(parameters) if not isinstance(parameters, Parameters)
-            else parameters
-        )
+        
         extensions = {} if extensions is None else extensions
 
         # Set attrs
@@ -103,6 +118,8 @@ class Session:
                     self.set_scheme(sch)
             else:
                 self.set_scheme(scheme)
+        if as_default:
+            self.set_as_default()
 
     def set_scheme(self, scheme:str):
         """Set logging/scheduling scheme from
@@ -257,6 +274,7 @@ class Session:
         state["_tasks"] = None
         state["_extensions"] = None
         state["scheduler"] = None
+        state["parser"] = None
         return state
 
     @property
@@ -339,3 +357,62 @@ class Session:
         else:
             raise TypeError(f"Extensions must be either list or dict. Given: {type(item)}")
         self._extensions = exts
+
+    @classmethod
+    def from_yaml(cls, file:Union[str, Path], **kwargs) -> 'Session':
+        """Create session from a YAML file.
+
+        Parameters
+        ----------
+        file : path-like
+            YAML configuration file path.
+        **kwargs : dict
+            Passed to Session.from_dict.
+        """
+        from redengine.config import parse_yaml
+        d = read_yaml(file)
+        d = {} if d is None else d
+        return cls.from_dict(d, **kwargs)
+
+    @classmethod
+    def from_dict(cls, conf:dict, root=None, session:'Session'=None, kwds_fields:dict=None, **kwargs) -> 'Session':
+        """Create session from a dictionary.
+
+        There are some extra options or functionalities to help 
+        with the creation of the tasks:
+
+        - The task class is read from the key ``conf['tasks'][...]['class']``.
+          See ``redengine.core.task.CLS_TASKS`` for list of classes.
+        - For some tasks that lack specified classes the class is determined
+          from the arguments:
+        - If argument ``path`` has suffix ``.py``, the class is ``PyScript``.
+
+        Parameters
+        ----------
+        conf : dict
+            Dict to turn to session.
+        root : path-like, optional
+            If passed, tasks that have ``path`` in their init
+            arguments have this argument modified. The ``root``
+            will be set as the parent directory for the path 
+            if ``path`` is relative. Useful to make the session
+            to work the same regardless of current working 
+            directory.
+        session : Session, optional
+            If provided, this session is appended with the parsed
+            content instead of creating a new one.
+        kwds_fields: dict, optional
+            Additional keyword arguments passed to the subparsers.
+            For example, the values of key 'task' are passed to
+            redengine.parse.parse_tasks.
+        **kwargs : dict
+            Additional parameters passed to all subparsers.
+        """
+        session = cls() if session is None else session
+        kwds_fields = {} if kwds_fields is None else kwds_fields
+        if root is not None:
+            if "tasks" not in kwds_fields:
+                kwds_fields["tasks"] = {}
+            kwds_fields["tasks"] = {"kwds_subparser": {"root": root}}
+        cls.parser(conf, session=session, kwds_fields=kwds_fields, **kwargs)
+        return session

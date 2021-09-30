@@ -9,9 +9,9 @@ import sys
 import pandas as pd
 
 from redengine.core import Task
-from redengine.parse import parse_task, parse_session
+from redengine.parse import parse_task
 from redengine.pybox.io import read_yaml
-from redengine import extensions
+from redengine import extensions, Session
 
 
 class LoaderBase(Task):
@@ -91,7 +91,7 @@ class SessionLoader(ContentLoader):
         tasks.
     glob : str, default="\\*\\*/conftask.yaml"
         Unix pattern that is used to identify the files
-        that are parsed with ``redengine.parse.parse_session``.
+        that are parsed with ``redengine.Session.from_dict``.
     delay : str
         Time delay after each cycle of going through the 
         found files. Only usable if ``execution='thread'``
@@ -153,7 +153,7 @@ class SessionLoader(ContentLoader):
 
     def parse_content(self, conf, path):
         root = Path(path).parent.absolute()
-        s = parse_session(
+        s = Session.from_dict(
             conf, 
             session=self.session, 
             kwds_fields={"tasks": {"kwds_subparser": {"root":root}}}
@@ -380,7 +380,7 @@ class ExtensionLoader(ContentLoader):
                             conf for conf in ext_conf
                             if re.match(self.name_pattern, conf.get("name", ""))
                         ]
-                comps = parser(ext_conf, session=self.session)
+                comps = parser(ext_conf, session=self.session, if_exists="replace")
         for comp in comps:
             self.found_items.append((comp.__parsekey__, comp.name))
 

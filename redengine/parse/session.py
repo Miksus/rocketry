@@ -1,6 +1,6 @@
 from .utils import StaticParser, Field
 from .task import parse_tasks
-from .misc import parse_logging, parse_clear_existing
+from .misc import parse_logging
 from .parameters import parse_session_params
 from .scheduler import parse_scheduler
 
@@ -24,7 +24,6 @@ class SessionParser(StaticParser):
 
 
 parse_session = SessionParser({
-        "clear_existing": Field(parse_clear_existing, if_missing="ignore", types=(bool,)),
         "logging": Field(parse_logging, if_missing="ignore"),
         "parameters": Field(parse_session_params, if_missing="ignore", types=(dict,)),
         "tasks": Field(parse_tasks, if_missing="ignore", types=(dict, list)),
@@ -32,5 +31,6 @@ parse_session = SessionParser({
         # Note that extensions are set in redengine.ext
     },
     on_extra="ignore", 
+    #! TODO: This to Session
 )
 

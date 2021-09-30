@@ -30,11 +30,6 @@ def _create_sequence(tasks, start_cond=None):
         else:
             task.start_cond &= DependSuccess(task=task, depend_task=parent_task)
 
-def parse_clear_existing(clear, **kwargs):
-    if clear:
-        # TODO: Get somewhere else the session
-        Task.session.clear()
-
 def parse_logging(conf, **kwargs):
     dictConfig(conf)
 

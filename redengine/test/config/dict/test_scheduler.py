@@ -51,7 +51,7 @@ def test_full_featured(tmpdir, session):
             pass
         """))
 
-        sess = parse_dict(
+        sess = Session.from_dict(
             {
                 "parameters": {
                     "mode": "test"
@@ -123,7 +123,7 @@ def test_full_featured(tmpdir, session):
         assert {
             # Globals
             "mode": "test",
-        } == dict(**session.parameters)
+        } == dict(**sess.parameters)
 
         # Test sequences
         cond = parse_condition("daily starting 19:00")
@@ -143,7 +143,7 @@ def test_scheduler_tasks_set(tmpdir, session):
             pass
         """))
 
-        sess = parse_dict(
+        sess = Session.from_dict(
             {
                 "tasks": {
                     "task_1": {"class": "FuncTask", "func": "some_funcs:do_task_1"},

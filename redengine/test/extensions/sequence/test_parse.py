@@ -2,9 +2,9 @@
 from redengine.extensions import Sequence
 from redengine.extensions.piping import TriggerCluster
 from redengine.conditions import All
-from redengine.config import parse_dict
+from redengine import Session
 
-def test_parse(session):
+def test_parse():
     conf = {
         "tasks": {
             "mytask-1": {"class": "PyScript", "path": "path/to/first.py"},
@@ -21,8 +21,8 @@ def test_parse(session):
         }
     }
 
-    assert {} == session.extensions
-    sess = parse_dict(conf, session=session)
+    #assert {} == session.extensions
+    session = Session.from_dict(conf)
     sequences = session.extensions["sequences"]
     assert isinstance(sequences["my-sequence-1"], Sequence)
     assert isinstance(sequences["my-sequence-2"], Sequence)

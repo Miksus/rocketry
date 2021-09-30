@@ -1,5 +1,4 @@
 
-from redengine.parse import parse_session
 from redengine.parse.utils import instances, ParserPicker
 from redengine.core.meta import _register
 
@@ -22,8 +21,9 @@ class _ExtensionMeta(type):
         # Store the name and class for configurations
         parse_key = getattr(cls, "__parsekey__", None)
         if parse_key is not None:
+            from redengine import Session
             parser = _get_parser(cls.parse_cls)
-            parse_session[parse_key] = parser
+            Session.parser[parse_key] = parser
             PARSERS[parse_key] = parser
         _register(cls, CLS_EXTENSIONS)
         return cls
@@ -94,8 +94,8 @@ class BaseExtension(metaclass=_ExtensionMeta):
     ...     def __repr__(self):
     ...         return f"MyExtension('{self.thing}')"
     ...
-    >>> from redengine.config import parse_session
-    >>> session = parse_session({
+    >>> from redengine import Session
+    >>> session = Session.from_dict({
     ...     "myextensions": [
     ...         {"thing": "hat", 'name': 'my_instance'}
     ...     ]
@@ -142,7 +142,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
         """
 
     @classmethod
-    def parse_cls(cls, d:dict, session:'Session'):
+    def parse_cls(cls, d:dict, session:'Session', if_exists=None):
         """Parse the extension from configuration dictionary.
 
         Parameters
@@ -152,7 +152,7 @@ class BaseExtension(metaclass=_ExtensionMeta):
         session : redengine.Session
             Session object for which the extension is for.
         """
-        return cls(**d, session=session)
+        return cls(**d, session=session, if_exists=if_exists)
 
     def delete(self):
         """Delete the extension from the session.
