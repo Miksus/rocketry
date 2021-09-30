@@ -192,13 +192,14 @@ class Task(metaclass=_TaskMeta):
 
     # Class defaults
     default_priority = 0
+    default_execution = "process"
 
     def __init__(self, parameters=None, session=None,
                 start_cond=None, run_cond=None, end_cond=None, 
                 dependent=None, timeout=None, priority=None, 
                 on_success=None, on_failure=None, on_finish=None, 
                 name=None, description=None, logger=None, daemon=None,
-                execution="process", disabled=False, force_run=False,
+                execution=None, disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False,
                 on_exists=None):
 
@@ -226,7 +227,7 @@ class Task(metaclass=_TaskMeta):
         )
         self.priority = priority or self.default_priority
 
-        self.execution = execution
+        self.execution = execution or self.default_execution
         self.daemon = daemon
 
         self.on_startup = on_startup
