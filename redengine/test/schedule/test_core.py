@@ -342,5 +342,5 @@ def test_startup_shutdown(tmpdir, execution, session):
         assert os.path.exists("start.txt")
         assert os.path.exists("shut.txt")
 
-        assert not pd.DataFrame(session.get_task_log()).empty
-        assert not pd.DataFrame(session.get_scheduler_log()).empty
+        assert list(session.get_task_log()) != []
+        assert list(session.get_scheduler_log()) != []
