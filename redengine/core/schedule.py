@@ -1,7 +1,7 @@
 
 from multiprocessing import cpu_count
 import multiprocessing
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 import threading
 import traceback
 import time
@@ -414,8 +414,9 @@ class Scheduler:
         return self._shut_cond
     
     @shut_cond.setter
-    def shut_cond(self, cond:BaseCondition):
-        set_statement_defaults(cond, _scheduler_=self)
+    def shut_cond(self, cond:Union[BaseCondition, str]):
+        from redengine.parse import parse_condition
+        cond = parse_condition(cond)
         self._shut_cond = cond
         
     def _shut_down_tasks(self, traceback=None, exception=None):
