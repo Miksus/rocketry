@@ -254,7 +254,8 @@ class Session:
         # NOTE: When a process task is executed, it will pickle
         # the task.session. Therefore removing unpicklable here.
         state = self.__dict__.copy()
-        state["tasks"] = {}
+        state["_tasks"] = None
+        state["_extensions"] = None
         state["scheduler"] = None
         return state
 
@@ -280,3 +281,61 @@ class Session:
         BaseExtension.session = self
         redengine.session = self
         BaseArgument.session = self
+
+    @property
+    def tasks(self) -> Dict[str, Task]:
+        """Dict[str, Task]: Dictionary of the tasks in the session."""
+        return self._tasks
+
+    @tasks.setter
+    def tasks(self, item:Union[List[Task], Dict[str, Task]]):
+        tasks = {}
+        if item is None:
+            pass
+        elif isinstance(item, (list, tuple, set)):
+            for task in item:
+                if not isinstance(task, Task):
+                    raise TypeError(f"Session tasks must be type {Task}. Given: {type(task)}")
+                tasks[task.name] = task
+        elif isinstance(item, dict):
+            tasks = item
+            #! TODO: Validate
+        else:
+            raise TypeError(f"Tasks must be either list or dict. Given: {type(item)}")
+        self._tasks = tasks
+
+    @property
+    def parameters(self) -> Parameters:
+        """Parameters: Session level parameters."""
+        return self._params
+
+    @parameters.setter
+    def parameters(self, item:Union[Dict, Parameters]):
+        self._params = Parameters(item)
+
+    @property
+    def extensions(self) -> Dict[str, Dict[str, BaseExtension]]:
+        """Dict[str, Dict[str, BaseExtension]]: Dictionary of the extensions 
+        in the session. The first key is the parse keys of the extensions
+        and second key the names of the extension objects."""
+        return self._extensions
+
+    @extensions.setter
+    def extensions(self, item:Union[List[BaseExtension], Dict[str, Dict[str, BaseExtension]]]):
+        exts = {}
+        if item is None:
+            pass
+        elif isinstance(item, list):
+            for ext in item:
+                if not isinstance(ext, BaseExtension):
+                    raise TypeError(f"Session extensions must be type {BaseExtension}. Given: {type(ext)}")
+                key = ext.__parsekey__
+                if key not in exts:
+                    exts[key] = {}
+                exts[key][ext.name] = ext
+        elif isinstance(item, dict):
+            exts = item
+            #! TODO: Validate
+        else:
+            raise TypeError(f"Extensions must be either list or dict. Given: {type(item)}")
+        self._extensions = exts
