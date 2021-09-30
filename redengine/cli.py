@@ -27,6 +27,8 @@ def start_project(target, template):
     }
 
     for file in source.glob("**/*.*"):
+        if any(not_this in file.parts for not_this in ("__pycache__",)):
+            continue
         new_file = target / file.relative_to(source)
         new_file.parent.mkdir(parents=True, exist_ok=True)
         with open(new_file, "w") as tgt:
