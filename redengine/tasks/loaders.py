@@ -22,14 +22,15 @@ class LoaderBase(Task):
         ".yaml": read_yaml,
     }
 
-    def __init__(self, path=None, glob=None, delay="1 minutes", execution=None, **kwargs):
+    def __init__(self, path=None, glob=None, delay="1 minutes", execution=None, on_startup=True, **kwargs):
+        if execution == "process":
+            raise ValueError("Loaders cannot be executed as 'process'.")
         execution = "main" if execution is None else execution
-        super().__init__(execution=execution, **kwargs)
         self.path = Path.cwd() if path is None else path
         self.glob = glob or self.default_glob
         self.found_items = []
-
         self.delay = pd.Timedelta(delay).total_seconds()
+        super().__init__(execution=execution, on_startup=on_startup, **kwargs)
 
     def execute(self):
         if self.execution == "main":
@@ -354,10 +355,10 @@ class ExtensionLoader(ContentLoader):
     def parse_content(self, conf, path):
         root = Path(path).parent
         if isinstance(conf, list):
-            # List of tasks
+            # List of extensions
             return [self.parse_extensions(task_conf, root=root) for task_conf in conf]
         elif isinstance(conf, dict):
-            # One task
+            # One extension
             task_conf = conf
             return self.parse_extensions(task_conf)
         else:
