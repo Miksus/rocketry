@@ -13,8 +13,8 @@ def test_session_loader(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
         root = Path(str(tmpdir)) / "project"
-        task1 = FuncTask(lambda: None, name="task-A")
-        task2 = FuncTask(lambda: None, name="task-B")
+        task1 = FuncTask(lambda: None, name="task-A", execution="main")
+        task2 = FuncTask(lambda: None, name="task-B", execution="main")
         finder = SessionLoader(path="project")
         
         create_file(root / "conftask.yaml", dedent("""

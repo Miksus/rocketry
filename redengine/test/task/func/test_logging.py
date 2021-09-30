@@ -171,6 +171,7 @@ def test_action_start(tmpdir, method, session):
 
         task = FuncTask(
             lambda : None,
+            execution="main",
         )
         task.log_running()
         getattr(task, method)()

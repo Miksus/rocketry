@@ -12,8 +12,8 @@ from io_helpers import create_file, delete_file
 def test_loader_multiple_times(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
-        FuncTask(lambda: None, name="task-1")
-        FuncTask(lambda: None, name="task-2")
+        FuncTask(lambda: None, name="task-1", execution="main")
+        FuncTask(lambda: None, name="task-2", execution="main")
         root = Path(str(tmpdir)) / "project"
 
         finder = ExtensionLoader(path="project")
@@ -76,8 +76,8 @@ def test_loader_multiple_times(tmpdir, session):
 def test_loader(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
-        task1 = FuncTask(lambda: None, name="task-1")
-        task2 = FuncTask(lambda: None, name="task-2")
+        task1 = FuncTask(lambda: None, name="task-1", execution="main")
+        task2 = FuncTask(lambda: None, name="task-2", execution="main")
         root = Path(str(tmpdir)) / "project"
 
         finder = ExtensionLoader(path="project")
@@ -99,8 +99,8 @@ def test_loader(tmpdir, session):
 def test_loader_pattern(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
-        task1 = FuncTask(lambda: None, name="task-1")
-        task2 = FuncTask(lambda: None, name="task-2")
+        task1 = FuncTask(lambda: None, name="task-1", execution="main")
+        task2 = FuncTask(lambda: None, name="task-2", execution="main")
         root = Path(str(tmpdir)) / "project"
 
         finder = ExtensionLoader(path="project", name_pattern=r"dev[.].+")

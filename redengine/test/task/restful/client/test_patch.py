@@ -10,21 +10,21 @@ from redengine import session
     "make_tasks,query_url,content,expected_attrs",
     [
         pytest.param(
-            lambda: [FuncTask(lambda: None, name="test-task", priority=5)],
+            lambda: [FuncTask(lambda: None, name="test-task", priority=5, execution="main")],
             "/test-task",
             {"force_run": True},
             {"test-task": {"force_run": True, "priority": 5, "name": "test-task", "disabled": False}},
             id="Set force run"),
         pytest.param(
-            lambda: [FuncTask(lambda: None, name="test-task", priority=5)],
+            lambda: [FuncTask(lambda: None, name="test-task", priority=5, execution="main")],
             "/test-task",
             {"disabled": True},
             {"test-task": {"force_run": False, "priority": 5, "name": "test-task", "disabled": True}},
             id="Set disabled"),
         pytest.param(
             lambda: [
-                FuncTask(lambda: None, name="test-task", priority=5),
-                FuncTask(lambda: None, name="other", priority=3)
+                FuncTask(lambda: None, name="test-task", priority=5, execution="main"),
+                FuncTask(lambda: None, name="other", priority=3, execution="main")
             ],
             "/test-task",
             {"disabled": True, "force_run": True},

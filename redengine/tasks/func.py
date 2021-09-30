@@ -4,6 +4,7 @@ import importlib
 from typing import Callable, Union
 
 from redengine.core.task import Task
+from redengine.core.utils import is_pickleable
 
 
 class FuncTask(Task):
@@ -37,18 +38,38 @@ class FuncTask(Task):
     If the ``name`` is not defined, the name will be in form
     ``path.to.module:myfunc``.
 
-
     Warnings
     --------
-    Creating the task this way is not recommended:
 
-    >>> @FuncTask  # doctest: +SKIP
-    ... def myfunc():
-    ...     ...
+    If ``execution='process'``, only picklable functions can be used.
+    The following will NOT work:
 
-    Even though the task is created (with defaults),
-    the task cannot be executed in child process due
-    to pickling issues. 
+    .. code-block:: python
+
+        # Lambda functions are not allowed
+        FuncTask(lambda:None, execution="process")
+
+    .. code-block:: python
+
+        # nested functions are not allowed
+        def my_func():
+            @FuncTask(execution="process")
+            def my_task_func():
+                ...
+        my_func()
+
+    .. code-block:: python
+
+        def my_decorator(func):
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        # decorated functions are not allowed
+        @my_decorator
+        @FuncTask(execution="process")
+        def my_task_func():
+            ...
     """
     func: Callable
 
@@ -63,12 +84,24 @@ class FuncTask(Task):
             # in next __call__ (which should occur immediately)
             self._delayed_kwargs = kwargs
             return 
+        elif not kwargs:
+            # Most likely called as:
+            # @FuncTask
+            # def myfunc(...): ...
+            
+            # We are slightly forgiving and set 
+            # the execution to else than process
+            # as it's obvious it would not work.
+            kwargs["execution"] = "thread"
+        # Setting func requires 'execution'
+        self.execution = kwargs.get("execution", self.default_execution)
         self.func = func
         super().__init__(**kwargs)
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, "_func"):
             func = args[0]
+            self.execution = self._delayed_kwargs.get("execution", self.default_execution)
             self.func = func
             super().__init__(**self._delayed_kwargs)
             del self._delayed_kwargs
@@ -160,4 +193,9 @@ class FuncTask(Task):
 
         if not callable(func):
             raise TypeError(f"FuncTask's function must be callable. Got: {type(func)}")
+        elif self.execution == "process" and func.__name__ == "<lambda>":
+            raise AttributeError(
+                f"Cannot pickle lambda function '{func}'. "
+                "The function must be pickleable if task's execution is 'process'. "
+            )
         self._func = func

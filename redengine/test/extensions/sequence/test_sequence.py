@@ -10,8 +10,8 @@ from log_helpers import log_task_record # From /test/helpers/log_helpers
 
 def test_other_conditions(session, mock_datetime_now):
     "Test that the task's condition is indeed as All(other_conds, TriggerCLuster())"
-    task1 = FuncTask(lambda: None, name="task1", start_cond="time of day between 11:00 and 16:00")
-    task2 = FuncTask(lambda: None, name="task2")
+    task1 = FuncTask(lambda: None, name="task1", start_cond="time of day between 11:00 and 16:00", execution="main")
+    task2 = FuncTask(lambda: None, name="task2", execution="main")
     seq = Sequence(tasks=[task1.name, task2.name])
 
     mock_datetime_now("2021-06-01 09:00:00")
@@ -33,7 +33,7 @@ class PipingBase:
     def tasks(self, request, mock_datetime_now):
         
         tasks = [
-            FuncTask(lambda: None, name=f"task_{i}")
+            FuncTask(lambda: None, name=f"task_{i}", execution="main")
             for i in range(self._n_tasks)
         ]
         if request.param == "no previous runs":
@@ -198,8 +198,8 @@ class TestWithoutInterval(SequenceBase):
     ),
 ])
 def test_sequence_wait_task(session, get_pipe, mock_datetime_now):
-    task1 = FuncTask(lambda: None, name="task1", start_cond="time of day between 11:00 and 16:00")
-    task2 = FuncTask(lambda: None, name="task2")
+    task1 = FuncTask(lambda: None, name="task1", start_cond="time of day between 11:00 and 16:00", execution="main")
+    task2 = FuncTask(lambda: None, name="task2", execution="main")
 
     seq = get_pipe()
 

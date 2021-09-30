@@ -11,6 +11,8 @@ from redengine.conditions import true
 
 from io_helpers import create_file, delete_file
 
+def mytask(): ... # Dummy func
+
 def asset_task_equal(a:Task, b:Task):
     assert isinstance(a, Task)
     assert isinstance(b, Task)
@@ -60,7 +62,7 @@ class TestTasks:
                 """,
             },
             "get_expected": lambda: [
-                FuncTask(func=lambda: "mytask", name="pyloader_test1.tasks:mytask", session=Session())
+                FuncTask(func=mytask, name="pyloader_test1.tasks:mytask", session=Session(), execution="thread")
             ]
         },
         {
@@ -71,18 +73,18 @@ class TestTasks:
                 from redengine.tasks import FuncTask
                 from redengine.conditions import true
 
-                @FuncTask(name="mytask-1", start_cond="time of day between 10:00 and 14:00")
+                @FuncTask(name="mytask-1", start_cond="time of day between 10:00 and 14:00", execution="process")
                 def mytask():
                     ...
 
-                @FuncTask(name="mytask-2", start_cond=true)
+                @FuncTask(name="mytask-2", start_cond=true, execution="process")
                 def mytask():
                     ...
                 """,
             },
             "get_expected": lambda: [
-                FuncTask(func=lambda: "mytask", name="mytask-1", start_cond="time of day between 10:00 and 14:00", session=Session()),
-                FuncTask(func=lambda: "mytask", name="mytask-2", start_cond=true, session=Session()),
+                FuncTask(mytask, name="mytask-1", start_cond="time of day between 10:00 and 14:00", session=Session(), execution="process"),
+                FuncTask(mytask, name="mytask-2", start_cond=true, session=Session(), execution="process"),
             ]
         },
     ]
@@ -111,7 +113,7 @@ class TestTasks:
                     # session is of course different, forcing the same
                     expected_task.session = session
                     # We use convention: expected task's func should return name of the func
-                    assert actual_task.func.__name__ == expected_task.func()
+                    assert actual_task.func.__name__ == expected_task.func.__name__
                     expected_task._func = None
                     actual_task._func = None
                     asset_task_equal(actual_task, expected_task)

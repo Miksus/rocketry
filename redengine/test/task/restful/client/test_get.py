@@ -212,7 +212,7 @@ def test_parameters(client, query_url, params, expected, session):
 def test_logs(client, logs, query_url, expected_logs, session):
     
     # A throwaway task for only forming the logger
-    task = FuncTask(lambda: None)
+    task = FuncTask(lambda: None, execution="main")
 
     for log in logs:
         asctime, action, task_name = log

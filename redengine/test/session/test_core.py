@@ -7,7 +7,8 @@ def test_get_task(tmpdir, session):
 
         task = FuncTask(
             lambda : None, 
-            name="example"
+            name="example",
+            execution="main"
         )
         
         # By string
@@ -24,11 +25,13 @@ def test_tasks_attr(tmpdir, session):
 
         task1 = FuncTask(
             lambda : None, 
-            name="example 1"
+            name="example 1",
+            execution="main"
         )
         task2 = FuncTask(
             lambda : None, 
-            name="example 2"
+            name="example 2",
+            execution="main"
         )
         
         assert {"example 1": task1, "example 2": task2} == session.tasks
@@ -42,11 +45,13 @@ def test_clear(tmpdir, session):
 
         task1 = FuncTask(
             lambda : None, 
-            name="example 1"
+            name="example 1",
+            execution="main"
         )
         task2 = FuncTask(
             lambda : None, 
-            name="example 2"
+            name="example 2",
+            execution="main"
         )
         session.parameters["x"] = 1
         sched = Scheduler()
