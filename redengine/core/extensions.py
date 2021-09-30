@@ -60,6 +60,11 @@ class BaseExtension(metaclass=_ExtensionMeta):
         Name of the extension instance.
     session : redengine.Session
         Session object for which the extension is for.
+    if_exists : {'raise', 'replace', 'ignore'}, default='raise'
+        If extension with the same name exists, what to do.
+        If 'raise' Exception is raised, if 'replace' the existing
+        extension is overridden in the session, if 'ignore' the 
+        extension is not set to the session.
 
     Notes
     -----
@@ -103,18 +108,27 @@ class BaseExtension(metaclass=_ExtensionMeta):
     __parsekey__: str
     __register__ = False
 
-    def __init__(self, *args, name:str=None, session:'Session'=None, **kwargs):
+    def __init__(self, *args, name:str=None, session:'Session'=None, if_exists=None, **kwargs):
         self.session = session if session is not None else self.session
 
         parse_key = self.__parsekey__
         name = str(id(name)) if name is None else name
         if parse_key not in self.session.extensions:
             self.session.extensions[parse_key] = {}
-            
+
         exts = self.session.extensions[parse_key]
-        if name in exts:
-            raise KeyError(f"Extension with name '{name}' aleady exists.")
-        exts[name] = self
+        exists = name in exts
+        if exists:
+            if if_exists is None or if_exists == "raise":
+                raise KeyError(f"Extension with name '{name}' aleady exists.")
+            elif if_exists == "replace":
+                existing = exts[name]
+                exts[name] = self
+            else:
+                # Ignore
+                pass
+        else:
+            exts[name] = self
 
         self.name = name
 
