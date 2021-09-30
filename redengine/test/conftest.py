@@ -73,6 +73,12 @@ def session():
     redengine.session = session
     session.set_as_default()
 
+    # enable logger
+    # Some tests may disable especially scheduler logger if logging config has
+    # "disable_existing_loggers" as True and missing scheduler logger
+    logging.getLogger(session.config["task_logger_basename"]).disabled = False
+    logging.getLogger(session.config["scheduler_logger_basename"]).disabled = False
+
     # Clear hooks
     clear_hooks()
     return session
