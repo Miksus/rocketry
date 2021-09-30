@@ -21,6 +21,8 @@ def parse_yaml(path, **kwargs):
         Session object.
     """
     conf = read_yaml(path)
+    if conf is None:
+        conf = {}
     return parse_dict(conf, **kwargs)
 
 def get_default(name:str, scheduler_basename:str=None, task_basename:str=None):
