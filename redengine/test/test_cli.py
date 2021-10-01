@@ -5,13 +5,10 @@ from pathlib import Path
 
 import importlib
 import importlib.util
+import sys, os
 
-def load_module(path):
-    
-    spec = importlib.util.spec_from_file_location("main", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def load_module(mdl):
+    return importlib.import_module(mdl)
 
 def test_create(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -28,18 +25,24 @@ def test_minimal(tmpdir):
 
         main(["create", "myproject", "--template", "minimal"])
         
-        module = load_module("myproject/main.py")
-        session = module.session
-        session.set_as_default()
-        
-        # Make almost instant shutdown
-        session.scheduler.shut_cond = SchedulerCycles() == 1
-        session.start()
+        try:
+            sys_path = os.path.join(str(tmpdir), "myproject")
+            sys.path.append(sys_path)
+            module = load_module("main")
 
-        assert 1 < len(session.tasks)
+            session = module.session
+            session.set_as_default()
+            
+            # Make almost instant shutdown
+            session.scheduler.shut_cond = SchedulerCycles() == 1
+            session.start()
 
-        # Check no tasks failed
-        assert ["success"] * len(session.tasks) == [
-            task.status
-            for task in session.tasks.values()
-        ]
+            assert 1 < len(session.tasks)
+
+            # Check no tasks failed
+            assert ["success"] * len(session.tasks) == [
+                task.status
+                for task in session.tasks.values()
+            ]
+        finally:
+            sys.path.remove(sys_path)
