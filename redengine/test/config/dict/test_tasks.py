@@ -1,10 +1,10 @@
 
 from redengine.tasks import PyScript
-from redengine.config import parse_dict
+from redengine import Session
 
 def test_init_maintain(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
-        sess = parse_dict(
+        sess = Session.from_dict(
             {
                 "tasks": {
                     "git-fetch": {"class": "GitFetch"},
@@ -23,7 +23,7 @@ def test_init_maintain(tmpdir, session):
         ] == [sess.get_task(task).name for task in tasks]
 
 def test_without_class():
-    sess = parse_dict(
+    sess = Session.from_dict(
         {
             "tasks": {
                 "my-task-1": {"path": "something.py"},

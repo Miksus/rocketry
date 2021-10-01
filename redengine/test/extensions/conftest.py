@@ -1,8 +1,8 @@
 
-from redengine.config import parse_dict
+from redengine import Session
 
 class ExtensionBase:
 
     def test_parse_name_dict(self, session, config):
         assert {} == session.extensions
-        parse_dict(config)
+        Session.from_dict(config)

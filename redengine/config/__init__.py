@@ -1,31 +1,12 @@
 
 from pathlib import Path
 
-from redengine.parse import parse_session
 from redengine.pybox.io import read_yaml
 
 DEFAULT_BASENAME_TASKS = "redengine.task"
 DEFAULT_BASENAME_SCHEDULER = "redengine.scheduler"
 
-def parse_yaml(path, **kwargs):
-    """Parse YAML configuration file.
-
-    Parameters
-    ----------
-    path : [pathlib.Path, str]
-        Path to the configuration file
-
-    Returns
-    -------
-    Session
-        Session object.
-    """
-    conf = read_yaml(path)
-    if conf is None:
-        conf = {}
-    return parse_dict(conf, **kwargs)
-
-def get_default(name:str, scheduler_basename:str=None, task_basename:str=None):
+def get_default(name:str, scheduler_basename:str=None, task_basename:str=None, **kwargs):
     """Get premade configuration. 
 
     Parameters
@@ -42,7 +23,8 @@ def get_default(name:str, scheduler_basename:str=None, task_basename:str=None):
         tasks' activity. The 'redengine.tasks'
         from the config scheme is renamed as so, by default 
         None
-    """    
+    """
+    from redengine import Session
     # From redengine/config/default
     root = Path(__file__).parent / "defaults"
     path = root / (name + ".yaml")
@@ -57,8 +39,8 @@ def get_default(name:str, scheduler_basename:str=None, task_basename:str=None):
             task_basename=task_basename, 
             scheduler_basename=scheduler_basename,
         )
-
-    return parse_dict(conf)
+    s = Session.from_dict(conf, **kwargs)
+    return s
 
 def _rename_basenames(loggers:dict, task_basename, scheduler_basename):
     """Rename all loggers that start with 'redengine.task' and redengine.scheduler
@@ -82,6 +64,3 @@ def _rename_basenames(loggers:dict, task_basename, scheduler_basename):
         else:
             continue
         loggers[new_key] = loggers.pop(key)
-
-def parse_dict(conf:dict, **kwargs):
-    return parse_session(conf, **kwargs)

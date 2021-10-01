@@ -4,7 +4,6 @@ from textwrap import dedent
 
 import pytest
 
-from redengine.config import parse_dict
 from redengine.parse import parse_condition
 from redengine import Session
 
@@ -19,7 +18,7 @@ def set_sys_path(tmpdir):
     sys.path.remove(str(tmpdir))
 
 def test_no_config():
-    sess = parse_dict(
+    sess = Session.from_dict(
         {}
     )
     assert isinstance(sess, Session)

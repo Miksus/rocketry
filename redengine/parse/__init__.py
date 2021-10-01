@@ -1,4 +1,4 @@
-from .session import parse_session
+
 from .task import parse_task, parse_tasks
 from .scheduler import parse_scheduler
 from .condition import parse_condition

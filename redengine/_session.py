@@ -369,7 +369,6 @@ class Session:
         **kwargs : dict
             Passed to Session.from_dict.
         """
-        from redengine.config import parse_yaml
         d = read_yaml(file)
         d = {} if d is None else d
         return cls.from_dict(d, **kwargs)
