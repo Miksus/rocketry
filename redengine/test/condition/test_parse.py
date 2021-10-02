@@ -66,7 +66,7 @@ cases_time = [
     pytest.param("time of hour between 45:00 and 50:00",       IsPeriod(period=TimeOfHour("45:00", "50:00")), id="time of hour between"),
     pytest.param("time of day between 10:00 and 14:00",        IsPeriod(period=TimeOfDay("10:00", "14:00")), id="time of day between"),
     pytest.param("time of week between Tuesday and Wednesday", IsPeriod(period=TimeOfWeek("Tue", "Wed")), id="time of week between"),
-    pytest.param("time of month between 1. and 15.",  IsPeriod(period=TimeOfMonth("1.", "15.")), id="time of month between"),
+    pytest.param("time of month between 1st and 2nd",  IsPeriod(period=TimeOfMonth("1st", "2nd")), id="time of month between (1st, 2nd)"),
 
     pytest.param("time of hour after 45:00",   IsPeriod(period=TimeOfHour("45:00", None)), id="time of hour after"),
     pytest.param("time of day after 10:00",    IsPeriod(period=TimeOfDay("10:00", None)), id="time of day after"),
