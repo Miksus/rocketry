@@ -5,6 +5,7 @@ import pytest
 
 from redengine.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from redengine.parse.condition import parse_condition
+from redengine.conditions import ParamExists
 from redengine.conditions import (
     AlwaysTrue, AlwaysFalse, 
     All, Any, Not,
@@ -142,7 +143,12 @@ cases_logical = [
 ]
 
 cases_misc = [
+    pytest.param("""(true & true)
+        | (false & ~
+        false)""", (AlwaysTrue() & AlwaysTrue()) | (AlwaysFalse() & ~AlwaysFalse()), id="Multiline"),
     pytest.param("env 'test'", IsEnv('test'), id="IsEnv 'test'"),
+    pytest.param("param 'x' exists", ParamExists('x'), id="ParamExists 'x'"),
+    pytest.param("param 'x' is 'myval'", ParamExists(x='myval'), id="ParamExists 'x=5'"),
 ]
 
 

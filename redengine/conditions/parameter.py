@@ -1,5 +1,6 @@
 
 import re
+from typing import Union
 
 from redengine.core.condition import BaseCondition
 
@@ -69,6 +70,11 @@ class ParamExists(BaseCondition):
     >>> bool(condition)
     False
     """
+    __parsers__ = {
+        re.compile(r"param '(?P<l>.+)' exists"): "_from_list",
+        re.compile(r"param '(?P<key>.+)' is '(?P<value>.+)'"): "_from_key_value",
+    }
+
     param_keys:dict
     param_vals:tuple
 
@@ -88,3 +94,11 @@ class ParamExists(BaseCondition):
                 return False
         # Passed all test
         return True
+
+    @classmethod
+    def _from_list(cls, l:Union[tuple, list]):
+        return cls(*l)
+    
+    @classmethod
+    def _from_key_value(cls, key:str, value):
+        return cls(**{key: value})
