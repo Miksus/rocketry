@@ -1,5 +1,4 @@
 from .func import FuncTask
-from .pyscript import PyScript
 from .command import CommandTask
 from . import maintain
 from . import loaders

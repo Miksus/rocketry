@@ -1,5 +1,5 @@
 
-from redengine.tasks import PyScript
+from redengine.tasks import FuncTask
 from redengine import Session
 
 def test_init_maintain(tmpdir, session):
@@ -26,10 +26,10 @@ def test_without_class():
     sess = Session.from_dict(
         {
             "tasks": {
-                "my-task-1": {"path": "something.py"},
+                "my-task-1": {"path": "something.py", "func": "main"},
             },
         }
     )
     assert [
-        ("my-task-1", PyScript),
+        ("my-task-1", FuncTask),
     ] == [(task.name, type(task)) for task in sess.tasks.values()]

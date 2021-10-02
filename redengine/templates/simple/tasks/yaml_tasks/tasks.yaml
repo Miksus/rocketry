@@ -1,0 +1,48 @@
+
+# You can also load tasks from YAML
+# configuration files such as this
+# one.
+
+# The file can be structured as this
+# (dict of dicts) or as list of dict.
+# In this example the key of the first
+# dictionary is the name of the tasks
+# and the inner dictionaries are the
+# configurations of each tasks. These
+# configurations are passed to the 
+# classes specified in 'class' key.
+
+# For some classes (like FuncTask)
+# the 'class' does not need to be 
+# specified if a 'path' key is set
+# and it's a Python file.
+
+# If list of dicts are used, the 'name' 
+# key should be specified in each task
+# unless default naming is used. 
+
+my-yaml-task-1:
+  path: 'funcs.py'
+  func: 'main'
+  #start_cond: 'every 1 seconds'
+  execution: 'main'
+  parameters: 
+    my_task_param: 'my value' # Function parameter
+    
+my-yaml-task-2:
+  path: 'funcs.py'
+  func: 'do_things' # Runs on another process
+  execution: 'thread'
+
+# Note also our init hook. Tasks that start with
+# 'dev.' won't be run when env='prod' but these
+# tasks are only ones allowed to be run if 
+# env='dev'.
+
+dev.my-yaml-task-2:
+  path: 'funcs.py'
+  execution: 'main'
+  func: 'main'
+  start_cond: 'every 5 seconds'
+  parameters: 
+    my_task_param: '(this is dev)' # Function parameter

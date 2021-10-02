@@ -22,7 +22,7 @@ def get_module(path, pkg_path=None):
     else:
         name = Path(path).name
 
-    spec = importlib.util.spec_from_file_location(name, path)
+    spec = importlib.util.spec_from_file_location(name, path.absolute())
     task_module = importlib.util.module_from_spec(spec)
 
     try:
@@ -124,6 +124,7 @@ class FuncTask(Task):
     func: Callable
 
     def __init__(self, func=None, path=None, delay=None, sys_paths=None, **kwargs):
+        only_func_set = not kwargs and delay is None and path is None and sys_paths is None
         if func is None and not delay:
             # FuncTask was probably called like:
             # @FuncTask(...)
@@ -137,7 +138,7 @@ class FuncTask(Task):
             kwargs["sys_paths"] = sys_paths
             self._delayed_kwargs = kwargs
             return 
-        elif not kwargs and not delay and path is None and func is None:
+        elif only_func_set:
             # Most likely called as:
             # @FuncTask
             # def myfunc(...): ...

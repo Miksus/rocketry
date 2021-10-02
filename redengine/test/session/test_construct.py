@@ -6,7 +6,7 @@ import pytest
 
 from redengine import Session
 from redengine.parse import parse_condition, parse_time
-from redengine.tasks import PyScript
+from redengine.tasks import FuncTask
 from redengine.extensions import Sequence
 from redengine.core import Task, Scheduler, BaseCondition, BaseArgument, BaseExtension, Parameters
 
@@ -31,23 +31,23 @@ class TestInit:
     def test_tasks(self):
 
         session = Session(tasks=[
-            PyScript(path="something.py", func="main", name="my-task-1"),
-            PyScript(path="another.py", func="myfunc", name="my-task-2")
+            FuncTask(path="something.py", func="main", name="my-task-1"),
+            FuncTask(path="another.py", func="myfunc", name="my-task-2")
         ])
     
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_tasks_lazy(self):
 
         session = Session()
-        PyScript(path="something.py", func="main", name="my-task-1")
-        PyScript(path="another.py", func="myfunc", name="my-task-2")
+        FuncTask(path="something.py", func="main", name="my-task-1")
+        FuncTask(path="another.py", func="myfunc", name="my-task-2")
 
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_scheduler(self):
         session = Session(kwds_scheduler={
@@ -67,8 +67,8 @@ class TestInit:
 
     def test_sequence(self):
         session = Session(tasks=[
-            PyScript(path="something.py", func="main", name="my-task-1"),
-            PyScript(path="another.py", func="myfunc", name="my-task-2")
+            FuncTask(path="something.py", func="main", name="my-task-1"),
+            FuncTask(path="another.py", func="myfunc", name="my-task-2")
         ], extensions=[
             Sequence(tasks=["my-task-1", "my-task-2"], interval="every 2 hours", name="my-sequence-1"),
             Sequence(tasks=["my-task-2", "my-task-1"], name="my-sequence-2"),
@@ -98,26 +98,26 @@ class TestDict:
     def test_tasks_dict(self):
         conf = {
             "tasks": {
-                "my-task-1": {"class": "PyScript", "path": "something.py", "func": "main"},
-                "my-task-2": {"class": "PyScript", "path": "another.py", "func": "myfunc"},
+                "my-task-1": {"class": "FuncTask", "path": "something.py", "func": "main"},
+                "my-task-2": {"class": "FuncTask", "path": "another.py", "func": "myfunc"},
             }
         }
         session = Session.from_dict(conf)
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_tasks_list(self):
         conf = {
             "tasks": [
-                {"class": "PyScript", "path": "something.py", "func": "main", "name": "my-task-1"},
-                {"class": "PyScript", "path": "another.py", "func": "myfunc", "name": "my-task-2"},
+                {"class": "FuncTask", "path": "something.py", "func": "main", "name": "my-task-1"},
+                {"class": "FuncTask", "path": "another.py", "func": "myfunc", "name": "my-task-2"},
             ]
         }
         session = Session.from_dict(conf)
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_scheduler(self):
         conf = {
@@ -141,8 +141,8 @@ class TestDict:
     def test_sequence(self):
         conf = {
             "tasks": [
-                {"class": "PyScript", "path": "something.py", "func": "main", "name": "my-task-1"},
-                {"class": "PyScript", "path": "another.py", "func": "myfunc", "name": "my-task-2"},
+                {"class": "FuncTask", "path": "something.py", "func": "main", "name": "my-task-1"},
+                {"class": "FuncTask", "path": "another.py", "func": "myfunc", "name": "my-task-2"},
             ],
             "sequences": {
                 "my-sequence-1": {"tasks": ["my-task-1", "my-task-2"], "interval": "every 2 hours"},
@@ -195,37 +195,37 @@ class TestYAML:
         content = """
         tasks:
             my-task-1:
-                class: PyScript
+                class: FuncTask
                 path: something.py
                 func: main
             my-task-2:
-                class: PyScript
+                class: FuncTask
                 path: another.py
                 func: myfunc
         """
         self.write_content(content, conf_file)
         session = Session.from_yaml(conf_file)
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_tasks_list(self, conf_file):
         content = """
         tasks:
           - name: my-task-1
-            class: PyScript
+            class: FuncTask
             path: something.py
             func: main
           - name: my-task-2
-            class: PyScript
+            class: FuncTask
             path: another.py
             func: myfunc
         """
         self.write_content(content, conf_file)
         session = Session.from_yaml(conf_file)
         assert list(session.tasks.keys()) == ["my-task-1", "my-task-2"]
-        assert all(isinstance(task, PyScript) for task in session.tasks.values())
-        assert [(str(task.path), task.func) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
+        assert all(isinstance(task, FuncTask) for task in session.tasks.values())
+        assert [(str(task.path), task.func_name) for task in session.tasks.values()] == [("something.py", "main"), ("another.py", "myfunc")]
 
     def test_scheduler(self, conf_file):
         content = """
@@ -250,11 +250,11 @@ class TestYAML:
         content = """
         tasks:
             my-task-1:
-                class: PyScript
+                class: FuncTask
                 path: something.py
                 func: main
             my-task-2:
-                class: PyScript
+                class: FuncTask
                 path: another.py
                 func: myfunc
         sequences:

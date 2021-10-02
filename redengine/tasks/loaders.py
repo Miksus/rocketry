@@ -117,9 +117,9 @@ class SessionLoader(ContentLoader):
         tasks:
             - class: TaskLoader
               ...  # Passed to redengine.tasks.loaders.TaskLoader(...)
-            - class: PyScript
+            - class: FuncTask
               name: 'my-task-1'
-              ... # Passed to redengine.tasks.PyScript(...)
+              ... # Passed to redengine.tasks.FuncTask(...)
 
         logging:
             clear_existing: True
@@ -273,7 +273,7 @@ class TaskLoader(ContentLoader):
         task_path = Path(conf["path"])
         task_extension = task_path.suffix
         if task_extension == ".py":
-            return 'PyScript'
+            return 'FuncTask'
         else:
             # TODO: Add parsing for .ipynb (JupyterTask), .tex (TexTask) etc.
             raise ValueError(f"No task class for task file '{task_extension}'")
@@ -462,8 +462,6 @@ class PyLoader(LoaderBase):
             sys.path.append(root_path)
         imp_path = self.to_import_path(file.relative_to(root))
         importlib.import_module(imp_path)
-        pass
-        #return PyScript.get_module(file)
 
     def delete_item(self, item):
         pass

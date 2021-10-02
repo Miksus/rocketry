@@ -20,11 +20,13 @@ def test_session_loader(tmpdir, session):
         create_file(root / "conftask.yaml", dedent("""
         tasks:
           task-1:
-            class: PyScript
+            class: FuncTask
             path: 'something.py'
+            func: 'main'
           task-2:
-            class: PyScript
+            class: FuncTask
             path: 'something.py'
+            func: 'main'
         sequences:
           my-sequence-1:
             tasks:

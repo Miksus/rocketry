@@ -1,13 +1,18 @@
+
 from pathlib import Path
-from redengine.config import parse_yaml
+from redengine import Session
 
-# from models.conditions import MyCondition
-# from models.tasks import MyTask
-# from models.extensions import MyExtension
-
+# Setting up the session
 root_dir = Path(__file__).parent
+session = Session.from_yaml(
+    root_dir / "config.yaml", 
+    root=root_dir,
+)
 
-session = parse_yaml(root_dir / "config.yaml", kwds_fields={"tasks": {"kwds_subparser": {"root":root_dir}}})
+# Importing the arguments.
+# Note the session must be set
+# before importing.
+import arguments
 
 def main():
     """start scheduling session"""

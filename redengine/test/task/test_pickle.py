@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from redengine.tasks import FuncTask, PyScript
+from redengine.tasks import FuncTask
 from redengine.conditions import TaskFailed
 from redengine.arguments import Arg
 
@@ -79,26 +79,3 @@ class TestFunc:
         pick_task = pickle_dump_read(task)
         
         assert pick_task.session.parameters.to_dict() == {"picklable": "myval"}
-
-class TestScript:
-
-    def test_script_unpicklable(self, tmpdir):
-        content = """
-        def decor(f):
-            def wrapper(*args, **kwargs):
-                return f(*args, **kwargs)
-            return wrapper
-
-        @decor
-        def main():
-            pass
-
-        
-        """
-        script = os.path.join(str(tmpdir), "script.py")
-        with open(script, "w") as f:
-            f.write(dedent(content))
-
-        task = PyScript(script, func="main")
-        # The task should fail in execution
-        pkl_task = pickle_dump_read(task)

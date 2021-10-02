@@ -7,9 +7,9 @@ from redengine import Session
 def test_parse():
     conf = {
         "tasks": {
-            "mytask-1": {"class": "PyScript", "path": "path/to/first.py"},
-            "mytask-2": {"class": "PyScript", "path": "path/to/second.py", "start_cond": "daily"},
-            "mytask-3": {"class": "PyScript", "path": "path/to/second.py", "start_cond": "daily"},
+            "mytask-1": {"class": "FuncTask", "path": "path/to/first.py", "func": "main"},
+            "mytask-2": {"class": "FuncTask", "path": "path/to/second.py", "func": "main", "start_cond": "daily"},
+            "mytask-3": {"class": "FuncTask", "path": "path/to/second.py", "func": "main", "start_cond": "daily"},
         },
         "sequences": {
             "my-sequence-1": {

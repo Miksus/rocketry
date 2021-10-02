@@ -1,0 +1,12 @@
+sequences:
+  my-sequence:
+    # Define pipeline: my-task-2 runs only when my-task-1
+    # has succeeded (and my-task-2 other conditions are met).
+
+    # The pipe starts every 10 seconds: every 10 seconds 
+    # both of these are allowed to run once and they must
+    # run in specified order.
+    tasks:
+      - 'my-yaml-task-1'
+      - 'my-yaml-task-2'
+    interval: 'every 10 seconds'

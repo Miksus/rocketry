@@ -13,7 +13,8 @@ from io_helpers import create_file, delete_file
 
 def mytask(): ... # Dummy func
 
-def asset_task_equal(a:Task, b:Task):
+def asset_task_equal(a:Task, b:Task, ignore=None):
+    ignore = [] if ignore is None else ignore
     assert isinstance(a, Task)
     assert isinstance(b, Task)
 
@@ -26,6 +27,8 @@ def asset_task_equal(a:Task, b:Task):
         attrs += list(base_cls.__annotations__) 
 
     for attr in attrs:
+        if attr in ignore:
+            continue
         a_attr_val = getattr(a, attr)
         b_attr_val = getattr(b, attr)
         assert a_attr_val == b_attr_val
@@ -114,9 +117,7 @@ class TestTasks:
                     expected_task.session = session
                     # We use convention: expected task's func should return name of the func
                     assert actual_task.func.__name__ == expected_task.func.__name__
-                    expected_task._func = None
-                    actual_task._func = None
-                    asset_task_equal(actual_task, expected_task)
+                    asset_task_equal(actual_task, expected_task, ignore="func")
             else:
                 # session is of course different, forcing the same
                 expected_tasks.session = session

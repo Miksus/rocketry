@@ -399,7 +399,7 @@ class Session:
           See ``redengine.core.task.CLS_TASKS`` for list of classes.
         - For some tasks that lack specified classes the class is determined
           from the arguments:
-        - If argument ``path`` has suffix ``.py``, the class is ``PyScript``.
+        - If argument ``path`` has suffix ``.py``, the class is ``FuncTask``.
 
         Parameters
         ----------

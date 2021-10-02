@@ -24,8 +24,10 @@ def test_session(session, tmpdir):
         """))
         create_file(root / "tasks.yaml", dedent("""
         - name: 'task-1'
+          func: 'main'
           path: 'something.py'
         - name: 'task-2'
+          func: 'main'
           path: 'something.py'
         """))
         ext_loader = ExtensionLoader(on_startup=True)

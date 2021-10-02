@@ -31,7 +31,7 @@ def parse_path(path, root=None, **kwargs):
     return path
 
 def get_cls_from_conf(conf:dict, **kwargs):
-    from redengine.tasks import PyScript
+    from redengine.tasks.func import FuncTask
     
     filepath = conf.get("path", None)
     if filepath is None:
@@ -39,7 +39,7 @@ def get_cls_from_conf(conf:dict, **kwargs):
         raise KeyError(f"Class of the task '{name}' cannot be determined. Please include 'class' with the configuration.")
     filepath = Path(filepath)
     if filepath.suffix == ".py":
-        return PyScript
+        return FuncTask
     else:
         name = conf.get("name", None)
         raise KeyError(f"Class of the task '{name}' cannot be determined for extension {filepath.suffix}. Please include 'class' with the configuration.")
