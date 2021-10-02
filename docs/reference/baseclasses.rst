@@ -13,3 +13,6 @@ Base classes
 
 .. autoclass:: redengine.core.BaseExtension
    :members:
+
+.. autoclass:: redengine.core.TimePeriod
+   :members:

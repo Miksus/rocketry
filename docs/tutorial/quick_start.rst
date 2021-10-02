@@ -26,31 +26,29 @@ Now you already have a working scheduler system. Just launch it:
 What you got?
 -------------
 
-The ``redengine create`` command created a project directory for your tasks. 
+The command created you a project directory for your tasks. 
 The structure is as follows:
 
 | my_project/
 | ├── tasks/
-| │ ├── my_tasks-1/
-| │ ├── ├── tasks.yaml
-| │ ├── ├── task-1.py
-| │ ├── ├── task-2.py
-| │ ├── └── ...
-| │ ├── extensions.yaml
+| │ ├── tasks.py
 | │ └── ...
 | ├── conf.yaml
-| ├── main.py
-| └── models/
-|    ├── conditions.py
-|    ├── tasks.py
-|    └── extensions.py
+| └── main.py
 
 
 You can freely edit the files. In general:
 
-- ``tasks/``: Put the tasks (for example Python scripts) here you wish to schedule.
-- ``tasks/.../tasks.yaml``: This file configures how the tasks are scheduled and run. Fill in as needed. You can have as many of these as suitable.
-- ``tasks/.../extensions.yaml``: This file configures extensions such as task pipelines. You can have multiple of these.
-- ``conf.yaml``: Session configuration. 
-- ``main.py``: Launcher for the scheduling session. Run this to start the scheduler.
-- ``models/``: Put your extensions of Red Engine here.
+- ``main.py``: Run file this to start the scheduler.
+- ``conf.yaml``: Session configuration. See :ref:`conf.yaml <minimal-session>`.
+- ``tasks/``: This folder contains your tasks.
+
+  - ``tasks.py``: These file contains tasks. See :ref:`tasks.py <minimal-tasks>`. You can have multiple of these in subdirectories.
+
+What now?
+---------
+
+Put your tasks to the ``tasks/`` directory. See :ref:`conditions-examples` 
+for examples to put to the staring conditions (``start_cond``) of the tasks. 
+However, Red Engine provides you also the batteries so read more to get most 
+out of the framework.

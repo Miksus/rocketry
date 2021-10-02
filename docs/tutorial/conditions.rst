@@ -1,121 +1,202 @@
 .. _conditions-intro:
 
-Writing conditions
+Conditions, Basics
 ==================
 
 Conditions are vital part of Red Engine system
 as they are responsible of determining when a 
 task may start. They also can be used to determine
-when the session will end or when a task should be 
-killed.
+when the session will end or when a (parallerized) 
+task should be killed. 
 
-In more abstract sense, conditions are statements 
-that are either true or false, such as "the clock is 
-half past six", "the task has run today" or "the 
-task has failed at least three times". Under the hood,
-the truthness of these condition objects are inspected 
-using the magic method ``__bool__``. On top, Red Engine 
-has intuitive parsing syntax to write the conditions 
-in as human readable form as practical. This syntax can 
-be utilized, for example, in the ``start_cond`` or 
-``end_cond`` in the task arguments. 
+A condition can be either ``true`` or ``false``.
+They can represent, for example, statement of 
+current time (ie. it is afternoon now), a statement 
+about a state (ie. the machine has internet access), 
+presence of an event (ie. a task has successfully run) 
+or presence of an thing (ie. a file exists).
 
-This built-in condition parsing syntax is used, for example, 
-in the  section of a task in ``tasks.yaml`` 
-files consumed by the TaskLoader. 
+There are two ways of creating conditions:
 
-See :ref:`creating-task` to see how these can be passed to 
-a task.
+- Using Red Engine's string parser or
+- Creating them from Red Engine's condition classes
 
-Run the task on specific times
-------------------------------
+The former is meant for being as human readable
+and convenient as possible. Therefore this method 
+is preferred and this section mostly covers that.
 
-- Run once a day
-    - ``daily``
-- Run once a day between 1 PM and 5 PM
-    - ``daily between 13:00 and 05:00``
-- Run once a week
-    - ``weekly``
-- Run once a week on Monday
-    - ``weekly on Monday``
-- Run once a week between Monday and Friday
-    - ``weekly between Monday and Friday``
-- Run once a month
-    - ``monthly``
-- Run every 1 hour
-    - ``every 1 hour``
-- Run every 3 days, 1 hour, 30 minutes (or anything that ``pandas.TimeDelta`` allows)
-    - ``every 3 days 1 hour 30 min``
+The conditions can be set to the tasks' initiation 
+arguments directly as strings:
 
-There is also the conditions ``time of ...`` which 
-inspect only whether the current time is in the 
-given interval and is not linked to any tasks.
-Therefore, such condition alone would cause the 
-task to be started constantly when the interval
-is fulfilled. These are useful for more complex
-examples which we will cover later.
+.. code-block:: python
 
-- Run all the time when time is between 5 AM and 10 AM.
-    - ``time of day between 05:00 and 10:00``
-- Run all the time when it's Monday, Tuesday or Wednesday.
-    - ``time of week between Monday and Wednesday``
+    FuncTask(..., start_cond="daily between 10:00 and 14:00")
+
+or you can set them to the ``start_cond`` of a task 
+configuration file if that is preferred. To refresh how to 
+set up tasks, see :ref:`creating-task`. The next examples 
+can be directly supplied to the ``start_cond`` or to the 
+``end_cond`` of a task.
 
 
-Run the task after another
---------------------------
+Combining Conditions with Logic
+-------------------------------
 
-One can pipe tasks using also
-:class:`redengine.ext.Sequence` but there is also
-a condition to make task pipelines. Which is to be 
-preferred depends on the complexity of the pipelines.
-Simple relations can be done with a condition but 
-clusters of pipelines are possibly more maintainabe
-as sequences.
+Conditions can also be combined using boolean logic. The 
+conditions support the following operators: 
 
-- Run once after task `other` succeeded
-    - ``after task 'other' succeeded``
-- Run once after task `other` failed
-    - ``after task 'other' failed``
-- Run once after task `other` failed or succeeded
-    - ``after task 'other' finished``
+- ``&``: **AND** operator 
+- ``|``: **OR** operator 
+- ``~``: **NOT** operator
+
+For example, ``<condition A> & <condition B>`` mean that the
+statement is true only if both conditions (A and B) are true. 
+Similarly ``<condition A> | <condition B>`` mean that either
+A or B need to be true for the whole statement to be true and 
+``~<condition A>`` mean that A must be false for the 
+statement to be true. The operators can also be nested using 
+parentheses.
+
+In practice, this looks like:
+
+.. code-block:: python
+
+    FuncTask(..., start_cond="""
+        (time of day between 08:00 and 10:00 & time of week between Monday and Friday) 
+        | (time of day between 14:00 and 16:00 & ~time of week between Monday and Friday)
+    """)
+
+The starting condition of this task is ``True`` if the time is between 8 AM and 10 AM and 
+current day is a week day or if the time is between 2 PM and 4 PM and current day is a non 
+week day (weekend). There are more elegant ways to express the same but this is for the 
+sake of example. Any condition can be combined with the same operators and next we will 
+discuss about some useful conditions found from Red Engine.
+
+.. _conditions-examples:
+
+Conditions, Examples
+====================
+
+There are several categories of conditions:
+
+- Time related conditions ('time of...'). These are conditions that are true or false depending
+  on whether current time is within the period.
+- Task related conditions. These are similar as time related conditions but these are also tied
+  in the status of the task. Useful to set a task to run once in given period (ie. day).
+- Scheduler related. These are conditions that check the state of the scheduler (ie. how many
+  cycles of tasks it has run or how long ago it stated). Mostly useful for testing.
+- Miscellaneous. Conditions can also check whether a parameter exists, whether a file exists,
+  whether the machine has internet access, whether a row exists in a database etc. It is adviced
+  to make your own condition classes when needed.
+
+Next some examples from these categories are shown.
+
+Time Related
+------------
+
+- ``time of day between 10:00 and 14:00``
+
+  - True if current time is between 10 AM and 2 PM.
+
+- ``time of week between Monday and Wednesday``
+
+  - True if current week day is Monday, Tuesday or Wednesday
+
+- ``time of week on Monday``
+
+  - True if currently is Monday.
+
+- ``time of month after 5th``
+
+  - True if if the current day of month is 5th or after.
+
+.. warning::
+    Be careful for not to use these as your only condition in the 
+    ``start_cond``. The task will be rerun constantly during the 
+    period.
+
+Task Related
+------------
+
+- ``every 10 minutes``
+
+  - True if the task has not run in the past 10 minutes.
+  - Useful for running the task once given time span.
+
+- ``every 3 d 2 h 5 min``
+
+  - True if the task has not run in the past 3 days, 2 hours 
+    and 5 minutes. See Pandas Timedelta for more.
+  - Useful for running the task once given time span.
+
+- ``daily``
+
+  - True if the task has not run in current day.
+  - Useful for running the task once a day.
+
+- ``daily between 10:00 and 14:00``
+
+  - True if the task has not run in current day between 10 AM 
+    and 2 PM and current time is between 10 AM and 2 PM.
+  - Useful for running the task once a day in given time.
+
+- ``daily after 14:00``
+
+  - True if the task has not run in current day after 2 PM and 
+    current time is after 2 PM.
+  - Useful for running the task once a day in given time.
+
+- ``weekly between Monday and Wednesday``
+
+  - True if the task has not run on Monday, Tuesday or Wednesday 
+    and currently the week day is one of these.
+  - Useful for running the task once a week in given week day(s).
+
+You can also tie these with other tasks:
+
+- ``task 'another task' has failed today``
+
+  - True if task named "another task" failed today.
+
+- ``task 'another task' has succeeded this hour``
+
+  - True if task named "another task" succeeded in this hour.
+
+- ``task 'another task' has terminated this week before Friday``
+
+  - True if task named "another task" was terminated this week 
+    before Friday.
+
+- ``after task 'another task' succeeded``
+
+  - True if the task this condition is set to (as `start_cond` or 
+    `end_cond`) has not succeeded after task named 'another task'.
+  - Useful to run the task straight after another task.
+
+.. note::
+    One can build task pipelines using these conditions (one task
+    runs after another). However, you can also create pipelines with
+    :py:class:`redengine.extensions.Sequence` which may be more convenient.
 
 
-Complex conditions
-------------------
+Scheduler Related
+-----------------
 
-The conditions also can be constructed using logical 
-expressions such as ``and``, ``or`` and ``not`` and 
-they can be nested using parentheses. Therefore it 
-is possible to create complex condition logic fairly
-easily. 
+- ``scheduler has more than 10 cycles``
 
-These logical operations are formed using the symbols
-``&``, ``|`` and ``~`` which corresponds to ``AND``, 
-``OR`` and ``NOT`` respectively.
+  - True if the scheduler has run more than 10 cycles of tasks.
 
-Some examples:
+- ``scheduler has run over 10 minutes``
 
-- Run twice a day: once between 8 AM and 10 AM, and once between 5 PM and 6 PM
-    - ``daily between 08:00 and 10:00 | daily between 17:00 and 18:00``
-- Run daily between 8 AM and 10 AM from Monday to Friday
-    - ``daily between 08:00 and 10:00 & time of week between Monday and Friday``
-- Run once when either: 'scraper-1' and 'transformer-1' succeeded or 'scraper-2' and 'transformer-2' succeeded
-    - | ``(after task 'scraper-1' succeeded & after task 'transformer-1' succeeded)``
-      | ``| (after task 'scraper-2' succeeded & after task 'transformer-2' succeeded)``
-- Run
-    - | ``daily & (~task 'critical-task-1' has failed today & ~task 'critical-task-2' has failed today)``
+  - True if the scheduler started over 10 minutes ago.
 
+Miscellaneous
+-------------
 
+- ``param 'x' exists``
 
-.. These are not displayed (testing the examples)
+  - True if session parameters have parameter `x`.
 
-.. testcode::
-   :hide:
+- ``param 'x' is 'myval'``
 
-   from redengine.parse import parse_condition
-   print(repr(parse_condition("daily & (~task 'critical-task-1' has failed today & ~task 'critical-task-2' has failed today)")))
-
-.. testoutput::
-   :hide:
-
-   (TaskExecutable(task=None, period=TimeOfDay(None, None)) & ~TaskFailed(task='critical-task-1', period=TimeOfDay(None, None)) & ~TaskFailed(task='critical-task-2', period=TimeOfDay(None, None)))
+  - True if session parameters have parameter `x` and the value of the paramter is `myval`.

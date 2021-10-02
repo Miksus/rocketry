@@ -5,8 +5,6 @@ Builtin task classes
 --------------------
 .. autoclass:: redengine.tasks.FuncTask
 
-.. autoclass:: redengine.tasks.PyScript
-
 .. autoclass:: redengine.tasks.CommandTask
 
 Loaders
