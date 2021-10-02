@@ -22,26 +22,39 @@ from redengine import parse
 class Session:
     """Collection of the scheduler objects.
 
+    Parameters
+    ----------
+
+    config : dict, optional
+        Central configuration for defining behaviour
+        of different object and classes in the session.
+    tasks : Dict[str, redengine.core.Task], optional
+        Tasks of the session. Can be formed later.
+    parameters : parameter-like, optional
+        Session level parameters.
+    extensions: dict, optional
+        Extensions of the session. Can be formed later.
+    scheme : str or list, optional
+        Premade scheme(s) to use to set up logging, 
+        parameters, setup tasks etc.
+    as_default : bool, default=True
+        Whether to set the session as default for next
+        tasks, extensions etc. that don't have session
+        specified.
+    kwds_scheduler : dict, optional
+        Keyword arguments passed to 
+        :py:class:`redengine.core.Scheduler`.
+    delete_existing_loggers : bool, default=False
+        If True, deletes the loggers that already existed
+        for the task logger basename.
+
     Attributes
     ----------
-    tasks : dict
-        Tasks the session has. These tasks are used for
-        the scheduler. Keys of the dict are the names
-        of the tasks. 
     config : dict
         Central configuration for defining behaviour
         of different object and classes in the session.
-    parameters : Parameters
-        Parameters feeded to the tasks.
     scheduler : Scheduler
         Scheduler of the session.
-    extensions : dict
-        External components that help to shape the 
-        behaviour of tasks. These are built on top
-        of the core functionalities and extends it.
-        This is not much used by anything but 
-        stored in the session if the user wants to 
-        access them.
     delete_existing_loggers : bool
         If True, all loggers that match the 
         session.config['basename'] are deleted (by 
@@ -254,7 +267,7 @@ class Session:
         return data
         
     def delete_task_loggers(self):
-        "Delete the "
+        """Delete the previous loggers from task logger"""
         loggers = logging.Logger.manager.loggerDict
         for name in list(loggers):
             if name.startswith(self.config["task_logger_basename"]):
@@ -302,7 +315,9 @@ class Session:
 
     @property
     def tasks(self) -> Dict[str, Task]:
-        """Dict[str, Task]: Dictionary of the tasks in the session."""
+        """Dict[str, Task]: Dictionary of the tasks in the session.
+        The key is the name of the task and values are the 
+        :py:class:`redengine.core.Task` objects."""
         return self._tasks
 
     @tasks.setter
