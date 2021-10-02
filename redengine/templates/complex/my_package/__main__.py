@@ -5,16 +5,12 @@ from argparse import ArgumentParser
 import argparse
 from typing import List, Optional
 
-from .main import session, main as run_main
+from .main import session, set_env, main as run_main
 from . import hooks
 
 
 def exec_task(tasks:List[str], env:str, obey_cond:bool, execution:Optional[str]=None):
     """Run given task(s)."""
-    #for loader_name in ("TaskLoader", "PyLoader"):
-    #    loader = session.tasks[loader_name]
-    #    loader.execution = 'main'
-    #    loader.execute()
     session.scheduler.startup()
 
     missing_tasks = [task for task in tasks if task not in session.tasks]
@@ -30,30 +26,11 @@ def exec_task(tasks:List[str], env:str, obey_cond:bool, execution:Optional[str]=
             task.execution = execution
         task()
     
-    # Wait till all tasks are finished
-    # session.scheduler.wait_task_alive()
-    # session.scheduler.handle_logs()
     session.scheduler.shut_down()
 
 def exec_sched(env):
     """Start the scheduler"""
     run_main(env)
-
-    for name, task in session.tasks.items():
-        print("")
-        print(f"{name}")
-        print("--------------------")
-        print(f"Status: {bool(task)}")
-        print(f"Disabled: {task.disabled}")
-        print(f"Force run: {task.force_run}")
-        print(f"Last run: {task.last_run}")
-
-def set_env(env):
-    """Set environment."""
-    session.parameters["env"] = env
-
-    # Set to environment variables temporarily
-    os.environ["ENV"] = env
 
 def parse_args(args=None):
     """Parse CLI arguments."""
@@ -103,7 +80,7 @@ def main(args=None):
     args = parse_args(args)
     
     args = vars(args)
-    func = args.pop("func")
+    func = args.pop("func", exec_sched)
     args.pop("initiation")
     set_env(args["env"])
     return func(**args)
