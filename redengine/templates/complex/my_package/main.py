@@ -1,6 +1,7 @@
+
 from pathlib import Path
-from redengine.config import parse_yaml
 import os
+from redengine import Session
 
 # Importing the custom classes (uncomment needed)
 # from models.conditions import MyCondition
@@ -9,8 +10,7 @@ import os
 
 root_dir = Path(__file__).parent
 
-session = parse_yaml(root_dir / "config.yaml", kwds_fields={"tasks": {"kwds_subparser": {"root": root_dir}}})
-session.set_as_default()
+session = Session.from_yaml(root_dir / "config.yaml", kwds_fields={"tasks": {"kwds_subparser": {"root": root_dir}}})
 
 try:
     from . import arguments

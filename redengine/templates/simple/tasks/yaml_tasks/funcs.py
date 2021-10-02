@@ -1,6 +1,6 @@
 
 
-from my_package.settings import my_setting
+from tasks.settings import my_setting
 
 def do_things():
     print(f"Doing things with {my_setting}")
