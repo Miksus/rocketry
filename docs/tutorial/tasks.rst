@@ -14,12 +14,9 @@ Most simplistic way to create tasks is just initiate
 them in a Python source file and just import them.
 However, to reduce boilder plate Red Engine also 
 provide ways to load all task files using ``Loaders``.
-There are essentially two types of loaders: 
+See :ref:`loaders`. 
 
-- ``PyLoader``: Imports all matched Python files.
-- ``TaskLoader``: Parses configuration files 
-
- .. _creating-task:
+.. _creating-task:
 
 Creating a Task from Python Function
 ------------------------------------
@@ -69,7 +66,7 @@ A task configuration file can look like this:
         ... # Other FuncTask init arguments
     my-task-3:
         class: 'CommandTask'
-        command: 'python -c \"open('test.txt', 'w');\"'
+        command: "python -c \"open('test.txt', 'w');\""
         start_cond: 'daily'
         ... # Other CommandTask init arguments
 

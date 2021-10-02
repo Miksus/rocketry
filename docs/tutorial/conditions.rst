@@ -123,7 +123,7 @@ Task Related
   - True if the task has not run in the past 10 minutes.
   - Useful for running the task once given time span.
 
-- ``every 3 d 2 h 5 min``
+- ``every 3d 2h 5min``
 
   - True if the task has not run in the past 3 days, 2 hours 
     and 5 minutes. See Pandas Timedelta for more.
