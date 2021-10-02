@@ -86,7 +86,7 @@ class FuncTask(Task):
     Or from string using lazy importing:
 
     >>> from redengine.tasks import FuncTask
-    >>> FuncTask("myfunc", path="path/to/script.py", name='my_func_task_2', start_cond="daily")
+    >>> task = FuncTask("myfunc", path="path/to/script.py", name='my_func_task_3', start_cond="daily")
 
     Warnings
     --------
