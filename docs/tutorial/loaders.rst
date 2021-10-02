@@ -11,7 +11,7 @@ in importing all the tasks and extensions
 the scheduling system uses.
 
 Essentially loaders are meta tasks.
-They don't support parallerization via ``process``
+They don't support parallelization via ``process``
 and should always be run as setup tasks.
 
 There are several prebuilt loaders:

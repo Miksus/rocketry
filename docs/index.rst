@@ -69,7 +69,7 @@ This task will run once a day between 9 AM and 2 PM.
 The task ``my_task`` is now parametrized with whatever is returned from 
 the function ``my_param``. 
 
-**What about parallerization?**
+**What about parallelization?**
 
 .. code-block:: python
 
