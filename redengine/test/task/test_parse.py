@@ -29,6 +29,12 @@ from redengine.tasks import FuncTask, PyScript, CommandTask
             id="PyScript with name"
         ),
         pytest.param(
+            {"class": "FuncTask", "path": "tasks/funcs.py", "func": "myfunc", "name": "a task"}, 
+            FuncTask,
+            {"path": Path("tasks/funcs.py"), "func": "myfunc", "name": "a task"},
+            id="FuncTask with name"
+        ),
+        pytest.param(
             {"class": "CommandTask", "command": ["python", "-m", "pip", "list"]}, 
             CommandTask,
             {"action": ["python", "-m", "pip", "list"]},
