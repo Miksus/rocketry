@@ -44,11 +44,14 @@ doctest_global_setup = '''
 def cleanup():
     from redengine import Session
     from redengine.core.hook import clear_hooks
+    Session.default_config['task_pre_exist'] = 'replace'
+
     clear_hooks()
     session = Session()
     session.set_as_default()
-    session.config['use_instance_naming'] = True
-
+    #session.config['use_instance_naming'] = True
+    
+cleanup()
 '''
 
 # Extension settings
