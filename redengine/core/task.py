@@ -7,7 +7,7 @@ from itertools import count
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import Callable, List, Dict, Union, Tuple, Optional
+from typing import Any, Callable, List, Dict, Union, Tuple, Optional
 import multiprocessing
 import threading
 from queue import Empty
@@ -104,15 +104,6 @@ class Task(metaclass=_TaskMeta):
         for tasks with execution='process' or 
         with execution='thread' if the task function
         supports it.
-    on_success : Callable, optional
-        Function to run after successful execution
-        of the task, by default None
-    on_failure : Callable, optional
-        Function to run after failing execution
-        of the task, by default None
-    on_finish : Callable, optional
-        Function to run after execution
-        of the task, by default None
     daemon : Bool, optional
         Whether run the task as daemon process
         or not. Only applicable for execution='process',
@@ -178,10 +169,6 @@ class Task(metaclass=_TaskMeta):
     start_cond: BaseCondition
     run_cond: BaseCondition
     end_cond: BaseCondition
-    
-    on_success: Callable
-    on_failure: Callable
-    on_finish: Callable
 
     on_startup: Callable
     on_shutdown: Callable
@@ -196,8 +183,7 @@ class Task(metaclass=_TaskMeta):
 
     def __init__(self, parameters=None, session=None,
                 start_cond=None, run_cond=None, end_cond=None, 
-                dependent=None, timeout=None, priority=None, 
-                on_success=None, on_failure=None, on_finish=None, 
+                dependent=None, timeout=None, priority=None,
                 name=None, description=None, logger=None, daemon=None,
                 execution=None, disabled=False, force_run=False,
                 on_startup=False, on_shutdown=False,
@@ -236,10 +222,6 @@ class Task(metaclass=_TaskMeta):
         self.disabled = disabled
         self.force_run = force_run
         self.force_termination = False
-
-        self.on_failure = on_failure
-        self.on_success = on_success
-        self.on_finish = on_finish
 
         self.dependent = dependent
         self.parameters = parameters
@@ -628,23 +610,20 @@ class Task(metaclass=_TaskMeta):
         """
         raise NotImplementedError(f"Method 'execute' not implemented to {type(self)}.")
 
-    def process_failure(self, exception):
+    def process_failure(self, exception:BaseException):
         """This method is executed after a failure of the task. 
-        By default, run the on_failure Callable (if not None)"""
-        if self.on_failure:
-            self.on_failure(exception=exception)
+        Override if needed."""
+        pass
     
-    def process_success(self, output):
+    def process_success(self, output:Any):
         """This method is executed after a success of the task. 
-        By default, run the on_success Callable (if not None)"""
-        if self.on_success:
-            self.on_success(output)
+        Override if needed."""
+        pass
 
-    def process_finish(self, status):
+    def process_finish(self, status:str):
         """This method is executed after finishing the task. 
-        By default, run the on_finish Callable (if not None)"""
-        if self.on_finish:
-            self.on_finish(status)
+        Override if needed."""
+        pass
 
     @property
     def is_running(self):
