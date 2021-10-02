@@ -20,15 +20,12 @@ class _TimeMeta(type):
 
 
 class TimePeriod(metaclass=_TimeMeta):
-    """Base for all classes that represent a time period
+    """Base for all classes that represent a time period.
 
-    Time period is a section in time where an event/occurence/current time can be
-
-    Examples:
-    ---------
-        hour
-        time of day (like from 12 am to 4 pm)
-        month
+    Time period is a period in time with a start and an end.
+    These are useful to determine whether an event took 
+    place in a specific time span or whether current time 
+    is in a given time span.
     """
 
     resolution = pd.Timestamp.resolution
@@ -38,15 +35,9 @@ class TimePeriod(metaclass=_TimeMeta):
     def __init__(self, *args, **kwargs):
         pass
 
-    def next_time_span(self, dt, *, include_current=False) -> tuple:
-        "Return (start, end) for next "
-        # TODO: Remove
-        if include_current:
-            next_dt = self.rollstart(dt)
-            
-        return (self.floor(next_dt), self.ceil(next_dt))
-
     def __contains__(self, other):
+        """Whether a given point of time is in
+        the TimePeriod"""
         interval = self.rollforward(other)
         return other in interval
 
@@ -64,15 +55,15 @@ class TimePeriod(metaclass=_TimeMeta):
         return Any(self, other)
 
     def rollforward(self, dt):
-        "Get previous time interval of the period"
+        "Get previous time interval of the period."
         raise NotImplementedError
 
     def rollback(self, dt):
-        "Get previous time interval of the period"
+        "Get previous time interval of the period."
         raise NotImplementedError
 
     def next(self, dt):
-        "Get next interval (excluding currently ongoing if any)"
+        "Get next interval (excluding currently ongoing if any)."
         interv = self.rollforward(dt)
         if dt in interv:
             # Offsetting the end point with minimum amount to get new full interval
@@ -80,7 +71,7 @@ class TimePeriod(metaclass=_TimeMeta):
         return interv
 
     def prev(self, dt):
-        "Get previous interval (excluding currently ongoing if any)"
+        "Get previous interval (excluding currently ongoing if any)."
         interv = self.rollback(dt)
         if dt in interv:
             # Offsetting the end point with minimum amount to get new full interval
@@ -97,11 +88,6 @@ class TimeInterval(TimePeriod):
     if the datetime of an event is known, the question
     whether the event belongs to the period can be answered
     unambigiously.
-
-    Examples:
-    ---------
-        Time of day (ie. from 11 am to 5 pm)
-        Month (ie. January)
 
     Answers to "between 11:00 and 12:00" and "from monday to tuesday"
     """
@@ -176,7 +162,6 @@ class TimeInterval(TimePeriod):
             return False
 
 
-
 class TimeDelta(TimePeriod):
     """Base for all time deltas
 
@@ -185,18 +170,6 @@ class TimeDelta(TimePeriod):
     contain arbitrary datetimes depending on where
     the reference point is set. This reference
     point is typically current datetime.
-
-    Examples:
-    ---------
-        hour (ie. one hour in the past)
-        day (ie. one day from an event)
-
-    Answers to "past 1 hour"
-
-    Attributes:
-    ----------
-        past [str]: the amount of time the Timedelta is from reference point to past
-        future [str]: the amount of time the Timedelta is from reference point to future
     """
     _type_name = "delta"
 
@@ -259,11 +232,11 @@ class TimeCycle(TimePeriod):
     during the cycle
 
     Examples:
-    ---------
-        hourly
-        daily
-        weekly
-        monthly
+
+    - hourly
+    - daily
+    - weekly
+    - monthly
     """
     # TODO: Delete
     _type_name = "cycle"
@@ -500,7 +473,7 @@ class Any(TimePeriod):
         return pd.Interval(start, end)
 
 class Offsetted(TimePeriod):
-
+    # TODO: This is not used. Delete?
     def __init__(self, period, n):
         if isinstance(period, TimeCycle):
             # adjust prev & next
@@ -521,8 +494,7 @@ class Offsetted(TimePeriod):
         return interval
 
 class StaticInterval(TimePeriod):
-    """Inverval that is fixed in specific datetimes
-    """
+    """Inverval that is fixed in specific datetimes."""
 
     def __init__(self, start=None, end=None):
         self.start = start if start is not None else self.min

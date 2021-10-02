@@ -10,3 +10,4 @@ from .schedule import Scheduler
 from .task import Task
 from .condition import BaseCondition
 from .extensions import BaseExtension
+from .time import TimePeriod

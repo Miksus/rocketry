@@ -11,13 +11,12 @@ from .trigger import TriggerCluster, IntervalTrigger, PulseTrigger, BaseTrigger
 
 
 class Sequence(BaseExtension):
-    """
-    Sequence is a task pipe but with exception that 
+    """Sequence is a task pipe but with exception that 
     each task is run only once in the interval.
 
     Parameters
     ----------
-    tasks : list of :py:class:`redengine.core.Task`s
+    tasks : list of :py:class:`redengine.core.Task`
         Tasks that are to be executed in order.
     interval : str, :py:class:`redengine.core.TimePeriod`, optional
         Interval when the sequence is allowed to run. When

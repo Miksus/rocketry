@@ -532,12 +532,6 @@ class Task(metaclass=_TaskMeta):
         logger.addHandler(handler)
         try:
             self.logger = logger
-            #task.logger.addHandler(
-            #    logging.StreamHandler(sys.stdout)
-            #)
-            #task.logger.addHandler(
-            #    QueueHandler(queue)
-            #)
         except:
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
