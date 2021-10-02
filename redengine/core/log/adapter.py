@@ -7,6 +7,8 @@ from typing import Iterable, List, Dict, Union
 from dateutil.parser import parse as _parse_datetime
 import pandas as pd
 
+from redengine.core.utils import is_main_subprocess
+
 class TaskAdapter(logging.LoggerAdapter):
     """Logging adapter for tasks.
 
@@ -31,7 +33,7 @@ class TaskAdapter(logging.LoggerAdapter):
             for handler in self.logger.handlers
         )
         is_process_dummy = logger.name.endswith("_process")
-        if not is_readable and not is_process_dummy:
+        if not is_readable and not is_process_dummy and is_main_subprocess():
             warnings.warn(f"Logger '{logger.name}' for task '{self.task_name}' does not have ability to be read. Past history of the task cannot be utilized.")
 
     def process(self, msg, kwargs):

@@ -17,7 +17,7 @@ import pandas as pd
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from redengine.core.parameters import Parameters
 from redengine.core.log import TaskAdapter
-from redengine.core.utils import is_pickleable, filter_keyword_args
+from redengine.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
 from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from redengine.core.meta import _register
 from redengine.core.hook import _Hooker
@@ -805,7 +805,8 @@ class Task(metaclass=_TaskMeta):
             try:
                 record = self.logger.get_latest()
             except AttributeError:
-                warnings.warn(f"Task '{self.name}' logger is not readable. Status unknown.")
+                if is_main_subprocess():
+                    warnings.warn(f"Task '{self.name}' logger is not readable. Status unknown.")
                 record = None
             if not record:
                 # No previous status
@@ -880,7 +881,8 @@ class Task(metaclass=_TaskMeta):
         try:
             record = self.logger.get_latest(action=action)
         except AttributeError:
-            warnings.warn(f"Task '{self.name}' logger is not readable. Latest {action} unknown.")
+            if is_main_subprocess():
+                warnings.warn(f"Task '{self.name}' logger is not readable. Latest {action} unknown.")
             return None
         else:
             if not record:
