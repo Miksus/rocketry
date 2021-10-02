@@ -11,8 +11,9 @@ from .trigger import TriggerCluster, IntervalTrigger, PulseTrigger, BaseTrigger
 
 
 class Sequence(BaseExtension):
-    """Sequence is a task pipe but with exception that 
-    each task is run only once in the interval.
+    """Sequence is a task pipeline. It executes 
+    each task one by one in order (respecting 
+    other conditions).
 
     Parameters
     ----------
@@ -21,12 +22,15 @@ class Sequence(BaseExtension):
     interval : str, :py:class:`redengine.core.TimePeriod`, optional
         Interval when the sequence is allowed to run. When
         the interval starts, the sequence starts from the 
-        first task regardless of previous state. 
+        first task regardless of previous state and it will be 
+        executing till all tasks have been executed in the interval
+        or interval ends. If no interval, the sequence will restart
+        when the last task has been executed. 
     sys_paths : list of path-like, optional
         List of paths that are set to ``sys.path`` temporarily
         to solve possible imports in the script.
     **kwargs : dict
-        See :py:class:`redengine.component.BaseComponent`
+        See :py:class:`redengine.core.BaseExtension`
     """
 
     __parsekey__ = "sequences"
