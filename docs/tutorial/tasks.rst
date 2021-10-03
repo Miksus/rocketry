@@ -97,12 +97,14 @@ The most commonly used arguments shared by all task classes are:
 
 - ``start_cond``: Specifies when the task may start running. Can be a string or a condition object. 
   See: :ref:`conditions-intro`
-- ``end_cond``: Specifies when the task is terminated (if running and parallerized). Can be a string or a condition object. 
+- ``end_cond``: Specifies when the task is terminated (if running and parallelized). Can be a string or a condition object. 
   See: :ref:`conditions-intro`
 - ``execution``: How the task is executed. Allowed values:
-  - ``'main'``: Runs on main thread and process,
-  - ``'thread'``: Runs on another thread or
+
+  - ``'main'``: Runs on main thread and process.
+  - ``'thread'``: Runs on another thread.
   - ``'process'``: Runs on another process.
+
 - ``parameters``: Parameters passed for specifically to this task. This is a dictionary.
 
 Scheduling Tasks
@@ -111,7 +113,7 @@ Scheduling Tasks
 Setting the starting and ending conditions are discussed
 in :ref:`conditions-intro`.
 
-Parallerizing Tasks
+Parallelizing Tasks
 -------------------
 
 Here is an example of all the execution options:
