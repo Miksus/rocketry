@@ -89,7 +89,7 @@ the function ``my_param``.
 
 The first task will run on a separate process while 
 the second will run on a separate thread. The last one
-is not parallerized. There are pros and cons on 
+is not parallelized. There are pros and cons on 
 each choices. 
 
 But does it work?

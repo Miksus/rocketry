@@ -22,6 +22,8 @@ Now you already have a working scheduler system. Just launch it:
 
    python myproject/main.py
 
+You can also use different :ref:`templates <templates>` depending on the complexity
+of your scheduling problem.
 
 What you got?
 -------------
@@ -48,7 +50,12 @@ You can freely edit the files. In general:
 What now?
 ---------
 
-Put your tasks to the ``tasks/`` directory. See :ref:`conditions-examples` 
-for examples to put to the staring conditions (``start_cond``) of the tasks. 
-However, Red Engine provides you also the batteries so read more to get most 
+Put your tasks to the ``tasks/`` directory. 
+
+See:
+
+- :ref:`How to set conditions <conditions-intro>` or just :ref:`examples <examples-cond>` for setting the starting conditions (``start_cond``) of the tasks. 
+- :ref:`How to parametrize tasks <parametrizing>`.
+
+Red Engine provides you also the batteries so read more to get most 
 out of the framework.

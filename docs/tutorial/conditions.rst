@@ -6,7 +6,7 @@ Conditions, Basics
 Conditions are vital part of Red Engine system
 as they are responsible of determining when a 
 task may start. They also can be used to determine
-when the session will end or when a (parallerized) 
+when the session will end or when a (parallelized) 
 task should be killed. 
 
 A condition can be either ``true`` or ``false``.
@@ -94,6 +94,8 @@ Next some examples from these categories are shown.
 Time Related
 ------------
 
+See :ref:`examples-cond-time` for list of actual examples.
+
 - ``time of day between 10:00 and 14:00``
 
   - True if current time is between 10 AM and 2 PM.
@@ -117,6 +119,8 @@ Time Related
 
 Task Related
 ------------
+
+See :ref:`examples-cond-task` for list of actual examples.
 
 - ``every 10 minutes``
 
