@@ -34,7 +34,6 @@ venv.bak/
 .pytest_cache/
 
 # Packaging
-Jubox.egg-info/
 build/
 dist/
 
