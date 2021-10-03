@@ -183,7 +183,7 @@ class Session:
         Dict[str, Union[TaskAdapter, logging.Logger]]
             Dictionary of the loggers (or adapters)
             in which the key is the logger name.
-            Placeholders and loggers built for parallerized
+            Placeholders and loggers built for parallelized
             tasks are ignored.
         """
 
