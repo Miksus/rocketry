@@ -1,4 +1,5 @@
 
+from pickle import PicklingError
 import time
 import datetime
 import logging
@@ -906,6 +907,17 @@ class Task(metaclass=_TaskMeta):
         state["_thread_terminate"] = None # Event only for threads
 
         state["_lock"] = None # Process task cannot lock anything anyways
+
+        
+        if not is_pickleable(state):
+            # When this block might get executed?
+            #   - If FuncTask func is non-picklable
+            #       - There is another func with same name in the file
+            #       - The function is lambda or decorated func
+            unpicklable = {key: val for key, val in state.items() if not is_pickleable(val)}
+            self.log_running()
+            self.logger.critical(f"Task '{self.name}' crashed in pickling. Cannot pickle: {unpicklable}", extra={"action": "fail", "task_name": self.name})
+            raise PicklingError(f"Task {self.name} could not be pickled. Cannot pickle: {unpicklable}")
 
         # what we return here will be stored in the pickle
         return state
