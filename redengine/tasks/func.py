@@ -260,7 +260,13 @@ class FuncTask(Task):
             file = self._path
             return '.'.join(file.parts).replace(".py", "") + f":{self._func_name}"
         else:
-            return f"{self._func.__module__}:{self._func.__name__}"
+            func_module = self._func.__module__
+            if func_module == "__main__":
+                # Showing as 'myfunc'
+                return self._func.__name__
+            else:
+                # Showing as 'path.to.module:myfunc'
+                return f"{func_module}:{self._func.__name__}"
 
     def process_finish(self, *args, **kwargs):
         if self.is_delayed():
