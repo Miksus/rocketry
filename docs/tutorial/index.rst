@@ -5,7 +5,7 @@ Red Engine is a vast framework with various levels of
 abstraction and endless ways to customize things. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    quick_start
