@@ -1,5 +1,6 @@
 
-
+# Note: this import is from the task root
+# directory.
 from tasks.settings import my_setting
 
 def do_things():

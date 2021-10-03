@@ -1,9 +1,6 @@
 
-
-from my_package.settings import my_setting
-
 def do_things():
-    print(f"Doing things with {my_setting}")
+    print(f"Doing things.")
     ...
 
 def main(my_task_param, my_session_arg):

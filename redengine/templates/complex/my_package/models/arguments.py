@@ -34,4 +34,4 @@ class MyArgument(Argument):
         
         Optional."""
         ...
-        cls.session.parameters[name] = cls(value)
+        cls.session.parameters[name] = cls(...)

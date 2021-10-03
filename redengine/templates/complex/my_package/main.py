@@ -12,10 +12,9 @@ root_dir = Path(__file__).parent
 
 session = Session.from_yaml(root_dir / "config.yaml", kwds_fields={"tasks": {"kwds_subparser": {"root": root_dir}}})
 
-try:
-    from . import arguments
-except ImportError:
-    import arguments
+# Note that arguments should be imported
+# after creating the session.
+from . import arguments
 
 def set_env(env):
     """Set environment."""
