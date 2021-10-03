@@ -8,4 +8,5 @@ This section introduces
    :caption: Contents:
 
    tasks/index
+   conditions/index
    session/index
