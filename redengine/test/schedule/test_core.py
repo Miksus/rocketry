@@ -54,7 +54,7 @@ def test_task_execution(tmpdir, execution, session):
         with open("work.txt", "r") as file:
             assert 3 == len(list(file))
 
-@pytest.mark.parametrize("logging_scheme", ["memory_logging", "csv_logging"])
+@pytest.mark.parametrize("logging_scheme", ["log_memory", "log_csv", "log_simple"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "task_func,run_count,fail_count,success_count,inact_count",

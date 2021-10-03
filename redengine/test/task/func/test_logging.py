@@ -196,7 +196,8 @@ def test_action_start(tmpdir, method, session):
 def test_process_no_double_logging(tmpdir, session):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
     # while this is not occuring on Windows. This tests the bug.
-    # TODO 0.2: Test this with MemoryHandler and CSVHandler
+    #!NOTE: This test requires there are two handlers in 
+    # redengine.task logger (Memory and Stream in this order)
 
     expected_actions = ["run", "success"]
     with tmpdir.as_cwd() as old_dir:
@@ -219,7 +220,7 @@ def test_process_no_double_logging(tmpdir, session):
         records = []
         while True:
             try:
-                record = log_queue.get(block=True, timeout=2)
+                record = log_queue.get(block=True, timeout=3)
             except Empty:
                 break
             else:
@@ -247,8 +248,8 @@ def test_process_no_double_logging(tmpdir, session):
         handlers[0] # Checking it has atleast 2
         handlers[1] # Checking it has atleast 2
         assert (
-            isinstance(handlers[0], logging.StreamHandler)
-            and isinstance(handlers[1], MemoryHandler)
+            isinstance(handlers[1], logging.StreamHandler)
+            and isinstance(handlers[0], MemoryHandler)
             and len(handlers) == 2
         ), f"Double logging. Too many handlers: {handlers}"
 

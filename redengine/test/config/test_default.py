@@ -9,7 +9,7 @@ from redengine.config import get_default
 from redengine.core.log import TaskAdapter
 
 @pytest.mark.parametrize(
-    "logging_scheme", ['csv_logging', 'memory_logging']
+    "logging_scheme", ['log_csv', 'log_memory']
 )
 def test_logger(tmpdir, logging_scheme):
     with tmpdir.as_cwd() as old_dir:

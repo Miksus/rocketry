@@ -1,0 +1,39 @@
+
+# Simple setup to keep task log 
+# records in memory
+
+# Loggers, handlers, formatters
+logging:
+  version: 1
+  # disable_existing_loggers: True
+
+  formatters:
+    # Custom
+    rec_formatter:
+      (): redengine.log.AttributeFormatter
+
+  handlers:
+    # Custom
+    mem_scheduler:
+       (): "redengine.log.MemoryHandler"
+       store_as: "dict"
+       formatter: 'rec_formatter'
+    mem_task:
+       (): "redengine.log.MemoryHandler"
+       store_as: "dict"
+       formatter: 'rec_formatter'
+
+  loggers:
+    redengine.task: 
+       handlers: ['mem_task']
+       level: 'INFO'
+       propagate: False
+    redengine.task._process:
+      # Preventing the logger of a 
+      # process task to use parent
+      # logger
+      propagate: False
+    redengine.scheduler:
+       handlers: ['mem_scheduler']
+       level: 'INFO'
+       propagate: False

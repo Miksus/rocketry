@@ -69,7 +69,7 @@ def script_files(tmpdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def session():
-    session = Session(scheme="memory_logging", config={"debug": True}, delete_existing_loggers=True)
+    session = Session(scheme="log_simple", config={"debug": True}, delete_existing_loggers=True)
     redengine.session = session
     session.set_as_default()
 

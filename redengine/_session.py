@@ -146,7 +146,7 @@ class Session:
         #! TODO: A function to list existing defaults and help of them
         scheduler_basename = self.config["scheduler_logger_basename"]
         task_basename = self.config["task_logger_basename"]
-        get_default(scheme, scheduler_basename=scheduler_basename, task_basename=task_basename)
+        get_default(scheme, scheduler_basename=scheduler_basename, task_basename=task_basename, session=self)
 
     def start(self):
         """Start the scheduling session.

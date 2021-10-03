@@ -1,4 +1,5 @@
-# Clear existing tasks & schedulers
+# Simple Memory logger that also
+# logs to std out
 clear_existing: True
 
 # Loggers, handlers, formatters
@@ -19,16 +20,6 @@ logging:
        formatter: 'standard'
        class: 'logging.StreamHandler'
        stream: 'ext://sys.stdout' # Default is stderr
-    stdout:
-       level: 'INFO'
-       formatter: 'standard'
-       class: 'logging.StreamHandler'
-       stream: 'ext://sys.stdout'  # Default is stderr
-    stderr:
-       level: 'ERROR'
-       formatter: 'standard'
-       class: 'logging.StreamHandler'
-       stream: 'ext://sys.stdout'  # Default is stderr
 
     # Custom
     mem_scheduler:
@@ -39,10 +30,6 @@ logging:
        (): "redengine.log.MemoryHandler"
        store_as: "dict"
        formatter: 'rec_formatter'
-    mem_task_maintain:
-       (): "redengine.log.MemoryHandler"
-       store_as: "dict"
-       formatter: 'rec_formatter'
 
   loggers:
     '': # root logger
@@ -50,7 +37,7 @@ logging:
        level: 'WARNING'
        propagate: False
     redengine.task: 
-       handlers: ['stderr', 'mem_task']
+       handlers: ['mem_task', 'default']
        level: 'INFO'
        propagate: False
     redengine.task._process:
@@ -58,12 +45,8 @@ logging:
       # process task to use parent
       # logger
       propagate: False
-    redengine.task.maintainer: 
-       handlers: ['mem_task_maintain']
-       level: 'INFO'
-       propagate: False
     redengine.scheduler:
-       handlers: ['mem_scheduler']
+       handlers: ['mem_scheduler', 'default']
        level: 'INFO'
        propagate: False
     __main__:  # if __name__ == '__main__'

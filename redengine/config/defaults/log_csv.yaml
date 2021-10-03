@@ -1,0 +1,57 @@
+
+# Simple setup to set task log 
+# records to CSV file
+
+# Loggers, handlers, formatters
+logging:
+  version: 1
+  formatters:
+    csv_formatter:
+      (): redengine.log.CsvFormatter
+      fields: [
+        asctime,
+        levelname,
+        name,
+        message
+      ]
+    csv_task_formatter:
+      (): redengine.log.CsvFormatter
+      fields: [
+        task_name,
+        asctime,
+        action,
+        start, # Represents the start time of the task (for failure/success/etc.)
+        end,
+        runtime,
+        exc_text,
+      ]
+
+  handlers:
+    # Custom
+    csv_scheduler:
+       (): "redengine.log.CsvHandler"
+       formatter: "csv_formatter"
+       filename: "log/scheduler.csv"
+       make_dir: True
+       delay: True
+    csv_task:
+       (): "redengine.log.CsvHandler"
+       formatter: "csv_task_formatter"
+       filename: "log/tasks.csv"
+       make_dir: True
+       delay: True
+
+  loggers:
+    redengine.task: 
+       handlers: ['csv_task']
+       level: 'INFO'
+       propagate: False
+    redengine.task._process:
+      # Preventing the logger of a 
+      # process task to use parent
+      # logger
+      propagate: False
+    redengine.scheduler:
+       handlers: ['csv_scheduler']
+       level: 'INFO'
+       propagate: False
