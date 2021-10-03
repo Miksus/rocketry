@@ -484,7 +484,10 @@ class Task(metaclass=_TaskMeta):
         daemon = self.daemon if self.daemon is not None else self.session.scheduler.tasks_as_daemon
         self._process = multiprocessing.Process(target=self._run_as_process, args=(params, log_queue, return_queue), daemon=daemon) 
         self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
+        self._mark_running = True # needed in pickling
+        
         self._process.start()
+        del self._mark_running
         
         self._lock_to_run_log(log_queue)
         return log_queue
@@ -910,14 +913,18 @@ class Task(metaclass=_TaskMeta):
 
         
         if not is_pickleable(state):
-            # When this block might get executed?
-            #   - If FuncTask func is non-picklable
-            #       - There is another func with same name in the file
-            #       - The function is lambda or decorated func
-            unpicklable = {key: val for key, val in state.items() if not is_pickleable(val)}
-            self.log_running()
-            self.logger.critical(f"Task '{self.name}' crashed in pickling. Cannot pickle: {unpicklable}", extra={"action": "fail", "task_name": self.name})
-            raise PicklingError(f"Task {self.name} could not be pickled. Cannot pickle: {unpicklable}")
+            if self._mark_running:
+                # When this block might get executed?
+                #   - If FuncTask func is non-picklable
+                #       - There is another func with same name in the file
+                #       - The function is lambda or decorated func
+                unpicklable = {key: val for key, val in state.items() if not is_pickleable(val)}
+                self.log_running()
+                self.logger.critical(f"Task '{self.name}' crashed in pickling. Cannot pickle: {unpicklable}", extra={"action": "fail", "task_name": self.name})
+                raise PicklingError(f"Task {self.name} could not be pickled. Cannot pickle: {unpicklable}")
+            else:
+                # Is pickled by something else than task execution
+                return state
 
         # what we return here will be stored in the pickle
         return state
