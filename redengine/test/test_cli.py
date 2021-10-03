@@ -39,7 +39,7 @@ class CLIBase:
         session.set_as_default()
         
         # Make almost instant shutdown
-        session.scheduler.shut_cond = SchedulerCycles() == 1
+        session.scheduler.shut_cond = SchedulerCycles() >= 2
         session.start()
 
         assert 1 < len(session.tasks)

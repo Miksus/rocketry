@@ -24,7 +24,7 @@
 my-yaml-task-1:
   path: 'funcs.py'
   func: 'main'
-  #start_cond: 'every 1 seconds'
+  start_cond: 'minutely'
   execution: 'main'
   parameters: 
     my_task_param: 'my value' # Function parameter
@@ -33,16 +33,3 @@ my-yaml-task-2:
   path: 'funcs.py'
   func: 'do_things' # Runs on another process
   execution: 'thread'
-
-# Note also our init hook. Tasks that start with
-# 'dev.' won't be run when env='prod' but these
-# tasks are only ones allowed to be run if 
-# env='dev'.
-
-dev.my-yaml-task-2:
-  path: 'funcs.py'
-  execution: 'main'
-  func: 'main'
-  start_cond: 'every 5 seconds'
-  parameters: 
-    my_task_param: '(this is dev)' # Function parameter
