@@ -92,7 +92,7 @@ cases_task = [
     pytest.param("after task 'other' finished",  DependFinish(depend_task="other"), id="after finished"),
     pytest.param("after task 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
 
-    pytest.param("has failed today", TaskFailed(task=None, period=TimeOfDay()), id="has failed today"),
+    pytest.param("has failed today", TaskFailed(period=TimeOfDay()), id="has failed today"),
 ]
 
 cases_scheduler = [
