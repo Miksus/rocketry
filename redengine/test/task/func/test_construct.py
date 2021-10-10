@@ -27,6 +27,20 @@ def test_construct(tmpdir, session, execution):
         assert task.status is None
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_construct_callable_class(tmpdir, session, execution):
+    class MyClass:
+        def __call__(self):
+            pass
+
+    # Going to tempdir to dump the log files there
+    with tmpdir.as_cwd() as old_dir:
+        # This should always be picklable
+        task = FuncTask(MyClass(), execution=execution)
+        assert not task.is_delayed()
+        assert task.status is None
+        assert task.name.endswith("test_construct:MyClass")
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_construct_delayed(tmpdir, session, execution):
 
     # Going to tempdir to dump the log files there

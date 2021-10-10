@@ -224,7 +224,7 @@ class FuncTask(Task):
 
             if not callable(func):
                 raise TypeError(f"FuncTask's function must be callable. Got: {type(func)}")
-            elif execution == "process" and func.__name__ == "<lambda>":
+            elif execution == "process" and getattr(func, "__name__", None) == "<lambda>":
                 raise AttributeError(
                     f"Cannot pickle lambda function '{func}'. "
                     "The function must be pickleable if task's execution is 'process'. "
@@ -261,12 +261,13 @@ class FuncTask(Task):
             return '.'.join(file.parts).replace(".py", "") + f":{self._func_name}"
         else:
             func_module = self._func.__module__
+            func_name = getattr(self._func, "__name__", type(self._func).__name__)
             if func_module == "__main__":
                 # Showing as 'myfunc'
-                return self._func.__name__
+                return func_name
             else:
                 # Showing as 'path.to.module:myfunc'
-                return f"{func_module}:{self._func.__name__}"
+                return f"{func_module}:{func_name}"
 
     def process_finish(self, *args, **kwargs):
         if self.is_delayed():
