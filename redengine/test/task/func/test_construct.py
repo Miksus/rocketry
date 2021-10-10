@@ -40,6 +40,45 @@ def test_construct_callable_class(tmpdir, session, execution):
         assert task.status is None
         assert task.name.endswith("test_construct:MyClass")
 
+def test_description(session):
+    "Test Task.description is correctly set (uses the func if missing)"
+
+    # Test no description
+    task = FuncTask(name="no desc 1")
+    @task
+    def myfunc():
+        ...
+    assert task.description is None
+
+    task = FuncTask(lambda x: x, name="no desc 2", execution="main")
+    assert task.description is None
+
+
+     # Test description from doc (decorated)
+    task = FuncTask(name="has desc 1")
+    @task
+    def myfunc():
+        "This is func"
+    assert task.description == "This is func"
+
+    # Test description from doc (normal)
+    def myfunc():
+        "This is func"
+    task = FuncTask(myfunc, name="has desc 2")
+    assert task.description == "This is func"
+
+    # Test the description is respected if doc is found
+    def myfunc():
+        "This is func"
+    task = FuncTask(myfunc, name="has desc 3", description="But this is preferred")
+    assert task.description == "But this is preferred"
+
+    # Test the description is respected if doc missing
+    def myfunc():
+        ...
+    task = FuncTask(myfunc, name="has desc 4", description="This is func")
+    assert task.description == "This is func"
+
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_construct_delayed(tmpdir, session, execution):
 

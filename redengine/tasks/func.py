@@ -168,6 +168,7 @@ class FuncTask(Task):
             sys_paths=sys_paths
         )
         super().__init__(**kwargs)
+        self._set_descr()
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, "_func"):
@@ -180,6 +181,7 @@ class FuncTask(Task):
                 sys_paths=self._delayed_kwargs.pop("sys_paths", None),
             )
             super().__init__(**self._delayed_kwargs)
+            self._set_descr()
             del self._delayed_kwargs
 
             # Note that we must return the function or 
@@ -232,6 +234,11 @@ class FuncTask(Task):
             self._path = None
             self._func_name = None
             self._func = func
+
+    def _set_descr(self):
+        "Set description from func doc if desc missing"
+        if self.description is None and hasattr(self._func, "__doc__"):
+            self.description = self._func.__doc__
 
     def execute(self, **params):
         "Run the actual, given, task"
