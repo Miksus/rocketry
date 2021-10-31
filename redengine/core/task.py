@@ -99,12 +99,12 @@ class Task(metaclass=_TaskMeta):
         >= 40 if they require loaded tasks,
         >= 50 if they require loaded extensions.
         By default 0
-    timeout : float, optional
+    timeout : str, int, pd.Timedelta, optional
         If the task has not run in given timeout
         the task will be terminated. Only applicable
         for tasks with execution='process' or 
-        with execution='thread' if the task function
-        supports it.
+        with execution='thread'. Passed to 
+        ``pandas.Timedelta``.
     daemon : Bool, optional
         Whether run the task as daemon process
         or not. Only applicable for execution='process',
