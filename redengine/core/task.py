@@ -195,7 +195,7 @@ class Task(metaclass=_TaskMeta):
 
         self.session = self.session if session is None else session
 
-        self.set_name(name, on_exists=on_exists)
+        self.set_name(name, on_exists=on_exists, register=False)
         self.description = description
         self.logger = logger
         
@@ -242,6 +242,8 @@ class Task(metaclass=_TaskMeta):
         self._last_fail = self._get_last_action_from_log("fail")
         self._last_terminate = self._get_last_action_from_log("terminate")
 
+        self.register()
+        
         # Hooks
         hooker.postrun()
 
@@ -643,7 +645,7 @@ class Task(metaclass=_TaskMeta):
     def name(self, name:str):
         self.set_name(name)
 
-    def set_name(self, name, on_exists=None, use_instance_naming=None):
+    def set_name(self, name, on_exists=None, use_instance_naming=None, register=True):
         """Set the name of the task.
 
         Parameters
@@ -682,24 +684,30 @@ class Task(metaclass=_TaskMeta):
         
         if name in self.session.tasks:
             if on_exists == "replace":
-                self.session.tasks[name] = self
+                pass
+
             elif on_exists == "raise":
                 raise KeyError(f"Task {name} already exists. (All tasks: {self.session.tasks})")
+
             elif on_exists == "ignore":
-                pass
+                register = False
+
             elif on_exists == "rename":
                 for i in count():
                     new_name = name + str(i)
                     if new_name not in self.session.tasks:
-                        self.name = new_name
-                        return
-        else:
-            self.session.tasks[name] = self
-        
-        self._name = str(name)
+                        name = new_name
+                        break
 
-        if old_name is not None:
-            del self.session.tasks[old_name]
+        self._name = str(name)
+        if register:
+            self.session.tasks[name] = self
+            if old_name is not None:
+                del self.session.tasks[old_name]
+
+    def register(self):
+        name = self.name
+        self.session.tasks[name] = self
 
     def get_default_name(self):
         """Create a name for the task when name was not passed to initiation of
