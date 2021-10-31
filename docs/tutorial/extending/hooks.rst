@@ -9,10 +9,12 @@ These are useful for building your logic for
 specific situations where subclassing a base class
 would be too complicated.
 
-Hook also can be a generator in which case the code 
-before the first ``yield`` is executed before the 
-hook's section and the code after it will be executed
-after the hook's section. 
+Hooks are section specific and can run before or after
+the section (ie. scheduler start up or task initiation).
+If a hook function is a generator (has ``yield``), the
+code before the ``yield`` is executed before the section
+and code after the ``yield`` is executed after the section.
+Multiple yields are not supported.
 
 
 .. testsetup:: func_hook

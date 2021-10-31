@@ -1,7 +1,7 @@
 
  
-Creating Tasks
-==============
+Tasks, Basics
+=============
 
 The whole purpose of this framework is to schedule 
 tasks or jobs. There are various types of tasks and 
@@ -34,7 +34,7 @@ be created as:
 
 The decorator initiates a task and sets it 
 to whatever is the default session. This example runs 
-once a day and is called "mytask". See for more detais: 
+once a day and is called "mytask". See for more details: 
 :py:class:`redengine.tasks.FuncTask`.
 
 You can also organize the tasks to multiple files and 
@@ -44,57 +44,12 @@ demonstrated in :ref:`getting-started` then you have this
 already set up. Alternatively you can just import all the 
 files containing tasks.
 
-Creating a Task Using Configuration Files
-------------------------------------------
-
-If you have many tasks that are meant to execute non-Python
-code (such as :py:class:`redengine.tasks.Commandtask`),
-it could be beneficial to configure the tasks in a configuration
-file instead of in Python source files. Red Engine also has 
-loader :py:class:`redengine.tasks.loaders.TaskLoader` which 
-is meant to parse such tasks.
-
-A task configuration file can look like this: 
-
-.. code-block:: yaml
-
-    my-task-2: # Name of the task
-        class: 'FuncTask'
-        func: 'myfunc'
-        path: 'path/to/myfile.py'
-        start_cond: 'daily'
-        ... # Other FuncTask init arguments
-    my-task-3:
-        class: 'CommandTask'
-        command: "python -c \"open('test.txt', 'w');\""
-        start_cond: 'daily'
-        ... # Other CommandTask init arguments
-
-The first key represents the names of the tasks and 
-the inner dictionary is passed to the initiation of
-the task with the exception of the key ``class`` that
-is used to define the actual class type. If the class 
-is not specified, Red Engine tries to guess it from the 
-other arguments. Also, if the key ``path`` is defined, 
-its value is turned to an absolute path in case it was 
-relative. This is for convenience. 
-
-Let's call our task file as ``tasks.yaml`` and put it somewhere to 
-``mytasks/`` directory. Then just load this by configuring 
-a ``TaskLoader``:
-
-.. code-block:: python
-
-    from redengime.tasks.loaders import TaskLoader
-
-    TaskLoader(glob='tasks.yaml', path='task/')
-
-
 Arguments for Tasks
 -------------------
 
 The most commonly used arguments shared by all task classes are:
 
+- ``name``: The name of the task. If not given, the name is derived elsewhere ie. from the name of the function.
 - ``start_cond``: Specifies when the task may start running. Can be a string or a condition object. 
   See: :ref:`conditions-intro`
 - ``end_cond``: Specifies when the task is terminated (if running and parallelized). Can be a string or a condition object. 
@@ -103,7 +58,7 @@ The most commonly used arguments shared by all task classes are:
 
   - ``'main'``: Runs on main thread and process.
   - ``'thread'``: Runs on another thread.
-  - ``'process'``: Runs on another process.
+  - ``'process'``: Runs on another process (default).
 
 - ``parameters``: Parameters passed for specifically to this task. This is a dictionary.
 
@@ -115,6 +70,14 @@ in :ref:`conditions-intro`.
 
 Parallelizing Tasks
 -------------------
+
+There are three options for how tasks are executed:
+
+- ``process``: Run the task in a separate process.
+- ``thread``: Run the task in a separate thread. 
+- ``main``: Run the task in the main process and thread.
+
+These are passed to the ``execution`` argument of a task.
 
 Here is an example of all the execution options:
 
@@ -136,17 +99,14 @@ Here is an example of all the execution options:
 
 There are pros and cons in each option. In short:
 
-- Use ``process`` if your task can get stuck or 
-  requires more resources and needs own process.
-- Use ``main`` or ``thread`` if the task needs 
-  to modify or inspect the other tasks or the 
-  scheduling session. 
-- Use ``thread`` or ``process`` if the task needs 
-  to be permanently running.
-- Use ``main`` if you need to put the scheduler 
-  on hold for some reason till the task finishes.
-  For example, if you are creating new tasks or 
-  pipelines.
+=========== =============  =====================  ========================
+Execution   Parallerized?  Can be terminated?      Can modify the session?
+=========== =============  =====================  ========================
+``process`` Yes            Yes                    No
+``thread``  Yes            Yes if task supports   Yes
+``main``    No             No                     Yes
+=========== =============  =====================  ========================
+
 
 Parametrizing Tasks
 -------------------

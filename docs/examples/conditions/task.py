@@ -2,7 +2,7 @@ from redengine.tasks import FuncTask
 
 @FuncTask(start_cond="true")
 def task_simple_1():
-    "This runs always (just a an example for first one)"
+    "(a dummy task)"
     ...
 
 @FuncTask(start_cond="after task 'task_simple_1'")

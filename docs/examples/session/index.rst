@@ -8,6 +8,7 @@ Red Engine scheduler sessions.
    :maxdepth: 2
    :caption: Contents:
 
+   simplistic
    standalone
    minimal
    simple

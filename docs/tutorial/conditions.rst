@@ -77,130 +77,27 @@ discuss about some useful conditions found from Red Engine.
 Conditions, Examples
 ====================
 
-There are several categories of conditions:
+The syntax are specified in the section :ref:`condition-syntax`. There are several types
+of built-in conditions useful for various scheduling strategies:
 
-- Time related conditions ('time of...'). These are conditions that are true or false depending
-  on whether current time is within the period.
-- Task related conditions. These are similar as time related conditions but these are also tied
-  in the status of the task. Useful to set a task to run once in given period (ie. day).
-- Scheduler related. These are conditions that check the state of the scheduler (ie. how many
-  cycles of tasks it has run or how long ago it stated). Mostly useful for testing.
-- Miscellaneous. Conditions can also check whether a parameter exists, whether a file exists,
-  whether the machine has internet access, whether a row exists in a database etc. It is adviced
-  to make your own condition classes when needed.
+- See :ref:`cond-execution` if you want to run a task in specific fixed intervals (ie. hourly, daily, weekly).
+- See :ref:`cond-timedelta` if you want to run a task after specific amount of time has passed (ie. a minute, an hour a day).
+- See :ref:`cond-dependence` if you want to run a task after another task has succeeded, failed or both.
+- See :ref:`cond-status` or :ref:`cond-fixedinterval` if you want to combine and create more advanced logic  
+  with task statuses and time of day.
 
-Next some examples from these categories are shown.
+
+Next possibly the most common patterns are shown.
+
 
 Time Related
 ------------
 
-See :ref:`examples-cond-time` for list of actual examples.
-
-- ``time of day between 10:00 and 14:00``
-
-  - True if current time is between 10 AM and 2 PM.
-
-- ``time of week between Monday and Wednesday``
-
-  - True if current week day is Monday, Tuesday or Wednesday
-
-- ``time of week on Monday``
-
-  - True if currently is Monday.
-
-- ``time of month after 5th``
-
-  - True if if the current day of month is 5th or after.
-
-.. warning::
-    Be careful for not to use these as your only condition in the 
-    ``start_cond``. The task will be rerun constantly during the 
-    period.
+.. literalinclude:: /examples/conditions/time.py
+    :language: py
 
 Task Related
 ------------
 
-See :ref:`examples-cond-task` for list of actual examples.
-
-- ``every 10 minutes``
-
-  - True if the task has not run in the past 10 minutes.
-  - Useful for running the task once given time span.
-
-- ``every 3d 2h 5min``
-
-  - True if the task has not run in the past 3 days, 2 hours 
-    and 5 minutes. See Pandas Timedelta for more.
-  - Useful for running the task once given time span.
-
-- ``daily``
-
-  - True if the task has not run in current day.
-  - Useful for running the task once a day.
-
-- ``daily between 10:00 and 14:00``
-
-  - True if the task has not run in current day between 10 AM 
-    and 2 PM and current time is between 10 AM and 2 PM.
-  - Useful for running the task once a day in given time.
-
-- ``daily after 14:00``
-
-  - True if the task has not run in current day after 2 PM and 
-    current time is after 2 PM.
-  - Useful for running the task once a day in given time.
-
-- ``weekly between Monday and Wednesday``
-
-  - True if the task has not run on Monday, Tuesday or Wednesday 
-    and currently the week day is one of these.
-  - Useful for running the task once a week in given week day(s).
-
-You can also tie these with other tasks:
-
-- ``task 'another task' has failed today``
-
-  - True if task named "another task" failed today.
-
-- ``task 'another task' has succeeded this hour``
-
-  - True if task named "another task" succeeded in this hour.
-
-- ``task 'another task' has terminated this week before Friday``
-
-  - True if task named "another task" was terminated this week 
-    before Friday.
-
-- ``after task 'another task' succeeded``
-
-  - True if the task this condition is set to (as `start_cond` or 
-    `end_cond`) has not succeeded after task named 'another task'.
-  - Useful to run the task straight after another task.
-
-.. note::
-    One can build task pipelines using these conditions (one task
-    runs after another). However, you can also create pipelines with
-    :py:class:`redengine.extensions.Sequence` which may be more convenient.
-
-
-Scheduler Related
------------------
-
-- ``scheduler has more than 10 cycles``
-
-  - True if the scheduler has run more than 10 cycles of tasks.
-
-- ``scheduler has run over 10 minutes``
-
-  - True if the scheduler started over 10 minutes ago.
-
-Miscellaneous
--------------
-
-- ``param 'x' exists``
-
-  - True if session parameters have parameter `x`.
-
-- ``param 'x' is 'myval'``
-
-  - True if session parameters have parameter `x` and the value of the paramter is `myval`.
+.. literalinclude:: /examples/conditions/task.py
+    :language: py

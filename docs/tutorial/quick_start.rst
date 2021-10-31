@@ -16,7 +16,26 @@ Generate a quick setup to directory `myproject` that will get you started.
 
    python -m redengine create myproject
 
-Now you already have a working scheduler system. Just launch it:
+Now create your own tasks by creating ``tasks.py`` files to directory 
+``my_project/tasks/``, for example:
+
+.. code-block:: python
+
+    from redengine.tasks import FuncTask
+
+    @FuncTask(start_cond="daily after 09:00")
+    def wake_up():
+        ... # Do whatever
+
+    @FuncTask(start_cond="after task 'wake_up'")
+    def have_shower():
+        ... # Do whatever
+
+    @FuncTask(start_cond="every 10 minutes")
+    def have_shower():
+        ... # Do whatever
+
+All done. Just launch the scheduler:
 
 .. code-block:: console
 
@@ -25,37 +44,14 @@ Now you already have a working scheduler system. Just launch it:
 You can also use different :ref:`templates <templates>` depending on the complexity
 of your scheduling problem.
 
-What you got?
--------------
+What next?
+----------
 
-The command created you a project directory for your tasks. 
-The structure is as follows:
+This is only a small slice what Red Engine has to offer. Read furher 
+to explore the features.
 
-| my_project/
-| ├── tasks/
-| │ ├── tasks.py
-| │ └── ...
-| ├── conf.yaml
-| └── main.py
+To skip to relevant sections:
 
-
-You can freely edit the files. In general:
-
-- ``main.py``: Run file this to start the scheduler.
-- ``conf.yaml``: Session configuration. See :ref:`conf.yaml <minimal-session>`.
-- ``tasks/``: This folder contains your tasks.
-
-  - ``tasks.py``: These file contains tasks. See :ref:`tasks.py <minimal-tasks>`. You can have multiple of these in subdirectories.
-
-What now?
----------
-
-Put your tasks to the ``tasks/`` directory. 
-
-See:
-
-- :ref:`How to set conditions <conditions-intro>` or just :ref:`examples <examples-cond>` for setting the starting conditions (``start_cond``) of the tasks. 
-- :ref:`How to parametrize tasks <parametrizing>`.
-
-Red Engine provides you also the batteries so read more to get most 
-out of the framework.
+- :ref:`How to create tasks. <creating-tasks>`
+- :ref:`How to schedule tasks. <scheduling>`
+- :ref:`How to parametrize tasks. <parametrizing>`

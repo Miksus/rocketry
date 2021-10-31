@@ -35,75 +35,34 @@ allows logical operations or nesting and is easily expanded with
 custom conditions such as whether data exists in 
 a database, file is found or a website is online.
 
-Examples
---------
+Example
+-------
 
-**Creating your tasks** with Red Engine is really simple:
+This is all it takes to create a scheduler:
 
-.. code-block:: python
+.. literalinclude:: examples/session/example.py
+    :language: py
 
-    from redengime.tasks import FuncTask
-
-    @FuncTask(start_cond="daily between 09:00 and 14:00")
-    def my_task():
-        ... # Do your thing.
-
-This task will run once a day between 9 AM and 2 PM.
-
-**What about parametrization?**
-
-.. code-block:: python
-
-    from redengine.arguments import FuncArg
-    from redengime.tasks import FuncTask
-
-    @FuncTask(start_cond="daily between 09:00 and 14:00")
-    def my_task(my_param):
-        ... # Do your thing.
-
-    @FuncArg.to_session()
-    def my_param():
-        ... # Determine the value of the parameter
-        return 'my value'
-
-The task ``my_task`` is now parametrized with whatever is returned from 
-the function ``my_param``. 
-
-**What about parallelization?**
-
-.. code-block:: python
-
-    from redengime.tasks import FuncTask
-
-    @FuncTask(execution="process")
-    def my_process_task():
-        ... # Do your thing.
-
-    @FuncTask(execution="thread")
-    def my_thread_task():
-        ... # Do your thing.
-
-    @FuncTask(execution="main")
-    def my_main_task():
-        ... # Do your thing.
-
-The first task will run on a separate process while 
-the second will run on a separate thread. The last one
-is not parallelized. There are pros and cons on 
-each choices. 
 
 But does it work?
 -----------------
 
 The system is tested with over 900 unit tests to 
-ensure quality of all promised features. It is already
-in use.
+ensure quality and to deliver what is promised. 
+Red Engine is used in production.
+
+Interested?
+-----------
+
+There is much more to offer. Read more and try it yourself.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    tutorial/index
+   condition_syntax/index
    reference/index
    examples/index
 

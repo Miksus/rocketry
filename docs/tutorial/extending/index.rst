@@ -10,4 +10,7 @@ or by subclassing the base classes.
    :caption: Contents:
 
    hooks
+   custom_condition
+   custom_task
+   custom_argument
    subclassing

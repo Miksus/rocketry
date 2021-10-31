@@ -1,8 +1,8 @@
 Tutorials
 =========
 
-Red Engine is a vast framework with various levels of 
-abstraction and endless ways to customize things. 
+Welcome to Red Engine tutorials. This section
+will get you started with the framework.
 
 .. toctree::
    :maxdepth: 1
@@ -10,11 +10,12 @@ abstraction and endless ways to customize things.
 
    quick_start
    templates
-   session_config
    tasks
+   creating_tasks
+   scheduling
+   session_config
    conditions
    parameters
    extensions
    loaders
-   hooks
-   subclassing
+   extending/index
