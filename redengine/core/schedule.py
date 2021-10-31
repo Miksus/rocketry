@@ -650,7 +650,7 @@ class Scheduler:
 
     @classmethod
     def hook_cycle(cls, func:Callable):
-        """Hook scheduler shutdown (:func:`Scheduler.run_cycle <redengine.core.Scheduler.run_cycle>`)
+        """Hook scheduler cycle (:func:`Scheduler.run_cycle <redengine.core.Scheduler.run_cycle>`)
         with a custom function or generator.
         
         Examples
