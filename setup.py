@@ -30,7 +30,7 @@ setup(
         "Intended Audience :: Financial and Insurance Industry",
      ],
      include_package_data=True, # for MANIFEST.in
-     python_requires='>=3.6.6',
+     python_requires='>=3.6.0',
 
     install_requires = [
         'pandas',
