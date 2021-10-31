@@ -6,6 +6,7 @@ import pytest
 
 from redengine.tasks import FuncTask
 from redengine.conditions import AlwaysFalse, AlwaysTrue, DependSuccess
+from redengine.parse.utils import ParserError
 
 def myfunc(): ...
 
@@ -201,3 +202,14 @@ def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
         assert start_cond() == task.start_cond
 
         assert str(task.start_cond) == start_cond_str
+
+def test_failure_in_init(session):
+    with pytest.raises(ParserError):
+        task = FuncTask(
+            lambda : None, 
+            name="task",
+            start_cond="this is not valid",
+            execution="main",
+        )
+    assert session.tasks == {}
+    
