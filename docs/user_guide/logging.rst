@@ -6,12 +6,17 @@ The main purpose of logging in Red Engine is to maintain the information
 which task has run, failed or succeeded and when. This information is needed
 to determine the state of many of the conditions. 
 
-Red Engine extends the ``logging`` library to allow also reading log records.
-This is conducted by special handlers that write the log records to a more 
-structural format such as CSV or as JSON to MongoDB. There is also a logging
-adapter used for automatically passing the task name to the extras of the 
-task logger and for acting as an interface for querying the handlers.
+Red Engine extends the ``logging`` library to allow also reading the log records.
+This is achieved with handlers that write the log records to a more 
+structural format such as CSV or JSON. There is also a logging
+adapter used as an interface for querying the handlers.
 
+The loggers can be customized in any way using the ``logging`` library itself
+or extending it. The most important thing to keep in mind is that the logger
+``redengine.task`` should have at least one handler that has method ``.read()``
+or ``.query(..)`` to also read the log files. These methods should return
+iterble of dictionaries. The method ``.query(...)`` should also be able to handle
+the passed queries.
 
 Querying the task adapter
 -------------------------
