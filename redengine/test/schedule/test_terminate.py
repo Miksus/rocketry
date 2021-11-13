@@ -8,7 +8,7 @@ import pandas as pd
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
 from redengine.core.exceptions import TaskTerminationException
-from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue
+from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue, AlwaysFalse
 
 def run_slow():
     time.sleep(0.2)
@@ -107,3 +107,26 @@ def test_task_terminate(tmpdir, execution, session):
         # Attr force_termination should be reseted every time the task has been terminated
         assert not task.force_termination
 
+
+@pytest.mark.parametrize("execution", ["thread", "process"])
+def test_task_terminate_end_cond(tmpdir, execution, session):
+    """Test task termination due to the task ran too long"""
+    with tmpdir.as_cwd() as old_dir:
+
+        func_run_slow = get_slow_func(execution)
+
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=AlwaysTrue(), execution=execution)
+
+        scheduler = Scheduler(
+            shut_cond=TaskStarted(task="slow task") >= 2,
+            timeout="0.1 seconds"
+        )
+        scheduler()
+
+        history = pd.DataFrame(task.logger.get_records())
+        assert 2 == (history["action"] == "run").sum()
+        assert 2 == (history["action"] == "terminate").sum()
+        assert 0 == (history["action"] == "success").sum()
+        assert 0 == (history["action"] == "fail").sum()
+
+        assert not os.path.exists("work.txt")
