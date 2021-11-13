@@ -65,18 +65,19 @@ def _set_task_has_parsing():
     ]
     for (action, cls) in clss:
         func = partial(_from_period_task_has, cls=cls)
-        PARSERS.update(
-            {
-                re.compile(fr"task '(?P<task>.+)' has {action}"): cls,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>starting) (?P<start>.+)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>between) (?P<start>.+) and (?P<end>.+)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>after) (?P<start>.+)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>before) (?P<end>.+)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>on) (?P<start>.+)"): func,
-                re.compile(fr"task '(?P<task>.+)' has {action} (in )?past (?P<past>.+)"): partial(func, span_type='past'),
-            }
-        )
+        for prefix in ("", r"task '(?P<task>.+)' "):
+            PARSERS.update(
+                {
+                    re.compile(fr"{prefix}has {action}"): cls,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>starting) (?P<start>.+)"): func,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>between) (?P<start>.+) and (?P<end>.+)"): func,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>after) (?P<start>.+)"): func,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>before) (?P<end>.+)"): func,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute)"): func,
+                    re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>on) (?P<start>.+)"): func,
+                    re.compile(fr"{prefix}has {action} (in )?past (?P<past>.+)"): partial(func, span_type='past'),
+                }
+            )
 
 def _set_scheduler_parsing():
     cls = SchedulerStarted
