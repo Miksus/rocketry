@@ -1,5 +1,6 @@
 from functools import partial
 
+from .func import FuncCond
 from .task import *
 from .scheduler import *
 from .time import *
