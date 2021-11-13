@@ -2,20 +2,13 @@ Tutorials
 =========
 
 Welcome to Red Engine tutorials. This section
-will get you started with the framework.
+consists of tutorial sets to show how you can 
+use Red Engine.
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
    quick_start
-   templates
-   tasks
-   creating_tasks
-   scheduling
-   session_config
-   conditions
-   parameters
-   extensions
-   loaders
-   extending/index
+   short_guide
+   advanced_guide

@@ -1,4 +1,4 @@
-
+.. _tasks:
  
 Tasks, Basics
 =============
@@ -67,6 +67,8 @@ Scheduling Tasks
 
 Setting the starting and ending conditions are discussed
 in :ref:`conditions-intro`.
+
+.. _parallelizing:
 
 Parallelizing Tasks
 -------------------
