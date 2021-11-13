@@ -13,6 +13,10 @@ class FuncCond(BaseCondition):
 
     Parameters
     ----------
+        func : callable
+            Function that should return True or False 
+            depending on the state of the condition.
+            Can also be passed later as decorator.
         syntax : str, Patter, list
             String, regex pattern or list of such to be 
             passed to the string parser.
@@ -22,7 +26,6 @@ class FuncCond(BaseCondition):
         kwargs : dict
             Keyword arguments to be passed to the function.
             Optional
-
 
     Examples
     --------
@@ -57,17 +60,19 @@ class FuncCond(BaseCondition):
     """
 
     def __init__(self, 
+                 func:Callable[..., bool]=None,
                  syntax:Union[str, Pattern, List[Union[str, Pattern]]]=None, 
                  args:Optional[tuple]=None, 
                  kwargs:Optional[dict]=None):
 
+        self.func = func
         self.syntax = syntax
         self.args = () if args is None else args
         self.kwargs = {} if kwargs is None else kwargs
         if self.syntax is not None:
             self._set_parsing()
 
-    def _recreate(self, *args, **kwargs):
+    def _recreate(self, *args, **kwargs) -> 'FuncCond':
         "Recreate the condition using args and kwargs"
         new_self = copy.copy(self)
         new_self.args = args
@@ -75,6 +80,8 @@ class FuncCond(BaseCondition):
         return new_self
 
     def __call__(self, func: Callable[..., bool]):
+        if self.func is not None:
+            raise ValueError("Function for the condition is already set")
         self.func = func
         return func # To prevent problems with pickling
 
@@ -90,4 +97,4 @@ class FuncCond(BaseCondition):
         cls_name = type(self).__name__
         func_name = self.func.__name__
         syntax = repr(self.syntax)
-        return f'{cls_name}({func_name}, syntax={syntax})'
+        return f'{cls_name}({func_name}, syntax={syntax}, args={repr(self.args)}, kwargs={repr(self.kwargs)})'
