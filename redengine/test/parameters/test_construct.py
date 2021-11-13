@@ -1,8 +1,11 @@
 
 import pytest
+import redengine
+from redengine.arguments import FuncArg
 
 from redengine.core import Parameters
 from redengine.arguments import Private
+from redengine.parameters import FuncParam
 
 @pytest.mark.parametrize(
     "get_param,mater,repr",
@@ -51,3 +54,25 @@ def test_from_func(session):
 
     assert "a_param" in session.parameters
     assert session.parameters.materialize() == {"a_param": 5}
+
+def test_func_param(session:redengine.Session):
+    @FuncParam()
+    def my_param():
+        return 5
+    
+    assert my_param() == 5
+    assert 'my_param' in session.parameters
+    assert isinstance(session.parameters._params['my_param'], FuncArg)
+    assert session.parameters['my_param'] == 5
+    assert session.parameters._params['my_param'].func is my_param
+
+def test_func_param_named(session:redengine.Session):
+    @FuncParam(name="a_param")
+    def my_param():
+        return 5
+    
+    assert my_param() == 5
+    assert 'a_param' in session.parameters
+    assert isinstance(session.parameters._params['a_param'], FuncArg)
+    assert session.parameters['a_param'] == 5
+    assert session.parameters._params['a_param'].func is my_param
