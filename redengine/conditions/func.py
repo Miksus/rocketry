@@ -9,13 +9,13 @@ class FuncCond(BaseCondition):
     """Condition from a function.
 
     This class is to create conditions directly from
-    functions
+    functions.
 
     Parameters
     ----------
         syntax : str, Patter, list
             String, regex pattern or list of such to be 
-            passed to the string parser. These 
+            passed to the string parser.
         args : tuple
             Argumnets to be passed to the function.
             Optional
