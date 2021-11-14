@@ -14,7 +14,7 @@ It has powerful and intuitive scheduling syntax that is easy to extend with cust
 It allows various levels of parallelization and various ways to parametrize tasks. It is suitable 
 for simple to moderately sized projects from process automatization to IOT.
 
-Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/latest/)
+Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/stable/)
 
 ## Core Features
 
