@@ -44,36 +44,3 @@ class QueueHandler(_QueueHandler):
         record.exc_info = None
         # record.exc_text = None
         return record
-
-class Junk:
-    def prepare(self, record):
-        """
-        Prepares a record for queuing. The object returned by this method is
-        enqueued.
-
-        The QueueHandler in logging.handlers removes exc_text completely 
-        before passing the record to the queue. This causes the problem
-        that the traceback text cannot be used in custom handlers that 
-        could utilize this info such as the CSVHandler. To include this,
-        the traceback is formatted to string to exc_text and creation of
-        the message is left to the responsibility behind the queue.
-        """
-        self.format(record)
-
-        record = copy.copy(record)
-        record.args = None
-        record.exc_info = None
-        # record.exc_text = None
-        return record
-
-#    def format(self, record):
-#        """
-#        Format the specified record.
-#        """
-#        if self.formatter:
-#            formatter = self.formatter
-#        else:
-#            formatter = _DEFAULT_FORMATTER
-#        if record.exc_info:
-#            if not record.exc_text:
-#                record.exc_text = formatter.formatException(record.exc_info)
