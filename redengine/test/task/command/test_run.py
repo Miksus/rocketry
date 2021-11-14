@@ -47,11 +47,7 @@ def test_fail_command(tmpdir, execution, session):
         )
         assert task.status is None
 
-        if execution == "main":
-            with pytest.raises(OSError):
-                task()
-        else:
-            task()
+        task()
 
         wait_till_task_finish(task)
 

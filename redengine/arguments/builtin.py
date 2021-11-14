@@ -35,6 +35,35 @@ class Arg(BaseArgument):
         for name, value in kwargs.items():
             cls.session.parameters[name] = cls(value)
 
+class Return(BaseArgument):
+    """A return argument
+
+    Return is an argument which value represents
+    the return of a task.
+
+    Parameters
+    ----------
+    name : str
+        Name of the task which return is represented.
+    """
+
+    def __init__(self, task_name, default=None):
+        self.task_name = task_name
+        self.default = default
+
+    def get_value(self, task=None) -> Any:
+        if self.task_name not in self.session.tasks:
+            raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
+        return self.session.returns.get(self.task_name, self.default)
+
+    def stage(self, task=None):
+        return Arg(self.get_value())
+
+    @classmethod
+    def to_session(cls, task_name, return_):
+        "Set the return to return parameters"
+        cls.session.returns[task_name] = return_
+
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
     return value of given function.

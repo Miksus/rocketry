@@ -14,6 +14,7 @@ import threading
 from queue import Empty
 
 import pandas as pd
+from redengine.arguments.builtin import Return
 
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from redengine.core.parameters import Parameters
@@ -336,26 +337,47 @@ class Task(metaclass=_TaskMeta):
         if hasattr(self, "_thread"):
             del self._thread
 
-        params = self.get_extra_params(params)
-        # Run the actual task
-        if self.execution == "main":
-            self.run_as_main(params=params, **kwargs)
-            if _IS_WINDOWS:
-                #! TODO: This probably is now solved
-                # There is an annoying bug (?) in Windows:
-                # https://bugs.python.org/issue44831
-                # If one checks whether the task has succeeded/failed
-                # already the log might show that the task finished 
-                # 1 microsecond in the future if memory logging is used. 
-                # Therefore we sleep that so condition checks especially 
-                # in tests will succeed. 
-                time.sleep(1e-6)
-        elif self.execution == "process":
-            self.run_as_process(params=params, **kwargs)
-        elif self.execution == "thread":
-            self.run_as_thread(params=params, **kwargs)
-        else:
-            raise ValueError(f"Invalid execution: {self.execution}")
+        # The parameters are handled in the following way:
+        #   - First extra parameters are fetched. This includes:
+        #       - session.parameters
+        #       - _task_, _session_, _thread_terminate_
+        #   - Then these extras are prefiltered (called params)
+        #   - Then the task parameters are fetched (direct_params)
+        #   - If process/thread, these parameters are pre_materialized
+        #   - Then the params are post filtered
+        #   - Then params and direct_params are fed to the execute method
+
+        try:
+            params = self.get_extra_params(params)
+            # Run the actual task
+            if self.execution == "main":
+                direct_params = self.parameters
+                output = self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
+                Return.to_session(self.name, output)
+                if _IS_WINDOWS:
+                    #! TODO: This probably is now solved
+                    # There is an annoying bug (?) in Windows:
+                    # https://bugs.python.org/issue44831
+                    # If one checks whether the task has succeeded/failed
+                    # already the log might show that the task finished 
+                    # 1 microsecond in the future if memory logging is used. 
+                    # Therefore we sleep that so condition checks especially 
+                    # in tests will succeed. 
+                    time.sleep(1e-6)
+            elif self.execution == "process":
+                self.run_as_process(params=params, **kwargs)
+            elif self.execution == "thread":
+                self.run_as_thread(params=params, **kwargs)
+            else:
+                raise ValueError(f"Invalid execution: {self.execution}")
+        except (SchedulerRestart, SchedulerExit):
+            raise
+        except Exception as exc:
+            # Something went wrong in the initiation
+            # and it did not reach to log_running
+            self.log_running()
+            self.log_failure()
+            raise
 
     def __bool__(self):
         """Check whether the task can be run or not.
@@ -380,10 +402,11 @@ class Task(metaclass=_TaskMeta):
 
         return cond
 
-    def run_as_main(self, params:Parameters, _log_running=True, **kwargs):
+    def run_as_main(self, params:Parameters):
+        return self._run_as_main(params, self.parameters)
+
+    def _run_as_main(self, params:Parameters, direct_params:Parameters, log_running=True, silence=False, **kwargs):
         """Run the task on the current thread and process"""
-        if _log_running:
-            self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
         #old_cwd = os.getcwd()
@@ -392,19 +415,22 @@ class Task(metaclass=_TaskMeta):
 
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
-        try:
-            params = self.postfilter_params(params)
-            params = Parameters(params) | self.parameters
-            params = params.materialize(task=self)
+        params = self.postfilter_params(params)
+        params = Parameters(params) | Parameters(direct_params)
+        params = params.materialize(task=self)
 
+        if log_running:
+            self.log_running()
+        try:
             output = self.execute(**params)
 
         except (SchedulerRestart, SchedulerExit):
             # SchedulerRestart is considered as successful task
             self.log_success()
-            #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(None)
+
+            # Note that these are never silenced
             raise
 
         except TaskInactionException:
@@ -428,10 +454,11 @@ class Task(metaclass=_TaskMeta):
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
             self.exception = exception
-            raise
+            if not silence:
+                raise
 
         else:
-            self.log_success()
+            self.log_success(output)
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
             self.process_success(output)
@@ -448,43 +475,48 @@ class Task(metaclass=_TaskMeta):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self)
+        direct_params = self.parameters.pre_materialize()
 
         self.thread_terminate.clear()
 
         event_is_running = threading.Event()
-        self._thread = threading.Thread(target=self._run_as_thread, args=(params, event_is_running))
+        self._thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, event_is_running))
         self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
-    def _run_as_thread(self, params:Parameters, event=None):
+    def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
 
         self.log_running()
         event.set()
-        # Adding the _thread_terminate as param so the task can
-        # get the signal for termination
-        #params = Parameters() if params is None else params
-        #params = params | {"_thread_terminate_": self._thread_terminate}
         try:
-            self.run_as_main(params=params, _log_running=False)
+            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
         except:
+            # Task crashed before actually running the execute.
+            self.log_failure()
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
-            pass
+        else:
+            # Store the output
+            Return.to_session(self.name, output)
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
 
         params = params.pre_materialize(task=self)
+        direct_params = self.parameters.pre_materialize()
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         log_queue = self.session.scheduler._log_queue #multiprocessing.Queue(-1)
-        return_queue = self.session.scheduler._return_queue
 
         daemon = self.daemon if self.daemon is not None else self.session.scheduler.tasks_as_daemon
-        self._process = multiprocessing.Process(target=self._run_as_process, args=(params, log_queue, return_queue), daemon=daemon) 
+        self._process = multiprocessing.Process(
+            target=self._run_as_process, 
+            args=(params, direct_params, log_queue), 
+            daemon=daemon
+        ) 
         self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._mark_running = True # needed in pickling
         
@@ -494,7 +526,7 @@ class Task(metaclass=_TaskMeta):
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, params:Parameters, queue, return_queue):
+    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -523,19 +555,18 @@ class Task(metaclass=_TaskMeta):
         except:
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
-
+        self.log_running()
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self.run_as_main(params=params)
+            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
         except Exception as exc:
-            # Just catching all exceptions.
+            # Task crashed before running execute (silence=True)
+            self.log_failure()
+
             # There is nothing to raise it
             # to :(
             pass
-        else:
-            if return_queue:
-                return_queue.put((self.name, output))
 
     def get_extra_params(self, params:Parameters) -> Parameters:
         """Get additional parameters from
@@ -785,9 +816,10 @@ class Task(metaclass=_TaskMeta):
         """Log that the task failed."""
         self.status = "fail"
 
-    def log_success(self):
+    def log_success(self, return_value=None):
         """Make a log that the task succeeded."""
-        self.status = "success"
+        self._set_status("success", return_value=return_value)
+        #self.status = "success"
 
     def log_termination(self, reason=None):
         """Make a log that the task was terminated."""
@@ -832,11 +864,15 @@ class Task(metaclass=_TaskMeta):
     def status(self, value:Union[str, Tuple[str, str]]):
         "Set status (and log the status) of the scheduler"
         if isinstance(value, tuple):
-            action = value[0]
-            message = value[1]
+            value, message = value
         else:
-            action = value
+            message = None
+        self._set_status(value, message)
+
+    def _set_status(self, action, message=None, return_value=None):
+        if message is None:
             message = self.fmt_log_message.format(action=action, task=self.name)
+
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
         
@@ -850,6 +886,13 @@ class Task(metaclass=_TaskMeta):
                 runtime = now - start_time if start_time is not None else None
                 extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
             
+            is_running_as_child = self.logger.name.endswith("._process")
+            if is_running_as_child and action == "success":
+                # If child process, the return value is passed via QueueHandler to the main process
+                # and it's handled then in Scheduler.
+                # Else the return value is handled in Task itself (__call__ & _run_as_thread)
+                extra["__return__"] = return_value
+
             log_method = self.logger.exception if action == "fail" else self.logger.info
             log_method(
                 message, 

@@ -26,11 +26,12 @@ from task_helpers import wait_till_task_finish
         pytest.param(
             "scripts/syntax_error_script.py", 
             "fail", 
-            SyntaxError,
+            ImportError,
             id="Import failure"),
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
+    session.config["silence_task_prerun"] = True
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
@@ -39,12 +40,11 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             name="a task",
             execution=execution
         )
-
         try:
             task()
         except:
-            # failing execution="main"
-            pass
+            if exc_cls and execution != "main":
+                raise
 
         wait_till_task_finish(task)
 
