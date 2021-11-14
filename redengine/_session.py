@@ -7,8 +7,9 @@ about the scehuler/task/parameters etc.
 
 import logging
 from pathlib import Path
+from redengine.conditions.scheduler import SchedulerCycles
 from redengine.pybox.io.read import read_yaml
-from typing import Iterable, Dict, List, Type, Union
+from typing import Iterable, Dict, List, Tuple, Type, Union
 from itertools import chain
 
 import redengine
@@ -157,6 +158,55 @@ class Session:
         Will block and wait till the scheduler finishes 
         if there is a shut condition."""
         self.scheduler()
+
+    def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
+        """Run specific task(s) manually.
+
+        This method starts up the scheduler but only the given
+        task is run. Useful to manually run a task while using
+        the setup/teardown and parameters of the session and 
+        scheduler.
+
+        Parameters
+        ----------
+        *task_names : tuple of str
+            Names of the tasks to run.
+        execution : str
+            Execution method for all of the tasks.
+            By default, whatever set to each task
+        obey_cond : bool
+            Whether to obey the ``start_cond`` or 
+            force a run regardless. By default, False
+
+        .. warning::
+
+            This is not meant to be called by tasks or the system
+            itself. Just to run specific tasks when the system itself
+            is not running.
+        """
+        orig_vals = {}
+        for name, task in self.tasks.items():
+            orig_vals[name] = {
+                attr: val for attr, val in task.__dict__.items()
+                if attr not in ("_status", "_last_run", "_last_success", "_last_fail", "_last_terminate")
+            }
+            if name in task_names:
+                if not obey_cond:
+                    task.force_run = True
+                if execution is not None:
+                    task.execution = execution
+            else:
+                task.disabled = True
+        
+        orig_shut_cond = self.scheduler.shut_cond
+        try:
+            self.scheduler.shut_cond = SchedulerCycles() >= 1
+            self.scheduler()
+        finally:
+            self.scheduler.shut_cond = orig_shut_cond
+            # Set back the disabled, execution etc.
+            for name, task in self.tasks.items():
+                task.__dict__.update(orig_vals[name])
 
     def get_tasks(self) -> list:
         """Get session tasks as list.
