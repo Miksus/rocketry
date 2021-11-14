@@ -12,3 +12,5 @@ use Red Engine.
    quick_start
    short_guide
    advanced_guide
+   pipeline_guide
+   extending_guide
