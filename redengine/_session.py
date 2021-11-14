@@ -78,6 +78,8 @@ class Session:
         "task_logger_basename": DEFAULT_BASENAME_TASKS,
         "scheduler_logger_basename": DEFAULT_BASENAME_SCHEDULER,
 
+        "silence_task_prerun": True, # Whether to silence errors occurred in setting a task to run
+        "silence_cond_check": True, # Whether to silence errors occurred in checking conditions
         #"session_store_cond_cls": True,
         #"session_store_task_cls": True,
         "debug": False,

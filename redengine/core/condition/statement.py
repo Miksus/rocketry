@@ -98,21 +98,8 @@ class Statement(BaseCondition):
         self.kwargs = kwargs
 
     def __bool__(self):
-        try:
-            outcome = self.observe(*self.args, **self.get_kwargs())
-            status = self._to_bool(outcome)
-        except (KeyboardInterrupt, ImportError) as exc:
-            # Let these through
-            raise
-        except Exception as exc:
-            logger.exception(f"Statement '{self}' is False due to an Exception.")
-            if self.session.config["debug"]:
-                # Typically error is not good but we don't want to crash the whole production
-                # due to a random error in one task's initiation. 
-                # However, we do want to crash tests because of it.
-                raise
-            return False
-
+        outcome = self.observe(*self.args, **self.get_kwargs())
+        status = self._to_bool(outcome)
         return status
 
     @abstractmethod

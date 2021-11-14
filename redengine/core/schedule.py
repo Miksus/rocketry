@@ -131,7 +131,7 @@ class Scheduler:
         try:
             self.startup()
 
-            while not bool(self.shut_cond):
+            while not self.check_cond(self.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
 
@@ -204,6 +204,14 @@ class Scheduler:
         
         self.n_cycles += 1
 
+    def check_cond(self, cond: Union[BaseCondition, Task]) -> bool:
+        try:
+            return bool(cond)
+        except:
+            if not self.session.config["silence_cond_check"]:
+                raise
+            return False
+
     def run_task(self, task:Task, *args, **kwargs):
         """Run a given task"""
         start_time = datetime.datetime.fromtimestamp(time.time())
@@ -213,20 +221,11 @@ class Scheduler:
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:
-            exception = exc
-            status = "fail"
+            if not self.session.config["silence_task_prerun"]:
+                raise
         else:
             exception = None
             status = "success"
-
-        end_time = datetime.datetime.fromtimestamp(time.time())
-
-        # NOTE: This only logs to the scheduler (task logger already handled). Probably remove this.
-        self.log_status(
-            task, status, 
-            start_time=start_time, end_time=end_time,
-            exception=exception
-        )
 
     def terminate_all(self, reason:str=None):
         """Terminate all running tasks."""
@@ -286,14 +285,14 @@ class Scheduler:
         if task.execution == "process":
             is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
-            is_condition = bool(task)
+            is_condition = self.check_cond(task)
             return is_not_running and has_free_processors and is_condition
         elif task.execution == "main":
-            is_condition = bool(task)
+            is_condition = self.check_cond(task)
             return is_condition
         elif task.execution == "thread":
             is_not_running = not task.is_alive()
-            is_condition = bool(task)
+            is_condition = self.check_cond(task)
             return is_not_running and is_condition
         else:
             raise NotImplementedError(task.execution)
@@ -311,7 +310,7 @@ class Scheduler:
             return True
 
         else:
-            return bool(task.end_cond) or not bool(task.run_cond)
+            return self.check_cond(task.end_cond) or not self.check_cond(task.run_cond)
             
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""

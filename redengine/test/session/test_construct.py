@@ -20,7 +20,12 @@ class TestInit:
     def test_empty(self):
         session = Session()
         assert session.parameters.to_dict() == {}
+        assert session.returns.to_dict() == {}
         assert session.tasks == {}
+
+        assert session.config["silence_task_prerun"]
+        assert session.config["silence_cond_check"]
+
         assert_default(session)
 
     def test_params(self):

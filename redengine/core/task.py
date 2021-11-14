@@ -347,9 +347,9 @@ class Task(metaclass=_TaskMeta):
         #   - Then the params are post filtered
         #   - Then params and direct_params are fed to the execute method
 
-        params = self.get_extra_params(params)
-        # Run the actual task
         try:
+            params = self.get_extra_params(params)
+            # Run the actual task
             if self.execution == "main":
                 direct_params = self.parameters
                 output = self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
@@ -377,6 +377,7 @@ class Task(metaclass=_TaskMeta):
             # and it did not reach to log_running
             self.log_running()
             self.log_failure()
+            raise
 
     def __bool__(self):
         """Check whether the task can be run or not.
@@ -406,8 +407,6 @@ class Task(metaclass=_TaskMeta):
 
     def _run_as_main(self, params:Parameters, direct_params:Parameters, log_running=True, silence=False, **kwargs):
         """Run the task on the current thread and process"""
-        if log_running:
-            self.log_running()
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
         #old_cwd = os.getcwd()
@@ -416,11 +415,13 @@ class Task(metaclass=_TaskMeta):
 
         # (If SystemExit is raised, it won't be catched in except Exception)
         status = None
-        try:
-            params = self.postfilter_params(params)
-            params = Parameters(params) | Parameters(direct_params)
-            params = params.materialize(task=self)
+        params = self.postfilter_params(params)
+        params = Parameters(params) | Parameters(direct_params)
+        params = params.materialize(task=self)
 
+        if log_running:
+            self.log_running()
+        try:
             output = self.execute(**params)
 
         except (SchedulerRestart, SchedulerExit):
@@ -490,16 +491,13 @@ class Task(metaclass=_TaskMeta):
 
         self.log_running()
         event.set()
-        # Adding the _thread_terminate as param so the task can
-        # get the signal for termination
-        #params = Parameters() if params is None else params
-        #params = params | {"_thread_terminate_": self._thread_terminate}
         try:
-            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False)
+            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
         except:
+            # Task crashed before actually running the execute.
+            self.log_failure()
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
-            pass
         else:
             # Store the output
             Return.to_session(self.name, output)
@@ -557,13 +555,15 @@ class Task(metaclass=_TaskMeta):
         except:
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
-
+        self.log_running()
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params)
+            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
         except Exception as exc:
-            # Just catching all exceptions.
+            # Task crashed before running execute (silence=True)
+            self.log_failure()
+
             # There is nothing to raise it
             # to :(
             pass
