@@ -13,6 +13,7 @@ from copy import copy
 from queue import Empty
 
 import pandas as pd
+from redengine.arguments.builtin import Return
 
 from redengine.core.condition import BaseCondition, set_statement_defaults, AlwaysFalse
 from redengine.core.task import Task
@@ -83,7 +84,6 @@ class Scheduler:
         self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
 
         self._log_queue = multiprocessing.Queue(-1)
-        self._return_queue = multiprocessing.Queue(-1)
 
         # Other
         self.session = session or self.session
@@ -184,7 +184,6 @@ class Scheduler:
         for task in tasks:
             with task.lock:
                 self.handle_logs()
-                self.handle_return()
                 if task.on_startup or task.on_shutdown:
                     # Startup or shutdown tasks are not run in main sequence
                     pass
@@ -219,8 +218,7 @@ class Scheduler:
         else:
             exception = None
             status = "success"
-            # Set output to other task to use
-            # self.task_returns[task.name] = output
+
         end_time = datetime.datetime.fromtimestamp(time.time())
 
         # NOTE: This only logs to the scheduler (task logger already handled). Probably remove this.
@@ -341,7 +339,12 @@ class Scheduler:
                     record.exc_text = record.exc_text
                     if record.exc_text is not None and record.exc_text not in record.message:
                         record.message = record.message + "\n" + record.message
-
+                elif record.action == "success":
+                    # Take the return value from the record and delete
+                    # Note that record has attr __return__ only if task running as process
+                    return_value = record.__return__
+                    Return.to_session(record.task_name, return_value)
+                    del record.__return__
                 
                 task = self.session.get_task(record.task_name)
                 task.log_record(record)
@@ -354,21 +357,6 @@ class Scheduler:
         for task in self.tasks:
             if task.status == "run" and not task.is_alive():
                 task.logger.critical(f"Task '{task.name}' crashed in process setup", extra={"action": "crash"})
-
-    def handle_return(self):
-        """Handle task return queue and saves task return values for other tasks to use."""
-        while True:
-            try:
-                output = self._return_queue.get(block=False)
-                task_name, return_value = output
-                # TODO: Store the returns
-            except Empty:
-                break
-            else:
-                pass
-                # If the return values are to put as
-                # there should be a maintainer task to take them there
-                #self.task_returns[task_name] = return_value
 
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -428,7 +416,6 @@ class Scheduler:
                 while self.n_alive:
                     #time.sleep(self.min_sleep)
                     self.handle_logs()
-                    self.handle_return()
                     for task in self.tasks:
                         if task.permanent_task:
                             # Would never "finish" anyways
@@ -445,7 +432,6 @@ class Scheduler:
                 return
             else:
                 self.handle_logs()
-                self.handle_return()
         else:
             self.terminate_all(reason="shutdown")
 

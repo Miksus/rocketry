@@ -112,6 +112,7 @@ class Session:
         self.config.update(config)
 
         self.tasks = tasks
+        self.returns = Parameters()
         self.parameters = parameters
         self.extensions = extensions
 
