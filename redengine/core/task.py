@@ -1,14 +1,16 @@
 
 from pickle import PicklingError
+import sys
 import time
 import datetime
 import logging
 import platform
 from itertools import count
+from types import TracebackType
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import Any, Callable, List, Dict, Union, Tuple, Optional
+from typing import Any, Callable, List, Dict, Type, Union, Tuple, Optional
 import multiprocessing
 import threading
 from queue import Empty
@@ -450,7 +452,7 @@ class Task(metaclass=_TaskMeta):
             # All the other exceptions (failures)
             self.log_failure()
             status = "failed"
-            self.process_failure(exception=exception)
+            self.process_failure(*sys.exc_info())
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
             self.exception = exception
@@ -647,19 +649,41 @@ class Task(metaclass=_TaskMeta):
         """
         raise NotImplementedError(f"Method 'execute' not implemented to {type(self)}.")
 
-    def process_failure(self, exception:BaseException):
+    def process_failure(self, exc_type:Type[Exception], exc_val:Exception, exc_tb:TracebackType):
         """This method is executed after a failure of the task. 
-        Override if needed."""
+        Override if needed.
+        
+        Parameters
+        ----------
+        exc_type : subclass of Exception
+            Type of the occurred exception that caused the failure.
+        exc_val : Exception
+            Exception that caused the failure. 
+        exc_type : Traceback object
+            Traceback of the failure exception.
+        """
         pass
     
     def process_success(self, output:Any):
         """This method is executed after a success of the task. 
-        Override if needed."""
+        Override if needed.
+        
+        Parameters
+        ----------
+        output : Any
+            Return value of the task.
+        """
         pass
 
     def process_finish(self, status:str):
         """This method is executed after finishing the task. 
-        Override if needed."""
+        Override if needed.
+        
+        Parameters
+        ----------
+        status : str {'succeeded', 'failed', 'termination', 'inaction'}
+            How the task finished.
+        """
         pass
 
     @property
