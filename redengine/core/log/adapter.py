@@ -2,12 +2,15 @@
 import logging
 import warnings
 import datetime
-from typing import Iterable, List, Dict, Union
+from typing import TYPE_CHECKING, Iterable, List, Dict, Union
 
 from dateutil.parser import parse as _parse_datetime
 import pandas as pd
 
 from redengine.core.utils import is_main_subprocess
+
+if TYPE_CHECKING:
+    from redengine.core import Task
 
 class TaskAdapter(logging.LoggerAdapter):
     """Logging adapter for tasks.
@@ -24,7 +27,7 @@ class TaskAdapter(logging.LoggerAdapter):
     task : Task, str
         Task the adapter is for.
     """
-    def __init__(self, logger:logging.Logger, task:Union['redengine.core.Task', str]):
+    def __init__(self, logger:logging.Logger, task:Union['Task', str]):
         task_name = task.name if hasattr(task, 'name') else task
         super().__init__(logger, {"task_name": task_name})
 
