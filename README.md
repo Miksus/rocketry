@@ -10,23 +10,23 @@
 
 ## What is it?
 Red Engine is a Python scheduling library with a focus on productivity, readability and extendability.
-It has powerful and intuitive scheduling syntax that is easy to extend with custom scheduling conditions. 
-It allows various levels of parallelization and various ways to parametrize tasks. It is suitable 
-for simple to moderately sized projects from process automatization to IOT.
+It has powerful and intuitive scheduling syntax that is easy to extend with custom conditions. 
+The sysystem allows various levels of parallelization and various ways to parametrize tasks. It is suitable 
+for simple to larger projects from process automatization to IOT.
 
 Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/latest/)
 
 ## Core Features
 
-- **Scheduling:** intuitive scheduling syntax.
+- **Scheduling:** intuitive and powerful scheduling syntax.
     - All of these are valid instructions for scheduling a task:
         - `daily`
         - `every 2 hours, 10 minutes`
         - `weekly between Tuesday and Wednesday & after task 'another task'`
 - **Parallelization:** run tasks in child processes or threads.
-- **Parametrization:** parametrize individual tasks or share them between the session. 
-- **Easy start:** just install the package, use the premade configurations and minimize boilerplate.
-- **Extendable:** everything is just a building block and the most is made to be modified. 
+- **Parametrization:** parametrize individual tasks or share them inside a session. 
+- **Easy start:** just install the package, use the premade configurations and get to it.
+- **Extendable:** everything is just a building block designed for modifications. 
 
 ## Installation
 
