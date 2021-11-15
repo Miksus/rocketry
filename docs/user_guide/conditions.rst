@@ -101,3 +101,62 @@ Task Related
 
 .. literalinclude:: /examples/conditions/task.py
     :language: py
+
+
+Custom Condition
+================
+
+Easiest way to create your own condition that can 
+be used in the ``start_cond`` argument of a task is 
+to simply create a function and decorate it using
+``FuncCond``:
+
+.. code-block:: python
+
+    from redengine.conditions import FuncCond
+
+    @FuncCond(syntax="is foo")
+    def is_foo():
+        ... # Logic to check the condition's status
+        return True
+
+Then we can immediately use it as:
+
+.. code-block:: python
+
+    from redengine.tasks import FuncTask
+
+    @FuncTask(start_cond="is foo")
+    def do_foo():
+        ... # Runs when function is_foo returns True
+
+The argument ``syntax`` can be a string, regex pattern
+(``re.compile(...)``) or a list of them. This is fed to 
+the string parser so it knows how to parse such. The 
+function must return ``True`` or ``False`` depending on
+whether the condition is true or not. 
+
+The named groups of a regex (if there are any) will be 
+passed to the function. Therefore, you can also do more 
+complex conditions like:
+
+.. code-block:: python
+
+    import re
+
+    @FuncCond(syntax=re.compile("is foo (?P<place>.+"))
+    def is_foo_where(place):
+        if place == "home":
+            return True
+        else:
+            return False
+
+And to use this:
+
+.. code-block:: python
+
+    from redengine.tasks import FuncTask
+
+    @FuncTask(start_cond="is foo home")
+    def do_foo():
+        ... # Runs when is_foo(place='home') returns True

@@ -13,7 +13,7 @@ Execution on fixed time interval
 **True when**
 
   When current time is in the given period and the task 
-  has not yet run in this period.
+  has not yet run in the given period.
 
 .. note::
 

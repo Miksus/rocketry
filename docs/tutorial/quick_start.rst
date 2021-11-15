@@ -3,7 +3,7 @@
 Quick start
 ===========
 
-Install the package from Pip:
+Install the package from `Pip <https://pypi.org/project/redengine/>`_:
 
 .. code-block:: console
 
@@ -32,7 +32,7 @@ Now create your own tasks by creating ``tasks.py`` files to directory
         ... # Do whatever
 
     @FuncTask(start_cond="every 10 minutes")
-    def have_shower():
+    def check_messages():
         ... # Do whatever
 
 All done. Just launch the scheduler:
@@ -50,8 +50,14 @@ What next?
 This is only a small slice what Red Engine has to offer. Read furher 
 to explore the features.
 
+See tutorials:
+
+- :ref:`short-guide`
+- :ref:`advanced-guide`
+
+
 To skip to relevant sections:
 
-- :ref:`How to create tasks. <creating-tasks>`
+- :ref:`How to create tasks. <tasks>`
 - :ref:`How to schedule tasks. <scheduling>`
 - :ref:`How to parametrize tasks. <parametrizing>`

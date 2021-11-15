@@ -80,11 +80,27 @@ interesting. Most ``Argument`` classes have method ``to_session`` that
 acts as a convenient constructor for special types of parameters.
 A bit more till we get to the arguments.
 
+If you would like to set a parameter with more dynamics, you 
+can use ``FuncParam`` that is used similarly as ``FuncTask``
+or ``FuncCond``:
+
+.. code-block:: python
+
+    from redengine.parameters import FuncParam
+
+    @FuncParam()
+    def my_param():
+        return 'a value'
+
+Optinally, you can pass ``name='my_param'`` to the ``FuncParam``
+if you would like to name the parameter key different than the 
+function name.
+
 As discussed, tasks use the session parameters as according
 to their own filtering rules. Some tasks might not use session 
-parameters (or even task level parameters) at all but generally 
-they use the parameters that are as arguments in the method 
-``.execute(...)`` of the task class.
+parameters (or even task level parameters)´. The default behaviour
+is that task classes use the parameters that are as arguments in the 
+method ``.execute(...)``.
 
 For example, this task will automatically use the parameter
 we set as session level parameter:
@@ -109,8 +125,8 @@ be shared by multiple tasks allowing changing the argument
 at one go. Arguments prove some interesting strategies to 
 parametrize tasks.
 
-For example, the argument ``FuncArg`` provide some interesting
-ways to define dynamic parameters. 
+For example, the argument ``FuncArg`` provide similar way
+of setting dynamic parameters as ``FuncParam``: 
 
 .. code-block:: python
 
