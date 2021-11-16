@@ -31,6 +31,18 @@ class TaskStarted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            if task.last_run is None:
+                return False
+            elif _start_ <= task.last_run <= _end_:
+                # Can probably be optimized only if inside the period (--> True)
+                # else the old records must be fetched in case the task ran multiple times
+                return True
+        elif allow_optimization and self.equal_zero():
+            return not bool(task.last_run)
+        
         records = task.logger.get_records(timestamp=(_start_, _end_), action="run")
         run_times = [record["timestamp"] for record in records]
         return run_times
@@ -66,6 +78,18 @@ class TaskFailed(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            if task.last_fail is None:
+                return False
+            elif _start_ <= task.last_fail <= _end_:
+                # Can probably be optimized only if inside the period (--> True)
+                # else the old records must be fetched in case the task ran multiple times
+                return True
+        elif allow_optimization and self.equal_zero():
+            return not bool(task.last_fail)
+        
         records = task.logger.get_records(timestamp=(_start_, _end_), action="fail")
         return [record["timestamp"] for record in records]
 
@@ -100,6 +124,18 @@ class TaskTerminated(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            if task.last_terminate is None:
+                return False
+            elif _start_ <= task.last_terminate <= _end_:
+                # Can probably be optimized only if inside the period (--> True)
+                # else the old records must be fetched in case the task ran multiple times
+                return True
+        elif allow_optimization and self.equal_zero():
+            return bool(task.last_terminate)
+
         records = task.logger.get_records(timestamp=(_start_, _end_), action="terminate")
         return [record["timestamp"] for record in records]
 
@@ -133,6 +169,18 @@ class TaskSucceeded(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            if task.last_success is None:
+                return False
+            elif _start_ <= task.last_success <= _end_:
+                # Can probably be optimized only if inside the period (--> True)
+                # else the old records must be fetched in case the task ran multiple times
+                return True
+        elif allow_optimization and self.equal_zero():
+            return not bool(task.last_success)
+
         records = task.logger.get_records(timestamp=(_start_, _end_), action="success")
         return [record["timestamp"] for record in records]
 
@@ -165,6 +213,21 @@ class TaskFinished(Historical, Comparable):
             now = datetime.datetime.fromtimestamp(time.time())
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
+
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            for status in ("success", "fail", "terminate"):
+                value = getattr(task, f"last_{status}")
+                if value is None:
+                    continue
+                if _start_ <= value <= _end_:
+                    return True
+            else:
+                # Has never run
+                return False
+        elif allow_optimization and self.equal_zero():
+            return not bool(task.last_success) and not bool(task.last_fail) and not bool(task.last_terminate)
 
         records = task.logger.get_records(timestamp=(_start_, _end_), action=["success", "fail", "terminate"])
         return [record["timestamp"] for record in records]
@@ -202,6 +265,9 @@ class TaskRunning(Historical):
 
         task = Statement.session.get_task(task)
 
+        if not self.session.config["force_status_from_logs"]:
+            return bool(task.last_run)
+
         record = task.logger.get_latest()
         if not record:
             return False
@@ -236,6 +302,16 @@ class TaskInacted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
+        allow_optimization = not self.session.config["force_status_from_logs"]
+        if allow_optimization and self.any_over_zero():
+            # Condition only checks whether has run at least once
+            if task.last_inaction is None:
+                return False
+            return _start_ <= task.last_inaction <= _end_
+        elif allow_optimization and self.equal_zero():
+            return not bool(task.last_inaction)
+        
+        #! TODO: use Task._last_success & Task._last_run if not none and not forced
         records = task.logger.get_records(timestamp=(_start_, _end_), action="inaction")
         return [record["timestamp"] for record in records]
 
@@ -365,6 +441,7 @@ class DependFinish(Historical):
         actual_task = Statement.session.get_task(task)
         depend_task = Statement.session.get_task(depend_task)
 
+        #! TODO: use Task._last_success & Task._last_run if not none and not forced
         last_depend_finish = depend_task.logger.get_latest(action=["success", "fail"])
         last_actual_start = actual_task.logger.get_latest(action=["run"])
 
@@ -416,6 +493,7 @@ class DependSuccess(Historical):
         actual_task = Statement.session.get_task(task)
         depend_task = Statement.session.get_task(depend_task)
 
+        #! TODO: use Task._last_success & Task._last_run if not none and not forced
         last_depend_finish = depend_task.logger.get_latest(action=["success"])
         last_actual_start = actual_task.logger.get_latest(action=["run"])
 
@@ -466,6 +544,7 @@ class DependFailure(Historical):
         actual_task = Statement.session.get_task(task)
         depend_task = Statement.session.get_task(depend_task)
 
+        #! TODO: use Task._last_success & Task._last_run if not none and not forced
         last_depend_finish = depend_task.logger.get_latest(action=["fail"])
         last_actual_start = actual_task.logger.get_latest(action=["run"])
 
