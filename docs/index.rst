@@ -1,5 +1,6 @@
-Welcome to :red:`Red` Engine's documentation!
-=============================================
+
+:red:`Red` Engine
+=================
 
 .. image:: https://badgen.net/pypi/v/redengine
    :target: https://pypi.org/project/redengine/
