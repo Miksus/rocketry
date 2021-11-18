@@ -75,7 +75,8 @@ class TaskAdapter(logging.LoggerAdapter):
                 records = handler.query(
                     **kwargs
                 )
-                for record in records:
+                formatter = RecordFormatter()
+                for record in formatter(records):
                     yield record
                 break
             elif hasattr(handler, "read"):
