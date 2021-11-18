@@ -15,7 +15,7 @@ from redengine.conditions import (
 
     TaskRunning
 )
-from redengine.conditions.task import TaskInacted
+from redengine.conditions.task import TaskInacted, TaskTerminated
 from redengine.time import (
     TimeDelta, 
     TimeOfDay
@@ -32,7 +32,7 @@ def to_epoch(dt):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_not_used_false(session, cls, mock_datetime_now):
@@ -53,7 +53,7 @@ def test_logs_not_used_false(session, cls, mock_datetime_now):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_not_used_true(session, cls, mock_datetime_now):
@@ -71,7 +71,7 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskRunning, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
@@ -90,7 +90,7 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
@@ -109,7 +109,7 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
@@ -130,7 +130,7 @@ def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted
+        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted, TaskTerminated
     ]
 )
 def test_logs_used(session, cls, mock_datetime_now):
