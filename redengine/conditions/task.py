@@ -134,7 +134,7 @@ class TaskTerminated(Historical, Comparable):
                 # else the old records must be fetched in case the task ran multiple times
                 return True
         elif allow_optimization and self.equal_zero():
-            return bool(task.last_terminate)
+            return not bool(task.last_terminate)
 
         records = task.logger.get_records(timestamp=(_start_, _end_), action="terminate")
         return [record["timestamp"] for record in records]
