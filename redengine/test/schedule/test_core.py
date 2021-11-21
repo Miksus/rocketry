@@ -11,6 +11,7 @@ import redengine
 from redengine import Session
 from redengine.core import Scheduler, Parameters
 from redengine.tasks import FuncTask
+from redengine.test.task.func.test_run import run_inaction
 from redengine.time import TimeDelta
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
@@ -129,6 +130,48 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         assert success_count == len(list(task.logger.get_records(action="success")))
         assert fail_count == len(list(task.logger.get_records(action="fail")))
         assert inact_count == len(list(task.logger.get_records(action="inaction")))
+
+@pytest.mark.parametrize("mode", ["use logs", "use cache"])
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_task_status(session, execution, mode):
+    session.config["force_status_from_logs"] = True if mode == "use logs" else False
+
+    task_success = FuncTask(
+        run_succeeding, 
+        start_cond=AlwaysTrue(), 
+        name="task success",
+        execution=execution
+    )
+    task_fail = FuncTask(
+        run_failing, 
+        start_cond=AlwaysTrue(), 
+        name="task fail",
+        execution=execution
+    )
+    task_inact = FuncTask(
+        run_inaction, 
+        start_cond=AlwaysTrue(), 
+        name="task inact",
+        execution=execution
+    )
+    task_not_run = FuncTask(
+        run_inaction, 
+        start_cond=AlwaysFalse(), 
+        name="task not run",
+        execution=execution
+    )
+    scheduler = Scheduler(
+        shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
+    )
+    scheduler()
+    assert task_success.last_run is not None
+    assert task_success.last_success is not None
+    assert task_fail.last_fail is not None
+    #assert task_inact.last_inaction is not None
+
+    assert task_not_run.last_run is None
+    assert task_fail.last_success is None
+    assert task_success.last_fail is None
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_run(tmpdir, execution, session):
@@ -302,9 +345,6 @@ def test_pass_params_as_local_and_global(tmpdir, execution, session):
         assert 1 == (history["action"] == "run").sum()
         assert 1 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
-
-
-# Maintainer
 
 
 # Only needed for testing start up and shutdown

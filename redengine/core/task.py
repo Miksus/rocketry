@@ -862,6 +862,11 @@ class Task(metaclass=_TaskMeta):
         """Log the record with the logger of the task.
         Also sets the status according to the record.
         """
+        # Set last_run/last_success/last_fail etc.
+        cache_attr = f"_last_{record.action}"
+        record_time = datetime.datetime.fromtimestamp(record.created)
+        setattr(self, cache_attr, record_time)
+
         self.logger.handle(record)
         self._status = record.action
 
