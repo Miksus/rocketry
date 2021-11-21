@@ -370,7 +370,7 @@ class Scheduler:
         hooker.prerun(self)
 
         self.n_cycles = 0
-        self.startup_time = datetime.datetime.now()
+        self.startup_time = datetime.datetime.fromtimestamp(time.time())
 
         self.logger.info(f"Beginning startup sequence...")
         for task in self.tasks:
