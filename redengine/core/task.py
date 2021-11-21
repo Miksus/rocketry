@@ -131,6 +131,9 @@ class Task(metaclass=_TaskMeta):
     logger : TaskAdapter
         Logger of the task. Access the 
         log records using task.logger.get_records()
+    return_arg : Type of BaseArgument
+        Argument class to use to store the return value,
+        by default ``Return``
 
     Examples
     --------
@@ -155,6 +158,7 @@ class Task(metaclass=_TaskMeta):
     daemon: Optional[bool]
 
     session: 'Session' = None
+    return_arg: Type['BaseArgument'] = Return
 
     # Instance
     name: str
@@ -355,7 +359,7 @@ class Task(metaclass=_TaskMeta):
             if self.execution == "main":
                 direct_params = self.parameters
                 output = self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
-                Return.to_session(self.name, output)
+                self._handle_return(output)
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -502,7 +506,7 @@ class Task(metaclass=_TaskMeta):
             # thus we supress to prevent unnecessary warnings.
         else:
             # Store the output
-            Return.to_session(self.name, output)
+            self._handle_return(output)
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
@@ -1015,6 +1019,10 @@ class Task(metaclass=_TaskMeta):
         This property should be used by the execute of the task."""
         # Readonly "attribute"
         return self._thread_terminate
+
+    def _handle_return(self, value):
+        "Handle the return value (ie. store to parameters)"
+        self.return_arg.to_session(self.name, value)
 
     def delete(self):
         """Delete the task from the session. 

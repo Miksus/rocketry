@@ -323,7 +323,7 @@ class Scheduler:
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                
+                task = self.session.get_task(record.task_name)
                 if record.action == "fail":
                     # There is a caveat in logging 
                     # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383 
@@ -342,10 +342,9 @@ class Scheduler:
                     # Take the return value from the record and delete
                     # Note that record has attr __return__ only if task running as process
                     return_value = record.__return__
-                    Return.to_session(record.task_name, return_value)
+                    task._handle_return(return_value)
                     del record.__return__
                 
-                task = self.session.get_task(record.task_name)
                 task.log_record(record)
         # return_values = self._param_queue.get(block=False)
         # self.returns[return_values[0]] = return_values[1]
