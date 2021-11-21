@@ -10,7 +10,7 @@ from types import TracebackType
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import Any, Callable, List, Dict, Type, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Dict, Type, Union, Tuple, Optional
 import multiprocessing
 import threading
 from queue import Empty
@@ -28,6 +28,10 @@ from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler
 
 from .utils.task_utils import get_execution, get_dependencies
+
+if TYPE_CHECKING:
+    from redengine import Session
+    from redengine.core.parameters import BaseArgument
 
 CLS_TASKS = {}
 _IS_WINDOWS = platform.system()
