@@ -513,8 +513,8 @@ class StaticInterval(TimePeriod):
         end = pd.Timestamp(self.end)
         if end < dt:
             # The actual interval is already gone
-            return pd.Interval(self.max, self.max)
-        return pd.Interval(dt, end)
+            return pd.Interval(self.max, self.max, closed="both")
+        return pd.Interval(dt, end, closed="both")
 
     @property
     def is_max_interval(self):

@@ -5,7 +5,7 @@ from functools import partial
 from abc import abstractmethod
 import datetime
 import time
-from typing import Optional
+from typing import Optional, Union
 
 from redengine.core.time.base import TimePeriod
 from .base import BaseCondition
@@ -285,8 +285,9 @@ class Historical(Statement):
         See ``Statement``.
     """
 
-    def __init__(self, *args, period:Optional[TimePeriod]=None, **kwargs):
-        self.period = period
+    def __init__(self, *args, period:Optional[Union[TimePeriod, str]]=None, **kwargs):
+        from redengine.parse.time import parse_time
+        self.period = parse_time(period) if isinstance(period, str) else period
         super().__init__(*args, **kwargs)
 
     def get_kwargs(self):

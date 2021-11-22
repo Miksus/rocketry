@@ -10,7 +10,7 @@ from types import TracebackType
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import Any, Callable, List, Dict, Type, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Dict, Type, Union, Tuple, Optional
 import multiprocessing
 import threading
 from queue import Empty
@@ -28,6 +28,10 @@ from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler
 
 from .utils.task_utils import get_execution, get_dependencies
+
+if TYPE_CHECKING:
+    from redengine import Session
+    from redengine.core.parameters import BaseArgument
 
 CLS_TASKS = {}
 _IS_WINDOWS = platform.system()
@@ -124,17 +128,21 @@ class Task(metaclass=_TaskMeta):
         Session the task is binded to, 
         by default default session 
 
+
     Attributes
     ----------
+    return_arg: Type of :class:`.BaseArgument`
+        Argument class to use to store the return value,
+        by default :class:`.Return`
     session : Session
         Session the task is binded to.
     logger : TaskAdapter
         Logger of the task. Access the 
         log records using task.logger.get_records()
 
+
     Examples
     --------
-
     Minimum example:
 
     >>> from redengine.core import Task
@@ -155,6 +163,7 @@ class Task(metaclass=_TaskMeta):
     daemon: Optional[bool]
 
     session: 'Session' = None
+    return_arg: Type['BaseArgument'] = Return
 
     # Instance
     name: str
@@ -187,13 +196,25 @@ class Task(metaclass=_TaskMeta):
     default_priority = 0
     default_execution = "process"
 
-    def __init__(self, parameters=None, session=None,
-                start_cond=None, run_cond=None, end_cond=None, 
-                dependent=None, timeout=None, priority=None,
-                name=None, description=None, logger=None, daemon=None,
-                execution=None, disabled=False, force_run=False,
-                on_startup=False, on_shutdown=False,
-                on_exists=None):
+    def __init__(self, 
+                 parameters=None, 
+                 session=None,
+                 start_cond: BaseCondition=None, 
+                 run_cond: BaseCondition=None, 
+                 end_cond: BaseCondition=None, 
+                 dependent=None, #! TODO: Delete
+                 timeout=None, 
+                 priority: int=None,
+                 name: str=None, 
+                 description: str=None, 
+                 logger: logging.Logger=None, 
+                 daemon: bool=None,
+                 execution: str=None, 
+                 disabled: bool=False, 
+                 force_run: bool=False,
+                 on_startup: bool=False, 
+                 on_shutdown: bool=False,
+                 on_exists: str=None):
 
         hooker = _Hooker(self.init_hooks)
         hooker.prerun(self)
@@ -358,7 +379,7 @@ class Task(metaclass=_TaskMeta):
             if self.execution == "main":
                 direct_params = self.parameters
                 output = self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
-                Return.to_session(self.name, output)
+                self._handle_return(output)
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -505,7 +526,7 @@ class Task(metaclass=_TaskMeta):
             # thus we supress to prevent unnecessary warnings.
         else:
             # Store the output
-            Return.to_session(self.name, output)
+            self._handle_return(output)
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
@@ -1023,6 +1044,10 @@ class Task(metaclass=_TaskMeta):
         This property should be used by the execute of the task."""
         # Readonly "attribute"
         return self._thread_terminate
+
+    def _handle_return(self, value):
+        "Handle the return value (ie. store to parameters)"
+        self.return_arg.to_session(self.name, value)
 
     def delete(self):
         """Delete the task from the session. 

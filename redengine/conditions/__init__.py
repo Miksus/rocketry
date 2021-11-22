@@ -6,6 +6,7 @@ from .scheduler import *
 from .time import *
 from .git import *
 from .parameter import ParamExists, IsEnv
+from .meta import TaskCond
 
 from redengine.core.condition import PARSERS, CLS_CONDITIONS
 from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
