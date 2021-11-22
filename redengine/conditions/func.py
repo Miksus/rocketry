@@ -41,7 +41,7 @@ class FuncCond(BaseCondition):
     ...     return True
 
     >>> parse_condition("is foo")
-    FuncCond(func=is_foo, syntax="is foo")
+    FuncCond(is_foo, syntax='is foo', args=(), kwargs={})
 
     You can also have named parameters (using regex groups)
     to be passed to the function:
@@ -56,7 +56,7 @@ class FuncCond(BaseCondition):
     ...         return False
 
     >>> parse_condition("is foo in house")
-    FuncCond(func=is_foo, syntax=re.compile(r"is foo in (?P<myval>.+)"))
+    FuncCond(is_foo, syntax=re.compile('is foo in (?P<myval>.+)'), args=(), kwargs={'myval': 'house'})
     """
 
     def __init__(self, 
