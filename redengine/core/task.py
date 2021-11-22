@@ -180,6 +180,8 @@ class Task(metaclass=_TaskMeta):
     last_run: Optional[datetime.datetime]
     last_success: Optional[datetime.datetime]
     last_fail: Optional[datetime.datetime]
+    last_terminate: Optional[datetime.datetime]
+    last_inaction: Optional[datetime.datetime]
 
     # Class defaults
     default_priority = 0
@@ -244,6 +246,7 @@ class Task(metaclass=_TaskMeta):
         self._last_success = self._get_last_action_from_log("success")
         self._last_fail = self._get_last_action_from_log("fail")
         self._last_terminate = self._get_last_action_from_log("terminate")
+        self._last_inaction = self._get_last_action_from_log("inaction")
 
         self.register()
         
@@ -948,8 +951,13 @@ class Task(metaclass=_TaskMeta):
 
     @property
     def last_terminate(self):
-        """datetime.datetime: The lastest timestamp when the task ran."""
+        """datetime.datetime: The lastest timestamp when the task terminated."""
         return self._get_last_action("terminate")
+
+    @property
+    def last_inaction(self):
+        """datetime.datetime: The lastest timestamp when the task inacted."""
+        return self._get_last_action("inaction")
 
     def _get_last_action(self, action):
         cache_attr = f"_last_{action}"

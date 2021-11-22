@@ -209,6 +209,25 @@ class Comparable(Statement):
             for comp, val in comps.items()
         )
 
+    def any_over_zero(self):
+        # Useful for optimization: just find any observation and the statement is true
+        comps = {
+            comp: self.kwargs[comp]
+            for comp in self._comp_attrs
+            if comp in self.kwargs
+        }
+        if comps == {"_gt_": 0} or comps == {"_ge_": 1} or comps == {"_gt_": 0, "_ge_": 1}:
+            return True
+        return not comps
+
+    def equal_zero(self):
+        comps = {
+            comp: self.kwargs[comp]
+            for comp in self._comp_attrs
+            if comp in self.kwargs
+        }
+        return comps == {"_eq_": 0}
+
     def __eq__(self, other):
         # self == other
         is_same_class = isinstance(other, Comparable)

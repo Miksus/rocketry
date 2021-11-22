@@ -27,7 +27,7 @@ def to_epoch(dt):
         dt = dt.tz_convert("utc").tz_localize(None)
     return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
-def setup_task_state(tmpdir, mock_datetime_now, logs:List[Tuple[str, str]], time_after):
+def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None):
     """A mock up that sets up a task to test the 
     condition with given logs
 
@@ -41,35 +41,35 @@ def setup_task_state(tmpdir, mock_datetime_now, logs:List[Tuple[str, str]], time
     time_after : date-like
         The datetime when inspecting the condition status
     """
-    with tmpdir.as_cwd() as old_dir:
-
+    if task is None:
         task = FuncTask(
             lambda:None, 
             name="the task",
             execution="main"
         )
 
-        # pd.Timestamp -> Epoch, https://stackoverflow.com/a/54313505/13696660
-        # We also need tz_localize to convert timestamp to localized form (logging thinks the time is local time and convert that to GTM)
+    # pd.Timestamp -> Epoch, https://stackoverflow.com/a/54313505/13696660
+    # We also need tz_localize to convert timestamp to localized form (logging thinks the time is local time and convert that to GTM)
 
-        for log in logs:
-            log_time, log_action = log[0], log[1]
-            log_created = to_epoch(pd.Timestamp(log_time, tz=tzlocal()))
-            record = logging.LogRecord(
-                # The content here should not matter for task status
-                name='redengine.core.task', level=logging.INFO, lineno=1, 
-                pathname='redengine\\redengine\\core\\task\\base.py',
-                msg="Logging of 'task'", args=(), exc_info=None,
-            )
+    for log in logs:
+        log_time, log_action = log[0], log[1]
+        log_created = to_epoch(pd.Timestamp(log_time, tz=tzlocal()))
+        record = logging.LogRecord(
+            # The content here should not matter for task status
+            name='redengine.core.task', level=logging.INFO, lineno=1, 
+            pathname='redengine\\redengine\\core\\task\\base.py',
+            msg="Logging of 'task'", args=(), exc_info=None,
+        )
 
-            record.created = log_created
-            record.action = log_action
-            record.task_name = "the task"
+        record.created = log_created
+        record.action = log_action
+        record.task_name = "the task"
 
-            task.logger.handle(record)
+        task.logger.handle(record)
 
+    if time_after is not None:
         mock_datetime_now(time_after)
-        return task
+    return task
 
 
 @pytest.mark.parametrize(
@@ -154,9 +154,9 @@ def setup_task_state(tmpdir, mock_datetime_now, logs:List[Tuple[str, str]], time
             id="Is not running (but does in the future)", marks=pytest.mark.xfail(reason="Bug but not likely to encounter")),
     ],
 )
-def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-
-    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+    session.config["force_status_from_logs"] = True
+    setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
         assert bool(cond)
@@ -216,8 +216,9 @@ def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             id="Not started (but failed, succeeded, terminated & inacted)"),
     ],
 )
-def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+    session.config["force_status_from_logs"] = True
+    setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
         assert bool(cond)
@@ -315,8 +316,9 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             id="Not finished (inaction out of period)"),
     ],
 )
-def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+    session.config["force_status_from_logs"] = True
+    setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
         assert bool(cond)
@@ -410,8 +412,9 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             
     ],
 )
-def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+    session.config["force_status_from_logs"] = True
+    setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
         assert bool(cond)
@@ -505,8 +508,9 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             
     ],
 )
-def test_fail(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome):
-    setup_task_state(tmpdir, mock_datetime_now, logs, time_after)
+def test_fail(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+    session.config["force_status_from_logs"] = True
+    setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
         assert bool(cond)
