@@ -128,20 +128,21 @@ class Task(metaclass=_TaskMeta):
         Session the task is binded to, 
         by default default session 
 
+
     Attributes
     ----------
+    return_arg: Type of :class:`.BaseArgument`
+        Argument class to use to store the return value,
+        by default :class:`.Return`
     session : Session
         Session the task is binded to.
     logger : TaskAdapter
         Logger of the task. Access the 
         log records using task.logger.get_records()
-    return_arg : Type of BaseArgument
-        Argument class to use to store the return value,
-        by default ``Return``
+
 
     Examples
     --------
-
     Minimum example:
 
     >>> from redengine.core import Task
@@ -193,13 +194,25 @@ class Task(metaclass=_TaskMeta):
     default_priority = 0
     default_execution = "process"
 
-    def __init__(self, parameters=None, session=None,
-                start_cond=None, run_cond=None, end_cond=None, 
-                dependent=None, timeout=None, priority=None,
-                name=None, description=None, logger=None, daemon=None,
-                execution=None, disabled=False, force_run=False,
-                on_startup=False, on_shutdown=False,
-                on_exists=None):
+    def __init__(self, 
+                 parameters=None, 
+                 session=None,
+                 start_cond: BaseCondition=None, 
+                 run_cond: BaseCondition=None, 
+                 end_cond: BaseCondition=None, 
+                 dependent=None, #! TODO: Delete
+                 timeout=None, 
+                 priority: int=None,
+                 name: str=None, 
+                 description: str=None, 
+                 logger: logging.Logger=None, 
+                 daemon: bool=None,
+                 execution: str=None, 
+                 disabled: bool=False, 
+                 force_run: bool=False,
+                 on_startup: bool=False, 
+                 on_shutdown: bool=False,
+                 on_exists: str=None):
 
         hooker = _Hooker(self.init_hooks)
         hooker.prerun(self)

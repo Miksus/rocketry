@@ -1,7 +1,7 @@
 
 from typing import Callable, Dict, Pattern, Union
 
-from ..utils import ParserError
+from ..utils import ParserError, CondParser
 from redengine.core.condition.base import PARSERS, BaseCondition
 
 CONDITION_PARSERS = []
@@ -38,5 +38,7 @@ def parse_condition_item(s:str) -> BaseCondition:
     if isinstance(parser, BaseCondition):
         return parser
     else:
-        return parser(**kwargs)
-
+        if isinstance(parser, CondParser):
+            return parser(s, **kwargs)
+        cond = parser(**kwargs)
+        return cond

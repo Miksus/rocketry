@@ -1,5 +1,5 @@
 from .interval import *
-from redengine.core.time import TimeDelta
+from redengine.core.time import TimeDelta, StaticInterval
 
 # Syntax
 import pandas as pd
@@ -16,5 +16,8 @@ PARSERS.update(
         re.compile(r"time of (?P<type_>month|week) on (?P<start>.+)"): get_on,
 
         re.compile(r"every (?P<past>.+)"): TimeDelta,
+        re.compile(r"past (?P<past>.+)"): TimeDelta,
+        "always": StaticInterval(),
+        "never": StaticInterval(start=StaticInterval.max - StaticInterval.resolution),
     }
 )

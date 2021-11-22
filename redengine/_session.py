@@ -118,6 +118,7 @@ class Session:
         self.returns = Parameters()
         self.parameters = parameters
         self.extensions = extensions
+        self.cond_cache = {}
 
         if delete_existing_loggers:
             # Delete existing task loggers
@@ -341,6 +342,7 @@ class Session:
         state["_extensions"] = None
         state["scheduler"] = None
         state["parser"] = None
+        state["cond_cache"] = None
         return state
 
     @property
