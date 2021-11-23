@@ -44,7 +44,26 @@ class Return(BaseArgument):
     Parameters
     ----------
     name : str
-        Name of the task which return is represented.
+        Name of the task which return value the argument 
+        represents.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        from redengine.arguments import Return
+        from redengine.tasks import FuncTask
+
+        # Create a task with a return
+        @FuncTask()
+        def my_task_1():
+            ...
+            return data
+
+        @FuncTask(parameters={"myarg": Return('my_task_1')})
+        def my_task_2(myarg):
+            ...
     """
 
     def __init__(self, task_name, default=None):
@@ -79,6 +98,23 @@ class FuncArg(BaseArgument):
 
     Examples
     --------
+
+    Simple example:
+
+    .. code-block:: python
+
+        from redengine.tasks import FuncTask
+        from redengine.arguments import FuncArg
+
+        def my_func():
+            ...
+            return obj
+
+        @FuncTask(parameters={"my_param": FuncArg(my_func)})
+        def my_task(my_param):
+            ...
+
+    Example to set to session:
 
     .. doctest:: funcarg
 

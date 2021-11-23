@@ -64,6 +64,10 @@ class TaskCond(BaseCondition):
             ... # Expensive check
             return True
 
+    Using the condition:
+
+    .. code-block:: python
+
         from redengine.tasks import FuncTask
 
         @FuncTask(start_cond="is foo at home")

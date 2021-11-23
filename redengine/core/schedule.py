@@ -346,8 +346,6 @@ class Scheduler:
                     del record.__return__
                 
                 task.log_record(record)
-        # return_values = self._param_queue.get(block=False)
-        # self.returns[return_values[0]] = return_values[1]
 
     def handle_zombie_tasks(self):
         """If there are tasks that has been crashed during setting up the task loggers, 
