@@ -83,6 +83,7 @@ class Session:
         "silence_cond_check": True, # Whether to silence errors occurred in checking conditions
         #"session_store_cond_cls": True,
         #"session_store_task_cls": True,
+        "cycle_sleep": None,
         "debug": False,
     }
 
