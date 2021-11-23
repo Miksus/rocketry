@@ -1,7 +1,7 @@
 
 from pathlib import Path
 
-from redengine.pybox.io import read_yaml
+from redengine.pybox.io import read_yaml, read_json
 
 DEFAULT_BASENAME_TASKS = "redengine.task"
 DEFAULT_BASENAME_SCHEDULER = "redengine.scheduler"
@@ -27,9 +27,9 @@ def get_default(name:str, scheduler_basename:str=None, task_basename:str=None, *
     from redengine import Session
     # From redengine/config/default
     root = Path(__file__).parent / "defaults"
-    path = root / (name + ".yaml")
+    path = root / (name + ".json")
 
-    conf = read_yaml(path)
+    conf = read_json(path)
 
     # Renaming redengine.task to task_basename
     is_loggers_specified = "loggers" in conf.get("logging", {})

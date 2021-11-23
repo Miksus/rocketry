@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
 from redengine.tasks.func import FuncTask
 from redengine import Session
 from redengine.tasks import FuncTask
@@ -49,6 +51,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
 def test_find_multiple_times(tmpdir, session):
+    pytest.importorskip("yaml")
     with tmpdir.as_cwd() as old_dir:
         # Create the test files
         root = Path(str(tmpdir)) / "project"
@@ -165,6 +168,7 @@ class TestParseTasks:
     ]
 
     def test_find_tasks(self, tmpdir, files, get_expected, session):
+        pytest.importorskip("yaml")
         with tmpdir.as_cwd() as old_dir:
             # Create the test files
             root = Path(str(tmpdir))

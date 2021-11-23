@@ -1,0 +1,59 @@
+{
+    "tasks": {
+      "config.find-tasks": {
+        "class": "YAMLFinder",
+        "path": "project/",
+        "execution": "main",
+        "force_run": true
+      },
+      "config.rest-server": {
+        "class": "HTTPConnection",
+        "force_run": true
+      },
+      "config.git-fetch": {
+        "class": "GitFetch"
+      },
+      "config.git-pull": {
+        "class": "GitPull",
+        "start_cond": {
+          "class": "IsGitBehind",
+          "fetch": false
+        }
+      },
+      "config.pip-install": {
+        "class": "PipInstall",
+        "requirements": "requirements.txt"
+      },
+      "config.reinstall": {
+        "class": "PipInstall",
+        "package": "git+https://github.com/Miksus/atlas.git@master#egg=atlas",
+        "options": [
+          "--upgrade",
+          "--no-deps",
+          "--force-reinstall"
+        ]
+      },
+      "config.restart": {
+        "class": "Restart",
+        "execution": "main"
+      }
+    },
+    "sequences": {
+      "config.sequence.auto-pull": {
+        "interval": "every 30 minutes",
+        "tasks": [
+          "config.git-fetch",
+          "config.git-pull",
+          "config.pip-install",
+          "config.restart"
+        ]
+      },
+      "config.sequence.auto-pip-upgrade": {
+        "start_cond": "daily between 00:00 and 18:00",
+        "tasks": [
+          "config.reinstall",
+          "config.restart"
+        ]
+      }
+    }
+  }

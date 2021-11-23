@@ -1,0 +1,63 @@
+{
+  "logging": {
+    "version": 1,
+    "formatters": {
+      "csv_formatter": {
+        "()": "redengine.log.CsvFormatter",
+        "fields": [
+          "asctime",
+          "levelname",
+          "name",
+          "message"
+        ]
+      },
+      "csv_task_formatter": {
+        "()": "redengine.log.CsvFormatter",
+        "fields": [
+          "task_name",
+          "asctime",
+          "action",
+          "start",
+          "end",
+          "runtime",
+          "exc_text"
+        ]
+      }
+    },
+    "handlers": {
+      "csv_scheduler": {
+        "()": "redengine.log.CsvHandler",
+        "formatter": "csv_formatter",
+        "filename": "log/scheduler.csv",
+        "make_dir": true,
+        "delay": true
+      },
+      "csv_task": {
+        "()": "redengine.log.CsvHandler",
+        "formatter": "csv_task_formatter",
+        "filename": "log/tasks.csv",
+        "make_dir": true,
+        "delay": true
+      }
+    },
+    "loggers": {
+      "redengine.task": {
+        "handlers": [
+          "csv_task"
+        ],
+        "level": "INFO",
+        "propagate": false
+      },
+      "redengine.task._process": {
+        "propagate": false
+      },
+      "redengine.scheduler": {
+        "handlers": [
+          "csv_scheduler"
+        ],
+        "level": "INFO",
+        "propagate": false
+      }
+    }
+  }
+}

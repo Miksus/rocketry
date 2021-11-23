@@ -1,0 +1,68 @@
+{
+    "clear_existing": true,
+    "logging": {
+      "version": 1,
+      "disable_existing_loggers": true,
+      "formatters": {
+        "standard": {
+          "format": "%(message)s"
+        },
+        "rec_formatter": {
+          "()": "redengine.log.AttributeFormatter"
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler",
+          "stream": "ext://sys.stdout"
+        },
+        "mem_scheduler": {
+          "()": "redengine.log.MemoryHandler",
+          "store_as": "dict",
+          "formatter": "rec_formatter"
+        },
+        "mem_task": {
+          "()": "redengine.log.MemoryHandler",
+          "store_as": "dict",
+          "formatter": "rec_formatter"
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARNING",
+          "propagate": false
+        },
+        "redengine.task": {
+          "handlers": [
+            "mem_task",
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "redengine.task._process": {
+          "propagate": false
+        },
+        "redengine.scheduler": {
+          "handlers": [
+            "mem_scheduler",
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "__main__": {
+          "handlers": [
+            "default"
+          ],
+          "level": "DEBUG",
+          "propagate": false
+        }
+      }
+    }
+  }

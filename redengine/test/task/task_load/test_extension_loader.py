@@ -3,6 +3,8 @@ from pathlib import Path
 
 from textwrap import dedent
 
+import pytest
+
 from redengine.tasks import FuncTask
 from redengine.tasks.loaders import ExtensionLoader
 from redengine.time import TimeOfDay
@@ -10,6 +12,7 @@ from redengine.time import TimeOfDay
 from io_helpers import create_file, delete_file
 
 def test_loader_multiple_times(tmpdir, session):
+    pytest.importorskip("yaml")
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
         FuncTask(lambda: None, name="task-1", execution="main")
@@ -74,6 +77,7 @@ def test_loader_multiple_times(tmpdir, session):
         assert [] == list(session.extensions["sequences"].keys())
 
 def test_loader(tmpdir, session):
+    pytest.importorskip("yaml")
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
         task1 = FuncTask(lambda: None, name="task-1", execution="main")
@@ -97,6 +101,7 @@ def test_loader(tmpdir, session):
         assert TimeOfDay("12:00", "16:00") == seq.interval
 
 def test_loader_pattern(tmpdir, session):
+    pytest.importorskip("yaml")
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
         task1 = FuncTask(lambda: None, name="task-1", execution="main")

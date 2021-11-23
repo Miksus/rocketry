@@ -1,0 +1,41 @@
+{
+    "logging": {
+      "version": 1,
+      "formatters": {
+        "rec_formatter": {
+          "()": "redengine.log.AttributeFormatter"
+        }
+      },
+      "handlers": {
+        "mem_scheduler": {
+          "()": "redengine.log.MemoryHandler",
+          "store_as": "dict",
+          "formatter": "rec_formatter"
+        },
+        "mem_task": {
+          "()": "redengine.log.MemoryHandler",
+          "store_as": "dict",
+          "formatter": "rec_formatter"
+        }
+      },
+      "loggers": {
+        "redengine.task": {
+          "handlers": [
+            "mem_task"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "redengine.task._process": {
+          "propagate": false
+        },
+        "redengine.scheduler": {
+          "handlers": [
+            "mem_scheduler"
+          ],
+          "level": "INFO",
+          "propagate": false
+        }
+      }
+    }
+  }

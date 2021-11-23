@@ -2,6 +2,8 @@
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
 from redengine.tasks import FuncTask
 from redengine.tasks.loaders import SessionLoader
 from redengine.time import TimeOfDay
@@ -10,6 +12,7 @@ from io_helpers import create_file, delete_file
 
 
 def test_session_loader(tmpdir, session):
+    pytest.importorskip("yaml")
     with tmpdir.as_cwd() as old_dir:
         # Create some dummy tasks
         root = Path(str(tmpdir)) / "project"

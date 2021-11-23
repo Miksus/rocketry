@@ -34,6 +34,5 @@ setup(
 
     install_requires = [
         'pandas',
-        'pyyaml',
     ],
 )

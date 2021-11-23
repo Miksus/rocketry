@@ -1,6 +1,4 @@
 
-import yaml
-
 from redengine.core.parameters import BaseArgument
 
 class YamlArg(BaseArgument):
@@ -19,6 +17,7 @@ class YamlArg(BaseArgument):
         self.items = [] if items is None else items
 
     def get_value(self):
+        import yaml
         path = self.path
         with open(path, 'r') as file:
             cont = yaml.safe_load(file)

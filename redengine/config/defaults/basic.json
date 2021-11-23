@@ -1,0 +1,108 @@
+{
+    "logging": {
+      "version": 1,
+      "formatters": {
+        "standard": {
+          "format": "%(asctime)s %(levelname)s %(name)s %(message)s"
+        },
+        "csv_formatter": {
+          "()": "redengine.log.CsvFormatter",
+          "fields": [
+            "asctime",
+            "levelname",
+            "name",
+            "message"
+          ]
+        },
+        "csv_task_formatter": {
+          "()": "redengine.log.CsvFormatter",
+          "fields": [
+            "asctime",
+            "levelname",
+            "action",
+            "task_name",
+            "message"
+          ]
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler",
+          "stream": "ext://sys.stdout"
+        },
+        "stdout": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler",
+          "stream": "ext://sys.stdout"
+        },
+        "stderr": {
+          "level": "ERROR",
+          "formatter": "standard",
+          "class": "logging.StreamHandler",
+          "stream": "ext://sys.stdout"
+        },
+        "csv_scheduler": {
+          "()": "redengine.log.CsvHandler",
+          "formatter": "csv_formatter",
+          "filename": "log/scheduler.csv",
+          "make_dir": true,
+          "delay": true
+        },
+        "csv_task": {
+          "()": "redengine.log.CsvHandler",
+          "formatter": "csv_task_formatter",
+          "filename": "log/tasks.csv",
+          "make_dir": true,
+          "delay": true
+        },
+        "csv_task_maintain": {
+          "()": "redengine.log.CsvHandler",
+          "formatter": "csv_task_formatter",
+          "filename": "log/maintainers.csv",
+          "make_dir": true,
+          "delay": true
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARNING",
+          "propagate": false
+        },
+        "redengine.task": {
+          "handlers": [
+            "stderr",
+            "csv_task"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "redengine.task.maintainer": {
+          "handlers": [
+            "csv_task_maintain"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "redengine.scheduler": {
+          "handlers": [
+            "csv_scheduler"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "__main__": {
+          "handlers": [
+            "default"
+          ],
+          "level": "DEBUG",
+          "propagate": false
+        }
+      }
+    }
+  }

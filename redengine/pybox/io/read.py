@@ -8,7 +8,6 @@ Generic guidelines:
     - Arguments are given in order: path, others
 """
 
-import yaml
 import json
 
 from typing import List
@@ -28,5 +27,10 @@ def read_yaml(file):
     Returns:
         YAML file in Python representation
     """
+    import yaml
     with open(file, 'r') as f:
         return yaml.safe_load(f)
+
+def read_json(file):
+    with open(file) as json_file:
+        return json.load(json_file)

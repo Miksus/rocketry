@@ -168,6 +168,7 @@ class TestYAML:
 
     @pytest.fixture
     def conf_file(self, tmpdir):
+        pytest.importorskip("yaml")
         return os.path.join(str(tmpdir), "conf.yaml")
 
     def write_content(self, c, file):
