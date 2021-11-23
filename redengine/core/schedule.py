@@ -358,6 +358,9 @@ class Scheduler:
 
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
+        delay = self.session.config.get("cycle_sleep")
+        if delay is not None:
+            time.sleep(delay)
 
     def startup(self):
         """Start up the scheduler.
