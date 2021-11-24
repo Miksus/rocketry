@@ -8,6 +8,8 @@ Arguments
 
 .. autoclass:: redengine.arguments.Arg
 
+.. autoclass:: redengine.arguments.Return
+
 .. testsetup:: funcarg
 
     from redengine import session
@@ -21,4 +23,3 @@ Arguments
     session.clear()
 
 .. autoclass:: redengine.arguments.Private
-

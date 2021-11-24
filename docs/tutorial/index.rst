@@ -1,3 +1,5 @@
+.. _tutorials:
+
 Tutorials
 =========
 
@@ -12,5 +14,7 @@ use Red Engine.
    quick_start
    short_guide
    advanced_guide
+   scheduling_guide
    pipeline_guide
+   logging_guide
    extending_guide

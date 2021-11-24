@@ -159,7 +159,7 @@ and also set the outputs as inputs to the next tasks:
         ... # Do stuff
         return data
 
-To continue further, you can ofcourse make pipelines where a task is run after two 
+To continue further, you can of course make pipelines where a task is run after two 
 tasks have succeeded and the outputs from both of the tasks are used in this task:
 
 .. code-block:: python

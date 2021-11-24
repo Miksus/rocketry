@@ -6,9 +6,11 @@ Execution on fixed time interval
 
 **Syntax**
 
-- ``[hourly | daily | weekly | monthly]``
-- ``[hourly | daily | weekly | monthly] between <start> and <end>``
-- ``[hourly | daily | weekly | monthly] [before | after | starting] <time>``
+.. code-block:: none
+
+   [hourly | daily | weekly | monthly]
+   [hourly | daily | weekly | monthly] between <start> and <end>
+   [hourly | daily | weekly | monthly] [before | after | starting] <time>
 
 **True when**
 

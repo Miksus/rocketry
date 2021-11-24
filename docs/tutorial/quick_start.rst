@@ -3,7 +3,7 @@
 Quick start
 ===========
 
-Install the package from `Pip <https://pypi.org/project/redengine/>`_:
+Install the package from `Pypi <https://pypi.org/project/redengine/>`_:
 
 .. code-block:: console
 
@@ -54,10 +54,10 @@ See tutorials:
 
 - :ref:`short-guide`
 - :ref:`advanced-guide`
-
+- :ref:`All tutorials <tutorials>`
 
 To skip to relevant sections:
 
-- :ref:`How to create tasks. <tasks>`
-- :ref:`How to schedule tasks. <scheduling>`
-- :ref:`How to parametrize tasks. <parametrizing>`
+- :ref:`Basics of tasks <tasks>`
+- :ref:`Basics of conditions <conditions-intro>`
+- :ref:`Basics of sessions <session-info>`

@@ -75,7 +75,7 @@ discuss about some useful conditions found from Red Engine.
 .. _conditions-examples:
 
 Conditions, Examples
-====================
+--------------------
 
 The syntax are specified in the section :ref:`condition-syntax`. There are several types
 of built-in conditions useful for various scheduling strategies:
@@ -91,20 +91,20 @@ Next possibly the most common patterns are shown.
 
 
 Time Related
-------------
+^^^^^^^^^^^^
 
 .. literalinclude:: /examples/conditions/time.py
     :language: py
 
 Task Related
-------------
+^^^^^^^^^^^^
 
 .. literalinclude:: /examples/conditions/task.py
     :language: py
 
 
 Custom Condition
-================
+----------------
 
 Easiest way to create your own condition that can 
 be used in the ``start_cond`` argument of a task is 

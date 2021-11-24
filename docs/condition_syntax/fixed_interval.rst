@@ -6,8 +6,10 @@ Fixed time interval
 
 **Syntax**
 
-- ``time of [hour | day | week | month] between <start> and <end>``
-- ``time of [hour | day | week | month] [after | before] <time>``
+.. code-block:: none
+
+   time of [hour | day | week | month] between <start> and <end>
+   time of [hour | day | week | month] [after | before] <time>
 
 **True when**
 

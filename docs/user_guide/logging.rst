@@ -18,6 +18,22 @@ or ``.query(..)`` to also read the log files. These methods should return
 iterble of dictionaries. The method ``.query(...)`` should also be able to handle
 the passed queries.
 
+In addition to the regular ``LogRecord`` attributes, the following extras are also set as
+extras to the logged records by the tasks or the adapter:
+
+- ``task_name``: Name of the task the log record is about
+- ``action``: Action of the task of which the log record is about (success, fail etc.)
+- ``start``: Start time of the task as datetime
+- ``end``: End time of the task as datetime, not passed if action is ``run``
+- ``runtime``: Time it took to run the task as timedelta, not passed if action is ``run``
+
+Both, ``read`` and ``query`` methods, should return an iterable of dictionaries (ie. a list of dict)
+and the dictionaries should contain at least the following keys:
+
+- ``task_name``: Name of the task the log record is about
+- ``timestamp``, ``created`` or ``asctime``: Time when the log record occurred.
+- ``action``: Action of the task of which the log record is about (success, fail etc.)
+
 Querying the task adapter
 -------------------------
 
@@ -67,7 +83,7 @@ Querying all:
   'task_name': 'mytask',
   'timestamp': datetime.datetime(2021, 12, 6, 2, 30)}]
 
-Querying list of actions:
+Querying a list of actions:
 
 >>> from pprint import pprint
 >>> pprint(list(task_adapter.get_records(action=['success', 'fail'])))
@@ -80,7 +96,7 @@ Querying list of actions:
   'task_name': 'mytask',
   'timestamp': datetime.datetime(2021, 12, 6, 2, 30)}]
 
-Querying specific range:
+Querying a specific range:
 
 >>> from pprint import pprint
 >>> import datetime

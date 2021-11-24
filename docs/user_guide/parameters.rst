@@ -1,8 +1,8 @@
 
 .. _parametrizing:
 
-Parametrizing Tasks
-===================
+Parametrizing
+=============
 
 There are many ways to pass additional 
 data to the tasks. One can put the data to 

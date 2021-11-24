@@ -10,10 +10,10 @@
 
 Too lazy to read? :ref:`Get started then. <getting-started>`
 
-Red Engine is an open source Python scheduling library made for 
-humans. It is suitable for scrapers, data processes,
-process automatization or IOT applications. It also
-has minimal dependencies and is pure Python.
+Red Engine is an open source advanced scheduling library made for 
+Python. It is suitable for automating processes, scheduling web scrapers,
+and building IOT applications. It also has minimal amount of dependencies 
+and is pure Python.
 
 Visit the `source code from Github <https://github.com/Miksus/red-engine>`_
 or `releases in Pypi page <https://pypi.org/project/redengine/>`_. 
@@ -22,27 +22,28 @@ or `releases in Pypi page <https://pypi.org/project/redengine/>`_.
 Why :red:`Red` Engine?
 ----------------------
 
-Red Engine's focus is on productivity: minimizing the 
-boiler plate, maximizing readability extendability. 
-Creating and scheduling tasks are very easy to do.
+Red Engine's focus is on readability, productivity and extendability.
+The philosophy behind the library is that simple things should be simple 
+and easy and complex things should be done by combining simple things. 
+The ultimate focus is in you: the library aims to make your life easier.
 
 :red:`Red` Engine is useful for small to moderate size
 projects. It is, however, not meant to handle thousands 
 of tasks or execute tasks with the percision required 
-by, for example, modern game engines.
+by, for example, game engines.
 
 Core Features
 -------------
 
 - **Easy setup:** Use a premade setup and focus on building your project.
-- **Condition parsing:** Scheduling tasks can be done with human readable statements.
-- **Parametrization:** Tasks consume session specific or task specific parameters depending on what they need.
-- **Extendability:** Almost everything is made for customization. Even the tasks can modify the scheduler.
+- **Condition syntax:** Scheduling tasks can be done with human readable statements.
+- **Parametrization:** Tasks can be parameterized various ways or they can be pipelined.
+- **Extendability:** Almost everything is made for customization. Even the tasks can modify the flow of the system.
 
 :red:`Red` Engine has built-in scheduling syntax which
 allows logical operations to create complex scheduling logic
-with breeze. Also, it very easy to extend and create your 
-own conditions.
+with breeze. Also, it very easy to create your own conditions
+for your needs.
 
 Example
 -------
@@ -56,14 +57,15 @@ This is all it takes to create a scheduler:
 But does it work?
 -----------------
 
-The system is tested with over 900 unit tests to 
+The system is tested with over 1000 unit tests to 
 ensure quality and to deliver what is promised. 
 Red Engine is used in production.
 
 Interested?
 -----------
 
-There is much more to offer. Read more and try it yourself.
+There is much more to offer. Start from the 
+:ref:`short guide <short-guide>`.
 
 
 .. toctree::
@@ -75,7 +77,9 @@ There is much more to offer. Read more and try it yourself.
    condition_syntax/index
    reference/index
    examples/index
-
+   how_it_works
+   contributing
+   versions
 
 
 Indices and tables

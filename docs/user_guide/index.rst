@@ -2,20 +2,17 @@ User Guide
 ==========
 
 Welcome to Red Engine user guide. This section
-consists of basics to advanced topics ranging
-from task creation and scheduling to extending
-Red Engine.
+consists of basics to advanced topics about 
+the Red Engine ecosystem.
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
    tasks
-   scheduling
-   session_config
+   session
    conditions
    parameters
-   extensions
    loaders
    templates
    logging

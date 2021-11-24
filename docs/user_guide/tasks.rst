@@ -10,11 +10,11 @@ are also multiple ways to configure the tasks. In
 this section, the most common and useful ways are 
 covered.
 
-Most simplistic way to create tasks is just initiate
-them in a Python source file and just import them.
+Most simplistic way to create tasks is to create functions,
+declare them as tasks and just import them to your session.
 However, to reduce boilder plate Red Engine also 
 provide ways to load all task files using ``Loaders``.
-See :ref:`loaders`. 
+See :ref:`loaders` for more. 
 
 .. _creating-task:
 
@@ -109,6 +109,42 @@ Execution   Parallerized?  Can be terminated?      Can modify the session?
 ``main``    No             No                     Yes
 =========== =============  =====================  ========================
 
+.. note::
+
+    Currently, Red Engine does not allow to have the same task running 
+    multiple times at the same time as this is rarely needed and it 
+    causes complications in determining what start consituted which 
+    success or failure. There might or might not be support for this 
+    in the future.
+
+    If you need this, you can achieve this by duplicating the task with
+    different names.
+
+Task Statuses
+-------------
+
+There are five statuses a task may have:
+
+- ``run``: the task is currently running
+- ``fail``: the task's previous run failed
+- ``success``: the task's previous run succeeded
+- ``terminate``: the task's previous run was terminated
+- ``inaction``: the task's previous run inacted
+
+The first three are fairly obvious. Only the tasks that 
+are running with ``thread`` or ``process`` execution may have 
+``terminate`` status as ``main`` cannot be terminated. 
+
+The status ``inaction`` is the least obvious. This status 
+means that the task did not fail but it did almost nothing
+due to missing data or other reasons. If you want to use 
+this status, you need to raise the exception 
+``rednegine.core.exceptions.TaskInactionException`` in the task's execution. It is useful
+if there is a prerequisite in the task that is expensive to check
+or there is a risk of getting stuck and therefore the check is 
+put to the task itself.
+
+The status of a task is found from the attribute ``task.status``.
 
 Parametrizing Tasks
 -------------------

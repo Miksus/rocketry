@@ -15,7 +15,22 @@ In previous guides we already discussed how you can schedule your tasks using
 ``start_cond`` or terminate them with ``end_cond`` (if 
 parallelized). There may be a situation in which there is 
 no suitable condition for your purpose. For such case you 
-can create your own condition easily.
+can create your own condition easily using either ``FuncCond`` or ``TaskCond``.
+If the condition is quick to check you can go with ``FuncCond``. If the 
+condition may take time or may get stuck you can use ``TaskCond``
+
+Here is a summary of the condition types:
+
+==================  ======================  =============================
+Property            FuncCond                TaskCond
+==================  ======================  =============================
+**Function runs**   when condition checked  in the background
+**Useful for**      Simple/fast checks      I/O bound or expensive checks
+==================  ======================  =============================
+
+
+Function Condition
+^^^^^^^^^^^^^^^^^^
 
 You can create your own conditions and add them 
 to the Red Engine condition parsing using ``FuncCond``.
@@ -57,6 +72,46 @@ need to pass a string that matches to the regex pattern
 ``folder (?P<folder>.+) has files``. The value of the 
 named regex group ``folder`` is passed as a keyword 
 argument to the function ``has_files``.
+
+Task Condition
+^^^^^^^^^^^^^^
+
+``TaskCond`` allows you to make a condition which state
+is checked using a separate task. This is very useful 
+for conditions which are I/O bound, may get stuck or 
+take excess resources. ``TaskCond`` is simply a 
+condition which state is determined by the output value
+of a ``FuncTask`` that runs in the background.
+
+.. code-block:: python
+
+    import re
+    import os
+    from redengine.conditions import TaskCond
+
+    @TaskCond(syntax=re.compile("data exists for (?P<date>.+)"), start_cond="every 10 minutes")
+    def has_data():
+        ... # Expensive code
+        return True
+
+Now you can use this condition simply:
+
+.. code-block:: python
+
+    @FuncTask(start_cond="data exists for today")
+    def process_data():
+        ... # Code to process data
+
+The condition ``has_data`` will create a task called ``_condition-...has_data`` that
+runs in the background every 10 minutes and returns the state of the condition. Between the runs the 
+task value is whatever was the outcome of the latest run. If the task has not previously
+run the state of the condition is ``False``. There is also a ``cooldown`` argument to 
+``TaskCond`` which determines the time when the latest run of the task is considered
+too old to count as the state and the state of the task is reverted back to ``False``
+till the task runs again.
+
+The task can have any settings that any ``FuncTask`` has: you can specify the ``execution``,
+``end_cond``, ``priority``, ``timeout`` etc.
 
 Custom Task
 -----------

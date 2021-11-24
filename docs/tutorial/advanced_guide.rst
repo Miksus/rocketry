@@ -40,70 +40,178 @@ is how you could structure it:
 In short the files:
 
 - ``project/main.py``: Configure the session here
-- ``project/parameters.py``: Put here the session parameters for tasks
+- ``project/parameters.py``: Put here the session level task parameters
 - ``project/tasks/.../tasks.py``: Put here the actual tasks
 - ``project/models/conditions.py``: Put here your custom conditions
+- ``project/models/tasks.py``: Put here your custom task classes
 - ``project/models/hooks.py``: Put here your custom hooks
 
-Your ``main.py`` file could look like:
+
+Configuring the Session
+-----------------------
+
+Next we will create the ``project/main.py`` file. We configure the 
+session here, import the models, parameters and tasks and start the 
+actual session here. Configuring session is simple:
 
 .. code-block:: python
 
-    from redengine import session
+    from redengine import Session
 
-    # Import custom extensions
-    from .models import conditions, tasks
+    session = Session(
+        scheme=['log_csv'],
+        config={
+            'silence_task_prerun': True,
+            'silence_cond_check': True,
+            'force_status_from_logs': False,
+            'task_pre_exist': 'raise',
+            'use_instance_naming': False,
+            'cycle_sleep': None
+        }
+    )
 
+We made a new session that uses CSV logging scheme and has some 
+configurations. The schemes are premade setups that can be used 
+to reduce the need to configure the required loggers yourself.
+Read more about schemes in :ref:`logging-schemes`.
+
+Configs
+^^^^^^^
+
+There are also some configs in sessions. These are settings that 
+help to set the session to be more or less tolerant for errors.
+When developing, it may be good idea to crash on situations like 
+errors in condition checking or errors in parameters but for 
+production you may want not want to crash the whole scheduler 
+for such cases. The values we set above are the defaults which 
+are used if not set.
+
+Here is a quick description of these configurations:
+
+- ``task_pre_exist``: What to do when creating a task which name already exists. Options:
+
+    - ``raise``: Raise an error
+    - ``replace``: Remove the previous task and add the new task to the session
+    - ``ignore``: Don't set the new task to the session and leave the previous
+    - ``rename``: Add number(s) to the name of the new task until it has unique name
+
+- ``use_instance_naming``: If name not specified, use ``id(task)`` as the name of the task
+- ``silence_task_prerun``: Don't crash the scheduler if a task fails outside the actual execution. Task is always logged as fail.
+- ``silence_cond_check``: Don't crash the scheduler if checking a condition fails. If False, the state of a crashed condition is considered ``False``.
+- ``force_status_from_logs``: Force the task related conditions always read the logs to determine the state. If false, the cached state is used if possible for optimization.
+- ``cycle_sleep``: Seconds to wait after executing each cycle of tasks. By default no wait. 
+
+Logging
+^^^^^^^
+
+You can also add your own handlers to the logger that is used to log 
+the tasks. You could, for example, send filter the failures and send
+them via SMTPHandler to your email or print the task log to terminal
+using StreamHandler. In this demo we do the latter:
+
+.. code-block:: python
 
     # Set logging
     import logging
-    from redengine.log import CsvHandler, CsvFormatter
     
-    task_handler = CsvHandler(fields=[
-        task_name,
-        asctime,
-        action,
-        start, # Start of the task
-        end, # End of the task ('run' does not have end)
-        runtime,
-        message
-    ])
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(task_name)s %(message)s'))
 
     task_logger = logging.getLogger('redengine.task')
-    task_logger.setHandler(task_handler)
     task_logger.setHandler(console_handler)
-    task_logger.setLevel(logging.INFO)
 
+You can find more information about logging in Red Engine in :ref:`logging-guide`.
+
+Importing Models and Tasks
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next we will import the custom conditions and task classes we may have:
+
+.. code-block:: python
+
+    # Import custom extensions
+    from .models import conditions, tasks
+
+And then we could import the tasks themselves. You could just import 
+the files where the tasks are or alternatively you could use a *loader*.
+Loader is a task that loads other tasks from predefined location. 
+There is a loader ``PyLoader`` that imports Python files for us from 
+given location which we will use so we don't need to explicitly import
+every task file:
+
+.. code-block:: python
+
+    # We make sure the tasks are searched from the correct directory
+    # in case the current working directory is set somewhere else
+    from pathlib import Path
+    main_directory = Path(__file__).parent
 
     # Automatic loader so we don't need to import
     # task files manually.
     from redengine.tasks.loaders import PyLoader
-    PyLoader(path="tasks/", glob="**/tasks.py")
+    PyLoader(path=main_directory / "tasks/", glob="**/tasks.py")
+
+The ``PyLoader`` loads all Python files that matches 
+the given glob from given path. In this case, it finds 
+all tasks that are named ``tasks.py`` in ``project/tasks/``
+folder.
+
+Starting the scheduler
+^^^^^^^^^^^^^^^^^^^^^^
+
+And finally we start the scheduler:
+
+.. code-block:: python
 
     # Start the session
     if __name__ == '__main__':
         session.start()
 
-In this example we use ``PyLoader`` to load our task files
-but you can also just import them yourself to the Python
-file where you have your session. In our example, the tasks
-are located in files named as ``tasks.py`` somewhere in the 
-``project/tasks/`` directory.
+Content of main.py
+^^^^^^^^^^^^^^^^^^
 
-In addition, we use ``CsvHandler`` to log when tasks have been
-run, succeeded, failed or terminated. Alternatively, you could 
-also just use the ``redengine.log.MemoryHandler`` if you want
-to have the logs in memory or you can create your own handler.
-Just remember to include a ``.read()`` method that should return
-the log records as list of dicts or ``.query(...)`` method if 
-you want to handle the filtering of records yourself.
+All set here. Now your ``main.py`` file should look like this now:
 
-As Red Engine's logging is built completely on Python's ``Logging``
-library found in standard library, you can extend and have 
-any kind of logging strategies as far as there is one readable 
-logger for ``redengine.tasks`` logger.
+.. code-block:: python
+
+    import logging
+    from pathlib import Path
+
+    from redengine import Session
+    from redengine.tasks.loaders import PyLoader
+
+    from .models import conditions, tasks
+
+    session = Session(
+        scheme=['log_csv'],
+        config={
+            'silence_task_prerun': True,
+            'silence_cond_check': True,
+            'force_status_from_logs': False,
+            'task_pre_exist': 'raise',
+            'use_instance_naming': False
+        }
+    )
+
+    # Set logging    
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(task_name)s %(message)s'))
+
+    task_logger = logging.getLogger('redengine.task')
+    task_logger.setHandler(console_handler)
+
+    # We make sure the tasks are searched from the correct directory
+    # in case the current working directory is set somewhere else
+    main_directory = Path(__file__).parent
+
+    # Automatic loader so we don't need to import
+    # task files manually.
+    PyLoader(path=main_directory / "tasks/", glob="**/tasks.py")
+
+    # Start the session
+    if __name__ == '__main__':
+        session.start()
+
 
 Tasks
 -----
@@ -111,9 +219,8 @@ Tasks
 Next we will create some tasks. Put these to the ``tasks.py``
 files in ``project/tasks/`` directory, for example 
 ``project/tasks/scrapers/tasks.py``. We made some simple tasks
-in :ref:`short-guide` but we will discuss them more thorougly.
+already in :ref:`short-guide` but now we will discuss them more thorougly.
 Here is a practical example of such file:
-
 
 .. code-block:: python
 
@@ -131,17 +238,20 @@ Here is a practical example of such file:
     def go_to_work():
         ... # Code to work
 
-We made couple of tasks that runs as follows:
+We made couple of tasks that run as follows:
 
 - ``wake_up``: Runs once a day between 8 AM and 12 PM
 - ``wash_teeth``: Runs twice a day. Once between 08:00 AM to 08:15 AM and once between 10:00 PM and 10:15 PM
 - ``do_work``: Runs once a day between 9 AM and 10 AM but only on week days.
 
-As you probably noted, using ``&`` (and) and ``|`` (or) operators we can have pretty complex scheduling logic
-but still be fairly understandable to read. We used ``|`` operator to expand the time when ``wash_teeth``
-may run and ``&`` to further constain the time when ``go_to_work`` may run. You can build any logic you want
-and use parentheses (ie. ``... & (... | ...)``) to further manipulate how you schedule things. 
+Using ``&`` (and) and ``|`` (or) operators we can create more complex scheduling logic than individual 
+conditions allow. We made the task ``wash_teeth`` to run twice a day using the *or* operator and 
+further constrained the time the task ``go_to_work`` may run using the *and* operator. You can also 
+nest these operations using parentheses (ie. ``... & (... | ...)``).
  
+Pipelining
+^^^^^^^^^^
+
 You can also create task pipelines conveniently. Let's make a file ``project/tasks/pipelines/tasks.py``
 to demonstrate this:
 
@@ -165,12 +275,11 @@ to demonstrate this:
     def report_errors():
         ... # Code to report errors in getting data
 
-You can also built logic with ``&`` and ``|`` to run a task, for example, 
-after multiple tasks have all succeeded or when any of a list of tasks is 
-succeeded. 
+You can find more about pipelining from :ref:`pipeline-guide`. and more about different condition options
+from :ref:`condition-syntax`. You can also find more information about conditions from :ref:`conditions-intro`.
 
-See more condition options for ``start_cond`` in :ref:`condition-syntax` and read more about conditions 
-from :ref:`conditions-intro`.
+Execution
+^^^^^^^^^
 
 Next we will make some more tasks (let's say to ``project/tasks/checks/tasks.py``) to discuss some other features:
 
@@ -196,9 +305,13 @@ Note that we used different ``execution`` for these tasks.
 separate thread and ``check_mail`` will run on a separate
 process. There are advantages and disadvantages in each and
 they are further discussed in :ref:`parallelizing`. In short,
-``process`` allows the most parallelization and that is also
-the default if not specified. Execution ``process`` also allows
-you to terminate tasks and have timeouts like:
+``process`` allows the most parallelization but is the most 
+expensive in terms of initiation. It is also the default if not 
+specified. It also allows you to terminate tasks 
+and have timeouts like:
+
+Terminating
+^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -215,7 +328,10 @@ be terminated:
     def check_mail():
         ... # Code check messages
 
-Finally, we make some parameterized tasks to, let's say, 
+Parametrization
+^^^^^^^^^^^^^^^
+
+And finally, we make some parameterized tasks to, let's say, 
 ``project/tasks/send/task.py``:
 
 .. code-block:: python
@@ -239,12 +355,33 @@ tasks that require given parameter and don't have it set
 yet. Next we will create the logic to feed this parameter
 ``friend_list``  
 
+You can also use the output of a task as an input for 
+another task:
+
+.. code-block:: python
+
+    from redengine.tasks import FuncTask
+
+    @FuncTask()
+    def get_data():
+        ... # Code to get data
+        return data
+
+    @FuncTask(parametes={"my_data": Return('get_data')})
+    def process_data(mydata):
+        ... # Code to process data
+
+When the task ``process_data`` executes, the argument ``mydata``
+will get the return value of the task ``get_data`` as the value.
+In case ``get_data`` did not run before ``process_data``, the 
+argument will receive a value ``None``. 
+
 Parameters
 ----------
 
-Following the previous example, we will create a function 
+Following the previous example about the ``announce`` task, we will create a function 
 that acts as our parameter ``friend_list``. Let's put it in
-the file ```project/parameters.py```:
+the file ``project/parameters.py``:
 
 .. code-block:: python
 

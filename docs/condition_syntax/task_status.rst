@@ -4,9 +4,13 @@
 Task Status
 -----------
 
-- ``has [succeeded | failed | finished | started | terminated] [this hour | today | this week | this month] between <start> and <end>``
-- ``has [succeeded | failed | finished | started | terminated] [this hour | today | this week | this month] [before | after] <time>``
-- ``has [succeeded | failed | finished | started | terminated] past <timedelta>``
+**Syntax**
+
+.. code-block:: none
+
+   has [succeeded | failed | finished | started | terminated] [this hour | today | this week | this month] between <start> and <end>
+   has [succeeded | failed | finished | started | terminated] [this hour | today | this week | this month] [before | after] <time>
+   has [succeeded | failed | finished | started | terminated] past <timedelta>
 
 **True when**
   

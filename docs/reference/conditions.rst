@@ -1,6 +1,9 @@
 Conditions
 ==========
 
+.. autoclass:: redengine.conditions.FuncCond 
+
+.. autoclass:: redengine.conditions.TaskCond 
 
 Task related conditions
 -----------------------

@@ -13,8 +13,8 @@ Here is a check list of things you need:
 - Start the session
 
 
-Create Session
---------------
+Create a Session
+----------------
 
 First thing you need is a session. Session is an object that
 stores all the tasks and (session level) parameters for the 
@@ -78,4 +78,38 @@ When you have set up the tasks, you can just start the session by:
 .. code-block:: python
 
     session.start()
+
+
+Putting together
+----------------
+
+Our program should now look something like this:
+
+.. code-block:: python
+
+    from redengine import Session
+    from redengine.tasks import FuncTask
+
+    # Create a session that logs in csv file
+    Session(scheme="log_csv")
+
+    # Tasks    
+    @FuncTask(start_cond="daily after 08:00")
+    def wake_up():
+        print("Waking up...")
+        ... # Code to run once a day after 8 AM 
+
+    @FuncTask(start_cond="every 2 hours")
+    def check_messages():
+        print("Checking messages...")
+        ... # Code to run every 2 hours
+
+    @FuncTask(start_cond="daily between 23:00 and 05:00")
+    def go_to_bed():
+        print("Going to bed...")
+        ... # Code to run once a day between 11 PM and 5 AM
+
+    if __name__ == "__main__":
+        # Starting the scheduler
+        session.start()
 

@@ -6,7 +6,9 @@ Timedelta
 
 **Syntax**
 
-- ``every <timedelta>``
+.. code-block:: none
+
+    every <timedelta>
 
 **True when**
 

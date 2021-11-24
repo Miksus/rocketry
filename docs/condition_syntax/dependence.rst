@@ -4,8 +4,12 @@
 Task Dependence
 ---------------
 
-- ``after task '<task>'``
-- ``after task '<task>' [succeeded | failed | finished | terminated]``
+**Syntax**
+
+.. code-block:: none
+
+   after task '<task>'
+   after task '<task>' [succeeded | failed | finished | terminated]
 
 **True when**
 
