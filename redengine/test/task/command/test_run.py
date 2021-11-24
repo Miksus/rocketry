@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import platform
+import sys
 
 import pytest
 
@@ -55,7 +56,7 @@ def test_fail_command(tmpdir, execution, session):
         assert "fail" == task.status
 
         err = logs[1]["exc_text"].strip().replace('\r', '')
-        if platform.python_version() >= '3.8.0':
+        if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
             expected = "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
         else:
             expected = "OSError: Failed running command (2): \nUnknown option: --\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
