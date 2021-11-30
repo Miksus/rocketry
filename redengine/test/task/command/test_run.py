@@ -30,7 +30,7 @@ def test_success_command(tmpdir, session, cmd, params, systems, execution):
         task = CommandTask(
             command=cmd, 
             name="a task",
-            shell=False,
+            shell=True,
             execution="main",
             parameters=params,
             argform="short"
