@@ -12,7 +12,7 @@ Too lazy to read? :ref:`Get started then. <getting-started>`
 
 Red Engine is an open source advanced scheduling library made for 
 Python. It is suitable for automating processes, scheduling web scrapers,
-and building IOT applications. It also has minimal amount of dependencies 
+and building IOT applications. It also has minimal dependencies 
 and is pure Python.
 
 Visit the `source code from Github <https://github.com/Miksus/red-engine>`_
