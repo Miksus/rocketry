@@ -156,9 +156,13 @@ def mock_pydatetime(mock_time, mock_datetime_now):
 # Mongo Database
 @pytest.fixture(scope="function")
 def mongo_conn_str():
+    conf_path = Path("redengine/test/private.yaml")
     pytest.importorskip("pymongo")
+    if not conf_path.is_file():
+        pytest.skip("Missing Mongo connection")
     import yaml
-    with open("redengine/test/private.yaml", 'r') as f:
+
+    with open(conf_path, 'r') as f:
         conf = yaml.safe_load(f)
     return conf["mongodb"]["conn_str"]
 
