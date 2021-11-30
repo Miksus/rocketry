@@ -102,11 +102,11 @@ def test_success_bash_file(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
         assert not Path("test.txt").is_file()
 
-        file = tmpdir.join("my_command.bash")
+        file = tmpdir.join("my_command.sh")
         file.write('python3 -c "{code}"'.format(code="open('test.txt', 'w');"))
 
         task = CommandTask(
-            command=["my_command.bash"], 
+            command=["/bin/bash", "my_command.sh"], 
             name="a task",
             shell=False,
             execution="main"
