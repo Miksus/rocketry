@@ -378,8 +378,7 @@ class Task(metaclass=_TaskMeta):
             # Run the actual task
             if self.execution == "main":
                 direct_params = self.parameters
-                output = self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
-                self._handle_return(output)
+                self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -431,7 +430,7 @@ class Task(metaclass=_TaskMeta):
     def run_as_main(self, params:Parameters):
         return self._run_as_main(params, self.parameters)
 
-    def _run_as_main(self, params:Parameters, direct_params:Parameters, log_running=True, silence=False, **kwargs):
+    def _run_as_main(self, params:Parameters, direct_params:Parameters, log_running=True, handle_return=True, silence=False, **kwargs):
         """Run the task on the current thread and process"""
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
@@ -450,6 +449,9 @@ class Task(metaclass=_TaskMeta):
         try:
             output = self.execute(**params)
 
+            # NOTE: we process success here in case the process_success
+            # fails (therefore task fails)
+            self.process_success(output)
         except (SchedulerRestart, SchedulerExit):
             # SchedulerRestart is considered as successful task
             self.log_success()
@@ -474,9 +476,14 @@ class Task(metaclass=_TaskMeta):
 
         except Exception as exception:
             # All the other exceptions (failures)
-            self.log_failure()
+            try:
+                self.process_failure(*sys.exc_info())
+            except:
+                # Failure of failure processing
+                self.log_failure()
+            else:
+                self.log_failure()
             status = "failed"
-            self.process_failure(*sys.exc_info())
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
             self.exception = exception
@@ -484,10 +491,12 @@ class Task(metaclass=_TaskMeta):
                 raise
 
         else:
+            # Store the output
+            if handle_return:
+                self._handle_return(output)
             self.log_success(output)
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
-            self.process_success(output)
             
             return output
 
@@ -524,9 +533,6 @@ class Task(metaclass=_TaskMeta):
             self.log_failure()
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
-        else:
-            # Store the output
-            self._handle_return(output)
 
     def run_as_process(self, params:Parameters, daemon=None):
         """Create a new process and run the task on that."""
@@ -585,7 +591,7 @@ class Task(metaclass=_TaskMeta):
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
+            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, handle_return=False, silence=True)
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
