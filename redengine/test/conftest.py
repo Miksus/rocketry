@@ -69,7 +69,7 @@ def script_files(tmpdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def session():
-    session = Session(scheme="log_simple", config={
+    session = Session(scheme="log_test", config={
         "debug": True,
         "silence_task_prerun": False,
         "silence_cond_check": False,
