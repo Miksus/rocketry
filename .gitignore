@@ -54,3 +54,6 @@ docs/_build/
 
 # tox
 .tox/
+
+# Coverage
+cov_data/
