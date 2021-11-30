@@ -1,11 +1,8 @@
 
 from typing import Any, Callable
-import logging
 
 from redengine.core.parameters import BaseArgument
 from redengine.core.utils import filter_keyword_args
-
-LOGGER_RETURN = logging.getLogger(__name__ + ".Return")
 
 class Arg(BaseArgument):
     """A simple argument.
@@ -82,9 +79,8 @@ class Return(BaseArgument):
         return Arg(self.get_value())
 
     @classmethod
-    def to_session(cls, task_name:str, return_:Any):
+    def to_session(cls, task_name, return_):
         "Set the return to return parameters"
-        LOGGER_RETURN.debug(f"Handling return for {task_name}")
         cls.session.returns[task_name] = return_
 
 class FuncArg(BaseArgument):
