@@ -1,15 +1,14 @@
-pandas >= 1.0.0
-pytest >= 5.0.1
-psutil >= 5.7.0
-pyyaml >= 5.3.1
+# Required
+pandas
 
 # Optional
-gitpython >= 3.1.12
+pyyaml
+gitpython
 pymongo
 
-# For HTTP API
-PyJWT>=2.0.1
-Flask >= 1.1.2
-requests >= 2.25.1
-psutil >= 5.8.0
+# Optional, HTTP API
+PyJWT
+Flask
+requests
+psutil
 werkzeug

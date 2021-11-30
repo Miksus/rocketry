@@ -1,0 +1,8 @@
+# Testing
+pytest
+pytest-cov
+
+# Docs
+sphinx >= 1.7.5
+pydata-sphinx-theme
+sphinx_rtd_theme
