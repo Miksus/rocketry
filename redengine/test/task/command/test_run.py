@@ -10,13 +10,21 @@ from redengine.tasks import CommandTask
 from task_helpers import wait_till_task_finish
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-@pytest.mark.parametrize("cmd,params", [
-    pytest.param(["python", "-c", "open('test.txt', 'w');"], None, id="list"),
-    pytest.param("python -c \"open('test.txt', 'w');\"", None, id="string"),
-    pytest.param(["python"], {"c": "open('test.txt', 'w')"}, id="list with params"),
-    pytest.param("python", {"c": "open('test.txt', 'w')"}, id="string with params"),
+@pytest.mark.parametrize("cmd,params,systems", [
+    pytest.param(["python", "-c", "open('test.txt', 'w');"], None, ["win32"], id="list (win32)"),
+    pytest.param("python -c \"open('test.txt', 'w');\"", None, ["win32"], id="string (win32)"),
+    
+    pytest.param(["python"], {"c": "open('test.txt', 'w')"}, None, id="list with params (win32)"),
+    pytest.param("python", {"c": "open('test.txt', 'w')"}, None, id="string with params (win32)"),
+
+    pytest.param(["python3", "-c", "open('test.txt', 'w');"], None, ["linux", "linux2"], id="list (linux)"),
+    pytest.param("python3 -c \"open('test.txt', 'w');\"", None, ["linux", "linux2"], id="string (linux)"),
+    pytest.param(["python3"], {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], id="list with params (linux)"),
+    pytest.param("python3", {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], id="string with params (linux)"),
 ])
-def test_success_command(tmpdir, session, cmd, params, execution):
+def test_success_command(tmpdir, session, cmd, params, systems, execution):
+    if systems is not None and sys.platform not in systems:
+        pytest.skip("Command not supported by OS")
     with tmpdir.as_cwd() as old_dir:
         assert not Path("test.txt").is_file()
 
