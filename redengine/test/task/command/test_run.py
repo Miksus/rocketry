@@ -10,18 +10,18 @@ from redengine.tasks import CommandTask
 from task_helpers import wait_till_task_finish
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-@pytest.mark.parametrize("cmd,params,systems", [
-    pytest.param(["python", "-c", "open('test.txt', 'w');"], None, ["win32"], id="list (win32)"),
-    pytest.param("python -c \"open('test.txt', 'w');\"", None, ["win32"], id="string (win32)"),
-    pytest.param(["python"], {"c": "open('test.txt', 'w')"}, ["win32"], id="list with params (win32)"),
-    pytest.param("python", {"c": "open('test.txt', 'w')"}, ["win32"], id="string with params (win32)"),
+@pytest.mark.parametrize("cmd,params,systems,shell", [
+    pytest.param(["python", "-c", "open('test.txt', 'w');"], None, ["win32"], False, id="list (win32)"),
+    pytest.param("python -c \"open('test.txt', 'w');\"", None, ["win32"], False, id="string (win32)"),
+    pytest.param(["python"], {"c": "open('test.txt', 'w')"}, ["win32"], False, id="list with params (win32)"),
+    pytest.param("python", {"c": "open('test.txt', 'w')"}, ["win32"], False, id="string with params (win32)"),
 
-    pytest.param(["python3", "-c", "open('test.txt', 'w');"], None, ["linux", "linux2"], id="list (linux)"),
-    pytest.param("python3 -c \"open('test.txt', 'w');\"", None, ["linux", "linux2"], id="string (linux)"),
-    pytest.param(["python3"], {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], id="list with params (linux)"),
-    pytest.param("python3", {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], id="string with params (linux)"),
+    pytest.param(["python3", "-c", "open('test.txt', 'w');"], None, ["linux", "linux2"], False, id="list (linux)"),
+    pytest.param("python3 -c \"open('test.txt', 'w');\"", None, ["linux", "linux2"], True, id="string (linux)"),
+    pytest.param(["python3"], {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], False, id="list with params (linux)"),
+    pytest.param("python3", {"c": "open('test.txt', 'w')"}, ["linux", "linux2"], True, id="string with params (linux)"),
 ])
-def test_success_command(tmpdir, session, cmd, params, systems, execution):
+def test_success_command(tmpdir, session, cmd, params, systems,shell, execution):
     if systems is not None and sys.platform not in systems:
         pytest.skip("Command not supported by OS")
     with tmpdir.as_cwd() as old_dir:
@@ -30,7 +30,7 @@ def test_success_command(tmpdir, session, cmd, params, systems, execution):
         task = CommandTask(
             command=cmd, 
             name="a task",
-            shell=True,
+            shell=shell,
             execution="main",
             parameters=params,
             argform="short"
