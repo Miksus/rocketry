@@ -27,17 +27,14 @@ def test_normal(session, execution):
         name="return task",
         start_cond="~has started",
         execution=execution,
-        force_run=True,
-        priority=90,
+        force_run=True
     )
     task = FuncTask(
         func_x_with_arg, 
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return('return task')},
-        execution=execution,
-        force_run=True,
-        priority=10
+        execution=execution
     )
     scheduler = Scheduler(
         shut_cond=TaskStarted(task="a task") >= 1
