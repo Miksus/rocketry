@@ -22,13 +22,15 @@ draft/
 .env
 .venv
 env/
+env_linux/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# VS Code
+# IDE
 .vscode/
+.idea/
 
 # Testing
 .pytest_cache/
