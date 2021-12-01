@@ -27,7 +27,7 @@ def test_taskcond(capsys, session, execution):
     FuncTask(lambda: None, start_cond="is foo at work", name="task not running 2", execution="main")
 
     scheduler = Scheduler( # (TaskStarted(task="a task") >= 2) | 
-        shut_cond=(TaskStarted(task="a task") >= 2)
+        shut_cond=(TaskStarted(task="a task") >= 2) | ~SchedulerStarted(period="past 5 seconds")
     )
 
     scheduler()
