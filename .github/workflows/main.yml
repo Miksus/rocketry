@@ -39,10 +39,15 @@ jobs:
         python -m pip install -r requirements.txt
         python -m pip install -r requirements/ci.txt
         python -m pip install -e .
-        
+     
     - name: Run test suite
       run: |
-        python -m pytest --pyargs redengine --cov-report=xml --cov-config=.coveragerc
+        python -m pytest --pyargs redengine
+    
+    # Seems there is a possible problem with pytest-cov parallelization
+    #- name: Run test suite
+    #  run: |
+    #    python -m pytest --pyargs redengine --cov-report=xml --cov-config=.coveragerc
 
-    - name: Upload test coverage
-      uses: codecov/codecov-action@v2
+    #- name: Upload test coverage
+    #  uses: codecov/codecov-action@v2
