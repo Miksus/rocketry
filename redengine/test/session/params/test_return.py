@@ -45,7 +45,7 @@ def test_normal(session, execution):
 
     assert task.status is None
     scheduler()
-
+    assert dict(session.returns) == {"return task": "x"}
     assert "success" == task_return.status
     assert "success" == task.status
 

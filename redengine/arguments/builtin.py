@@ -81,7 +81,8 @@ class Return(BaseArgument):
     @classmethod
     def to_session(cls, task_name, return_):
         "Set the return to return parameters"
-        cls.session.returns[task_name] = return_
+        if return_ is not None:
+            cls.session.returns[task_name] = return_
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
