@@ -4,9 +4,10 @@
 
 -----------------
 
-[![Documentation Status](https://readthedocs.org/projects/red-engine/badge/?version=latest)](https://red-engine.readthedocs.io/en/latest/?badge=latest)
 [![Pypi version](https://badgen.net/pypi/v/redengine)](https://pypi.org/project/redengine/)
 [![PyPI pyversions](https://badgen.net/pypi/python/redengine)](https://pypi.org/project/redengine/)
+[![build](https://github.com/Miksus/red-engine/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/Miksus/red-engine/actions/workflows/main.yml)
+[![Documentation Status](https://readthedocs.org/projects/red-engine/badge/?version=latest)](https://red-engine.readthedocs.io/en/latest/?badge=latest)
 
 ## What is it?
 Red Engine is a Python scheduling library with a focus on productivity, readability and extendability.
