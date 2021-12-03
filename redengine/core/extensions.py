@@ -1,6 +1,8 @@
 
 from redengine.parse.utils import instances, ParserPicker
 from redengine.core.meta import _register
+from redengine._session import Session
+from redengine._base import RedBase
 
 CLS_EXTENSIONS = {}
 PARSERS = {}
@@ -23,12 +25,14 @@ class _ExtensionMeta(type):
         if parse_key is not None:
             from redengine import Session
             parser = _get_parser(cls.parse_cls)
-            Session.parser[parse_key] = parser
-            PARSERS[parse_key] = parser
+            if Session.parser is not None:
+                # User defined
+                Session.parser[parse_key] = parser
+            Session._ext_parsers[parse_key] = parser
         _register(cls, CLS_EXTENSIONS)
         return cls
 
-class BaseExtension(metaclass=_ExtensionMeta):
+class BaseExtension(RedBase, metaclass=_ExtensionMeta):
     """Base for all extensions that are registered
     to the sessions and are parsable in configs.
 

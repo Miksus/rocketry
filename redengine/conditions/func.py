@@ -2,8 +2,9 @@
 import copy
 from typing import Callable, List, Optional, Pattern, Union
 
+
+from redengine._session import Session
 from redengine.core.condition import BaseCondition
-from redengine.core.condition.base import PARSERS
 
 class FuncCond(BaseCondition):
     """Condition from a function.
@@ -89,9 +90,12 @@ class FuncCond(BaseCondition):
         return self.func(*self.args, **self.kwargs)
 
     def _set_parsing(self):
+
+        session = Session.session
+
         syntaxes = [self.syntax] if not isinstance(self.syntax, (list, tuple, set)) else self.syntax
         for syntax in syntaxes:
-            PARSERS[syntax] = self._recreate
+            session.cond_parsers[syntax] = self._recreate
 
     def __repr__(self):
         cls_name = type(self).__name__

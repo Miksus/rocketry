@@ -3,6 +3,7 @@ from typing import Callable, Dict, Pattern, Union
 
 from ..utils import ParserError, CondParser
 from redengine.core.condition.base import PARSERS, BaseCondition
+from redengine._session import Session
 
 CONDITION_PARSERS = []
 
@@ -15,12 +16,15 @@ def add_condition_parser(d: Dict[Union[str, Pattern], Union[Callable, 'BaseCondi
     d : dict
         TODO
     """
-    PARSERS.update(d)
+    parsers = Session._cond_parsers #! TODO
+    parsers.update(d)
 
 def parse_condition_item(s:str) -> BaseCondition:
     "Parse one condition"
 
-    for statement, parser in PARSERS.items():
+    session = Session.session
+
+    for statement, parser in session.cond_parsers.items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
             if res:

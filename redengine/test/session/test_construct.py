@@ -87,6 +87,20 @@ class TestInit:
         assert seqs["my-sequence-1"].interval == parse_time("every 2 hours")
         assert seqs["my-sequence-2"].interval is None
 
+    def test_set_cls_condition(self):
+        session = Session()
+        class MyCond(BaseCondition):
+            __parsers__ = {"is my foo": "__init__"}
+            def __bool__(self):
+                return True
+        
+        assert "is my foo" in session.cond_parsers
+        # Create new, should reset
+        session = Session()
+        assert "is my foo" not in session.cond_parsers
+        assert len(session.cond_parsers) > 0
+
+
 class TestDict:
 
     def test_empty(self):

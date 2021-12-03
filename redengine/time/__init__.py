@@ -7,8 +7,9 @@ import calendar
 
 from .construct import get_between, get_before, get_after, get_full_cycle, get_on
 
-from redengine.core.time import PARSERS
-PARSERS.update(
+from redengine._session import Session
+
+Session._time_parsers.update(
     {
         re.compile(r"time of (?P<type_>month|week|day|hour|minute) between (?P<start>.+) and (?P<end>.+)"): get_between,
         re.compile(r"time of (?P<type_>month|week|day|hour|minute) after (?P<start>.+)"): get_after,

@@ -365,7 +365,7 @@ class ExtensionLoader(ContentLoader):
             raise TypeError("Expected a list of tasks or a dict of task.")
 
     def parse_extensions(self, conf:dict):
-        for key, parser in extensions.PARSERS.items():
+        for key, parser in Session.session.ext_parsers.items():
             if key in conf:
                 ext_conf = conf[key]
                 if self.name_pattern:

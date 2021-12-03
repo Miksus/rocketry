@@ -1,7 +1,7 @@
 
 from multiprocessing import cpu_count
 import multiprocessing
-from typing import Callable, Optional, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union
 import threading
 import traceback
 import time
@@ -15,6 +15,7 @@ from queue import Empty
 import pandas as pd
 from redengine.arguments.builtin import Return
 
+from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, set_statement_defaults, AlwaysFalse
 from redengine.core.task import Task
 from redengine.core.parameters import Parameters
@@ -22,8 +23,9 @@ from redengine.core.exceptions import SchedulerRestart, SchedulerExit
 from redengine.core.utils import is_pickleable
 from redengine.core.hook import _Hooker
 
-
-class Scheduler:
+if TYPE_CHECKING:
+    from redengine import Session
+class Scheduler(RedBase):
     """Multiprocessing scheduler
 
     Parameters
@@ -71,7 +73,7 @@ class Scheduler:
         for. One session has only one 
         scheduler.
     """
-    session = None # This is set as redengine.session
+    session: 'Session'
 
     def __init__(self, session=None, max_processes:Optional[int]=None, tasks_as_daemon:bool=True, timeout="30 minutes",
                 shut_cond:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,

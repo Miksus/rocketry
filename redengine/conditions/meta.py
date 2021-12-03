@@ -5,8 +5,6 @@ from typing import Callable, Pattern, Union
 from redengine.core.condition import BaseCondition #, Task
 from redengine.core.parameters.arguments import BaseArgument
 
-from redengine.core.condition.base import PARSERS
-
 class _CondStatus(BaseArgument):
 
     @classmethod
@@ -128,7 +126,7 @@ class TaskCond(BaseCondition):
 
     def _set_parsing(self):
         from redengine.parse import CondParser
-        PARSERS[self.syntax] = CondParser(func=self._set_task, cached=True)
+        self.session.cond_parsers[self.syntax] = CondParser(func=self._set_task, cached=True)
 
     def _get_func_name(self, func):
         func_module = func.__module__
