@@ -1,6 +1,8 @@
 from redengine.core import BaseCondition, Task
 
+from redengine._session import Session
 from redengine.parse import add_condition_parser
+from redengine.parse.session import session_parser
 from redengine.conditions import true, false
 
 def _setup_defaults():
@@ -19,3 +21,8 @@ def _setup_defaults():
         "always false": false,
         "always true": true
     })
+
+    Session.parser = session_parser
+
+    # Manually setting extra parsers
+    Session.parser["sequences"] = Session._ext_parsers["sequences"]

@@ -6,8 +6,9 @@ import itertools
 
 import pandas as pd
 
+from redengine._base import RedBase
 from redengine.core.meta import _add_parser
-
+from redengine._session import Session
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 
@@ -15,11 +16,16 @@ class _TimeMeta(type):
     def __new__(mcs, name, bases, class_dict):
         cls = type.__new__(mcs, name, bases, class_dict)
         # Add the parsers
-        _add_parser(cls, container=PARSERS)
+        if cls.session is None:
+            # Package defaults
+            _add_parser(cls, container=Session._time_parsers)
+        else:
+            # User defined
+            _add_parser(cls, container=cls.session.time_parsers)
         return cls
 
 
-class TimePeriod(metaclass=_TimeMeta):
+class TimePeriod(RedBase, metaclass=_TimeMeta):
     """Base for all classes that represent a time period.
 
     Time period is a period in time with a start and an end.

@@ -3,6 +3,7 @@ from typing import Pattern
 
 from ..utils import ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
+from redengine._session import Session
 
 def add_time_parser(d):
     """Add a parsing instruction to be used for parsing a 
@@ -20,11 +21,12 @@ def add_time_parser(d):
         Whether the 's' is a regex or exact string, 
         by default True
     """
-    PARSERS.update(d)
+    Session._time_parsers.update(d)
 
 def parse_time_item(s:str):
     "Parse one condition"
-    for statement, parser in PARSERS.items():
+    parsers = Session.session.time_parsers
+    for statement, parser in parsers.items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
             if res:

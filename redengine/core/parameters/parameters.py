@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Callable, Type, Union, TYPE_CHECKING
 from functools import partial
 
+from redengine._base import RedBase
 from .arguments import BaseArgument
 from redengine.core.utils import is_pickleable
 from redengine.pybox.io import read_yaml
@@ -12,7 +13,7 @@ from redengine.core.utils import filter_keyword_args
 if TYPE_CHECKING:
     import redengine
 
-class Parameters(Mapping): # Mapping so that mytask(**Parameters(...)) would work
+class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) would work
     """Parameter set for tasks.
 
     Parameter set is a mapping (like dictionary).

@@ -2,7 +2,9 @@ import datetime
 from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
 
+from redengine._base import RedBase
 from redengine.core.meta import _add_parser, _register
+from redengine._session import Session
 
 
 CLS_CONDITIONS: Dict[str, Type['BaseCondition']] = {}
@@ -19,11 +21,18 @@ class _ConditionMeta(type):
         _register(cls, CLS_CONDITIONS)
 
         # Add the parsers
-        _add_parser(cls, container=PARSERS)
+        if cls.session is None:
+            # Red engine default conditions
+            # storing to the class
+            _add_parser(cls, container=Session._cond_parsers)
+        else:
+            # User defined conditions
+            # storing to the object
+            _add_parser(cls, container=cls.session.cond_parsers)
         return cls
 
 
-class BaseCondition(metaclass=_ConditionMeta):
+class BaseCondition(RedBase, metaclass=_ConditionMeta):
     """A condition is a thing/occurence that should happen in 
     order to something happen.
 
@@ -75,7 +84,7 @@ class BaseCondition(metaclass=_ConditionMeta):
 
     """
     # The session (set in redengine.session)
-    session = None
+    session: Session
 
     __parsers__ = {}
     __register__ = False

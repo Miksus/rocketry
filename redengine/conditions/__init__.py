@@ -8,8 +8,9 @@ from .git import *
 from .parameter import ParamExists, IsEnv
 from .meta import TaskCond
 
-from redengine.core.condition import PARSERS, CLS_CONDITIONS
-from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not
+from redengine._session import Session
+from redengine.core.condition import CLS_CONDITIONS
+from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
 
 true = AlwaysTrue()
 false = AlwaysFalse()
@@ -41,7 +42,6 @@ def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
 
 
 def _set_is_period_parsing():
-    from redengine.core.time import PARSERS as _TIME_PARSERS
     
     from functools import partial
 
@@ -49,14 +49,20 @@ def _set_is_period_parsing():
         period = period_constructor(*args, **kwargs)
         return IsPeriod(period=period)
 
-    PARSERS.update(
+    cond_parsers = Session._cond_parsers
+    time_parsers = Session._time_parsers
+    
+    cond_parsers.update(
         {
             parsing: partial(_get_is_period, period_constructor=parser)
-            for parsing, parser in _TIME_PARSERS.items()
+            for parsing, parser in time_parsers.items()
         }
     )
 
 def _set_task_has_parsing():
+
+    cond_parsers = Session._cond_parsers
+
     clss = [
         ("failed", TaskFailed),
         ("succeeded", TaskSucceeded),
@@ -68,7 +74,7 @@ def _set_task_has_parsing():
     for (action, cls) in clss:
         func = partial(_from_period_task_has, cls=cls)
         for prefix in ("", r"task '(?P<task>.+)' "):
-            PARSERS.update(
+            cond_parsers.update(
                 {
                     re.compile(fr"{prefix}has {action}"): cls,
                     re.compile(fr"{prefix}has {action} (?P<type_>this month|this week|today|this hour|this minute) (?P<span_type>starting) (?P<start>.+)"): func,
@@ -82,9 +88,12 @@ def _set_task_has_parsing():
             )
 
 def _set_scheduler_parsing():
+
+    cond_parsers = Session._cond_parsers
+
     cls = SchedulerStarted
     func = partial(_from_period_task_has, cls=cls)
-    PARSERS.update(
+    cond_parsers.update(
         {
             re.compile(fr"scheduler has run over (?P<past>.+)"): partial(func, span_type='past', inverse=True),
             re.compile(fr"scheduler started (?P<past>.+) ago"): partial(func, span_type='past'),

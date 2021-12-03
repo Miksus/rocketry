@@ -2,10 +2,12 @@
 from typing import Any, TYPE_CHECKING
 from abc import abstractmethod
 
+from redengine._base import RedBase
+
 if TYPE_CHECKING:
     import redengine
 
-class BaseArgument:
+class BaseArgument(RedBase):
     """Base class for Arguments.
     
     Argument is a wrapper for value that can be 

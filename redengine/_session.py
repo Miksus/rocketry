@@ -7,20 +7,27 @@ about the scehuler/task/parameters etc.
 
 import logging
 from pathlib import Path
-from redengine.conditions.scheduler import SchedulerCycles
 from redengine.pybox.io.read import read_yaml
-from typing import Iterable, Dict, List, Tuple, Type, Union
+from typing import TYPE_CHECKING, Iterable, Dict, List, Tuple, Type, Union, Any
 from itertools import chain
 
-import redengine
-from redengine.core import BaseExtension, extensions, parameters
-from redengine.core.log import TaskAdapter
-from redengine.core import Scheduler, Task, BaseCondition, Parameters, BaseArgument
-from redengine.conditions import Any
 from redengine.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
-from redengine import parse
+from redengine._base import RedBase
 
-class Session:
+if TYPE_CHECKING:
+    from redengine.core.log import TaskAdapter
+    from redengine.parse import StaticParser
+    from redengine.core import (
+        Task,
+        BaseExtension,
+        Scheduler,
+        BaseCondition,
+        Parameters,
+        BaseArgument,
+        TimePeriod
+    )
+
+class Session(RedBase):
     """Collection of the scheduler objects.
 
     Parameters
@@ -64,13 +71,11 @@ class Session:
 
     """
 
-    tasks: Dict[str, Task]
+    tasks: Dict[str, 'Task']
     config: Dict[str, Any]
-    extensions: Dict[Type, Dict[str, BaseExtension]]
-    parameters: Parameters
-    scheduler: Scheduler
-
-    cls_scheduler = Scheduler
+    extensions: Dict[Type, Dict[str, 'BaseExtension']]
+    parameters: 'Parameters'
+    scheduler: 'Scheduler'
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
@@ -87,25 +92,25 @@ class Session:
         "debug": False,
     }
 
-    parser = parse.StaticParser({
-            "logging": parse.Field(parse.parse_logging, if_missing="ignore"),
-            "parameters": parse.Field(parse.parse_session_params, if_missing="ignore", types=(dict,)),
-            "tasks": parse.Field(parse.parse_tasks, if_missing="ignore", types=(dict, list)),
-            "scheduler": parse.Field(parse.parse_scheduler, if_missing="ignore"),
-            # Note that extensions are set in redengine.ext
-        },
-        on_extra="ignore", 
-    )
+    parser: 'StaticParser' = None # Set later due to circular import
+
+    _time_parsers: Dict[str, 'TimePeriod'] = {}
+    _cond_parsers: Dict[str, 'BaseCondition'] = {}
+    _ext_parsers: Dict[str, 'BaseExtension'] = {}
 
     def __init__(self, 
                  config:dict=None, 
                  tasks:dict=None, 
-                 parameters:Parameters=None, 
+                 parameters:'Parameters'=None, 
                  extensions:dict=None, 
                  scheme:Union[str,list]=None, 
                  as_default=True,
                  kwds_scheduler=None, 
                  delete_existing_loggers=False):
+
+        # To prevent circular importing
+        from redengine.core import Parameters, Scheduler
+            
         # Set defaults
         config = {} if config is None else config
         
@@ -121,6 +126,11 @@ class Session:
         self.extensions = extensions
         self.cond_cache = {}
 
+        # Parsers
+        self.cond_parsers = self._cond_parsers.copy()
+        self.time_parsers = self._time_parsers.copy()
+        self.ext_parsers = self._ext_parsers.copy()
+
         if delete_existing_loggers:
             # Delete existing task loggers
             # so that the old loggers won't
@@ -129,7 +139,7 @@ class Session:
             self.delete_task_loggers()
 
         kwds_scheduler = {} if kwds_scheduler is None else kwds_scheduler
-        self.scheduler = self.cls_scheduler(session=self, **kwds_scheduler)
+        self.scheduler = Scheduler(session=self, **kwds_scheduler)
         if scheme is not None:
             is_list_of_schemes = not isinstance(scheme, str)
             if is_list_of_schemes:
@@ -186,6 +196,9 @@ class Session:
             itself. Just to run specific tasks when the system itself
             is not running.
         """
+        # To prevent circular import
+        from redengine.conditions.scheduler import SchedulerCycles
+
         orig_vals = {}
         for name, task in self.tasks.items():
             orig_vals[name] = {
@@ -222,9 +235,10 @@ class Session:
 
     def get_task(self, task):
         #! TODO: Do we need this?
+        from redengine.core import Task
         return self.tasks[task] if not isinstance(task, Task) else task
 
-    def get_task_loggers(self, with_adapters=True) -> Dict[str, Union[TaskAdapter, logging.Logger]]:
+    def get_task_loggers(self, with_adapters=True) -> Dict[str, Union['TaskAdapter', logging.Logger]]:
         """Get task logger(s) from the session.
 
         Parameters
@@ -241,6 +255,7 @@ class Session:
             Placeholders and loggers built for parallelized
             tasks are ignored.
         """
+        from redengine.core.log import TaskAdapter
 
         basename = self.config["task_logger_basename"]
         return {
@@ -252,7 +267,7 @@ class Session:
             and not name.endswith("_process") # No private
         }
 
-    def get_scheduler_loggers(self, with_adapters=True) -> Dict[str, Union[TaskAdapter, logging.Logger]]:
+    def get_scheduler_loggers(self, with_adapters=True) -> Dict[str, Union['TaskAdapter', logging.Logger]]:
         """Get scheduler logger(s) from the session.
 
         Parameters
@@ -268,6 +283,9 @@ class Session:
             in which the key is the logger name.
             Placeholders and private loggers are ignored.
         """
+
+        from redengine.core.log import TaskAdapter
+
         basename = self.config["scheduler_logger_basename"]
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
@@ -331,6 +349,8 @@ class Session:
     def clear(self):
         """Clear tasks, parameters etc. of the session"""
         #! TODO: Remove?
+        from redengine.core import Parameters
+
         self.tasks = {}
         self.parameters = Parameters()
         self.scheduler = None
@@ -344,6 +364,11 @@ class Session:
         state["scheduler"] = None
         state["parser"] = None
         state["cond_cache"] = None
+        state["session"] = None
+
+        state["cond_parsers"] = None
+        state["time_parsers"] = None
+        state["ext_parsers"] = None
         return state
 
     @property
@@ -361,23 +386,25 @@ class Session:
         next tasks, conditions and schedulers that
         are created.
         """
-        Scheduler.session = self
-        Task.session = self
-        BaseCondition.session = self
-        Parameters.session = self
-        BaseExtension.session = self
+
+        RedBase.session = self
+
+        import redengine
         redengine.session = self
-        BaseArgument.session = self
 
     @property
-    def tasks(self) -> Dict[str, Task]:
+    def tasks(self) -> Dict[str, 'Task']:
         """Dict[str, Task]: Dictionary of the tasks in the session.
         The key is the name of the task and values are the 
         :py:class:`redengine.core.Task` objects."""
         return self._tasks
 
     @tasks.setter
-    def tasks(self, item:Union[List[Task], Dict[str, Task]]):
+    def tasks(self, item:Union[List['Task'], Dict[str, 'Task']]):
+
+        # To prevent circular importing
+        from redengine.core import Task
+
         tasks = {}
         if item is None:
             pass
@@ -394,23 +421,28 @@ class Session:
         self._tasks = tasks
 
     @property
-    def parameters(self) -> Parameters:
+    def parameters(self) -> 'Parameters':
         """Parameters: Session level parameters."""
         return self._params
 
     @parameters.setter
-    def parameters(self, item:Union[Dict, Parameters]):
+    def parameters(self, item:Union[Dict, 'Parameters']):
+        from redengine.core import Parameters
         self._params = Parameters(item)
 
     @property
-    def extensions(self) -> Dict[str, Dict[str, BaseExtension]]:
+    def extensions(self) -> Dict[str, Dict[str, 'BaseExtension']]:
         """Dict[str, Dict[str, BaseExtension]]: Dictionary of the extensions 
         in the session. The first key is the parse keys of the extensions
         and second key the names of the extension objects."""
         return self._extensions
 
     @extensions.setter
-    def extensions(self, item:Union[List[BaseExtension], Dict[str, Dict[str, BaseExtension]]]):
+    def extensions(self, item:Union[List['BaseExtension'], Dict[str, Dict[str, 'BaseExtension']]]):
+
+        # Prevent circular import
+        from redengine.core import BaseCondition, BaseExtension
+        
         exts = {}
         if item is None:
             pass

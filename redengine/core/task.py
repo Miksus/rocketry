@@ -18,6 +18,7 @@ from queue import Empty
 import pandas as pd
 from redengine.arguments.builtin import Return
 
+from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
 from redengine.core.parameters import Parameters
 from redengine.core.log import TaskAdapter
@@ -46,7 +47,7 @@ class _TaskMeta(type):
         return cls
 
 
-class Task(metaclass=_TaskMeta):
+class Task(RedBase, metaclass=_TaskMeta):
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that 
@@ -162,7 +163,7 @@ class Task(metaclass=_TaskMeta):
 
     daemon: Optional[bool]
 
-    session: 'Session' = None
+    session: 'Session'
     return_arg: Type['BaseArgument'] = Return
 
     # Instance
