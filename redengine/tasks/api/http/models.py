@@ -54,7 +54,6 @@ class RedengineJSONEncoder(JSONEncoder):
             "name": task.name,
             "start_cond": task.start_cond,
             "end_cond": task.end_cond,
-            "run_cond": task.run_cond,
             "status": task.status,
             "logger": task.logger.name,
             "parameters": dict(**task.parameters),
