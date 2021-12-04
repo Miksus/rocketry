@@ -1,6 +1,6 @@
 # Testing
 pytest
-# pytest-cov
+pytest-cov
 
 # Docs
 sphinx >= 1.7.5
