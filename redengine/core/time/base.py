@@ -190,10 +190,6 @@ class TimeDelta(TimePeriod):
         
         self.past = abs(pd.Timedelta(past, **kws_past))
         self.future = abs(pd.Timedelta(future, **kws_future))
-        if pd.isna(self.past):
-            raise future("TimeDelta past duration cannot be 'not a time'")
-        if pd.isna(self.past):
-            raise ValueError("TimeDelta future duration cannot be 'not a time'")
 
     @abstractmethod
     def __contains__(self, dt):

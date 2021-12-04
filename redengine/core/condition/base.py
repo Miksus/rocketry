@@ -127,14 +127,6 @@ class BaseCondition(RedBase, metaclass=_ConditionMeta):
 class _ConditionContainer:
     "Wraps another condition"
 
-    def flatten(self):
-        conditions = []
-        for attr in self._cond_attrs:
-            conds = getattr(self, attr)
-
-            conditions += conds
-        return conditions
-        
     def __getitem__(self, val):
         return self.subconditions[val]
 
@@ -274,40 +266,3 @@ class AlwaysFalse(BaseCondition):
             return super().__str__()
         except AttributeError:
             return 'false'
-
-
-class TimeCondition(BaseCondition):
-    """Base class for Time conditions (whether currently is specified time of day)
-    """
-    # TODO: Replace with IsPeriod
-    def __init__(self, *args, **kwargs):
-        if hasattr(self, "period_class"):
-            self.period = self.period_class(*args, **kwargs)
-
-    def __bool__(self):
-        now = datetime.datetime.now()
-        return now in self.period
-
-    def estimate_next(self, dt):
-        interval = self.period.rollforward(dt)
-        return dt - interval.left
-
-    @classmethod
-    def from_period(cls, period):
-        new = TimeCondition()
-        new.period = period
-        return new
-
-    def __repr__(self):
-        if hasattr(self, "period"):
-            return f'<is {repr(self.period)}>'
-        else:
-            return type(self).__name__
-
-    def __eq__(self, other):
-        "Equal operation"
-        is_same_class = isinstance(other, type(self))
-        if is_same_class:
-            return self.period == other.period
-        else:
-            return False
