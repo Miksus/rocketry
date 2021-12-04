@@ -135,14 +135,6 @@ class AnchoredInterval(TimeInterval):
     def anchor_str(self, s, **kwargs) -> int:
         raise NotImplementedError
 
-    @classmethod
-    def from_starting(cls, starting):
-        # Replaces TimeCycles
-        obj = cls(starting)
-        if obj._start != 0:
-            # End is one nanosecond away from start
-            obj._end = obj._start - 1 
-
     def __contains__(self, dt) -> bool:
         "Whether dt is in the interval"
 

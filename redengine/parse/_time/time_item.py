@@ -5,24 +5,6 @@ from ..utils import ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
 from redengine._session import Session
 
-def add_time_parser(d):
-    """Add a parsing instruction to be used for parsing a 
-    string to condition.
-
-    Parameters
-    ----------
-    s : str
-        Exact string (if regex=False) or regex (if regex=True)
-        to be matched. If regex and has groups, the groups are
-        passed to func.
-    func : Callable
-        Function that should return a condition. 
-    regex : bool, optional
-        Whether the 's' is a regex or exact string, 
-        by default True
-    """
-    Session._time_parsers.update(d)
-
 def parse_time_item(s:str):
     "Parse one condition"
     parsers = Session.session.time_parsers

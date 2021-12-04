@@ -1,5 +1,5 @@
 from .interval import *
-from redengine.core.time import TimeDelta, StaticInterval
+from redengine.core.time import TimeDelta, StaticInterval, All, Any
 
 # Syntax
 import pandas as pd

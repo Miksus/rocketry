@@ -65,7 +65,6 @@ def test_full_featured(tmpdir, session):
                     "calculate.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
                     "report.signals": {"class": "FuncTask", "func": "funcs.do_a_task"},
 
-                    "maintain.fetch": {"class": "FuncTask", "func": "funcs.do_a_task", "start_cond": {"class": "IsGitBehind", "fetch": True}, "execution": "main"},
                     "maintain.pull": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main"},
                     "maintain.status": {"class": "FuncTask", "func": "funcs.do_a_task", "execution": "main", "start_cond": "daily starting 19:00"},
                 },
@@ -111,7 +110,6 @@ def test_full_featured(tmpdir, session):
             # "quarterly",
 
             "maintain.notify-1", 
-            "maintain.fetch",
             "maintain.pull",
             "maintain.status",
 

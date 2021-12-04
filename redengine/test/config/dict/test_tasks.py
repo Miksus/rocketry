@@ -7,19 +7,13 @@ def test_init_maintain(tmpdir, session):
         sess = Session.from_dict(
             {
                 "tasks": {
-                    "git-fetch": {"class": "GitFetch"},
-                    "git-pull": {"class": "GitPull"},
-                    "pip-install": {"class": "PipInstall"},
-                     "restart": {"class": "Restart"}
+                    "restart": {"class": "Restart"}
                 },
             }
         )
         tasks = sess.tasks
         assert [
-            "git-fetch",
-            "git-pull",
-            "pip-install",
-             "restart"
+            "restart"
         ] == [sess.get_task(task).name for task in tasks]
 
 def test_without_class():

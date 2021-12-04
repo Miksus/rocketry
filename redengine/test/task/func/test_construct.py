@@ -159,11 +159,6 @@ def test_construct_decorate_default_name(tmpdir, session):
             None,
             AlwaysTrue(),
             id="AlwaysTrue"),
-        pytest.param(
-            AlwaysTrue(),
-            ["another task"],
-            AlwaysTrue() & DependSuccess(task="task", depend_task="another task"),
-            id="AlwaysTrue with dependent"),
     ],
 )
 def test_set_start_condition(tmpdir, start_cond, depend, expected, session):
@@ -175,7 +170,6 @@ def test_set_start_condition(tmpdir, start_cond, depend, expected, session):
             lambda : None, 
             name="task",
             start_cond=start_cond,
-            dependent=depend,
             execution="main",
         )
         assert expected == task.start_cond
@@ -203,13 +197,56 @@ def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
 
         assert str(task.start_cond) == start_cond_str
 
-def test_failure_in_init(session):
-    with pytest.raises(ParserError):
-        task = FuncTask(
-            lambda : None, 
-            name="task",
-            start_cond="this is not valid",
-            execution="main",
-        )
+@pytest.mark.parametrize(
+    "get_task,exc",
+    [
+        pytest.param(
+            lambda: FuncTask(lambda : None, name="task", start_cond="this is not valid", execution="main"), 
+            ParserError, 
+            id="invalid start_cond"
+        ),
+        pytest.param(
+            lambda: FuncTask(lambda : None, name="task", execution="not valid"), 
+            ValueError, 
+            id="invalid execution"
+        ),
+    ],
+)
+def test_failure(session, exc, get_task):
+    with pytest.raises(exc):
+        get_task()
     assert session.tasks == {}
-    
+
+def test_rename(session):
+    task = FuncTask(lambda : None, name="a task", execution="main")
+    assert session.tasks == {"a task": task}
+    task.name = "renamed task"
+    assert task.name == "renamed task"
+    assert session.tasks == {"renamed task": task}
+
+def test_existing_default(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    with pytest.raises(KeyError):
+        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_raise(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    with pytest.raises(KeyError):
+        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_ignore(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="ignore")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_replace(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="replace")
+    assert session.tasks == {"a task": task2}
+
+def test_existing_rename(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="rename")
+    assert session.tasks == {"a task": task1, "a task0": task2}

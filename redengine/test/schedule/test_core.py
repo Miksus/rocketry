@@ -165,19 +165,24 @@ def test_task_status(session, execution, mode):
     )
     scheduler()
     assert task_success.last_run is not None
-    assert task_fail.last_run is not None
-    assert task_inact.last_run is not None
-
     assert task_success.last_success is not None
+    assert task_success.last_fail is None
+
+    assert task_fail.last_run is not None
     assert task_fail.last_fail is not None
-    #assert task_inact.last_inaction is not None
+    assert task_fail.last_success is None
+
+    assert task_inact.last_run is not None
 
     assert task_not_run.last_run is None
     assert task_not_run.last_success is None
     assert task_not_run.last_fail is None
 
-    assert task_fail.last_success is None
-    assert task_success.last_fail is None
+    assert task_success.status == "success"
+    assert task_fail.status == "fail"
+    assert task_inact.status == "inaction"
+    assert task_not_run.status == None
+
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_run(tmpdir, execution, session):

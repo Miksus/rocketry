@@ -2,9 +2,12 @@
 import pytest
 
 from redengine.conditions import (
-    true, false, ParamExists,
+    true, false, ParamExists, IsPeriod,
+    Any, All
 )
 from redengine.core.condition import Statement, Comparable, Historical
+
+from redengine.time import TimeDelta
 
 def test_true():
     assert bool(true)
@@ -81,3 +84,30 @@ def test_magic_noerror(cls):
     if cls.__name__ in ('TaskSucceeded', 'DependFinish', 'TaskTerminated', 'TaskFinished', 'TaskFailed', 'DependFailure', 'TaskStarted', 'DependSuccess', 'TaskInacted', 'TaskRunning'):
         pytest.skip("Initing requires task as argument")
     str(cls())
+
+@pytest.mark.parametrize("get_cond,exc",
+    [
+        pytest.param(lambda: IsPeriod(TimeDelta("2 hours")), AttributeError, id="IsPeriod with timedelta")
+    ]
+)
+def test_fail(get_cond,exc):
+    with pytest.raises(exc):
+        get_cond()
+
+@pytest.mark.parametrize("obj,string,represent", 
+    [
+        pytest.param(
+            All(true, false), 
+            "(true & false)", 
+            "All(true, false)", 
+            id="All"),
+        pytest.param(
+            Any(true, false), 
+            "(true | false)", 
+            "Any(true, false)", 
+            id="Any")
+    ]
+)
+def test_representation(obj, string, represent):
+    assert str(obj) == string
+    assert repr(obj) == represent

@@ -20,6 +20,7 @@ from redengine.arguments.builtin import Return
 
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
+from redengine.core.time import TimePeriod
 from redengine.core.parameters import Parameters
 from redengine.core.log import TaskAdapter
 from redengine.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
@@ -27,8 +28,6 @@ from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInact
 from redengine.core.meta import _register
 from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler
-
-from .utils.task_utils import get_execution, get_dependencies
 
 if TYPE_CHECKING:
     from redengine import Session
@@ -68,9 +67,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     start_cond : BaseCondition, optional
         Condition that when True the task
         is to be started, by default AlwaysFalse()
-    run_cond : BaseCondition, optional
-        The task will run as long as this 
-        condition is True, by default AlwaysTrue()
     end_cond : BaseCondition, optional
         Condition that when True the task
         will be terminated. Only works for for 
@@ -178,10 +174,8 @@ class Task(RedBase, metaclass=_TaskMeta):
     timeout: pd.Timedelta
 
     parameters: Parameters
-    dependent: List['Task']
 
     start_cond: BaseCondition
-    run_cond: BaseCondition
     end_cond: BaseCondition
 
     on_startup: Callable
@@ -201,9 +195,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                  parameters=None, 
                  session=None,
                  start_cond: BaseCondition=None, 
-                 run_cond: BaseCondition=None, 
                  end_cond: BaseCondition=None, 
-                 dependent=None, #! TODO: Delete
                  timeout=None, 
                  priority: int=None,
                  name: str=None, 
@@ -229,7 +221,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         self.status = None
 
         self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
-        self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
         self.end_cond = AlwaysFalse() if end_cond is None else copy(end_cond)
 
         self.timeout = (
@@ -251,7 +242,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         self.force_run = force_run
         self.force_termination = False
 
-        self.dependent = dependent
         self.parameters = parameters
 
         # Thread specific (readonly properties)
@@ -306,21 +296,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         self._end_cond = cond
 
     @property
-    def dependent(self):
-        #! TODO: Delete
-        return get_dependencies(self)
-
-    @dependent.setter
-    def dependent(self, tasks:list):
-        from redengine.conditions import DependSuccess
-        # tasks: List[str]
-        if not tasks:
-            # TODO: Remove dependent parts
-            return
-        dep_cond = All(*(DependSuccess(depend_task=task, task=self.name) for task in tasks))
-        self.start_cond &= dep_cond
-
-    @property
     def parameters(self):
         """Parameters: Parameters of the task."""
         return self._parameters
@@ -339,7 +314,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
         set_statement_defaults(self.start_cond, task=self)
-        set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
     def __call__(self, params:Union[dict, Parameters]=None, **kwargs):
@@ -394,8 +368,6 @@ class Task(RedBase, metaclass=_TaskMeta):
                 self.run_as_process(params=params, **kwargs)
             elif self.execution == "thread":
                 self.run_as_thread(params=params, **kwargs)
-            else:
-                raise ValueError(f"Invalid execution: {self.execution}")
         except (SchedulerRestart, SchedulerExit):
             raise
         except Exception as exc:
@@ -731,6 +703,18 @@ class Task(RedBase, metaclass=_TaskMeta):
     def name(self, name:str):
         self.set_name(name)
 
+    @property
+    def execution(self) -> str:
+        """str: Execution of the task"""
+        return self._execution
+    
+    @execution.setter
+    def execution(self, execution:str):
+        allowed = ("main", "thread", "process")
+        if execution not in allowed:
+            raise ValueError(f"Execution {execution:!r} not valid. Options: {allowed}")
+        self._execution = execution
+
     def set_name(self, name, on_exists=None, use_instance_naming=None, register=True):
         """Set the name of the task.
 
@@ -776,7 +760,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                 raise KeyError(f"Task {name} already exists. (All tasks: {self.session.tasks})")
 
             elif on_exists == "ignore":
-                register = False
+                self._mark_register = False
 
             elif on_exists == "rename":
                 for i in count():
@@ -792,6 +776,9 @@ class Task(RedBase, metaclass=_TaskMeta):
                 del self.session.tasks[old_name]
 
     def register(self):
+        if hasattr(self, "_mark_register") and not self._mark_register:
+            del self._mark_register
+            return # on_exists = 'ignore'
         name = self.name
         self.session.tasks[name] = self
 
@@ -1130,7 +1117,29 @@ class Task(RedBase, metaclass=_TaskMeta):
 
 # Other
     @property
-    def period(self):
-        "Determine Time object for the interval (maximum possible if time independent as 'or')"
-        #! TODO: Is this needed?
-        return get_execution(self)
+    def period(self) -> TimePeriod:
+        """TimePeriod: Time period in which the task runs
+
+        Note that this should not be considered as absolute truth but
+        as a best estimate.
+        """
+        from redengine.core.time import StaticInterval, All as AllTime
+        from redengine.conditions import TaskFinished, TaskSucceeded
+
+        cond = self.start_cond
+        session = self.session
+
+        if isinstance(cond, (TaskSucceeded, TaskFinished)):
+            if session.get_task(cond.kwargs["task"]) is self:
+                return cond.period
+
+        elif isinstance(cond, All):
+            task_periods = []
+            for sub_stmt in cond:
+                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session.get_task(sub_stmt.kwargs["task"]) is self:
+                    task_periods.append(sub_stmt.period)
+            if task_periods:
+                return AllTime(*task_periods)
+        
+        # TimePeriod could not be determined
+        return StaticInterval()

@@ -25,13 +25,15 @@ class TestInit:
 
         assert session.config["silence_task_prerun"]
         assert session.config["silence_cond_check"]
+        assert session.env is None
 
         assert_default(session)
 
     def test_params(self):
-        session = Session(parameters={"x": 1, "y": 2})
-        assert session.parameters.to_dict() == {"x": 1, "y": 2}
+        session = Session(parameters={"x": 1, "y": 2, "env": "prod"})
+        assert session.parameters.to_dict() == {"x": 1, "y": 2, "env": "prod"}
         assert session.tasks == {}
+        assert session.env == "prod"
 
     def test_tasks(self):
 

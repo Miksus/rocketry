@@ -27,19 +27,6 @@ class ClosureParser:
             self._regex_opening = re.compile(opening)
             self._regex_closing = re.compile(closing)
         
-    def reduce(self, string, func):
-        "Iterate string from innermost closure and apply the function reducing the closured one by one"
-        while self.count(string):
-
-            start, end = self.find_inner_indices(string)
-            slice_closure = slice(start, end+len(self.closing))
-            modif = func(string[slice_closure])
-
-            if self.opening in modif or self.closing in modif:
-                raise ValueError(f"Modified string cannot contain opening or closing strings: {modif}")
-            string = string[:start] + modif + string[end+len(self.closing):]
-        return string
-
     def to_list(self, string):
         "Turn the string to (nested) list of strings of closures"
         # "1 * (21 + (211 - 212) / 22) ^ 3 * (21 + (211 - 212) / 22)"
@@ -93,32 +80,6 @@ class ClosureParser:
         
         return (opening, closing)
     
-    def find_inner_indices(self, string, start=None):
-        "Find indices of next inner closure (ie. '( something )')"
-        # Start of the fetch (searches from left to right)
-        offset = len(self.opening)
-        start = 0 if start is None else start
-        start -= offset
-        
-        openings = 0
-        closings = 0
-        while closings == 0:
-
-            index, next_closure = self._get_next_element(string, start + offset)
-
-            if next_closure == self.opening:
-                openings += 1
-                opening = index
-                offset = len(self.opening)
-            elif next_closure == self.closing:
-                closings += 1
-                closing = index
-                offset = len(self.closing)
-
-            start = index
-    
-        return (opening, closing)
-    
     def find(self, string, start=None):
         s, e = self.find_outer_indices(string, start)
         return string[s:e+len(self.closing)]
@@ -137,15 +98,4 @@ class ClosureParser:
         minimum = min(indexes)
         return minimum, indexes[minimum]
     
-    def _index_opening(self, string, start):
-        if self.regex:
-            return self._regex_opening.search(string, pos=start).start()
-        else:
-            return self.opening.index(string, start, end)
-        
-    def _index_closing(self, string, start):
-        if self.regex:
-            return self._regex_closing.search(string, pos=start).start()
-        else:
-            return self.closing.index(string, start, end)
         

@@ -3,12 +3,4 @@ pandas
 
 # Optional
 pyyaml
-gitpython
 pymongo
-
-# Optional, HTTP API
-PyJWT
-Flask
-requests
-psutil
-werkzeug

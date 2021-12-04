@@ -312,7 +312,7 @@ class Scheduler(RedBase):
             return True
 
         else:
-            return self.check_cond(task.end_cond) or not self.check_cond(task.run_cond)
+            return self.check_cond(task.end_cond)
             
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
@@ -348,13 +348,6 @@ class Scheduler(RedBase):
                     del record.__return__
                 
                 task.log_record(record)
-
-    def handle_zombie_tasks(self):
-        """If there are tasks that has been crashed during setting up the task loggers, 
-        this method finds those out and logs them."""
-        for task in self.tasks:
-            if task.status == "run" and not task.is_alive():
-                task.logger.critical(f"Task '{task.name}' crashed in process setup", extra={"action": "crash"})
 
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -557,25 +550,6 @@ class Scheduler(RedBase):
 
         # TODO: Use TaskAdapter to relay the scheduler name?
         self._logger = logger
-
-    def log_status(self, task, status, **kwargs):
-        """Log a run task."""
-
-        # Log it to strout/files/email/whatever
-        if status == "success":
-            self.log_success(task, **kwargs)
-        elif status == "fail":
-            self.log_failure(task, **kwargs)
-
-    def log_success(self, task, **kwargs):
-        """Log a succeeded task."""
-        self.logger.debug(f"Task {task} succeeded.")
-
-    def log_failure(self, task, exception, **kwargs):
-        """Log a failed task."""
-        tb = traceback.format_exception(type(exception), exception, exception.__traceback__)
-        tb_string = ''.join(tb)
-        self.logger.debug(f"Task {task} failed: \n{tb_string}")
 
 # Hooks
     startup_hooks = []

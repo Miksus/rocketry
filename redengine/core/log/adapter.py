@@ -126,19 +126,6 @@ class TaskAdapter(logging.LoggerAdapter):
     def task_name(self):
         return self.extra['task_name']
 
-class TaskFilter(logging.Filter):
-    """Filter only task related so one logger can be
-    used with scheduler and tasks"""
-    def __init__(self, *args, include, **kwargs):
-        super().__init__()
-        self.include = include
-
-    def filter(self, record):
-        if self.include:
-            return hasattr(record, "task")
-        else:
-            return not hasattr(record, "task")
-
 # Utils
 def parse_datetime(dt):
     return _parse_datetime(dt) if not isinstance(dt, (datetime.datetime, pd.Timestamp)) and dt is not None else dt

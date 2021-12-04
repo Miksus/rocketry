@@ -176,31 +176,6 @@ class IntervalTrigger(BaseTrigger):
         line_start = triggers[0].task.last_run or datetime.datetime.min
         return line_start in self.interval.rollback(now)
 
-    def is_depend_ready(self):
-        # TODO: Possibly merge this with active (remove this)
-        is_first = self.is_first()
-        if not is_first:
-            depend_trigger = self.depend_trigger
-            interval = depend_trigger.interval
-            last_success = depend_trigger.task.last_success
-            if last_success is None:
-                # Has never succeeded (yet)
-                return False
-            now = datetime.datetime.fromtimestamp(time.time())
-            return last_success in interval.rollback(now)
-        elif is_first:
-            return True
-
-    def is_ready(self):
-        "Whether the trigger has completed"
-        interval = self.interval
-        last_success = self.task.last_success
-        if last_success is None:
-            # Has never succeeded (yet)
-            return False
-        now = datetime.datetime.fromtimestamp(time.time())
-        return last_success in interval.rollback(now)
-
     @property
     def interval(self):
         return self.parent.interval

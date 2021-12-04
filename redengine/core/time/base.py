@@ -38,9 +38,6 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
     min = pd.Timestamp.min
     max = pd.Timestamp.max
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     def __contains__(self, other):
         """Whether a given point of time is in
         the TimePeriod"""
@@ -60,10 +57,12 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
 
         return Any(self, other)
 
+    @abstractmethod
     def rollforward(self, dt):
         "Get previous time interval of the period."
         raise NotImplementedError
 
+    @abstractmethod
     def rollback(self, dt):
         "Get previous time interval of the period."
         raise NotImplementedError
@@ -191,10 +190,6 @@ class TimeDelta(TimePeriod):
         
         self.past = abs(pd.Timedelta(past, **kws_past))
         self.future = abs(pd.Timedelta(future, **kws_future))
-        if pd.isna(self.past):
-            raise future("TimeDelta past duration cannot be 'not a time'")
-        if pd.isna(self.past):
-            raise ValueError("TimeDelta future duration cannot be 'not a time'")
 
     @abstractmethod
     def __contains__(self, dt):
@@ -226,112 +221,16 @@ class TimeDelta(TimePeriod):
         else:
             return False
 
-class TimeCycle(TimePeriod):
-    """Base for all time cycles
-
-    Time cycle is a period of time that is constantly
-    repeating. It has start time but inherently all
-    datetimes belong to the cycle. Useful tool to 
-    check whether an event has already 
-
-    Useful for checking times an event has happened
-    during the cycle
-
-    Examples:
-
-    - hourly
-    - daily
-    - weekly
-    - monthly
-    """
-    # TODO: Delete
-    _type_name = "cycle"
-
-    offset = None
-    def __init__(self, *args, n=1, **kwargs):
-        self.start = self.transform_start(*args, **kwargs)
-        self.n = n
-
-    def __mul__(self, value):
-        return type(self)(self.start, n=value)
-
-    def rollback(self, dt):
-        dt_start = dt - (self.n - 1) * self.offset
-        if self.get_time_element(dt_start) >= self.start:
-            #       dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            pass
+    def __str__(self):
+        if not self.future:
+            return f"past {str(self.past)}"
+        elif not self.past:
+            return f"next {str(self.future)}"
         else:
-            #               dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            dt_start = dt_start - self.offset
-        dt_start = self.replace(dt_start)
+            return f"past {str(self.past)} to next {str(self.future)}"
 
-        start = pd.Timestamp(dt_start)
-        end = pd.Timestamp(dt)
-
-        return pd.Interval(start, end)
-
-    def rollforward(self, dt):
-        dt_end = dt + (self.n - 1) * self.offset
-        if self.get_time_element(dt_end) >= self.start:
-            #       dt           (dt_end)
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            dt_end = dt_end + self.offset
-        else:
-            #               dt
-            #  -->--------------------->-----------
-            #  time   |              time     |    
-            pass
-        dt_end = self.replace(dt_end)
-
-        start = pd.Timestamp(dt)
-        end = pd.Timestamp(dt_end) - self.resolution
-        
-        return pd.Interval(start, end)
-
-    def rollend(self, dt):
-        """All datetimes are in the cycle thus rolls
-        returns the same datetime. This method is for
-        convenience"""
-        return dt
-
-    def rollstart(self, dt):
-        """All datetimes are in the cycle thus rolls
-        returns the same datetime. This method is for
-        convenience"""
-        return dt
-
-    @abstractmethod
-    def transform_start(self, dt):
-        pass
-
-    @abstractmethod
-    def get_time_element(self, dt):
-        """Extract the time element from a
-        datetime.
-        Examples:
-        ---------
-            week cycle: day of week
-            day cycle: time of day
-            month cycle: day of month"""
-
-    @abstractmethod
-    def replace(self, dt):
-        """Replace the datetime in a way that it is
-        on current cycle's start day. This is to make
-        the implementation of cycles less tiresome"""
-        #              dt---------->
-        #  -->--------------------->-----------
-        #  time      |           time     |    
-        # OR
-        #    <----dt  
-        #  -->--------------------->-----------
-        #  time      |           time     |    
-
+    def __repr__(self):
+        return f"TimeDelta(past={repr(self.past)}, future={repr(self.future)})"
 
 def all_overlap(times:List[pd.Interval]):
     return all(a.overlaps(b) for a, b in itertools.combinations(times, 2))
@@ -354,6 +253,8 @@ class All(TimePeriod):
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("All is only supported with TimePeriods")
+        elif not args:
+            raise ValueError("No TimePeriods to wrap")
         self.periods = args
 
     def rollback(self, dt):
@@ -398,12 +299,21 @@ class All(TimePeriod):
             ends = [interval.right for interval in intervals]
             return self.rollforward(min(ends) + datetime.datetime.resolution)
 
+    def __eq__(self, other):
+        # self | other
+        # bitwise or
+        if type(self) == type(other):
+            return self.periods == other.periods
+        else:
+            return False
 
 class Any(TimePeriod):
 
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("Any is only supported with TimePeriods")
+        elif not args:
+            raise ValueError("No TimePeriods to wrap")
         self.periods = args
 
     def rollback(self, dt):
@@ -478,26 +388,13 @@ class Any(TimePeriod):
 
         return pd.Interval(start, end)
 
-class Offsetted(TimePeriod):
-    # TODO: This is not used. Delete?
-    def __init__(self, period, n):
-        if isinstance(period, TimeCycle):
-            # adjust prev & next
-            raise NotImplementedError
-        self.period = period
-        self.n = n
-
-    def rollback(self, dt):
-        interval = self.period.rollback(dt)
-        new_dt = interval.left - pd.Timestamp.resolution
-        interval = self.period.rollback(new_dt)
-        return interval
-
-    def rollforward(self, dt):
-        interval = self.period.rollforward(dt)
-        new_dt = interval.right + pd.Timestamp.resolution
-        interval = self.period.rollforward(new_dt)
-        return interval
+    def __eq__(self, other):
+        # self | other
+        # bitwise or
+        if type(self) == type(other):
+            return self.periods == other.periods
+        else:
+            return False
 
 class StaticInterval(TimePeriod):
     """Inverval that is fixed in specific datetimes."""
