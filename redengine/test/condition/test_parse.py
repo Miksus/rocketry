@@ -3,6 +3,7 @@ import itertools
 
 import pytest
 
+from redengine.parse.utils import ParserError
 from redengine.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from redengine.parse.condition import parse_condition
 from redengine.conditions import ParamExists
@@ -173,3 +174,16 @@ def test_back_to_string(cond_str, expected):
     cond_2 = parse_condition(cond_as_str)
     assert cond == cond_2
     #assert cond_str == cond_as_str
+
+@pytest.mark.parametrize("cond_str,exc",
+    [
+        pytest.param("this is not valid", ParserError, id="Invalid condition"),
+        pytest.param("true &", IndexError, id="AND, missing right"),
+        pytest.param("true |", IndexError, id="OR, missing right"),
+        pytest.param("& true", IndexError, id="AND, missing left"),
+        pytest.param("| true", IndexError, id="OR, missing left"),
+    ]
+)
+def test_failure(cond_str, exc):
+    with pytest.raises(exc):
+        parse_condition(cond_str)

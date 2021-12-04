@@ -1,4 +1,6 @@
 
+import pickle
+import pytest
 from redengine.core import Task
 from redengine.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
 
@@ -19,3 +21,14 @@ def test_delete(session):
     assert session.tasks == {"mytest": task}
     task.delete()
     assert session.tasks == {}
+
+def test_set_invalid_status(session):
+    task = DummyTask(name="mytest")
+    with pytest.raises(KeyError):
+        task.status = "not valid"
+
+def test_pickle(session):
+    task_1 = DummyTask(name="mytest")
+    pkl_obj = pickle.dumps(task_1)
+    task_2 = pickle.loads(pkl_obj)
+    assert task_1.name == task_2.name

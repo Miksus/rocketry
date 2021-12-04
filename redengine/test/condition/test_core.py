@@ -2,7 +2,8 @@
 import pytest
 
 from redengine.conditions import (
-    true, false, ParamExists, IsPeriod
+    true, false, ParamExists, IsPeriod,
+    Any, All
 )
 from redengine.core.condition import Statement, Comparable, Historical
 
@@ -92,3 +93,21 @@ def test_magic_noerror(cls):
 def test_fail(get_cond,exc):
     with pytest.raises(exc):
         get_cond()
+
+@pytest.mark.parametrize("obj,string,represent", 
+    [
+        pytest.param(
+            All(true, false), 
+            "(true & false)", 
+            "All(true, false)", 
+            id="All"),
+        pytest.param(
+            Any(true, false), 
+            "(true | false)", 
+            "Any(true, false)", 
+            id="Any")
+    ]
+)
+def test_representation(obj, string, represent):
+    assert str(obj) == string
+    assert repr(obj) == represent
