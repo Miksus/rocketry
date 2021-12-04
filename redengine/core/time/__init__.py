@@ -1,7 +1,7 @@
 # Imports
 from .base import (
     TimePeriod, TimeInterval, 
-    TimeDelta, TimeCycle,
+    TimeDelta, 
     StaticInterval,
     All, Any,
 
