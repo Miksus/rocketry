@@ -37,10 +37,6 @@ class Visitor:
         self.visit_funcs = []
         if visit_types is not None:
             self.visit_funcs.append(lambda cont: isinstance(cont, visit_types))
-        if visit_func is not None:
-            self.visit_funcs.append(visit_func)
-        if visit_with_attr:
-            self.visit_funcs.append(lambda cont: hasattr(cont, visit_with_attr))
 
     def flatten(self, cont):
         """Turn nested container to flat container
@@ -90,28 +86,6 @@ class Visitor:
                 value = func(obj)
                 self._assign_value(cont, key, value)
 
-    def assign_last(self, cont, func):
-        "Assign function to the last level containers (containers that do not have subcontainers)"
-        # cont: [1, [21, 22, 23], 3]
-        #   iter 1:
-        #       cont[1] = func([21, 22, 23])
-        #       ....    
-        if not self.is_visitable(cont):
-            # End up here only if first level of recursion
-            raise TypeError(f"Values of {cont} cannot be set anywhere. The object must be a visitable")
-
-        for key, obj in self.iter(cont):
-            if self.is_visitable(obj) and self.has_sub_containers(obj):
-                # obj = [..., [...], ...]
-                self.assign_last(obj, func)
-            elif self.is_visitable(obj) and not self.has_sub_containers(obj):
-                # obj = [...]
-                value = func(obj)
-                self._assign_value(cont, key, value)
-            else:
-                # obj = 123
-                pass
-            
     def _assign_value(self, cont, key, value):
         # list: cont=[1, 2, 3], key=0, value=5
         #   cont[0] = 5
@@ -152,22 +126,6 @@ class Visitor:
             for key, subobj in self.iter(obj)
         )
 
-
-    def visit(self, container, func):
-        "Apply a function to each element"
-        if not self.is_visitable(container):
-            return func(container)
-        self._visit(container, func)
-            
-    def _visit(self, cont, func):
-        for key, subcont in self.iter(cont):
-            if self.is_visitable(subcont):
-                # Container
-                self._visit(subcont, func)
-            else:
-                # Actual element
-                func(subcont)
-            
     def apply(self, cont, func):
         "Apply a function to each container"
         func(cont)
@@ -178,50 +136,6 @@ class Visitor:
             else:
                 # Actual element
                 pass
-
-    def prune(self, cont, prune_loners=False):
-        """Flatten sub containers that contain only 
-        one another container thus unnecessary
-
-        Examples:
-        ---------
-            v = Visitor(
-                visit_types=(list, tuple)
-            )
-            l = [1, [[1]], [[1, 2]]]
-            v.prune(l)
-            l
-            >>> [1, [1], [1, 2]]
-
-            l = [1, [[1]], [[1, 2]]]
-            v.prune(l, prune_loners=True)
-            l
-            >>> [1, 1, [1, 2]]
-        
-        Arguments:
-        ----------
-            prune_loners [bool] : Whether to prune lone elements (like [1, [2]] --> [1, 2])"""
-        def is_prunable(obj):
-            return (
-                self.is_visitable(obj)
-                and (True if prune_loners else self.has_sub_containers(obj))
-                and len(obj) == 1
-            )
-        if not self.is_visitable(cont):
-            # End up here only if first level of recursion
-            return
-            #raise TypeError(f"Values of {cont} cannot be set anywhere. The object must be a visitable")
-
-        for key, obj in self.iter(cont):
-            # Prune until there is no more unnecessary layers
-            while is_prunable(obj):
-                
-                _, value = next(self.iter(obj))
-                self._assign_value(cont, key, value)
-                obj = value
-
-            if self.is_visitable(obj):
-                self.prune(obj, prune_loners=prune_loners)
 
     def iter(self, obj):
         # List:
