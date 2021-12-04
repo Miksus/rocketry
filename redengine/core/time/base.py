@@ -38,9 +38,6 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
     min = pd.Timestamp.min
     max = pd.Timestamp.max
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     def __contains__(self, other):
         """Whether a given point of time is in
         the TimePeriod"""
