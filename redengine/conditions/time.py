@@ -3,7 +3,7 @@ import datetime
 
 from redengine.time import TimeOfDay, TimeOfWeek, TimeDelta
 from redengine.time.construct import get_full_cycle, get_between, get_after, get_before
-from redengine.core.condition.base import TimeCondition, BaseCondition
+from redengine.core.condition.base import BaseCondition
 
 class IsPeriod(BaseCondition):
     """Condition for checking whether current time
@@ -59,10 +59,3 @@ class IsPeriod(BaseCondition):
         period = period_func(**kwargs)
         return cls(period=period)
 
-
-
-class IsTimeOfDay(TimeCondition):
-    period_class = TimeOfDay
-
-class IsTimeOfWeek(TimeCondition):
-    period_class = TimeOfWeek
