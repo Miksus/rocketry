@@ -103,4 +103,7 @@ is assigned to a task.
 
 See all available string parsers:
 
-    >>> from redengine.conditions import PARSERS
+.. testcode::
+
+    from redengine import session
+    session.cond_parsers

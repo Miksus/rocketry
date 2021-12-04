@@ -45,9 +45,3 @@ Time related conditions
 
 .. autoclass:: redengine.conditions.IsPeriod
    :members:
-
-.. autoclass:: redengine.conditions.IsTimeOfDay
-   :members:
-
-.. autoclass:: redengine.conditions.IsTimeOfWeek
-   :members:
