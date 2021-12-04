@@ -68,9 +68,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     start_cond : BaseCondition, optional
         Condition that when True the task
         is to be started, by default AlwaysFalse()
-    run_cond : BaseCondition, optional
-        The task will run as long as this 
-        condition is True, by default AlwaysTrue()
     end_cond : BaseCondition, optional
         Condition that when True the task
         will be terminated. Only works for for 
@@ -181,7 +178,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     dependent: List['Task']
 
     start_cond: BaseCondition
-    run_cond: BaseCondition
     end_cond: BaseCondition
 
     on_startup: Callable
@@ -201,9 +197,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                  parameters=None, 
                  session=None,
                  start_cond: BaseCondition=None, 
-                 run_cond: BaseCondition=None, 
                  end_cond: BaseCondition=None, 
-                 dependent=None, #! TODO: Delete
                  timeout=None, 
                  priority: int=None,
                  name: str=None, 
@@ -229,7 +223,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         self.status = None
 
         self.start_cond = AlwaysFalse() if start_cond is None else copy(start_cond) # If no start_condition, won't run except manually
-        self.run_cond = AlwaysTrue() if run_cond is None else copy(run_cond)
         self.end_cond = AlwaysFalse() if end_cond is None else copy(end_cond)
 
         self.timeout = (
@@ -339,7 +332,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
         set_statement_defaults(self.start_cond, task=self)
-        set_statement_defaults(self.run_cond, task=self)
         set_statement_defaults(self.end_cond, task=self)
 
     def __call__(self, params:Union[dict, Parameters]=None, **kwargs):

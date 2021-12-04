@@ -312,7 +312,7 @@ class Scheduler(RedBase):
             return True
 
         else:
-            return self.check_cond(task.end_cond) or not self.check_cond(task.run_cond)
+            return self.check_cond(task.end_cond)
             
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
