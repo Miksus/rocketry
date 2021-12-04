@@ -4,7 +4,6 @@ from .func import FuncCond
 from .task import *
 from .scheduler import *
 from .time import *
-from .git import *
 from .parameter import ParamExists, IsEnv
 from .meta import TaskCond
 
