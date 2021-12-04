@@ -2,12 +2,18 @@
 source = redengine
 branch = False
 omit = 
-    redengine/test/*
-    redengine/_version.py
+    test/*
+    _version.py
 
 data_file = cov_data/.coverage
 
 [report]
+
+omit = 
+    redengine/test/*
+    redengine/_version.py
+    redengine/__main__.py
+
 # Regexes for lines to exclude from consideration
 exclude_lines =
     pragma: no cover
