@@ -203,13 +203,23 @@ def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
 
         assert str(task.start_cond) == start_cond_str
 
-def test_failure_in_init(session):
-    with pytest.raises(ParserError):
-        task = FuncTask(
-            lambda : None, 
-            name="task",
-            start_cond="this is not valid",
-            execution="main",
-        )
+@pytest.mark.parametrize(
+    "get_task,exc",
+    [
+        pytest.param(
+            lambda: FuncTask(lambda : None, name="task", start_cond="this is not valid", execution="main"), 
+            ParserError, 
+            id="invalid start_cond"
+        ),
+        pytest.param(
+            lambda: FuncTask(lambda : None, name="task", execution="not valid"), 
+            ValueError, 
+            id="invalid execution"
+        ),
+    ],
+)
+def test_failure(session, exc, get_task):
+    with pytest.raises(exc):
+        get_task()
     assert session.tasks == {}
     

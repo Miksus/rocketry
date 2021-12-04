@@ -386,8 +386,6 @@ class Task(RedBase, metaclass=_TaskMeta):
                 self.run_as_process(params=params, **kwargs)
             elif self.execution == "thread":
                 self.run_as_thread(params=params, **kwargs)
-            else:
-                raise ValueError(f"Invalid execution: {self.execution}")
         except (SchedulerRestart, SchedulerExit):
             raise
         except Exception as exc:
@@ -722,6 +720,18 @@ class Task(RedBase, metaclass=_TaskMeta):
     @name.setter
     def name(self, name:str):
         self.set_name(name)
+
+    @property
+    def execution(self) -> str:
+        """str: Execution of the task"""
+        return self._execution
+    
+    @execution.setter
+    def execution(self, execution:str):
+        allowed = ("main", "thread", "process")
+        if execution not in allowed:
+            raise ValueError(f"Execution {execution:!r} not valid. Options: {allowed}")
+        self._execution = execution
 
     def set_name(self, name, on_exists=None, use_instance_naming=None, register=True):
         """Set the name of the task.
