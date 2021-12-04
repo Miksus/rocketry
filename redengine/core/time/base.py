@@ -57,10 +57,12 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
 
         return Any(self, other)
 
+    @abstractmethod
     def rollforward(self, dt):
         "Get previous time interval of the period."
         raise NotImplementedError
 
+    @abstractmethod
     def rollback(self, dt):
         "Get previous time interval of the period."
         raise NotImplementedError
@@ -351,6 +353,8 @@ class All(TimePeriod):
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("All is only supported with TimePeriods")
+        elif not args:
+            raise ValueError("No TimePeriods to wrap")
         self.periods = args
 
     def rollback(self, dt):
@@ -401,6 +405,8 @@ class Any(TimePeriod):
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("Any is only supported with TimePeriods")
+        elif not args:
+            raise ValueError("No TimePeriods to wrap")
         self.periods = args
 
     def rollback(self, dt):
