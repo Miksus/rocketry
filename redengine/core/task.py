@@ -1122,7 +1122,29 @@ class Task(RedBase, metaclass=_TaskMeta):
 
 # Other
     @property
-    def period(self):
-        "Determine Time object for the interval (maximum possible if time independent as 'or')"
-        #! TODO: Is this needed?
-        return get_execution(self)
+    def period(self) -> TimePeriod:
+        """TimePeriod: Time period in which the task runs
+
+        Note that this should not be considered as absolute truth but
+        as a best estimate.
+        """
+        from redengine.core.time import StaticInterval, All as AllTime
+        from redengine.conditions import TaskFinished, TaskSucceeded
+
+        cond = self.start_cond
+        session = self.session
+
+        if isinstance(cond, (TaskSucceeded, TaskFinished)):
+            if session.get_task(cond.kwargs["task"]) is self:
+                return cond.period
+
+        elif isinstance(cond, All):
+            task_periods = []
+            for sub_stmt in cond:
+                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session.get_task(sub_stmt.kwargs["task"]) is self:
+                    task_periods.append(sub_stmt.period)
+            if task_periods:
+                return AllTime(*task_periods)
+        
+        # TimePeriod could not be determined
+        return StaticInterval()
