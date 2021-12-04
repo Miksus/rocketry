@@ -12,7 +12,6 @@ def test_defaults(session):
     task = DummyTask(name="mytest")
     assert task.name == "mytest"
     assert isinstance(task.start_cond, AlwaysFalse)
-    assert isinstance(task.run_cond, AlwaysTrue)
     assert isinstance(task.end_cond, AlwaysFalse)
 
 def test_delete(session):
