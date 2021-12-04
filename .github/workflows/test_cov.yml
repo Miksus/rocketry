@@ -41,7 +41,7 @@ jobs:
         
     - name: Run test suite
       run: |
-        python -m pytest --pyargs redengine --cov-report=xml --cov-config=.coveragerc
+        python -m pytest --cov=redengine --cov-report=xml redengine/test
 
     - name: Upload test coverage
       uses: codecov/codecov-action@v2
