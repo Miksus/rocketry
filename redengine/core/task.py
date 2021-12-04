@@ -760,7 +760,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                 raise KeyError(f"Task {name} already exists. (All tasks: {self.session.tasks})")
 
             elif on_exists == "ignore":
-                register = False
+                self._mark_register = False
 
             elif on_exists == "rename":
                 for i in count():
@@ -776,6 +776,9 @@ class Task(RedBase, metaclass=_TaskMeta):
                 del self.session.tasks[old_name]
 
     def register(self):
+        if hasattr(self, "_mark_register") and not self._mark_register:
+            del self._mark_register
+            return # on_exists = 'ignore'
         name = self.name
         self.session.tasks[name] = self
 

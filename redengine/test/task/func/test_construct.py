@@ -223,3 +223,30 @@ def test_rename(session):
     task.name = "renamed task"
     assert task.name == "renamed task"
     assert session.tasks == {"renamed task": task}
+
+def test_existing_default(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    with pytest.raises(KeyError):
+        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_raise(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    with pytest.raises(KeyError):
+        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_ignore(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="ignore")
+    assert session.tasks == {"a task": task1}
+
+def test_existing_replace(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="replace")
+    assert session.tasks == {"a task": task2}
+
+def test_existing_rename(session):
+    task1 = FuncTask(lambda : None, name="a task", execution="main")
+    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="rename")
+    assert session.tasks == {"a task": task1, "a task0": task2}
