@@ -20,6 +20,7 @@ from redengine.arguments.builtin import Return
 
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
+from redengine.core.time import TimePeriod
 from redengine.core.parameters import Parameters
 from redengine.core.log import TaskAdapter
 from redengine.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
@@ -173,7 +174,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     timeout: pd.Timedelta
 
     parameters: Parameters
-    dependent: List['Task']
 
     start_cond: BaseCondition
     end_cond: BaseCondition
@@ -242,7 +242,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         self.force_run = force_run
         self.force_termination = False
 
-        self.dependent = dependent
         self.parameters = parameters
 
         # Thread specific (readonly properties)
@@ -295,21 +294,6 @@ class Task(RedBase, metaclass=_TaskMeta):
 
         set_statement_defaults(cond, task=self)
         self._end_cond = cond
-
-    @property
-    def dependent(self):
-        #! TODO: Delete
-        return get_dependencies(self)
-
-    @dependent.setter
-    def dependent(self, tasks:list):
-        from redengine.conditions import DependSuccess
-        # tasks: List[str]
-        if not tasks:
-            # TODO: Remove dependent parts
-            return
-        dep_cond = All(*(DependSuccess(depend_task=task, task=self.name) for task in tasks))
-        self.start_cond &= dep_cond
 
     @property
     def parameters(self):

@@ -159,11 +159,6 @@ def test_construct_decorate_default_name(tmpdir, session):
             None,
             AlwaysTrue(),
             id="AlwaysTrue"),
-        pytest.param(
-            AlwaysTrue(),
-            ["another task"],
-            AlwaysTrue() & DependSuccess(task="task", depend_task="another task"),
-            id="AlwaysTrue with dependent"),
     ],
 )
 def test_set_start_condition(tmpdir, start_cond, depend, expected, session):
@@ -175,7 +170,6 @@ def test_set_start_condition(tmpdir, start_cond, depend, expected, session):
             lambda : None, 
             name="task",
             start_cond=start_cond,
-            dependent=depend,
             execution="main",
         )
         assert expected == task.start_cond
@@ -222,4 +216,10 @@ def test_failure(session, exc, get_task):
     with pytest.raises(exc):
         get_task()
     assert session.tasks == {}
-    
+
+def test_rename(session):
+    task = FuncTask(lambda : None, name="a task", execution="main")
+    assert session.tasks == {"a task": task}
+    task.name = "renamed task"
+    assert task.name == "renamed task"
+    assert session.tasks == {"renamed task": task}
