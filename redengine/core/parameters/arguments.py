@@ -93,6 +93,7 @@ class BaseArgument(RedBase):
         return str(self.get_value())
 
     @classmethod
+    @abstractmethod
     def to_session(cls, *args, **kwargs):
         """Put the argument(s) to session's 
         parameters.
