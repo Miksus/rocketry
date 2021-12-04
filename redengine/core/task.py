@@ -28,8 +28,6 @@ from redengine.core.meta import _register
 from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler
 
-from .utils.task_utils import get_execution, get_dependencies
-
 if TYPE_CHECKING:
     from redengine import Session
     from redengine.core.parameters import BaseArgument
