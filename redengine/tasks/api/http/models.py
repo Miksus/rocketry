@@ -52,6 +52,7 @@ class RedengineJSONEncoder(JSONEncoder):
             "class": type(task),
             # Some properties won't otherwise end up here
             "name": task.name,
+            "execution": task.execution,
             "start_cond": task.start_cond,
             "end_cond": task.end_cond,
             "status": task.status,
