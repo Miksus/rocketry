@@ -141,6 +141,9 @@ class _ConditionContainer:
         else:
             return False
 
+    def __repr__(self):
+        string = ', '.join(map(str, self.subconditions))
+        return f'{type(self).__name__}({string})'
 
 class Any(_ConditionContainer, BaseCondition):
 
@@ -155,10 +158,6 @@ class Any(_ConditionContainer, BaseCondition):
 
     def __bool__(self):
         return any(self.subconditions)
-
-    def __repr__(self):
-        string = ' | '.join(map(repr, self.subconditions))
-        return f'({string})'
 
     def __str__(self):
         try:
@@ -181,10 +180,6 @@ class All(_ConditionContainer, BaseCondition):
 
     def __bool__(self):
         return all(self.subconditions)
-
-    def __repr__(self):
-        string = ' & '.join(map(repr, self.subconditions))
-        return f'({string})'
 
     def __str__(self):
         try:
