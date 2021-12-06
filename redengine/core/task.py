@@ -187,10 +187,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     last_terminate: Optional[datetime.datetime]
     last_inaction: Optional[datetime.datetime]
 
-    # Class defaults
-    default_priority = 0
-    default_execution = "process"
-
     def __init__(self, 
                  parameters=None, 
                  session=None,
@@ -230,9 +226,9 @@ class Task(RedBase, metaclass=_TaskMeta):
             if timeout is not None 
             else timeout
         )
-        self.priority = priority or self.default_priority
+        self.priority = priority or self.session.config['task_priority']
 
-        self.execution = execution or self.default_execution
+        self.execution = execution or self.session.config['task_execution']
         self.daemon = daemon
 
         self.on_startup = on_startup
@@ -247,9 +243,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         # Thread specific (readonly properties)
         self._thread_terminate = threading.Event()
         self._lock = threading.Lock() # So that multiple threaded tasks/scheduler won't simultaneusly use the task
-
-        # Whether the task is maintenance task
-        self.is_maintenance = False
 
         self._set_default_task()
 

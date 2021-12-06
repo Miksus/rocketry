@@ -163,7 +163,7 @@ class FuncTask(Task):
         self._set_func(
             func, 
             path=path, 
-            execution=kwargs.get("execution", self.default_execution),
+            execution=kwargs.get("execution", self.session.config['task_execution']),
             delay=delay,
             sys_paths=sys_paths
         )
@@ -176,7 +176,7 @@ class FuncTask(Task):
             self._set_func(
                 func, 
                 path=self._delayed_kwargs.pop("path", None), 
-                execution=self._delayed_kwargs.get("execution", self.default_execution),
+                execution=self._delayed_kwargs.get("execution", self.session.config['task_execution']),
                 delay=self._delayed_kwargs.pop("delay", None), 
                 sys_paths=self._delayed_kwargs.pop("sys_paths", None),
             )

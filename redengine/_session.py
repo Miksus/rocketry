@@ -79,6 +79,8 @@ class Session(RedBase):
 
     default_config = {
         "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
+        "task_priority": 0, # Task priority if not specified
+        "task_execution": 'process', # Task execution if not specified
         "task_pre_exist": "raise", # What to do if a task name is already taken
         "force_status_from_logs": False, # Force to check status from logs every time (slow but robust)
         "task_logger_basename": DEFAULT_BASENAME_TASKS,
@@ -86,8 +88,6 @@ class Session(RedBase):
 
         "silence_task_prerun": True, # Whether to silence errors occurred in setting a task to run
         "silence_cond_check": True, # Whether to silence errors occurred in checking conditions
-        #"session_store_cond_cls": True,
-        #"session_store_task_cls": True,
         "cycle_sleep": None,
         "debug": False,
     }
