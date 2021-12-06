@@ -178,8 +178,8 @@ class Task(RedBase, metaclass=_TaskMeta):
     start_cond: BaseCondition
     end_cond: BaseCondition
 
-    on_startup: Callable
-    on_shutdown: Callable
+    on_startup: bool
+    on_shutdown: bool
 
     last_run: Optional[datetime.datetime]
     last_success: Optional[datetime.datetime]
