@@ -115,8 +115,8 @@ def test_construct_decorate_minimal(tmpdir, session):
     """This is an exception when FuncTask returns itself 
     (__init__ cannot return anything else)"""
     # Going to tempdir to dump the log files there
-    orig_default_exec = self.session.config['task_execution']
-    self.session.config['task_execution'] = 'main'
+    orig_default_exec = session.config['task_execution']
+    session.config['task_execution'] = 'main'
     try:
         with tmpdir.as_cwd() as old_dir:
 
@@ -131,7 +131,7 @@ def test_construct_decorate_minimal(tmpdir, session):
 
             assert [do_stuff] == list(session.tasks.values())
     finally:
-        self.session.config['task_execution'] = orig_default_exec
+        session.config['task_execution'] = orig_default_exec
 
 def test_construct_decorate_default_name(tmpdir, session):
     # Going to tempdir to dump the log files there

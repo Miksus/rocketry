@@ -226,11 +226,10 @@ class TaskLoader(ContentLoader):
     - YAML files
     """
     default_glob = '**/tasks.yaml'
-    default_priority = 40 
 
-    def __init__(self, *args, name_pattern=None, **kwargs):
+    def __init__(self, *args, name_pattern=None, priority=40, **kwargs):
         self.name_pattern = name_pattern
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, priority=priority, **kwargs)
 
     def parse_content(self, conf, path) -> list:
         root = Path(path).parent
@@ -346,11 +345,10 @@ class ExtensionLoader(ContentLoader):
     """
 
     default_glob = '**/extensions.yaml'
-    default_priority = 20 # second lowest priority
 
-    def __init__(self, *args, name_pattern=None, **kwargs):
+    def __init__(self, *args, name_pattern=None, priority=20, **kwargs):
         self.name_pattern = name_pattern
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, priority=priority, **kwargs)
 
     def parse_content(self, conf, path):
         root = Path(path).parent
@@ -450,7 +448,9 @@ class PyLoader(LoaderBase):
 
     """
     default_glob = '**/tasks.py'
-    default_priority = 40
+
+    def __init__(self, *args, name_pattern=None, priority=40, **kwargs):
+        super().__init__(*args, priority=priority, **kwargs)
 
     def load_file(self, file, root):
         extension = Path(file).suffix
