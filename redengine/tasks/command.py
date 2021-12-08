@@ -1,5 +1,6 @@
 
 import subprocess
+import warnings
 
 from redengine.core.parameters.parameters import Parameters
 from redengine.core.task import Task
@@ -42,7 +43,7 @@ class CommandTask(Task):
     }
 
     def __init__(self, command=None, shell=False, cwd=None, kwds_popen=None, argform="-", **kwargs):
-        self.action = command
+        self.command = command
         self.argform = self.argforms[argform]
         super().__init__(**kwargs)
         self.kwargs_popen = {
@@ -58,7 +59,7 @@ class CommandTask(Task):
 
     def execute(self, **parameters):
         """Run the command."""
-        command = self.action
+        command = self.command
         
         for param, val in parameters.items():
             if not param.startswith("-"):
@@ -95,3 +96,11 @@ class CommandTask(Task):
         command = self.action
         return command if isinstance(command, str) else ' '.join(command)
 
+    @property
+    def action(self):
+        "Alias for command. Deprecated."
+        warnings.warn(
+            'CommandTask.action is deprecated ' 
+            'and will be removed in the future release. '
+            'Please use CommandTask.command instead', FutureWarning)
+        return self.command
