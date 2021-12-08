@@ -17,8 +17,9 @@ class DictInstanceParser:
         if "class" not in conf and self.default is not None:
             cls = self.default if inspect.isclass(self.default) else self.default(conf, **kwargs)
         else:
+            classes = self.classes() if callable(self.classes) else self.classes
             cls_name = conf.pop("class")
-            cls = self.classes[cls_name]
+            cls = classes[cls_name]
 
         if kwds_subparser is None:
             kwds_subparser = {}

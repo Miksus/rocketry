@@ -98,6 +98,8 @@ class Session(RedBase):
     _cond_parsers: Dict[str, 'BaseCondition'] = {}
     _ext_parsers: Dict[str, 'BaseExtension'] = {}
 
+    _cls_tasks: Dict[str, Type['Task']] = {}
+
     def __init__(self, 
                  config:dict=None, 
                  tasks:dict=None, 
@@ -130,6 +132,7 @@ class Session(RedBase):
         self.cond_parsers = self._cond_parsers.copy()
         self.time_parsers = self._time_parsers.copy()
         self.ext_parsers = self._ext_parsers.copy()
+        self.cls_tasks = self._cls_tasks.copy()
 
         if delete_existing_loggers:
             # Delete existing task loggers
@@ -484,7 +487,7 @@ class Session(RedBase):
         with the creation of the tasks:
 
         - The task class is read from the key ``conf['tasks'][...]['class']``.
-          See ``redengine.core.task.CLS_TASKS`` for list of classes.
+          See ``session.cls_tasks`` for list of classes.
         - For some tasks that lack specified classes the class is determined
           from the arguments:
         - If argument ``path`` has suffix ``.py``, the class is ``FuncTask``.

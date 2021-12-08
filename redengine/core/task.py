@@ -33,7 +33,6 @@ if TYPE_CHECKING:
     from redengine import Session
     from redengine.core.parameters import BaseArgument
 
-CLS_TASKS = {}
 _IS_WINDOWS = platform.system()
 
 class _TaskMeta(type):
@@ -42,7 +41,8 @@ class _TaskMeta(type):
         cls = type.__new__(mcs, name, bases, class_dict)
 
         # Store the name and class for configurations
-        _register(cls, CLS_TASKS)
+        if cls.session is not None:
+            _register(cls, cls.session.cls_tasks)
         return cls
 
 
@@ -149,7 +149,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     ...         return ...
 
     """
-    __register__ = False
 
     # Class
     use_instance_naming: bool = False

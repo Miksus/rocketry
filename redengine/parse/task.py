@@ -6,20 +6,12 @@ from .utils import ParserPicker, DictInstanceParser
 from .condition import parse_condition
 from .utils import instances
 
-from redengine.core.task import CLS_TASKS
+from redengine.core.task import Task
 
 
 def _get_task(*args, session=None, **kwargs):
     "Wrapper of session.get_task to overcome circular import"
     return session.get_task(*args, **kwargs)
-
-def _parse_func_task(**kwargs):
-    from redengine.tasks import FuncTask
-
-    module, func = kwargs.pop("func").rsplit('.', 1)
-    mdl = importlib.import_module(module)
-    func = getattr(mdl, func)
-    return FuncTask(**kwargs, func=func)
 
 def parse_path(path, root=None, **kwargs):
     if isinstance(path, (Path, str)):
@@ -44,13 +36,11 @@ def get_cls_from_conf(conf:dict, **kwargs):
         name = conf.get("name", None)
         raise KeyError(f"Class of the task '{name}' cannot be determined for extension {filepath.suffix}. Please include 'class' with the configuration.")
 
-CLS_TASKS["FuncTask"] = _parse_func_task # TODO: Rename this as "Function"
-
 # TODO: Script style to parse_task
 parse_task = ParserPicker(
     {
         dict:DictInstanceParser(
-            classes=CLS_TASKS, 
+            classes=lambda: Task.session.cls_tasks, 
             default=get_cls_from_conf,
             subparsers={
                 "start_cond": parse_condition,
