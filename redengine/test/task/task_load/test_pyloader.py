@@ -122,3 +122,36 @@ class TestTasks:
                 # session is of course different, forcing the same
                 expected_tasks.session = session
                 asset_task_equal(actual_tasks, expected_tasks)
+
+def test_reload(session, tmpdir):
+    with tmpdir.as_cwd() as old_dir:
+        # Create the test files
+        root = Path(str(tmpdir))
+
+        path = root / "project/tasks.py"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(dedent("""
+        from redengine.tasks import FuncTask
+
+        @FuncTask(name='mytask')
+        def main():
+            ...
+        """))
+        finder = PyLoader(path="project")
+        finder.execute()
+
+        assert 'mytask' in session.tasks
+
+        # Modify the file
+        path.write_text(dedent("""
+        from redengine.tasks import FuncTask
+
+        @FuncTask(name='yourtask')
+        def main():
+            ...
+        """))
+
+        finder.execute()
+
+        assert 'mytask' in session.tasks
+        assert 'yourtask' in session.tasks

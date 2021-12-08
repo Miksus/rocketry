@@ -391,7 +391,9 @@ class ExtensionLoader(ContentLoader):
 class PyLoader(LoaderBase):
     """Task that searches Python source files matching 
     a given patterns from a given directory. All matched 
-    files are simply imported.
+    files are simply imported. If a matched file is 
+    already imported, it is reloaded. Note that removed
+    content (such as tasks) are unaffected.
 
     Parameters
     ----------
@@ -406,6 +408,15 @@ class PyLoader(LoaderBase):
         found files. Only usable if ``execution='thread'``
     **kwargs : dict
         See :py:class:`redengine.core.Task`
+
+
+    Warnings
+    --------
+    Note that reloading files do not affect on content that is removed.
+    If you remove a task from a file that is already imported and this 
+    the loader runs, the task won't be removed from the session.
+    There are also other caveats in reloading. Please see:
+    `importlib.reload <https://docs.python.org/3/library/importlib.html#importlib.reload>`_.
 
     Examples
     --------
@@ -461,7 +472,13 @@ class PyLoader(LoaderBase):
         if root_path not in sys.path:
             sys.path.append(root_path)
         imp_path = self.to_import_path(file.relative_to(root))
-        importlib.import_module(imp_path)
+        if imp_path in sys.modules:
+            # Already imported, reloaded
+            mdl = importlib.import_module(imp_path)
+            importlib.reload(mdl)
+        else:
+            # Not imported, import
+            importlib.import_module(imp_path)
 
     def delete_item(self, item):
         pass
