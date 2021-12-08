@@ -460,7 +460,7 @@ class PyLoader(LoaderBase):
     """
     default_glob = '**/tasks.py'
 
-    def __init__(self, *args, name_pattern=None, priority=40, **kwargs):
+    def __init__(self, *args, priority=40, **kwargs):
         super().__init__(*args, priority=priority, **kwargs)
 
     def load_file(self, file, root):

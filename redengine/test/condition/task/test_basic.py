@@ -13,7 +13,7 @@ from redengine.conditions import (
 from redengine.core.task import Task
 from redengine.tasks import FuncTask
 
-Task.use_instance_naming = True
+
 
 def run_task(fail=False):
     print("Running func")

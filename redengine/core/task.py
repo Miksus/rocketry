@@ -151,7 +151,6 @@ class Task(RedBase, metaclass=_TaskMeta):
     """
 
     # Class
-    use_instance_naming: bool = False
     permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: Tuple = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
     fmt_log_message = r"Task '{task}' status: '{action}'"
