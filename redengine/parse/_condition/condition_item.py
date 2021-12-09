@@ -3,7 +3,7 @@ from typing import Callable, Dict, Pattern, Union
 
 from ..utils import ParserError, CondParser
 from redengine.core.condition.base import PARSERS, BaseCondition
-from redengine._session import Session
+from redengine.session import Session
 
 CONDITION_PARSERS = []
 

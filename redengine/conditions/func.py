@@ -3,7 +3,7 @@ import copy
 from typing import Callable, List, Optional, Pattern, Union
 
 
-from redengine._session import Session
+from redengine.session import Session
 from redengine.core.condition import BaseCondition
 
 class FuncCond(BaseCondition):

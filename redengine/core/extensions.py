@@ -1,7 +1,7 @@
 
 from redengine.parse.utils import instances, ParserPicker
 from redengine.core.meta import _register
-from redengine._session import Session
+from redengine.session import Session
 from redengine._base import RedBase
 
 CLS_EXTENSIONS = {}
@@ -62,7 +62,7 @@ class BaseExtension(RedBase, metaclass=_ExtensionMeta):
     ----------
     name : str
         Name of the extension instance.
-    session : redengine.Session
+    session : redengine.session.Session
         Session object for which the extension is for.
     if_exists : {'raise', 'replace', 'ignore'}, default='raise'
         If extension with the same name exists, what to do.
@@ -153,7 +153,7 @@ class BaseExtension(RedBase, metaclass=_ExtensionMeta):
         ----------
         d : dict
             Configuration dictionary.
-        session : redengine.Session
+        session : redengine.session.Session
             Session object for which the extension is for.
         """
         return cls(**d, session=session, if_exists=if_exists)

@@ -24,7 +24,7 @@ class TaskAdapter(logging.LoggerAdapter):
     ----------
     logger : logging.Logger
         Logger the TaskAdapter is for.
-    task : Task, str
+    task : redengine.core.Task, str
         Task the adapter is for.
     """
     def __init__(self, logger:logging.Logger, task:Union['Task', str]):

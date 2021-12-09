@@ -1,6 +1,6 @@
 from redengine.core import BaseCondition, Task
 
-from redengine._session import Session
+from redengine.session import Session
 from redengine.parse import add_condition_parser
 from redengine.parse.session import session_parser
 from redengine.conditions import true, false

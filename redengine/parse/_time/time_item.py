@@ -3,7 +3,7 @@ from typing import Pattern
 
 from ..utils import ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
-from redengine._session import Session
+from redengine.session import Session
 
 def parse_time_item(s:str):
     "Parse one condition"

@@ -231,7 +231,7 @@ class Session(RedBase):
 
         Returns
         -------
-        list[Task]
+        list[redengine.core.Task]
             List of tasks in the session.
         """
         return self.tasks.values()
@@ -397,7 +397,7 @@ class Session(RedBase):
 
     @property
     def tasks(self) -> Dict[str, 'Task']:
-        """Dict[str, Task]: Dictionary of the tasks in the session.
+        """Dict[str, redengine.core.Task]: Dictionary of the tasks in the session.
         The key is the name of the task and values are the 
         :py:class:`redengine.core.Task` objects."""
         return self._tasks
@@ -425,7 +425,7 @@ class Session(RedBase):
 
     @property
     def parameters(self) -> 'Parameters':
-        """Parameters: Session level parameters."""
+        """redengine.core.Parameters: Session level parameters."""
         return self._params
 
     @parameters.setter

@@ -92,7 +92,7 @@ class SessionLoader(ContentLoader):
         tasks.
     glob : str, default="\\*\\*/conftask.yaml"
         Unix pattern that is used to identify the files
-        that are parsed with ``redengine.Session.from_dict``.
+        that are parsed with ``redengine.session.Session.from_dict``.
     delay : str
         Time delay after each cycle of going through the 
         found files. Only usable if ``execution='thread'``

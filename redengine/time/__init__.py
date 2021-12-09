@@ -7,7 +7,7 @@ import calendar
 
 from .construct import get_between, get_before, get_after, get_full_cycle, get_on
 
-from redengine._session import Session
+from redengine.session import Session
 
 Session._time_parsers.update(
     {

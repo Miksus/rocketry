@@ -7,7 +7,7 @@ from .time import *
 from .parameter import ParamExists, IsEnv
 from .meta import TaskCond
 
-from redengine._session import Session
+from redengine.session import Session
 from redengine.core.condition import CLS_CONDITIONS
 from redengine.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
 

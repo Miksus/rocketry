@@ -1,5 +1,5 @@
 Session
 =======
 
-.. autoclass:: redengine.Session
+.. autoclass:: redengine.session.Session
    :members:

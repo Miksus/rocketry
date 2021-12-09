@@ -30,7 +30,7 @@ class Scheduler(RedBase):
 
     Parameters
     ----------
-    session : Session, optional
+    session : redengine.session.Session, optional
         Session object containing tasks,
         parameters and settings, 
         by default None
@@ -68,7 +68,7 @@ class Scheduler(RedBase):
 
     Attributes
     ----------
-    session : Session
+    session : redengine.session.Session
         Session for which the scheduler is
         for. One session has only one 
         scheduler.

@@ -1,5 +1,5 @@
 
-from ._session import Session
+from .session import Session
 from .core import Scheduler
 
 from ._setup import _setup_defaults

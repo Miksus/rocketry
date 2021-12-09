@@ -4,7 +4,7 @@ from typing import Callable, Dict, Pattern, Union, Type
 
 from redengine._base import RedBase
 from redengine.core.meta import _add_parser, _register
-from redengine._session import Session
+from redengine.session import Session
 
 
 CLS_CONDITIONS: Dict[str, Type['BaseCondition']] = {}

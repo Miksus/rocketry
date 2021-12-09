@@ -3,7 +3,7 @@
 Session
 =======
 
-:class:`redengine.Session` is a container of the Red Engine ecosystem.
+:py:class:`redengine.session.Session` is a container of the Red Engine ecosystem.
 They contain the configurations, scheduled tasks, 
 shared parameters and the scheduler itself.
 All of these should exist prefetably in one session.
@@ -27,7 +27,7 @@ you can simply do:
     from redengine import Session
     mysession = Session(...)
 
-See :py:class:`redengine.Session` for parameters 
+See :py:class:`redengine.session.Session` for parameters 
 to a session.
 
 Examples of how to set up the session:
@@ -41,7 +41,7 @@ Configurations
 
 The session configurations are options that tune the behaviour of 
 the system error handling and system flow. These can be passed as dict
-in ``config`` argument of a :class:`redengine.Session`. There are following
+in ``config`` argument of a :py:class:`redengine.session.Session`. There are following
 configuration options:
 
 - ``task_pre_exist``: What to do when creating a task which name already exists. Options:

@@ -121,7 +121,7 @@ class Task(RedBase, metaclass=_TaskMeta):
     logger : str, logger.Logger, optional
         Logger of the task. Typically not needed
         to be set.
-    session : Session, optional
+    session : redengine.session.Session, optional
         Session the task is binded to, 
         by default default session 
 
@@ -131,7 +131,7 @@ class Task(RedBase, metaclass=_TaskMeta):
     return_arg: Type of :class:`.BaseArgument`
         Argument class to use to store the return value,
         by default :class:`.Return`
-    session : Session
+    session : redengine.session.Session
         Session the task is binded to.
     logger : TaskAdapter
         Logger of the task. Access the 

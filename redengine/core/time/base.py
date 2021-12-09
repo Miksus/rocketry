@@ -8,7 +8,7 @@ import pandas as pd
 
 from redengine._base import RedBase
 from redengine.core.meta import _add_parser
-from redengine._session import Session
+from redengine.session import Session
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 
