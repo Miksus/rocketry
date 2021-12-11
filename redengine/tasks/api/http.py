@@ -2,7 +2,6 @@ from typing import Callable, DefaultDict, Dict, Optional
 from threading import Thread
 import time
 
-from flask.app import Flask
 from redengine.core import Parameters
 from .resources import Configs, Logs, Parameters, Session, Task, Tasks
 
