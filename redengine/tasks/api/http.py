@@ -124,7 +124,7 @@ class FlaskAPI(APITask):
     def get_endpoint_kwds(resource):
         from flask import request
         if request.method == 'GET':
-            return request.args
+            return list(request.args.items(multi=True))
         return request.get_json()
 
     @staticmethod

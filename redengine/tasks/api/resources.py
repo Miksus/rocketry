@@ -2,6 +2,7 @@
 from redengine._base import RedBase
 from redengine.tasks import CodeTask, FuncTask
 from redengine import core
+from redengine.pybox import query
 
 class RedResource(RedBase):
     """Base class for resources"""
@@ -121,34 +122,12 @@ class Logs(RedResource):
         """Get task log records"""
         kwargs = self.get_kwargs(**kwargs)
 
-        py_query = {}
-        for key, value in kwargs.items(multi=True):
-            if '$' in key:
-                # For example, timestamp$min: '2021-01-01'
-                key, oper = key.split('$')
-                if oper in ('min', 'max'):
-                    past_min_val = py_query.get(key, (None, None))[0]
-                    past_max_val = py_query.get(key, (None, None))[1]
-                    if oper == 'max':
-                        min_val = past_min_val
-                        max_val = value
-                    elif oper == 'min':
-                        min_val = value
-                        max_val = past_max_val
-                    py_query[key] = (min_val, max_val)
-                else:
-                    raise ValueError(f"Invalid operator: {oper}")
-            else:
-                if key not in py_query:
-                    py_query[key] = value
-                else:
-                    # A list (any of the given values)
-                    prev_val = py_query[key]
-                    if not isinstance(prev_val, list):
-                        prev_val = [prev_val]
-                    py_query[key] = prev_val + [value]
-        
-        logs = self.session.get_task_log(**py_query)
+        if isinstance(kwargs, list):
+            # List of tuples, like [('action', 'run'), ...]
+            qry = query.parser.from_tuples(kwargs)
+        else:
+            qry = query.parser.from_dict(kwargs)
+        logs = self.session.get_task_log(qry)
         return self.format_output(list(logs))
 
 @register_resource()
