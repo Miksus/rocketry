@@ -1,4 +1,4 @@
-from typing import Callable, DefaultDict, Dict, Optional
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional
 from threading import Thread
 import time
 
@@ -8,6 +8,8 @@ from .resources import Configs, Logs, Parameters, Session, Task, Tasks
 from .base import APITask
 from .models import RedEncoder
 
+if TYPE_CHECKING:
+    from flask import Flask
 
 class FlaskAPI(APITask):
     """Flask web API for runtime session
@@ -104,7 +106,7 @@ class FlaskAPI(APITask):
         from waitress import create_server
         return create_server(app, host=host, port=port)
 
-    def add_url_rules(self, app:Flask):
+    def add_url_rules(self, app:'Flask'):
         from flask_restful import Resource
         def to_rest(cls):
             new_cls = type(f'Http{cls.__name__}', (cls, Resource), {})
