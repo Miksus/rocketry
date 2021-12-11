@@ -290,6 +290,10 @@ class ExtensionLoader(ContentLoader):
     a directory. All matched files are
     read and the contents are parsed.
 
+    .. deprecated:: 1.2.0
+          `ExtensionLoader` will be removed in Red Engine 1.3.0.
+          Use appropriate `start_cond` instead.
+
     Parameters
     ----------
     path : path-like
