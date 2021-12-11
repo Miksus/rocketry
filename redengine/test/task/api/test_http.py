@@ -195,7 +195,7 @@ def do_nothing():
         ], id='/logs'),
 
         pytest.param(
-            '/logs?action=run&action=fail', 
+            '/logs?action=run', 
             [
                 {'task_name': 'code-task', 'action': 'run', 'start': '2021-01-01 12:00:00', 'timestamp': '2021-01-01 12:00:00', 'created': 1609495200},
                 {'task_name': 'another-task', 'action': 'run', 'start': '2021-01-01 13:00:00', 'timestamp': '2021-01-01 13:00:00', 'created': 1609498800},
