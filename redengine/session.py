@@ -300,7 +300,7 @@ class Session(RedBase):
         }
 
 # Log data
-    def get_task_log(self, **kwargs) -> Iterable[Dict]:
+    def get_task_log(self, *args, **kwargs) -> Iterable[Dict]:
         """Get task log records from all of the 
         readable handlers in the session.
 
@@ -318,7 +318,7 @@ class Session(RedBase):
         loggers = self.get_task_loggers(with_adapters=True)
         data = iter(())
         for logger in loggers.values():
-            data = chain(data, logger.get_records(**kwargs))
+            data = chain(data, logger.get_records(*args, **kwargs))
         return data
 
     def get_scheduler_log(self, **kwargs) -> Iterable[Dict]:

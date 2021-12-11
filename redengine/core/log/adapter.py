@@ -8,6 +8,7 @@ from dateutil.parser import parse as _parse_datetime
 import pandas as pd
 
 from redengine.core.utils import is_main_subprocess
+from redengine.pybox import query
 
 if TYPE_CHECKING:
     from redengine.core import Task
@@ -46,7 +47,7 @@ class TaskAdapter(logging.LoggerAdapter):
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
-    def get_records(self, **kwargs) -> Iterable[Dict]:
+    def get_records(self, qry=None, **kwargs) -> Iterable[Dict]:
         r"""Get the log records of the task from the 
         handlers of the logger.
         
@@ -54,12 +55,14 @@ class TaskAdapter(logging.LoggerAdapter):
         have one of the methods:
 
         - read()
-        - query(\*\*kwargs)
+        - query(qry)
 
         Parameters
         ----------
+        qry : list of tuples, dict, Expression
+            Query expression to filter records
         **kwargs : dict
-            Query arguments to filter the log records.
+            Keyword arguments turned to a query (if qry is None)
 
         """
         # TODO: Add examples in docstring
@@ -70,11 +73,15 @@ class TaskAdapter(logging.LoggerAdapter):
         if task_name is not None:
             kwargs["task_name"] = task_name
 
+        if qry is None:
+            qry = query.parser.from_kwargs(**kwargs)
+        elif isinstance(qry, list):
+            qry = query.parser.from_tuple(qry)
+        elif isinstance(qry, dict):
+            qry = query.parser.from_dict(qry)
         for handler in handlers:
             if hasattr(handler, "query"):
-                records = handler.query(
-                    **kwargs
-                )
+                records = handler.query(qry)
                 formatter = RecordFormatter()
                 for record in formatter(records):
                     yield record
@@ -82,7 +89,7 @@ class TaskAdapter(logging.LoggerAdapter):
             elif hasattr(handler, "read"):
 
                 formatter = RecordFormatter()
-                filter = RecordFilter(kwargs)
+                filter = RecordFilter(qry)
 
                 records = filter(formatter(handler.read()))
                 yield from records
@@ -102,7 +109,8 @@ class TaskAdapter(logging.LoggerAdapter):
             type.
         """
         record = {}
-        for record in self.get_records(action=action):
+        kwargs = {'action': action} if action is not None else {}
+        for record in self.get_records(**kwargs):
             pass # Iterating the generator till the end
         return record
 
@@ -149,10 +157,7 @@ class RecordFormatter:
         "Format 'start' and 'end' if found"
         for dt_key in ("start", "end"):
             if dt_key in record and record[dt_key]:
-                dt_val = record[dt_key]
-                if not isinstance(dt_val, datetime.datetime):
-                    # This is the situation if reading from file or so
-                    record[dt_key] = parse_datetime(record[dt_key])
+                record[dt_key] = pd.Timestamp(record[dt_key])
 
     def format_runtime(self, record:dict):
         # This is not required
@@ -161,15 +166,15 @@ class RecordFormatter:
 
     def format_timestamp(self, record:dict):
         if "timestamp" in record:
-            timestamp = parse_datetime(record['timestamp'])
+            timestamp = pd.Timestamp(record['timestamp'])
         elif "created" in record:
             # record.create is in every LogRecord (but not necessarily end up to handler msg)
             created = record["created"]
-            timestamp = datetime.datetime.fromtimestamp(float(created))
+            timestamp = pd.Timestamp.fromtimestamp(float(created))
         elif "asctime" in record:
             # asctime is most likely in handler message when formatted
             asctime = record["asctime"]
-            timestamp = parse_datetime(asctime) if not isinstance(asctime, datetime.datetime) else asctime
+            timestamp = pd.Timestamp(asctime)
         else:
             raise KeyError(f"Cannot determine 'timestamp' for record: {record}")
         record["timestamp"] = timestamp
@@ -190,8 +195,8 @@ class RecordFilter:
         "runtime": pd.Timedelta,
     }
 
-    def __init__(self, query:dict):
-        self.query = {key: self.format_query_value(val, key) for key, val in query.items()}
+    def __init__(self, query):
+        self.query = query
 
     def __call__(self, data:List[Dict]):
         for record in data:
@@ -199,36 +204,7 @@ class RecordFilter:
                 yield record
 
     def include_record(self, record:dict):
-        for key, value in self.query.items():
-            if key not in record:
-                break
-            record_value = record[key]
-
-            is_equal = isinstance(value, str)
-            is_range = isinstance(value, tuple) and len(value) == 2
-            is_in = isinstance(value, list)
-            if is_equal:
-                if record_value != value:
-                    break
-            elif is_range:
-                # Considered as range
-                start, end = value[0], value[1]
-
-                if start is not None and record_value < start:
-                    # Outside of start
-                    break
-                if end is not None and record_value > end:
-                    # Outside of end
-                    break
-            elif is_in:
-                if record_value not in value:
-                    # Outside of items
-                    break
-        else:
-            # Loop did not break (no condition violated)
-            return True
-        # Loop did break, 
-        return False
+        return self.query.match(record)
 
     def format_query_value(self, val, key):
         if isinstance(val, slice):
