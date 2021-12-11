@@ -150,21 +150,20 @@ and the dictionaries should contain at least the following keys:
 
 The method ``.read`` should require no arguments and just return
 all the log records. The necessary filtering is done after calling the method. 
-However, the method ``.query`` should also take the query as keyword arguments. 
-The keys of the arguments represent the names of 
-the record attributes and the values are either the actual values to look for,
-a list of values to look for (a list of values) or a range of values to look for
-(a tuple of two values). 
+However, the method ``.query`` should also take the query as an argument. 
+The query is an object that represents a logical lazy evaluated expression. 
 
 For example if you implement the ``query`` method, this call:
 
 .. code-block:: python
 
-    handler.query(
+    from redengine.pybox import query
+    qry = query.parser.from_kwargs(
         task_name="a task", 
         timestamp=(datetime.datetime(2021, 1, 1), datetime.datetime(2021, 1, 2)),
         action=["fail", "success", "terminate"]
     )
+    handler.query(qry)
 
 should return log records where the ``task_name`` is *a task*, and where the ``timestamp``
 is between *2021-01-01* and *2021-01-02* (including the start and end), and where

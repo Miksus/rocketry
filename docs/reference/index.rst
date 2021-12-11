@@ -13,6 +13,8 @@ Red Engine's classes here.
    tasks
    conditions
    arguments
+   api
+   query
    extensions
    scheduler
    parsing

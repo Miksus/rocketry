@@ -4,3 +4,6 @@ pandas
 # Optional
 pyyaml
 pymongo
+flask
+flask-restful
+waitress

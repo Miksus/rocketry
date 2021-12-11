@@ -10,7 +10,7 @@ from types import TracebackType
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, List, Dict, Type, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Dict, Type, Union, Tuple, Optional, get_type_hints
 import multiprocessing
 import threading
 from queue import Empty
@@ -1134,3 +1134,25 @@ class Task(RedBase, metaclass=_TaskMeta):
         
         # TimePeriod could not be determined
         return StaticInterval()
+
+    def to_dict(self) -> dict:
+        """Get dict representation of a task"""
+        string_typehints = {'Session': 'Session', 'BaseArgument': 'BaseArgument'}
+        cls = type(self)
+        type_hints = get_type_hints(cls, string_typehints)
+        return {
+            attr: getattr(self, attr)
+            for attr in type_hints
+            if not attr.startswith("_") # ignore private
+        }
+    
+    @classmethod
+    def from_dict(cls, conf:dict):
+        """Create a task from dict
+        
+        If called from the base class (``Task.from_dict(...)``)
+        the dict should also have specified ``class`` as a key."""
+        if cls == Task:
+            cls_name = conf.pop('class')
+            cls = cls.session.cls_tasks[cls_name]
+        return cls(**conf)

@@ -44,7 +44,7 @@ def log_task_record(task, now, action, start_time=None):
         pathname='redengine\\redengine\\core\\task\\base.py',
         msg=msg, args=(), exc_info=exc_info,
     )
-    record.created = to_epoch(now)
+    record.created = int(now.timestamp())# to_epoch(now)
     record.action = action
     record.task_name = task.name
     record.start = start_time

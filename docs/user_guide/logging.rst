@@ -69,19 +69,19 @@ Querying all:
 [{'action': 'run',
   'created': 1638748800,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 0)},
+  'timestamp': Timestamp('2021-12-06 02:00:00')},
  {'action': 'success',
   'created': 1638749400,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 10)},
+  'timestamp': Timestamp('2021-12-06 02:10:00')},
  {'action': 'run',
   'created': 1638750000,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 20)},
+  'timestamp': Timestamp('2021-12-06 02:20:00')},
  {'action': 'fail',
   'created': 1638750600,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 30)}]
+  'timestamp': Timestamp('2021-12-06 02:30:00')}]
 
 Querying a list of actions:
 
@@ -90,11 +90,11 @@ Querying a list of actions:
 [{'action': 'success',
   'created': 1638749400,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 10)},
+  'timestamp': Timestamp('2021-12-06 02:10:00')},
  {'action': 'fail',
   'created': 1638750600,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 30)}]
+  'timestamp': Timestamp('2021-12-06 02:30:00')}]
 
 Querying a specific range:
 
@@ -104,8 +104,8 @@ Querying a specific range:
 [{'action': 'success',
   'created': 1638749400,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 10)},
+  'timestamp': Timestamp('2021-12-06 02:10:00')},
  {'action': 'run',
   'created': 1638750000,
   'task_name': 'mytask',
-  'timestamp': datetime.datetime(2021, 12, 6, 2, 20)}]
+  'timestamp': Timestamp('2021-12-06 02:20:00')}]
