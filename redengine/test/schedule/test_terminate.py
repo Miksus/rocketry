@@ -4,6 +4,7 @@ import os
 
 import pytest
 import pandas as pd
+from redengine.conditions.task import TaskTerminated
 
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
@@ -11,7 +12,7 @@ from redengine.core.exceptions import TaskTerminationException
 from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue, AlwaysFalse
 
 def run_slow():
-    time.sleep(0.2)
+    time.sleep(1)
     with open("work.txt", "a") as file:
         file.write("line created\n")
 
@@ -119,13 +120,13 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution)
 
         scheduler = Scheduler(
-            shut_cond=TaskStarted(task="slow task") >= 2,
+            shut_cond=TaskTerminated(task="slow task") >= 1,
         )
         scheduler()
 
         history = pd.DataFrame(task.logger.get_records())
-        assert 2 == (history["action"] == "run").sum()
-        assert 2 == (history["action"] == "terminate").sum()
+        assert 1 <= (history["action"] == "run").sum()
+        assert 1 <= (history["action"] == "terminate").sum()
         assert 0 == (history["action"] == "success").sum()
         assert 0 == (history["action"] == "fail").sum()
 
