@@ -265,7 +265,7 @@ def test_run(session, tmpdir):
         api = JSONAPI(path='commands.json', path_display='output.json', path_history='history.jsonl', delay=0)
         task_post = FuncTask(name='make_command', func=make_command, execution='main', force_run=True)
 
-        scheduler = Scheduler(shut_cond=SchedulerCycles() >= 3)
+        scheduler = Scheduler(shut_cond=SchedulerCycles() >= 10)
         scheduler()
         assert task_post.status == 'success'
         assert 'mytask' in session.tasks
@@ -274,7 +274,7 @@ def test_run(session, tmpdir):
         # Test rereading the history
         new_session = Session()
         api = JSONAPI(path='commands.json', path_display='output.json', path_history='history.jsonl', delay=0)
-        scheduler = Scheduler(shut_cond=SchedulerCycles() >= 3)
+        scheduler = Scheduler(shut_cond=SchedulerCycles() >= 10)
 
         assert 'mytask' not in new_session.tasks
 
