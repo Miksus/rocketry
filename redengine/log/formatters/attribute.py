@@ -3,11 +3,16 @@ from logging import Formatter, LogRecord
 from typing import Callable, Dict, List
 
 class AttributeFormatter(Formatter):
-    """Format the log record to a row 
-    in CSV file.
+    """Format log records' attributes
+
+    This formatter is useful with handlers that 
+    store all of the attributes of LogRecords.
+    Use this formatter to remove some of the attributes. 
 
     Parameters
     ----------
+    *args : tuple
+        See `logging.Formatter <https://docs.python.org/3/library/logging.html#formatter-objects>`_
     has_default : bool
         If True, adds the exception attributes
         with None if no exceptions.
@@ -18,8 +23,6 @@ class AttributeFormatter(Formatter):
     attr_formats : Dict[str, Callable]
         Dictionary of function for formatting the 
         attribute values.
-    *args : tuple
-        See `logging.Formatter <https://docs.python.org/3/library/logging.html#formatter-objects>`_
     **kwargs : tuple
         See `logging.Formatter <https://docs.python.org/3/library/logging.html#formatter-objects>`_
 

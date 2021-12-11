@@ -389,8 +389,10 @@ class ExtensionLoader(ContentLoader):
 
 
 class PyLoader(LoaderBase):
-    """Task that searches Python source files matching 
-    a given patterns from a given directory. All matched 
+    """Python script loader
+    
+    This task searches Python source files matching 
+    a given pattern from a given directory. All matched 
     files are simply imported. If a matched file is 
     already imported, it is reloaded. Note that removed
     content (such as tasks) are unaffected.
@@ -454,8 +456,10 @@ class PyLoader(LoaderBase):
     Notes
     -----
     ``execution`` can have only values ``main`` and ``thread``.
-    Subprocesses cannot change the state of the session tasks in
-    the main thread.
+    If ``execution`` is *main*, the script files are imported
+    only once and the task is exited. If ``execution`` is *thread*,
+    the task is left running periodically importing and reloading 
+    scripts.
 
     """
     default_glob = '**/tasks.py'
