@@ -311,6 +311,13 @@ def test_get(url, expected, client, session):
     assert response.status_code == 200
 
     data = response.get_json()
+    if url.startswith('/logs?') or url == '/logs':
+        # Due to timezones, we remove the "created"
+        # CI is on different timezone
+        for d in data:
+            d.pop('created')
+        for d in expected:
+            d.pop('created')
     assert data == expected
 
 @pytest.mark.parametrize('data,cls,attrs',
