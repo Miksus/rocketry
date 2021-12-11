@@ -7,6 +7,8 @@ Builtin task classes
 
 .. autoclass:: redengine.tasks.CommandTask
 
+.. autoclass:: redengine.tasks.CodeTask
+
 Loaders
 -------
 
