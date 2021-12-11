@@ -107,11 +107,13 @@ class Tasks(RedResource):
     def get(self, **kwargs):
         "Get session tasks"
         kwargs = self.get_kwargs(**kwargs)
+        qry = query.parser.from_obj(kwargs)
         tasks = []
         for task in self.session.tasks.values():
             task_dict = task.to_dict()
             task_dict.pop('session')
-            tasks.append(task_dict)
+            if qry.match(task_dict):
+                tasks.append(task_dict)
         return self.format_output(tasks)
 
 @register_resource()
@@ -122,11 +124,7 @@ class Logs(RedResource):
         """Get task log records"""
         kwargs = self.get_kwargs(**kwargs)
 
-        if isinstance(kwargs, list):
-            # List of tuples, like [('action', 'run'), ...]
-            qry = query.parser.from_tuples(kwargs)
-        else:
-            qry = query.parser.from_dict(kwargs)
+        qry = query.parser.from_obj(kwargs)
         logs = self.session.get_task_log(qry)
         return self.format_output(list(logs))
 

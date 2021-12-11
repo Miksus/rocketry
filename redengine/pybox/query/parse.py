@@ -3,6 +3,7 @@ from typing import DefaultDict, List
 from collections import Counter
 
 from .base import (
+    Expression,
     QueryBase,
     Key,
     All, Any, Not,
@@ -105,7 +106,7 @@ class Parser:
 
     def from_kwargs(self, **kwargs):
         """Parse query from Pythonic keyword arguments
-        
+
         Examples
         --------
         >>> from redengine.pybox.query import parser
@@ -143,3 +144,20 @@ class Parser:
         if statement is None:
             return true
         return statement
+
+    def from_obj(self, obj):
+        """Quess the parsing of the object and parse to expression
+        
+        Parameters
+        ----------
+        obj : list of tuples, dict, Expression
+            Object to parse as expression.
+            See other parser methods.
+        """
+        if isinstance(obj, dict):
+            return self.from_dict(obj)
+        elif isinstance(obj, Expression):
+            return obj
+        else:
+            # Expected as iterable of tuples
+            return self.from_tuples(obj)
