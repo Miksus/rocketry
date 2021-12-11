@@ -111,15 +111,15 @@ def test_task_terminate(tmpdir, execution, session):
 @pytest.mark.parametrize("execution", ["thread", "process"])
 def test_task_terminate_end_cond(tmpdir, execution, session):
     """Test task termination due to the task ran too long"""
+    #! NOTE: CI observed to get stuck in this for some times
     with tmpdir.as_cwd() as old_dir:
 
         func_run_slow = get_slow_func(execution)
 
-        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=AlwaysTrue(), execution=execution)
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution)
 
         scheduler = Scheduler(
             shut_cond=TaskStarted(task="slow task") >= 2,
-            timeout="0.1 seconds"
         )
         scheduler()
 
