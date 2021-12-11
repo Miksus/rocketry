@@ -8,5 +8,6 @@ pandas
 # Optional
 pyyaml
 pymongo
+waitress
 flask
 flask-restful
