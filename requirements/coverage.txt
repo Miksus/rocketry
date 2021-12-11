@@ -1,0 +1,12 @@
+# Testing
+pytest
+pytest-cov
+
+# Package requirements
+pandas
+
+# Optional
+pyyaml
+pymongo
+flask
+flask-restful
