@@ -183,3 +183,64 @@ tasks have succeeded and the outputs from both of the tasks are used in this tas
     )
     def run_when_both_succeeded(return_of_a, return_of_b):
         ... # Do stuff
+
+
+Visualizing Pipelines
+---------------------
+
+It may become hard to have complete picture of which 
+task depend on which when you have several and complex dependencies.
+For this purpose, the session object has view ``dependencies``.
+
+To illustrate, first we make some non-trivial dependencies:
+
+.. code-block:: python
+
+    @FuncTask(start_cond="daily")
+    def run_a():
+        ... # Do stuff
+
+    @FuncTask(start_cond="after task 'run_a'")
+    def run_b(myarg):
+        ... # Do stuff
+
+    @FuncTask(start_cond="after task 'run_a' & after task 'run_b'")
+    def run_c(myarg):
+        ... # Do stuff
+
+    @FuncTask(start_cond="after task 'run_a' | after task 'run_b'")
+    def run_d(myarg):
+        ... # Do stuff
+
+    @FuncTask(start_cond="after task 'run_a' failed | after task 'run_b' failed")
+    def run_e(myarg):
+        ... # Do stuff
+
+You can display the dependencies as a graph using 
+`NetworkX <https://networkx.org/documentation/stable/index.html>`_ 
+and `Matplotlib <https://matplotlib.org/stable/index.html>`_:
+
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+    from redengine import session
+    session.dependencies.to_networkx()
+    plt.show()
+
+.. image:: ../graphs/pipeline.png
+   :scale: 100 %
+   :alt: pipeline visualized
+
+You can see that in order to run task ``run_c``, tasks ``run_a`` and ``run_b``
+must both run successfully before. To run task ``run_d``, either ``run_a`` 
+or ``run_b`` must run successfully while to run task ``run_e`` either 
+``run_a`` or ``run_b`` must fail.
+
+You can also put the dependencies to a dict representation and 
+iterate them yourself if needed:
+
+.. code-block:: python
+
+    for link_dict in session.dependencies.to_dict():
+        ...
+

@@ -11,3 +11,5 @@ pymongo
 waitress
 flask
 flask-restful
+networkx
+matplotlib
