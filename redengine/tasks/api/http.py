@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Optional
+from typing import TYPE_CHECKING, Callable, DefaultDict, Dict, Iterator, Optional, Tuple, Union
 from threading import Thread
 import time
 
@@ -69,15 +69,15 @@ class FlaskAPI(APITask):
         return 'flask-api'
 
     def setup(self):
-        # TODO: refetch the http_api parameters in while loop
-        
         self.app = self.create_app()
         self.server = self.create_server(self.app, self.host, self.port)
         context = self.app.app_context()
         context.push()
 
-    # https://flask.palletsprojects.com/en/1.1.x/testing/#testing-json-apis
-    def execute(self, access_token=None):
+        for resource, method, data in self.get_requests():
+            call_resource(resource, method, data)
+
+    def execute(self):
         self.setup()
         # Start and run the server
         thread = Thread(target=self.server.run)
@@ -109,8 +109,8 @@ class FlaskAPI(APITask):
     def add_url_rules(self, app:'Flask'):
         from flask_restful import Resource
         def to_rest(cls):
-            new_cls = type(f'Http{cls.__name__}', (cls, Resource), {})
-            setattr(new_cls, 'get_kwargs', self.get_endpoint_kwds)
+            new_cls = type(f'Http{cls.__name__}', (cls, Resource), {'_api': self})
+            setattr(new_cls, 'get_kwargs', self._resource_wrapper)
             setattr(new_cls, 'format_output', self.format_output)
             return new_cls
 
@@ -122,12 +122,20 @@ class FlaskAPI(APITask):
         self.api.add_resource(to_rest(Logs), '/logs')
         self.api.add_resource(to_rest(Dependencies), '/dependencies')
 
-    @staticmethod
-    def get_endpoint_kwds(resource):
+    def get_endpoint_kwds(self, resource):
         from flask import request
         if request.method == 'GET':
             return list(request.args.items(multi=True))
         return request.get_json()
+
+    @staticmethod
+    def _resource_wrapper(resource:RedResource):
+        # Note that this is actually resource's method
+        from flask import request
+        self = resource._api
+        kwargs = self.get_endpoint_kwds(resource)
+        self.store_request(resource, method=request.method, data=kwargs)
+        return kwargs
 
     @staticmethod
     def format_output(resource, output):
@@ -136,3 +144,30 @@ class FlaskAPI(APITask):
 
     def authenticate(self):
         "Authenticate the user"
+
+    def store_request(self, resource:RedResource, method:str, data:Union[list, dict, None]):
+        """Store the request to reimplement after restart
+        
+        Parameters
+        ----------
+        resources : RedResource
+            Resource that was requested
+        method : str
+            HTTP method. Should correspond on the method
+            on the resource.
+        data : list, dict
+            Data for the request.
+        """
+    
+    def get_requests(self) -> Iterator[Tuple[str, str, Union[list, dict]]]:
+        """Get stored requests to reimplement after restart
+        
+        Returns
+        -------
+        tuple
+            The first argument is the resource name (ie. ``Task``), 
+            second argument is the method name (ie. ``POST``) and 
+            third is the data to pass as keyword arguments to the 
+            resource
+        """
+        yield from ()
