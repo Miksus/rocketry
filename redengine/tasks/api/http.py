@@ -24,8 +24,10 @@ class FlaskAPI(APITask):
         Host for the API
     port : int
         Port for the API
+    app_config : dict, optional
+        App configurations passed to Flask. 
     **kwargs : dict
-        see :py:class:`redengine.core.Task`
+        See :py:class:`redengine.core.Task`
 
     Examples
     --------
@@ -49,13 +51,6 @@ class FlaskAPI(APITask):
         curl --request POST \ 
              --data '{"class": "CodeTask", "code":"print('hello world')", "start_cond":"daily"}' \ 
              http://localhost:5000/task/my-task-name
-
-    See available resources from 
-
-    .. code-block:: python
-
-        from redengine.tasks.api import RedResource
-        RedResource.resources
 
     """
     def __init__(self, host='127.0.0.1', port=5000, app_config=None, **kwargs):

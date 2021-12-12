@@ -16,5 +16,6 @@ use Red Engine.
    advanced_guide
    scheduling_guide
    pipeline_guide
+   api_guide
    logging_guide
    extending_guide

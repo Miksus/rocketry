@@ -9,6 +9,12 @@ Builtin task classes
 
 .. autoclass:: redengine.tasks.CodeTask
 
+API
+---
+
+.. autoclass:: redengine.tasks.api.FlaskAPI
+.. autoclass:: redengine.tasks.api.JSONAPI
+
 Loaders
 -------
 

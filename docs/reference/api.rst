@@ -5,8 +5,10 @@ APIs
 ----
 
 .. autoclass:: redengine.tasks.api.FlaskAPI
+    :noindex:
 
 .. autoclass:: redengine.tasks.api.JSONAPI
+    :noindex:
 
 .. _resources:
 
