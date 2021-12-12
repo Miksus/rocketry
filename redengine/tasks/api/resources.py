@@ -180,3 +180,26 @@ class Session(RedResource):
             "returns": sess.returns.to_dict(),
         }
         return self.format_output(sess_dict)
+
+# Views
+@register_resource()
+class Dependencies(RedResource):
+    """Resource of task dependency information"""
+
+    def get(self, **kwargs):
+        "Get information about the session"
+        kwargs = self.get_kwargs(**kwargs)
+
+        qry = query.parser.from_obj(kwargs)
+
+        deps = []
+        for link in self.session.dependencies:
+            d = {
+                'parent': link.parent.name,
+                'child': link.child.name,
+                'relation': link.relation.__name__,
+                'type': link.type.__name__ if link.type is not None else None,
+            }
+            if qry.match(d):
+                deps.append(d)
+        return deps

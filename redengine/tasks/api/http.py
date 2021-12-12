@@ -120,6 +120,7 @@ class FlaskAPI(APITask):
         self.api.add_resource(to_rest(Session), '/session')
         self.api.add_resource(to_rest(Tasks), '/tasks')
         self.api.add_resource(to_rest(Logs), '/logs')
+        self.api.add_resource(to_rest(Dependencies), '/dependencies')
 
     @staticmethod
     def get_endpoint_kwds(resource):

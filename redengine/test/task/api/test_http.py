@@ -320,6 +320,30 @@ def test_get(url, expected, client, session):
             d.pop('created')
     assert data == expected
 
+def test_get_dependencies(session, client):
+    FuncTask(lambda: None, start_cond='daily', name="a", execution="main")
+    FuncTask(lambda: None, start_cond="after task 'a'", name="b", execution="main")
+    FuncTask(lambda: None, start_cond="after task 'a' & after task 'b' failed", name="c", execution="main")
+
+    response = client.get('/dependencies')
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data == [
+        {'parent': 'a', 'child': 'b', 'relation': 'DependSuccess', 'type': None},
+        {'parent': 'a', 'child': 'c', 'relation': 'DependSuccess', 'type': 'All'},
+        {'parent': 'b', 'child': 'c', 'relation': 'DependFailure', 'type': 'All'},
+    ]
+
+    response = client.get('/dependencies?child=c')
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data == [
+        {'parent': 'a', 'child': 'c', 'relation': 'DependSuccess', 'type': 'All'},
+        {'parent': 'b', 'child': 'c', 'relation': 'DependFailure', 'type': 'All'},
+    ]
+
 @pytest.mark.parametrize('data,cls,attrs',
     [
         pytest.param({
