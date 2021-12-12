@@ -89,10 +89,9 @@ class TaskAdapter(logging.LoggerAdapter):
             elif hasattr(handler, "read"):
 
                 formatter = RecordFormatter()
-                filter = RecordFilter(qry)
-
-                records = filter(formatter(handler.read()))
-                yield from records
+                for record in formatter(handler.read()):
+                    if qry.match(record):
+                        yield record
                 break
         else:
             raise AttributeError(f"Logger '{self.logger.name}' cannot be read. Missing readable handler.")
@@ -178,54 +177,3 @@ class RecordFormatter:
         else:
             raise KeyError(f"Cannot determine 'timestamp' for record: {record}")
         record["timestamp"] = timestamp
-
-class RecordFilter:
-
-    formats = {
-        # From: https://docs.python.org/3/library/logging.html#logrecord-attributes
-        "timestamp": parse_datetime,
-        "start": parse_datetime,
-        "end": parse_datetime,
-        "asctime": str,
-        "created": float,
-        "relativeCreated": int,
-        "lineno": int,
-        "thread": int,
-        "msecs": int,
-        "runtime": pd.Timedelta,
-    }
-
-    def __init__(self, query):
-        self.query = query
-
-    def __call__(self, data:List[Dict]):
-        for record in data:
-            if self.include_record(record):
-                yield record
-
-    def include_record(self, record:dict):
-        return self.query.match(record)
-
-    def format_query_value(self, val, key):
-        if isinstance(val, slice):
-            val.start = self._format_value(val.start, key=key)
-            val.stop = self._format_value(val.stop, key=key)
-        elif isinstance(val, list):
-            val = [self._format_value(subval, key=key) for subval in val]
-        elif isinstance(val, tuple):
-            val = tuple(self._format_value(subval, key=key) for subval in val)
-        else:
-            val = self._format_value(val, key=key)
-        return val
-
-    def _format_value(self, val, key):
-        if key in self.formats:
-            return self.formats[key](val)
-        else:
-            return val
-
-    def _to_same_type(self, record_value, other):
-        if isinstance(other, datetime.datetime):
-            return parse_datetime(record_value)
-        else:
-            return type(other)(record_value)
