@@ -12,3 +12,4 @@ waitress
 flask
 flask-restful
 networkx
+matplotlib

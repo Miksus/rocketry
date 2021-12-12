@@ -16,3 +16,4 @@ waitress
 
 # For dependency visualization
 networkx
+matplotlib
