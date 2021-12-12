@@ -32,67 +32,6 @@ class Statement(BaseCondition):
         method.
     """
 
-    name = None
-    _use_global_params = False
-
-    @classmethod
-    def from_func(cls, func=None, *, historical=False, quantitative=False, str_repr=None, use_globals=False):
-        """Generate statement from a function.
-
-        The created statement is a subclass of 
-        Statement and Historical (if historical=True)
-        and Comparable (if quantitative=True).
-
-        Parameters
-        ----------
-        func : Callable, optional
-            The function to create the statement with, by default None
-        historical : bool, optional
-            Whether the statement has a time window to check observation, 
-            by default False
-        quantitative : bool, optional
-            Whether the statement can be compared (with <, >, ==, >=, etc.), 
-            by default False
-        str_repr : [type], optional
-            [description], by default None
-        use_globals : bool, optional
-            Whether to allow passing session.parameters to the observe method, 
-            by default False
-
-        Returns
-        -------
-        Type
-            Condition class.
-        """
-        if func is None:
-            # Acts as decorator
-            return partial(cls.from_func, historical=historical, quantitative=quantitative, use_globals=use_globals)
-
-        name = func.__name__
-        #bases = (cls,)
-
-        bases = []
-        if historical: 
-            bases.append(Historical)
-        if quantitative: 
-            bases.append(Comparable)
-        bases.append(cls)
-        bases = tuple(bases)
-
-        attrs = {
-            "_use_global_params": use_globals,
-            # Methods
-            "observe": staticmethod(func),
-        }
-
-        # Creating class dynamically
-        cls = type(
-            name,
-            tuple(bases),
-            attrs
-        )
-        return cls
-
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
@@ -114,10 +53,7 @@ class Statement(BaseCondition):
 
     def get_kwargs(self):
         # TODO: Get session parameters
-        if self._use_global_params:
-            return self.session.parameters | self.kwargs
-        else:
-            return self.kwargs
+        return self.kwargs
 
     def to_count(self, result):
         "Turn event result to quantitative number"
@@ -132,7 +68,7 @@ class Statement(BaseCondition):
         self.kwargs.update(kwargs)
 
     def __str__(self):
-        name = self.name
+        name = type(self).__name__
         return f"< Statement '{name}'>"
 
     def copy(self):
