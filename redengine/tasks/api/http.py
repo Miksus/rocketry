@@ -3,7 +3,7 @@ from threading import Thread
 import time
 
 from redengine.core import Parameters
-from .resources import Configs, Logs, Parameters, Session, Task, Tasks
+from .resources import Configs, Logs, Parameters, RedResource, Session, Task, Tasks, Dependencies, call_resource
 
 from .base import APITask
 from .models import RedEncoder
