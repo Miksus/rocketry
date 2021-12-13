@@ -88,8 +88,24 @@ task a or task b have succeeded* and so on:
 
 .. note::
 
-    In case the condition gets too long, you can split it to multiple lines.
-    For example:
+    If you have many dependent tasks, you can use a more compact version 
+    of the condition syntax for pipelining tasks with **all**:
+
+    .. code-block:: python
+
+        @FuncTask(start_cond="after tasks 'task_a', 'task_b', 'task_c' succeeded")
+        def my_task():
+            ...
+
+    There is also a compact version for **any** prerequisites:
+
+    .. code-block:: python
+
+        @FuncTask(start_cond="after any tasks 'task_a', 'task_b', 'task_c' succeeded")
+        def my_task():
+            ...
+
+    Alternatively, you can split them to multiple lines:
 
     .. code-block:: python
 

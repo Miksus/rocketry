@@ -10,6 +10,9 @@ Task Dependence
 
    after task '<task>'
    after task '<task>' [succeeded | failed | finished | terminated]
+   after tasks '<task 1>', '<task 2>' ... 
+   after tasks '<task 1>', '<task 2>' ... [succeeded | failed | finished]
+   after any tasks '<task 1>', '<task 2>' ... [succeeded | failed | finished]
 
 **True when**
 
@@ -34,3 +37,4 @@ Task Dependence
     FuncTask(..., start_cond="after task 'a task' succeeded")
     FuncTask(..., start_cond="after task 'a task' failed")
     FuncTask(..., start_cond="after task 'a task' finished")
+    FuncTask(..., start_cond="after tasks 'a task', 'another task' finished")
