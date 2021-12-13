@@ -88,10 +88,21 @@ cases_task = [
 
     # Task dependent related (requires 2 tasks)
     pytest.param("after task 'other'",           DependSuccess(depend_task="other"), id="after task"),
-    pytest.param("after task 'other' succeeded", DependSuccess(depend_task="other"), id="after task successs"),
+    pytest.param("after task 'other' succeeded", DependSuccess(depend_task="other"), id="after task success"),
     pytest.param("after task 'other' failed",    DependFailure(depend_task="other"), id="after failed"),
     pytest.param("after task 'other' finished",  DependFinish(depend_task="other"), id="after finished"),
     pytest.param("after task 'group1.group-2.mytask+'", DependSuccess(depend_task="group1.group-2.mytask+"), id="after task special chars"),
+
+    # Multi
+    pytest.param("after tasks 'first', 'second', 'third'", All(DependSuccess(depend_task="first"), DependSuccess(depend_task="second"), DependSuccess(depend_task="third")), id="after task (multi)"),
+    pytest.param("after tasks 'first', 'second', 'third' succeeded", All(DependSuccess(depend_task="first"), DependSuccess(depend_task="second"), DependSuccess(depend_task="third")), id="after task success (multi)"),
+    pytest.param("after tasks 'first', 'second', 'third' failed", All(DependFailure(depend_task="first"), DependFailure(depend_task="second"), DependFailure(depend_task="third")), id="after task fail (multi)"),
+    pytest.param("after tasks 'first', 'second', 'third' finished", All(DependFinish(depend_task="first"), DependFinish(depend_task="second"), DependFinish(depend_task="third")), id="after task fail (multi)"),
+
+    pytest.param("after any tasks 'first', 'second', 'third' succeeded", Any(DependSuccess(depend_task="first"), DependSuccess(depend_task="second"), DependSuccess(depend_task="third")), id="after task success (multi)"),
+    pytest.param("after any tasks 'first', 'second', 'third' failed", Any(DependFailure(depend_task="first"), DependFailure(depend_task="second"), DependFailure(depend_task="third")), id="after task fail (multi)"),
+    pytest.param("after any tasks 'first', 'second', 'third' finished", Any(DependFinish(depend_task="first"), DependFinish(depend_task="second"), DependFinish(depend_task="third")), id="after task fail (multi)"),
+
 
     pytest.param("has failed today", TaskFailed(period=TimeOfDay()), id="has failed today"),
 ]
@@ -182,6 +193,8 @@ def test_back_to_string(cond_str, expected):
         pytest.param("true |", IndexError, id="OR, missing right"),
         pytest.param("& true", IndexError, id="AND, missing left"),
         pytest.param("| true", IndexError, id="OR, missing left"),
+
+        pytest.param("after tasks missing quotes", ParserError, id="Malformed after tasks"),
     ]
 )
 def test_failure(cond_str, exc):

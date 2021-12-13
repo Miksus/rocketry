@@ -1,10 +1,11 @@
 
 import re, time
 import datetime
+from .utils import DependMixin
 
-from redengine.core.condition import Statement, Historical, Comparable
+from redengine.core.condition import Statement, Historical, Comparable, All
 from redengine.core.time import TimeDelta
-from .time import IsPeriod
+from ..time import IsPeriod
 from redengine.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
 
 
@@ -410,7 +411,7 @@ class TaskExecutable(Historical):
     }
 
 
-class DependFinish(Historical):
+class DependFinish(DependMixin, Historical):
     """Condition for checking whether a given
     task has not finished after running a dependent 
     task. Useful to set the given task to run after
@@ -427,32 +428,10 @@ class DependFinish(Historical):
     """
     __parsers__ = {
         re.compile(r"after task '(?P<depend_task>.+)' finished"): "__init__",
+        re.compile(r"after tasks '(?P<depend_tasks>.+)' finished"): "_parse_multi_all",
+        re.compile(r"after any tasks '(?P<depend_tasks>.+)' finished"): "_parse_multi_any",
     }
-    def __init__(self, depend_task, task=None, **kwargs):
-        super().__init__(task=task, depend_task=depend_task, **kwargs)
-
-    def observe(self, task, depend_task, **kwargs):
-        """True when the "depend_task" has finished and "task" has not yet ran after it.
-        Useful for start cond for task that should be run after finish of another task.
-        """
-        # Name ideas: TaskNotRanAfterFinish, NotRanAfterFinish, DependFinish
-        # HasRunAfterTaskFinished, RanAfterTask, RanAfterTaskFinished, AfterTaskFinished
-        # TaskRanAfterFinish
-        actual_task = Statement.session.get_task(task)
-        depend_task = Statement.session.get_task(depend_task)
-
-        #! TODO: use Task._last_success & Task._last_run if not none and not forced
-        last_depend_finish = depend_task.logger.get_latest(action=["success", "fail"])
-        last_actual_start = actual_task.logger.get_latest(action=["run"])
-
-        if not last_depend_finish:
-            # Depend has not run at all
-            return False
-        elif not last_actual_start:
-            # Depend has finished but the actual task has not
-            return True
-
-        return last_depend_finish["created"] > last_actual_start["created"]
+    _dep_actions = ['success', 'fail']
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -462,7 +441,7 @@ class DependFinish(Historical):
         return f"task '{depend_task}' finished before {task} started"
 
 
-class DependSuccess(Historical):
+class DependSuccess(DependMixin, Historical):
     """Condition for checking whether a given
     task has not succeeded after running a dependent 
     task. Useful to set the given task to run after
@@ -481,30 +460,10 @@ class DependSuccess(Historical):
 
     __parsers__ = {
         re.compile(r"after task '(?P<depend_task>.+)'( succeeded)?"): "__init__",
+        re.compile(r"after tasks '(?P<depend_tasks>.+)'( succeeded)?"): "_parse_multi_all",
+        re.compile(r"after any tasks '(?P<depend_tasks>.+)'( succeeded)?"): "_parse_multi_any",
     }
-
-    def __init__(self, depend_task, task=None, **kwargs):
-        super().__init__(task=task, depend_task=depend_task, **kwargs)
-
-    def observe(self, task, depend_task, **kwargs):
-        """True when the "depend_task" has succeeded and "task" has not yet ran after it.
-        Useful for start cond for task that should be run after success of another task.
-        """
-        actual_task = Statement.session.get_task(task)
-        depend_task = Statement.session.get_task(depend_task)
-
-        #! TODO: use Task._last_success & Task._last_run if not none and not forced
-        last_depend_finish = depend_task.logger.get_latest(action=["success"])
-        last_actual_start = actual_task.logger.get_latest(action=["run"])
-
-        if not last_depend_finish:
-            # Depend has not run at all
-            return False
-        elif not last_actual_start:
-            # Depend has succeeded but the actual task has not
-            return True
-            
-        return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
+    _dep_actions = ['success']
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -514,7 +473,7 @@ class DependSuccess(Historical):
         return f"task '{depend_task}' finished before {task} started"
 
 
-class DependFailure(Historical):
+class DependFailure(DependMixin, Historical):
     """Condition for checking whether a given
     task has not failed after running a dependent 
     task. Useful to set the given task to run after
@@ -532,30 +491,10 @@ class DependFailure(Historical):
 
     __parsers__ = {
         re.compile(r"after task '(?P<depend_task>.+)' failed"): "__init__",
+        re.compile(r"after tasks '(?P<depend_tasks>.+)' failed"): "_parse_multi_all",
+        re.compile(r"after any tasks '(?P<depend_tasks>.+)' failed"): "_parse_multi_any",
     }
-
-    def __init__(self, depend_task, task=None, **kwargs):
-        super().__init__(task=task, depend_task=depend_task, **kwargs)
-
-    def observe(self, task, depend_task, **kwargs):
-        """True when the "depend_task" has failed and "task" has not yet ran after it.
-        Useful for start cond for task that should be run after failure of another task.
-        """
-        actual_task = Statement.session.get_task(task)
-        depend_task = Statement.session.get_task(depend_task)
-
-        #! TODO: use Task._last_success & Task._last_run if not none and not forced
-        last_depend_finish = depend_task.logger.get_latest(action=["fail"])
-        last_actual_start = actual_task.logger.get_latest(action=["run"])
-
-        if not last_depend_finish:
-            # Depend has not run at all
-            return False
-        elif not last_actual_start:
-            # Depend has failed but the actual task has not
-            return True
-            
-        return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
+    _dep_actions = ['fail']
 
     def __str__(self):
         if hasattr(self, "_str"):
