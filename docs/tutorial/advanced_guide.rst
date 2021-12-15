@@ -167,6 +167,12 @@ And finally we start the scheduler:
     if __name__ == '__main__':
         session.start()
 
+.. warnings::
+
+    It is always recomended to start the session in ``if __name__ == "__main__"``
+    block. You will get RuntimeError from multiprocessing if there is any task
+    executed in separate process.
+
 Content of main.py
 ^^^^^^^^^^^^^^^^^^
 

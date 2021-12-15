@@ -79,8 +79,9 @@ def my_task_1():
 def my_task_2():
     ... # Do whatever.
 
-# Start scheduling
-session.start()
+if __name__ == '__main__':
+    # Start scheduling
+    session.start()
 ```
 
 ## More Examples

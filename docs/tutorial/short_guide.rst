@@ -29,8 +29,9 @@ tasks. If you want you can configure a session yourself:
 
     ... # import or put your tasks here
 
-    # Starting the scheduler
-    session.start()
+    if __name__ == '__main__':
+        # Starting the scheduler
+        session.start()
 
 Create Tasks
 ------------
@@ -77,8 +78,13 @@ When you have set up the tasks, you can just start the session by:
 
 .. code-block:: python
 
-    session.start()
+    if __name__ == "__main__":
+        session.start()
 
+.. warnings::
+
+    It is always recomended to start the session in ``if __name__ == "__main__"``
+    block. Otherwise you may get RuntimeError from multiprocessing library.
 
 Putting together
 ----------------

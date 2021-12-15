@@ -13,5 +13,7 @@ Then read this in a launch file (ie. ``main.py``):
 
     from redengine import Session
     session = Session.from_yaml("myconf.yaml")
-    session.start()
+    
+    if __name__ == '__main__':
+        session.start()
     
