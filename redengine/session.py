@@ -138,6 +138,10 @@ class Session(RedBase):
         self.hooks = {
             'task_init': [],
             'task_execute': [],
+            
+            'scheduler_startup': [],
+            'scheduler_cycle': [],
+            'scheduler_shutdown': [],
         }
 
         if delete_existing_loggers:

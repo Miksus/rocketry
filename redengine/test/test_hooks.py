@@ -39,7 +39,7 @@ def test_task_init(session):
             return 
 
 
-    assert Task.init_hooks == [myhook, mygenerhook] # The func is in different namespace thus different
+    assert session.hooks['task_init'] == [myhook, mygenerhook] # The func is in different namespace thus different
 
     timeline.append("Main")
     mytask = DummyTask(name="dummy")
@@ -101,6 +101,10 @@ def test_scheduler_startup(session):
     session.scheduler.shut_cond = SchedulerCycles(_eq_=2)
     session.start()
     
+    assert session.hooks['scheduler_startup'] == [my_startup_hook, my_startup_hook_generator]
+    assert session.hooks['scheduler_cycle'] == [my_cycle_hook, my_cycle_hook_generator]
+    assert session.hooks['scheduler_shutdown'] == [my_shutdown_hook, my_shutdown_hook_generator]
+
     assert timeline == [
         "ran hook (startup)", 
         "ran hook (startup, generator first)", 

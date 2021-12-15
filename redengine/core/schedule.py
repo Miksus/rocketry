@@ -180,7 +180,7 @@ class Scheduler(RedBase):
         self.logger.debug(f"Beginning cycle with {len(tasks)} tasks...", extra={"action": "run"})
 
         # Running hooks
-        hooker = _Hooker(self.cycle_hooks)
+        hooker = _Hooker(self.session.hooks['scheduler_cycle'])
         hooker.prerun(self)
 
         for task in tasks:
@@ -362,7 +362,7 @@ class Scheduler(RedBase):
         running tasks that have ``on_startup`` as ``True``."""
         #self.setup_listener()
         self.logger.info(f"Starting up...", extra={"action": "setup"})
-        hooker = _Hooker(self.startup_hooks)
+        hooker = _Hooker(self.session.hooks['scheduler_startup'])
         hooker.prerun(self)
 
         self.n_cycles = 0
@@ -451,7 +451,7 @@ class Scheduler(RedBase):
         """
         
         self.logger.info(f"Beginning shutdown sequence...")
-        hooker = _Hooker(self.shutdown_hooks)
+        hooker = _Hooker(self.session.hooks['scheduler_shutdown'])
         hooker.prerun(self)
 
         # Make sure the tasks run if start_cond not set
@@ -552,9 +552,6 @@ class Scheduler(RedBase):
         self._logger = logger
 
 # Hooks
-    startup_hooks = []
-    shutdown_hooks = []
-    cycle_hooks = []
 
     @classmethod
     def hook_startup(cls, func:Callable):
@@ -582,7 +579,7 @@ class Scheduler(RedBase):
             ...     print("Scheduler started up.")
 
         """
-        cls.startup_hooks.append(func)
+        cls.session.hooks['scheduler_startup'].append(func)
         return func
 
     @classmethod
@@ -606,7 +603,7 @@ class Scheduler(RedBase):
         ...     print("Scheduler is shut down.")
 
         """
-        cls.shutdown_hooks.append(func)
+        cls.session.hooks['scheduler_shutdown'].append(func)
         return func
 
     @classmethod
@@ -630,5 +627,5 @@ class Scheduler(RedBase):
         ...     print("Scheduler finished a cycle.")
 
         """
-        cls.cycle_hooks.append(func)
+        cls.session.hooks['scheduler_cycle'].append(func)
         return func
