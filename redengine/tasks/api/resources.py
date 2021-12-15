@@ -148,6 +148,25 @@ class Parameters(RedResource):
         self.session.parameters.update(self.get_kwargs(**kwargs))
 
 @register_resource()
+class Returns(RedResource):
+    """Resource of task return values"""
+
+    def get(self):
+        "Get task return values"
+        params = self.session.returns.to_dict()
+        return self.format_output(params)
+
+    def patch(self, **kwargs):
+        """Patch (partial update) return values
+        
+        Parameters
+        ----------
+        **kwargs : dict
+            Return values to update and their updated values.
+        """
+        self.session.returns.update(self.get_kwargs(**kwargs))
+
+@register_resource()
 class Configs(RedResource):
     """Resource of session configs"""
 

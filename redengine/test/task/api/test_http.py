@@ -70,6 +70,9 @@ def do_nothing():
             'myparam3': {'foo': 1, 'bar': 2},
             'myparam4': 'FuncArg(do_nothing)',
         }, id='/parameters'),
+        pytest.param('/returns', {
+            'code-task': "a return value",
+        }, id='/returns'),
         pytest.param('/configs', {
             'use_instance_naming':False,
             'task_priority':0,
@@ -104,7 +107,9 @@ def do_nothing():
                 'myparam4': 'FuncArg(do_nothing)',
             },
             'tasks':['flask-api', 'code-task', 'another-task'],
-            'returns':{},
+            'returns':{
+                'code-task': "a return value"
+            },
         }, id='/session'),
         pytest.param('/tasks', 
         [
@@ -307,6 +312,8 @@ def test_get(url, expected, client, session):
     log_task_record(task2, '2021-01-01 13:00:00', 'run')
     log_task_record(task2, '2021-01-01 13:01:00', 'fail', start_time='2021-01-01 13:00:00')
 
+    task1._handle_return("a return value")
+
     response = client.get(url)
     assert response.status_code == 200
 
@@ -443,6 +450,17 @@ def test_params_patch(client, session):
     assert response.status_code == 200
 
     assert session.parameters.to_dict() == {'myparam1': 'a value', 'pre_existing': 1, 'overridden': 'new'}
+
+def test_returns_patch(client, session):
+    session.returns['pre_existing'] = 1
+    session.returns['overridden'] = 'original'
+    response = client.patch(
+        '/returns', 
+        json={'myparam1': 'a value', 'overridden': 'new'}
+    )
+    assert response.status_code == 200
+
+    assert session.returns.to_dict() == {'myparam1': 'a value', 'pre_existing': 1, 'overridden': 'new'}
 
 def test_execute(session, api_task, client):
     sched = Scheduler(shut_cond=SchedulerCycles() >=10)

@@ -60,6 +60,7 @@ Endpoint       Methods                   Description
 /tasks         GET                       List of the tasks in the session
 /task/<name>   GET, POST, PATCH, DELETE  Get, create, modify or delete a task
 /parameters    GET, PATCH                Get or modify the session parameters
+/returns       GET, PATCH                Get or modify the task return values
 /config        GET, PATCH                Get or modify the session configurations
 /session       GET                       Get information about the session
 /logs          GET                       Get log records

@@ -3,7 +3,7 @@ from threading import Thread
 import time
 
 from redengine.core import Parameters
-from .resources import Configs, Logs, Parameters, RedResource, Session, Task, Tasks, Dependencies, call_resource
+from .resources import Configs, Logs, Parameters, RedResource, Returns, Session, Task, Tasks, Dependencies, call_resource
 
 from .base import APITask
 from .models import RedEncoder
@@ -112,6 +112,7 @@ class FlaskAPI(APITask):
         self.api.add_resource(to_rest(Task), '/tasks/<string:name>')
         self.api.add_resource(to_rest(Configs), '/configs')
         self.api.add_resource(to_rest(Parameters), '/parameters')
+        self.api.add_resource(to_rest(Returns), '/returns')
         self.api.add_resource(to_rest(Session), '/session')
         self.api.add_resource(to_rest(Tasks), '/tasks')
         self.api.add_resource(to_rest(Logs), '/logs')
