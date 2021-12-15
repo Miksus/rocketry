@@ -11,6 +11,7 @@ use Red Engine.
    :maxdepth: 1
    :caption: Contents:
 
+   installing
    quick_start
    short_guide
    advanced_guide

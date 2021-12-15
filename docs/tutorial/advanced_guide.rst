@@ -278,6 +278,8 @@ to demonstrate this:
 You can find more about pipelining from :ref:`pipeline-guide`. and more about different condition options
 from :ref:`condition-syntax`. You can also find more information about conditions from :ref:`conditions-intro`.
 
+.. _parallelizing-guide:
+
 Execution
 ^^^^^^^^^
 
@@ -327,6 +329,8 @@ be terminated:
     @FuncTask(start_cond="weekly", execution="process", end_cond="time of day between 16:00 and 20:00")
     def check_mail():
         ... # Code check messages
+
+.. _parametrization-guide:
 
 Parametrization
 ^^^^^^^^^^^^^^^

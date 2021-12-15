@@ -1,4 +1,4 @@
-.. _api:
+.. _api-guide:
 
 Runtime API Guide
 =================

@@ -200,6 +200,7 @@ tasks have succeeded and the outputs from both of the tasks are used in this tas
     def run_when_both_succeeded(return_of_a, return_of_b):
         ... # Do stuff
 
+.. _dependencies-guide:
 
 Visualizing Pipelines
 ---------------------

@@ -10,10 +10,16 @@
 
 Too lazy to read? :ref:`Get started then. <getting-started>`
 
-Red Engine is an open source advanced scheduling library made for 
-Python. It is suitable for automating processes, scheduling web scrapers,
-and building IOT applications. It also has minimal dependencies 
-and is pure Python.
+Red Engine is an advanced open source scheduling library 
+with a focus on productivity, readability and extendability. 
+It works well in orchestrating task execution in a complex system
+or as a tool for quick and simple automation. Example use cases for the 
+framework include orchestrating ETL pipelines, scheduling web scrapers
+or algorithms, building IOT applications or automating daily tasks.
+
+The library is pure Python with minimal dependencies. It is 
+pythonic and the style is similar to other notable frameworks
+in Python ecosystem. 
 
 Visit the `source code from Github <https://github.com/Miksus/red-engine>`_
 or `releases in Pypi page <https://pypi.org/project/redengine/>`_. 
@@ -22,28 +28,33 @@ or `releases in Pypi page <https://pypi.org/project/redengine/>`_.
 Why :red:`Red` Engine?
 ----------------------
 
-Red Engine's focus is on readability, productivity and extendability.
-The philosophy behind the library is that simple things should be simple 
-and easy and complex things should be done by combining simple things. 
-The ultimate focus is in you: the library aims to make your life easier.
+Most of the candidates for scheduling framework tend to be 
+either complex to configure or too simple for advanced use. Red Engine
+aims to handle both sides of the spectrum without sacrificing from the other. 
+It only takes a minute to set it up and schedule some tasks but there are 
+a lot of advanced features such as parametrization, parallelization, 
+pipelining, runtime APIs and logging. The library is also created in mind of
+extending and customization.
 
-:red:`Red` Engine is useful for small to moderate size
-projects. It is, however, not meant to handle thousands 
-of tasks or execute tasks with the percision required 
-by, for example, game engines.
+Red Engine is reliable and well tested. You can build your project
+around Red Engine or simply embed it to an existing project. 
 
 Core Features
 -------------
 
-- **Easy setup:** Use a premade setup and focus on building your project.
-- **Condition syntax:** Scheduling tasks can be done with human readable statements.
-- **Parametrization:** Tasks can be parameterized various ways or they can be pipelined.
-- **Extendability:** Almost everything is made for customization. Even the tasks can modify the flow of the system.
+- :ref:`Scheduling syntax <scheduling-guide>`: intuitive and very powerful scheduling syntax
+- :ref:`Parallelization <parallelizing-guide>`: run tasks simultaneously on separate processes or threads
+- :ref:`Parametrization <parametrization-guide>`: parametrize individual tasks and pipeline return values
+- :ref:`Extendable <extending-guide>`: almost everything is designed for modifications
 
-:red:`Red` Engine has built-in scheduling syntax which
-allows logical operations to create complex scheduling logic
-with breeze. Also, it very easy to create your own conditions
-for your needs.
+Additional Features
+-------------------
+
+- :ref:`APIs <api-guide>`: Communicate with your scheduler real time using HTTP requests
+- :ref:`Dependencies <dependencies-guide>`: view your task dependencies as a graph
+- :ref:`Easy setup <getting-started>`: simply install the package, use the premade configurations and work on your problem.
+- :ref:`Logging <logging-guide>`: Red Engine simply extends logging library making task logging trivial
+- :ref:`Built-ins <scheduling-guide>`: There are a lot of pre-built conditions for various purposes out of the box
 
 Example
 -------
@@ -53,19 +64,11 @@ This is all it takes to create a scheduler:
 .. literalinclude:: examples/session/example.py
     :language: py
 
-
-But does it work?
------------------
-
-The system is tested with over 1000 unit tests to 
-ensure quality and to deliver what is promised. 
-Red Engine is used in production.
-
 Interested?
 -----------
 
-There is much more to offer. Start from the 
-:ref:`short guide <short-guide>`.
+There is much more to offer. See :ref:`quick start <getting-started>`
+or :ref:`short guide <short-guide>` to get started with.
 
 
 .. toctree::

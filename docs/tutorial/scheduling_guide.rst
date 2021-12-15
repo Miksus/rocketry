@@ -1,4 +1,6 @@
 
+.. _scheduling-guide:
+
 Scheduling Guide
 ================
 
