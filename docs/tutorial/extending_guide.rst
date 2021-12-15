@@ -171,3 +171,97 @@ If you need more customization, you can specify methods:
 - ``.get_default_name()``: Get a name for the task when a name was not specified.
 
 See more in :class:`redengine.core.Task`.
+
+Hooks
+-----
+
+You can add your own logic in between of Red Engine's
+execution flow using hooks. They are simply functions 
+or generators that are executed in specific parts of Red 
+Engine's code. Hooks are stored in the session object 
+and therefore if you recreate it the previous hooks 
+will be removed.
+
+Example use cases for hooks include:
+
+- Disable production tasks not to run in testing 
+- Send notification when the scheduler has started and shut down
+- Send notification when any task has failed
+
+Task Hooks
+^^^^^^^^^^
+
+Task init hook is useful for controlling the initiation 
+of all tasks. An example of the hook:
+
+.. code-block:: python
+
+    from redengine.core import Task
+
+    @Task.hook_init
+    def my_init_hook(task):
+        # Run before Task.__init__
+        ...
+        yield
+        # Run after Task.__init__
+        ...
+
+Task execution hook is useful for injecting code 
+to starting and finishing the execution of all tasks.
+An example of such hook:
+
+.. code-block:: python
+
+    @Task.hook_execute
+    def my_execution_hook(task):
+        # Run before executing the task
+        ...
+        exc_type, exc, tb = yield
+        # Run after the task has executed
+        ...
+
+A tuple of the exception type, the exception and 
+the traceback object are sent to the generator.
+Note that this hook runs in the child thread, if
+``execution='thread'``), or process, if 
+``execution='process'``.
+
+.. warning::
+
+    The hooks must be picklable meaning that you
+    should not use, for example, lambda functions.
+
+Scheduler Hooks
+^^^^^^^^^^^^^^^
+
+There are also several hooks you can use to 
+control what happens on each part of the 
+scheduler. Some examples of these hooks:
+
+.. code-block:: python
+
+    from redengine.core import Scheduler
+
+    @Scheduler.hook_startup
+    def my_startup_hook(scheduler):
+        # Run before starting up scheduler
+        ...
+        yield
+        # Run after the scheduler has started up
+        ...
+
+    @Scheduler.hook_cycle
+    def my_cycle_hook(scheduler):
+        # Run before running a cycle of tasks
+        ...
+        yield
+        # Run after running a cycle of tasks
+        ...
+
+    @Scheduler.hook_shutdown
+    def my_shutdown_hook(scheduler):
+        # Run before starting shutdown
+        ...
+        yield
+        # Run after finishing shutdown
+        ...

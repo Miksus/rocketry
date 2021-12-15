@@ -15,8 +15,8 @@ are permanently running and waiting for an input.
 These tasks can only be parallelized via threads as 
 modifying data between processes is problematic.
 
-API via HTTP
-------------
+Web API
+-------
 
 There is a premade :py:class:`redengine.tasks.api.FlaskAPI` task for runtime 
 communication via HTTP. It uses `Flask <https://flask.palletsprojects.com/>`_, 
