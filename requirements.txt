@@ -1,7 +1,5 @@
-# Required
+# Minimum requirements
 pandas
-
-# Optional
 
 # For config parsing
 pyyaml
