@@ -11,22 +11,51 @@
 [![PyPI pyversions](https://badgen.net/pypi/python/redengine)](https://pypi.org/project/redengine/)
 
 ## What is it?
-Red Engine is a Python scheduling library with a focus on productivity, readability and extendability.
-It has powerful and intuitive scheduling syntax that is easy to extend with custom conditions. 
-The sysystem allows various levels of parallelization and various ways to parametrize tasks. It is suitable 
-for simple to larger projects from process automatization to IOT.
+
+Red Engine is an advanced open source scheduling library 
+with a focus on productivity, readability and extendability. 
+It works well in orchestrating task execution in a complex system
+or as a tool for quick and simple automation. Example use cases for the 
+framework include orchestrating ETL pipelines, scheduling web scrapers
+or algorithms, building IOT applications or automating daily tasks.
+
+The library is pure Python with minimal dependencies. It is 
+pythonic and the style is similar to other notable frameworks
+in Python ecosystem. 
 
 Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/stable/)
 
+## Why Red Engine?
+
+Most of the candidates for scheduling framework tend to be 
+either complex to configure or too simple for advanced use. Red Engine
+aims to handle both sides of the spectrum without sacrificing from the other. 
+It only takes a minute to set it up and schedule some tasks but there are 
+a lot of advanced features such as parametrization, parallelization, 
+pipelining, runtime APIs and logging provided straight out of the box. 
+The library is also created in mind of extending and customization.
+
+Red Engine is reliable and well tested. You can build your project
+around Red Engine or simply embed it to an existing project. 
+
 ## Core Features
 
-- **Scheduling:** intuitive and powerful scheduling syntax.
-- **Parallelization:** run tasks on child processes or threads.
-- **Parametrization:** parametrize individual tasks and pass return values as inputs to next. 
-- **Easy start:** just install the package, use the premade configurations and work on your problem.
-- **Extendable:** everything is just a building block designed for modifications. 
+- **Scheduling syntax:** intuitive and very powerful scheduling syntax
+- **Parallelization:** run tasks simultaneously on separate processes or threads
+- **Parametrization:** parametrize individual tasks and pipeline return values
+- **Extendable:** almost everything is designed for modifications
+
+## Additional Features
+
+- **APIs:** Communicate with your scheduler real time using HTTP requests
+- **Dependencies:** view your task dependencies as a graph
+- **Easy setup:** simply install the package, use the premade configurations and work on your problem.
+- **Logging:** Red Engine simply extends logging library making task logging trivial
+- **Built-ins:** There are a lot of pre-built conditions for various purposes out of the box
 
 ## Installation
+
+Red Engine can be installed from [Pypi](https://pypi.org/project/redengine/):
 
 ```shell
 pip install redengine
@@ -34,7 +63,7 @@ pip install redengine
 
 ## How it looks like
 
-> Minimal example
+Minimal example:
 
 ```python
 from redengine.tasks import FuncTask
@@ -54,54 +83,28 @@ def my_task_2():
 session.start()
 ```
 
+## More Examples
 
-> Customize
+Parallelize tasks:
 
 ```python
-import os, re
+@FuncTask(execution="main")
+def run_on_main():
+    ... # Runs on main thread and process
 
-from redengine.tasks import FuncTask
-from redengine.conditions import FuncCond
-from redengine import Session
+@FuncTask(execution="thread")
+def run_on_thread():
+    ... # Runs on a separate thread
 
-session = Session()
-
-# Custom conditions
-@FuncCond(syntax="is work time")
-def is_work_time():
-    # This custom condition is
-    # directly usable in parsing
-    return True
-
-@FuncCond(syntax=re.compile("file (?P<filename>.+) exists"))
-def file_exists(filename):
-    # You can also use regex in custom conditions.
-    # The pattern is matched and named groups are 
-    # passed as parameters to the function
-    return os.path.exists(filename)
-
-# Tasks
-@FuncTask(start_cond="is work time & file C:/Temp/mydata.csv exists")
-def do_work():
-    # Runs when is_work_time is True 
-    # and file 'C:/Temp/mydata.csv' exists
-    ... 
-
-# Start scheduling
-session.start()
+@FuncTask(execution="process")
+def run_on_process():
+    ... # Runs on a separate process
 ```
 
-
-> Pipeline tasks and their outputs
+Pipeline tasks and their outputs:
 
 ```python
-from redengine.tasks import FuncTask
-from redengine.conditions import FuncCond
 from redengine.arguments import Return
-from redengine import Session
-
-session = Session()
-
 @FuncTask(start_cond="daily")
 def first_task():
     ... # Run once a day
@@ -121,49 +124,31 @@ def third_task(mydata1, mydata2):
     # and pass arguments as defined in parameters
     ... 
     return some_data
-
-# Start scheduling
-session.start()
 ```
 
-
-> Parallelize tasks
+Create custom condition components:
 
 ```python
-from redengine.tasks import FuncTask
 from redengine.conditions import FuncCond
-from redengine.arguments import Return
-from redengine import Session
 
-session = Session()
+@FuncCond(syntax="is work time")
+def is_work_time():
+    # This custom condition is
+    # directly usable in parsing
+    ...
+    return True
 
-@FuncTask(execution="main")
-def run_on_main():
-    ... # Runs on main thread and process
+# An example task
+@FuncTask(start_cond="daily & is work time")
+def do_work():
+    # Runs once a day when is_work_time is True 
+    ... 
 
-@FuncTask(execution="thread")
-def run_on_thread():
-    ... # Runs on a separate thread
-
-@FuncTask(execution="process")
-def run_on_process():
-    ... # Runs on a separate process
-
-# Start scheduling
-session.start()
 ```
 
-
-> Do complex scheduling
+Do complex scheduling:
 
 ```python
-from redengine.tasks import FuncTask
-from redengine.conditions import FuncCond
-from redengine.arguments import Return
-from redengine import Session
-
-session = Session()
-
 @FuncTask(start_cond="daily after 10:00")
 def run_daily():
     ... # Runs once a day after 10 AM
@@ -187,9 +172,6 @@ def run_complex():
     # Runs after run_daily but only between 8 AM and 5 PM
     # and only if the task itself has not failed today
     ...
-
-# Start scheduling
-session.start()
 ```
 
 ---
