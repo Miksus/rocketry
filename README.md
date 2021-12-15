@@ -49,7 +49,7 @@ around Red Engine or simply embed it to an existing project.
 
 - **APIs:** Communicate with your scheduler real time using HTTP requests
 - **Dependencies:** view your task dependencies as a graph
-- **Easy setup:** simply install the package, use the premade configurations and work on your problem.
+- **Easy setup:** use the premade configurations and get started immediately
 - **Logging:** Red Engine simply extends logging library making task logging trivial
 - **Built-ins:** There are a lot of pre-built conditions for various purposes out of the box
 

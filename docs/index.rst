@@ -52,7 +52,7 @@ Additional Features
 
 - :ref:`APIs <api-guide>`: Communicate with your scheduler real time using HTTP requests
 - :ref:`Dependencies <dependencies-guide>`: view your task dependencies as a graph
-- :ref:`Easy setup <getting-started>`: simply install the package, use the premade configurations and work on your problem.
+- :ref:`Easy setup <getting-started>`: use the premade configurations and get started immediately.
 - :ref:`Logging <logging-guide>`: Red Engine simply extends logging library making task logging trivial
 - :ref:`Built-ins <scheduling-guide>`: There are a lot of pre-built conditions for various purposes out of the box
 
