@@ -134,6 +134,12 @@ class Session(RedBase):
         self.ext_parsers = self._ext_parsers.copy()
         self.cls_tasks = self._cls_tasks.copy()
 
+        # Hooks
+        self.hooks = {
+            'task_init': [],
+            'task_execute': [],
+        }
+
         if delete_existing_loggers:
             # Delete existing task loggers
             # so that the old loggers won't

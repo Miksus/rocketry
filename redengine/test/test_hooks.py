@@ -1,9 +1,19 @@
+
+from textwrap import dedent
+
+import pytest
 from redengine.core import Task, Scheduler
 
 from redengine.tasks import FuncTask
 from redengine.conditions import SchedulerCycles, true
 
-def test_task_init():
+def do_success(**kwargs):
+    ...
+
+def do_fail(**kwargs):
+    raise RuntimeError("Deliberate fail")
+
+def test_task_init(session):
     timeline = []
 
     @Task.hook_init
@@ -114,3 +124,42 @@ def test_scheduler_startup(session):
         "ran TASK (shutdown)", 
         "ran hook (shutdown, generator second)", 
     ]
+
+# Hooks
+def myhook_normal(task):
+    file = task.parameters['testfile']
+    with open(file, "a") as f:
+        f.write("Function hook called\n")
+
+def myhook_gener(task):
+    file = task.parameters['testfile']
+    with open(file, "a") as f:
+        f.write("Generator hook inited\n")
+    exc_type, exc, tb = yield
+    with open(file, "a") as f:
+        f.write(f"Generator hook continued with {exc_type} {exc}\n")
+
+
+@pytest.mark.parametrize("func,exc_type,exc", [pytest.param(do_success, None, None, id="success"), pytest.param(do_fail, RuntimeError, RuntimeError('Deliberate fail'), id="fail")])
+@pytest.mark.parametrize("execution", ['main', 'thread', 'process'])
+def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
+
+    file = tmpdir.join("timeline.txt")
+
+    Task.hook_execute(myhook_normal)
+    Task.hook_execute(myhook_gener)
+
+    with open(file, "w") as f:
+        f.write("\nStarting\n")
+
+    task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
+    session.scheduler.shut_cond = SchedulerCycles(_ge_=1)
+    session.start()
+    with open(file) as f:
+        cont = f.read()
+    assert dedent(f"""
+    Starting
+    Function hook called
+    Generator hook inited
+    Generator hook continued with {exc_type} {exc}
+    """) == cont

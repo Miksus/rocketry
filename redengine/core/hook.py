@@ -19,9 +19,12 @@ class _Hooker:
                 next(gener, None) # Executes first yield
                 self._post_hooks.append(gener)
 
-    def postrun(self):
+    def postrun(self, *args):
         for gener in self._post_hooks:
-            next(gener, None) # Executes rest
+            try:
+                gener.send(args)
+            except StopIteration:
+                pass
 
     def __enter__(self):
         self.prerun()

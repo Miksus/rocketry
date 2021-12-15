@@ -5,6 +5,7 @@ import time
 import datetime
 import logging
 import platform
+import traceback
 from itertools import count
 from types import TracebackType
 import warnings
@@ -203,7 +204,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                  on_shutdown: bool=False,
                  on_exists: str=None):
 
-        hooker = _Hooker(self.init_hooks)
+        hooker = _Hooker(self.session.hooks['task_init'])
         hooker.prerun(self)
 
         self.session = self.session if session is None else session
@@ -403,7 +404,12 @@ class Task(RedBase, metaclass=_TaskMeta):
         #    os.chdir(cwd)
 
         # (If SystemExit is raised, it won't be catched in except Exception)
+        hooker = _Hooker(self.session.hooks['task_execute'])
+        hooker.prerun(self)
+
         status = None
+        output = None
+        exc_info = (None, None, None)
         params = self.postfilter_params(params)
         params = Parameters(params) | Parameters(direct_params)
         params = params.materialize(task=self)
@@ -421,7 +427,7 @@ class Task(RedBase, metaclass=_TaskMeta):
             self.log_success()
             status = "succeeded"
             self.process_success(None)
-
+            exc_info = sys.exc_info()
             # Note that these are never silenced
             raise
 
@@ -431,12 +437,14 @@ class Task(RedBase, metaclass=_TaskMeta):
             #   and therefore the purpose of the task was not executed.
             self.log_inaction()
             status = "inaction"
+            exc_info = sys.exc_info()
             
         except TaskTerminationException:
             # Task was terminated and the task's function
             # did listen to that.
             self.log_termination()
             status = "termination"
+            exc_info = sys.exc_info()
 
         except Exception as exception:
             # All the other exceptions (failures)
@@ -451,7 +459,8 @@ class Task(RedBase, metaclass=_TaskMeta):
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
             self.exception = exception
-            if not silence:
+            exc_info = sys.exc_info()
+            if execution is None:
                 raise
 
         else:
@@ -469,6 +478,7 @@ class Task(RedBase, metaclass=_TaskMeta):
             self.force_run = None
             #if cwd is not None:
             #    os.chdir(old_cwd)
+            hooker.postrun(*exc_info)
 
     def run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
@@ -1045,8 +1055,6 @@ class Task(RedBase, metaclass=_TaskMeta):
         return self._lock
 
 # Hooks
-    init_hooks = []
-
     @classmethod
     def hook_init(cls, func:Callable) -> Callable:
         """Hook task initiation (:class:`Task.__init__ <redengine.core.Task>`)
@@ -1103,7 +1111,28 @@ class Task(RedBase, metaclass=_TaskMeta):
             
             cleanup()
         """
-        cls.init_hooks.append(func)
+        cls.session.hooks['task_init'].append(func)
+        return func
+
+    @classmethod
+    def hook_execute(cls, func:Callable) -> Callable:
+        """Hook executing tasks (:class:`Task <redengine.core.Task>`)
+        with a custom function or generator.
+        
+        Examples
+        --------
+        
+        .. code-block:: python
+
+            >>> from redengine.core import Task
+            >>> @Task.hook_execute
+            ... def do_things(task):
+            ...     "This is executed when any task is started"
+            ...     print("Run hook was executed.")
+            ...     exc_type, exc, tb = yield
+            ...     print("After executing a task")
+        """
+        cls.session.hooks['task_execute'].append(func)
         return func
 
 # Other
