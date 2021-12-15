@@ -344,7 +344,7 @@ class Task(RedBase, metaclass=_TaskMeta):
             # Run the actual task
             if self.execution == "main":
                 direct_params = self.parameters
-                self._run_as_main(params=params, direct_params=direct_params, silence=True, **kwargs)
+                self._run_as_main(params=params, direct_params=direct_params, execution="main", **kwargs)
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -394,7 +394,7 @@ class Task(RedBase, metaclass=_TaskMeta):
     def run_as_main(self, params:Parameters):
         return self._run_as_main(params, self.parameters)
 
-    def _run_as_main(self, params:Parameters, direct_params:Parameters, log_running=True, handle_return=True, silence=False, **kwargs):
+    def _run_as_main(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
         """Run the task on the current thread and process"""
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
@@ -408,7 +408,7 @@ class Task(RedBase, metaclass=_TaskMeta):
         params = Parameters(params) | Parameters(direct_params)
         params = params.materialize(task=self)
 
-        if log_running:
+        if execution == 'main':
             self.log_running()
         try:
             output = self.execute(**params)
@@ -456,7 +456,7 @@ class Task(RedBase, metaclass=_TaskMeta):
 
         else:
             # Store the output
-            if handle_return:
+            if execution != 'process':
                 self._handle_return(output)
             self.log_success(output)
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
@@ -491,7 +491,7 @@ class Task(RedBase, metaclass=_TaskMeta):
         self.log_running()
         event.set()
         try:
-            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, silence=True)
+            output = self._run_as_main(params=params, direct_params=direct_params, execution="thread")
         except:
             # Task crashed before actually running the execute.
             self.log_failure()
@@ -555,7 +555,7 @@ class Task(RedBase, metaclass=_TaskMeta):
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, log_running=False, handle_return=False, silence=True)
+            output = self._run_as_main(params=params, direct_params=direct_params, execution="process")
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
