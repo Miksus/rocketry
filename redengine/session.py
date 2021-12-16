@@ -7,6 +7,7 @@ about the scehuler/task/parameters etc.
 
 import logging
 from pathlib import Path
+import warnings
 from redengine.pybox.io.read import read_yaml
 from typing import TYPE_CHECKING, Iterable, Dict, List, Tuple, Type, Union, Any
 from itertools import chain
@@ -182,6 +183,7 @@ class Session(RedBase):
 
         Will block and wait till the scheduler finishes 
         if there is a shut condition."""
+        self._check_readable_logger()
         self.scheduler()
 
     def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
@@ -209,6 +211,7 @@ class Session(RedBase):
             itself. Just to run specific tasks when the system itself
             is not running.
         """
+        self._check_readable_logger()
         # To prevent circular import
         from redengine.conditions.scheduler import SchedulerCycles
 
@@ -235,6 +238,19 @@ class Session(RedBase):
             # Set back the disabled, execution etc.
             for name, task in self.tasks.items():
                 task.__dict__.update(orig_vals[name])
+
+    def _check_readable_logger(self):
+        from redengine.core.log import TaskAdapter
+        logger = TaskAdapter(logging.getLogger(self.config['task_logger_basename']), None, ignore_warnings=True)
+        if logger.is_readable_unset:
+            # Setting memory logger 
+            warnings.warn(
+                f"Logger {self.config['task_logger_basename']} cannot be read. " 
+                "Logging is set to memory. " 
+                "To supress this warning, "
+                "please specify a scheme which creates a readable task logger (such as log_simple) "
+                "or set one using logging.", UserWarning)
+            self.set_scheme("log_memory")
 
     def get_tasks(self) -> list:
         """Get session tasks as list.

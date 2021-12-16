@@ -208,6 +208,8 @@ class Task(RedBase, metaclass=_TaskMeta):
         hooker.prerun(self)
 
         self.session = self.session if session is None else session
+        # Set default readable logger if missing 
+        self.session._check_readable_logger()
 
         self.set_name(name, on_exists=on_exists, register=False)
         self.description = description

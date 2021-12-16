@@ -28,16 +28,11 @@ class TaskAdapter(logging.LoggerAdapter):
     task : redengine.core.Task, str
         Task the adapter is for.
     """
-    def __init__(self, logger:logging.Logger, task:Union['Task', str]):
+    def __init__(self, logger:logging.Logger, task:Union['Task', str], ignore_warnings=False):
         task_name = task.name if hasattr(task, 'name') else task
         super().__init__(logger, {"task_name": task_name})
 
-        is_readable = any(
-            hasattr(handler, "read") or hasattr(handler, "query")
-            for handler in self.logger.handlers
-        )
-        is_process_dummy = logger.name.endswith("_process")
-        if not is_readable and not is_process_dummy and is_main_subprocess():
+        if not ignore_warnings and self.is_readable_unset:
             warnings.warn(f"Logger '{logger.name}' for task '{self.task_name}' does not have ability to be read. Past history of the task cannot be utilized.")
 
     def process(self, msg, kwargs):
@@ -132,6 +127,22 @@ class TaskAdapter(logging.LoggerAdapter):
     @property
     def task_name(self):
         return self.extra['task_name']
+
+    @property
+    def is_readable(self):
+        "bool: Whether the logger is also readable"
+        handlers = self.logger.handlers
+        for handler in handlers:
+            if hasattr(handler, 'read') or hasattr(handler, 'query'):
+                return True
+        else:
+            return False
+
+    @property
+    def is_readable_unset(self):
+        "bool: Whether the logger is for main process"
+        is_process_dummy = self.logger.name.endswith("_process")
+        return not self.is_readable and not is_process_dummy and is_main_subprocess()
 
 # Utils
 def parse_datetime(dt):

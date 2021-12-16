@@ -4,6 +4,7 @@ import multiprocessing
 from queue import Empty
 
 import pandas as pd
+from redengine import Session
 
 from redengine.tasks import FuncTask
 from redengine.log import MemoryHandler
@@ -112,6 +113,33 @@ def test_handle(tmpdir, session):
         ] == records
 
 def test_without_handlers(tmpdir, session):
+    session.config["force_status_from_logs"] = True
+    session.config["task_logger_basename"] = 'hdlr_test.task'
+    with tmpdir.as_cwd() as old_dir:
+    
+        logger = logging.getLogger("hdlr_test.task")
+        logger.handlers = []
+        logger.propagate = False
+
+        with pytest.warns(UserWarning) as warns:
+            task = FuncTask(
+                lambda : None, 
+                name="task 1",
+                start_cond="always true",
+                #logger="redengine.task.test",
+                execution="main",
+            )
+        
+        # Test warnings
+        
+        #assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
+        assert str(warns[0].message) == "Logger hdlr_test.task cannot be read. Logging is set to memory. To supress this warning, please specify a scheme which creates a readable task logger (such as log_simple) or set one using logging."
+        assert len(warns) == 1
+
+        assert len(logger.handlers) == 1
+        assert isinstance(logger.handlers[0], MemoryHandler)
+
+def test_without_handlers_status_warnings(tmpdir, session):
     session.config["force_status_from_logs"] = True
     with tmpdir.as_cwd() as old_dir:
     
