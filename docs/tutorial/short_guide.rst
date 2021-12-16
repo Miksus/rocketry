@@ -81,7 +81,7 @@ When you have set up the tasks, you can just start the session by:
     if __name__ == "__main__":
         session.start()
 
-.. warnings::
+.. warning::
 
     It is always recomended to start the session in ``if __name__ == "__main__"``
     block. Otherwise you may get RuntimeError from multiprocessing library.
