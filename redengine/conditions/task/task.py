@@ -191,7 +191,7 @@ class TaskRunning(Historical):
         return f"task '{task}' is running"
 
 
-class TaskInacted(Historical, Comparable):
+class TaskInacted(TaskStatusMixin, Historical, Comparable):
     """Condition for whether the given task has inacted
     (in given period).
 
