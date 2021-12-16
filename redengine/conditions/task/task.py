@@ -1,7 +1,7 @@
 
 import re, time
 import datetime
-from .utils import DependMixin
+from .utils import DependMixin, TaskStatusMixin
 
 from redengine.core.condition import Statement, Historical, Comparable, All
 from redengine.core.time import TimeDelta
@@ -56,7 +56,7 @@ class TaskStarted(Historical, Comparable):
         return f"task '{task}' started {period}"
 
 
-class TaskFailed(Historical, Comparable):
+class TaskFailed(TaskStatusMixin, Historical, Comparable):
     """Condition for whether the given task has failed
     (in given period).
 
@@ -70,29 +70,7 @@ class TaskFailed(Historical, Comparable):
     >>> parse_condition("task 'mytask' has failed today between 10:00 and 14:00")
     TaskFailed(task='mytask', period=TimeOfDay('10:00', '14:00'))
     """
-
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            # If no period, start and end are the ones from the task
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
-        
-        allow_optimization = not self.session.config["force_status_from_logs"]
-        if allow_optimization and self.any_over_zero():
-            # Condition only checks whether has run at least once
-            if task.last_fail is None:
-                return False
-            elif _start_ <= task.last_fail <= _end_:
-                # Can probably be optimized only if inside the period (--> True)
-                # else the old records must be fetched in case the task ran multiple times
-                return True
-        elif allow_optimization and self.equal_zero():
-            return not bool(task.last_fail)
-        
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="fail")
-        return [record["timestamp"] for record in records]
+    _action = 'fail'
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -102,7 +80,7 @@ class TaskFailed(Historical, Comparable):
         return f"task '{task}' failed {period}"
 
 
-class TaskTerminated(Historical, Comparable):
+class TaskTerminated(TaskStatusMixin, Historical, Comparable):
     """Condition for whether the given task has terminated
     (in given period).
 
@@ -116,30 +94,7 @@ class TaskTerminated(Historical, Comparable):
     >>> parse_condition("task 'mytask' has terminated this week after Monday")
     TaskTerminated(task='mytask', period=TimeOfWeek('Monday', None))
     """
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
-
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            # If no period, start and end are the ones from the task
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
-        
-        allow_optimization = not self.session.config["force_status_from_logs"]
-        if allow_optimization and self.any_over_zero():
-            # Condition only checks whether has run at least once
-            if task.last_terminate is None:
-                return False
-            elif _start_ <= task.last_terminate <= _end_:
-                # Can probably be optimized only if inside the period (--> True)
-                # else the old records must be fetched in case the task ran multiple times
-                return True
-        elif allow_optimization and self.equal_zero():
-            return not bool(task.last_terminate)
-
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="terminate")
-        return [record["timestamp"] for record in records]
-
+    _action = 'terminate'
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
@@ -148,7 +103,7 @@ class TaskTerminated(Historical, Comparable):
         return f"task '{task}' terminated {period}"
 
 
-class TaskSucceeded(Historical, Comparable):
+class TaskSucceeded(TaskStatusMixin, Historical, Comparable):
     """Condition for whether the given task has succeeded
     (in given period).
 
@@ -162,28 +117,7 @@ class TaskSucceeded(Historical, Comparable):
     >>> parse_condition("task 'mytask' has succeeded this month")
     TaskSucceeded(task='mytask', period=TimeOfMonth(None, None))
     """
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
-
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
-        
-        allow_optimization = not self.session.config["force_status_from_logs"]
-        if allow_optimization and self.any_over_zero():
-            # Condition only checks whether has run at least once
-            if task.last_success is None:
-                return False
-            elif _start_ <= task.last_success <= _end_:
-                # Can probably be optimized only if inside the period (--> True)
-                # else the old records must be fetched in case the task ran multiple times
-                return True
-        elif allow_optimization and self.equal_zero():
-            return not bool(task.last_success)
-
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="success")
-        return [record["timestamp"] for record in records]
+    _action = 'success'
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -193,7 +127,7 @@ class TaskSucceeded(Historical, Comparable):
         return f"task 'task '{task}' succeeded {period}"
 
 
-class TaskFinished(Historical, Comparable):
+class TaskFinished(TaskStatusMixin, Historical, Comparable):
     """Condition for whether the given task has finished
     (in given period).
 
@@ -207,31 +141,7 @@ class TaskFinished(Historical, Comparable):
     >>> parse_condition("task 'mytask' has finished today")
     TaskFinished(task='mytask', period=TimeOfDay(None, None))
     """
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
-
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
-
-        allow_optimization = not self.session.config["force_status_from_logs"]
-        if allow_optimization and self.any_over_zero():
-            # Condition only checks whether has run at least once
-            for status in ("success", "fail", "terminate"):
-                value = getattr(task, f"last_{status}")
-                if value is None:
-                    continue
-                if _start_ <= value <= _end_:
-                    return True
-            else:
-                # Has never run
-                return False
-        elif allow_optimization and self.equal_zero():
-            return not bool(task.last_success) and not bool(task.last_fail) and not bool(task.last_terminate)
-
-        records = task.logger.get_records(timestamp=(_start_, _end_), action=["success", "fail", "terminate"])
-        return [record["timestamp"] for record in records]
+    _action = ["success", "fail", "terminate"]
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -294,27 +204,7 @@ class TaskInacted(Historical, Comparable):
     >>> parse_condition("task 'mytask' has inacted")
     TaskInacted(task='mytask')
     """
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
-
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            # If no period, start and end are the ones from the task
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
-        
-        allow_optimization = not self.session.config["force_status_from_logs"]
-        if allow_optimization and self.any_over_zero():
-            # Condition only checks whether has run at least once
-            if task.last_inaction is None:
-                return False
-            return _start_ <= task.last_inaction <= _end_
-        elif allow_optimization and self.equal_zero():
-            return not bool(task.last_inaction)
-        
-        #! TODO: use Task._last_success & Task._last_run if not none and not forced
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="inaction")
-        return [record["timestamp"] for record in records]
+    _action = 'inaction'
 
     def __str__(self):
         if hasattr(self, "_str"):

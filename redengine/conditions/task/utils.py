@@ -1,5 +1,9 @@
 
-from redengine.core.condition import All, Any
+import re, time
+import datetime
+
+from redengine.core.condition import All, Any, Statement
+
 
 class DependMixin:
 
@@ -43,3 +47,62 @@ class DependMixin:
             return True
             
         return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
+
+class TaskStatusMixin:
+
+    _action = None
+
+    def observe(self, task, _start_=None, _end_=None, **kwargs):
+
+        task = Statement.session.get_task(task)
+        if _start_ is None and _end_ is None:
+            now = datetime.datetime.fromtimestamp(time.time())
+            interv = task.period.rollback(now)
+            _start_, _end_ = interv.left, interv.right
+        
+        allow_optimization = not self.session.config["force_status_from_logs"]
+
+        if allow_optimization:
+            
+            # Get features that could be used to bypass reading logs
+            if isinstance(self._action, str):
+                last_occur = getattr(task, f'last_{self._action}')
+                occurred_on_period = _start_ <= last_occur <= _end_ if last_occur is not None else False
+                cannot_have_occurred = last_occur is None or last_occur < _start_
+            else:
+                # Multiple actions
+                cannot_have_occurred = True
+                for action in self._action:
+                    last_occur = getattr(task, f'last_{action}')
+                    if last_occur is not None and _start_ <= last_occur <= _end_:
+                        occurred_on_period = True
+                        cannot_have_occurred = False
+                        break
+                    elif last_occur is not None and last_occur >= _start_:
+                        cannot_have_occurred = False
+                else:
+                    occurred_on_period = False
+            
+            # Check if can be determined without reading logs
+            # NOTE: if the last_occurred > _end_, we cannot determine whether the cond is true or not
+            if self.equal_zero():
+                if cannot_have_occurred:
+                    return True
+                elif occurred_on_period:
+                    return False
+            elif self.any_over_zero():
+                if cannot_have_occurred:
+                    # If never occurred, it hasn't occurred on the period either
+                    return False
+                elif occurred_on_period:
+                    return True
+
+        records = task.logger.get_records(timestamp=(_start_, _end_), action=self._action)
+        return [record["timestamp"] for record in records]
+
+    def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
+        period = self.period
+        task = self.kwargs["task"]
+        return f"task 'task '{task}' {self._action} {period}"
