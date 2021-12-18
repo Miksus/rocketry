@@ -2,6 +2,20 @@
 Version history
 ===============
 
+- ``1.2.0``
+
+    - Add: shortcut condition syntax for multiple dependencies
+    - Add: new task ``FlaskAPI`` and ``JSONAPI``
+    - Add: task dependency view
+    - Add: new task ``CodeTask``
+    - Add: new hook ``Task.hook_execute``
+    - Fix: Bug in ``Return`` if a task executes too quickly
+    - Fix: Major bug in optimized task conditions
+    - Deprecate: Extensions should no longer be used
+    - Update: Now hooks, parsers and task classes are stored in sessions
+    - Update: A lot of undocumented code under the hood was removed
+    - Update: Removed unsupported templates
+
 - ``1.1.0``
 
     - Add: conditions ``FuncCond`` and ``TaskCond``
