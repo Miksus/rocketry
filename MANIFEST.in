@@ -1,6 +1,6 @@
 include redengine/test/test_files/*.ipynb
 include redengine/test/test_files/*.py
-include redengine/config/defaults/*.yaml
+include redengine/config/defaults/*.json
 include versioneer.py
 include redengine/_session.py
 include redengine/_setup.py
