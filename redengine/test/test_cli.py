@@ -66,3 +66,7 @@ class TestStandalone(CLIBase):
 class TestSimple(CLIBase):
     template = "simple"
     n_success = 15
+
+    def test_start(self, project):
+        pytest.importorskip('flask')
+        super().test_start(project)

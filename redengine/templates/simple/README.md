@@ -9,6 +9,13 @@ cd <TARGET>
 python main.py
 ```
 
+Note that this template require additional dependencies
+due to the FlaskAPI. You can install them using:
+
+```console
+pip install waitress flask flask-restful
+```
+
 ## Development
 
 Checklist:
