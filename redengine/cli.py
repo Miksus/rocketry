@@ -47,7 +47,7 @@ def parse_args(args=None):
     start_project_parser.set_defaults(func=start_project)
 
     start_project_parser.add_argument("target", default="engine-project", nargs='?', help='Name of the foder for the project.')
-    start_project_parser.add_argument("-t", "--template", default="minimal", dest="template", help=f'Template to generate. (Options: {TEMPLATE_OPTIONS})', required=False)
+    start_project_parser.add_argument("-t", "--template", default="simple", dest="template", help=f'Template to generate. (Options: {TEMPLATE_OPTIONS})', required=False)
     
     return parser.parse_args(args)
 

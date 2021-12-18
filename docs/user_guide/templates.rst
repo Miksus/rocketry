@@ -18,7 +18,5 @@ List of Templates
 -----------------
 
 - ``standalone``: The most simplistic example. Only one file system.
-- ``minimal``: A simplistic system for quick start and small projects.
 - ``simple``: Has most of the features offered by Red Engine but not more.
   Useful to get familiar with the framework or for moderate sized projects.
-- ``complex``: Full featured production grade template (a package).

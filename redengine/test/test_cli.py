@@ -8,6 +8,7 @@ import pytest
 
 from redengine.conditions.scheduler import SchedulerCycles
 from redengine.cli import main
+from redengine import Session
 
 def test_create_default(tmpdir):
     with tmpdir.as_cwd() as old_dir:
@@ -21,7 +22,7 @@ def test_create_default(tmpdir):
 class CLIBase:
 
     template = None
-
+    n_success = 1
     @pytest.fixture#(scope="class")
     def project(self, tmpdir):
         with tmpdir.as_cwd() as old_dir:
@@ -33,7 +34,9 @@ class CLIBase:
 
 
     def test_start(self, project):
+        Session(config={'task_pre_exist': 'replace'})
         module = importlib.import_module("main")
+        importlib.reload(module)
 
         session = module.session
         session.set_as_default()
@@ -45,19 +48,21 @@ class CLIBase:
         assert 1 < len(session.tasks)
 
         # Check no tasks failed
-        assert ["success"] * len(session.tasks) == [
+        statuses = [
             task.status
             for task in session.tasks.values()
         ]
+        assert [status for status in statuses if status not in ('success', None)] == []
+        assert len([status for status in statuses]) >= self.n_success
+        
 
 class TestStandalone(CLIBase):
     template = "standalone"
+    n_success = 4
 
     def test_content(self, project):
         assert os.listdir(project) == ["main.py"]
 
-class TestMinimal(CLIBase):
-    template = "minimal"
-
 class TestSimple(CLIBase):
     template = "simple"
+    n_success = 15
