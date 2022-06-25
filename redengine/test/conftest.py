@@ -9,9 +9,13 @@ from pathlib import Path
 import pytest
 from dateutil.parser import parse as parse_datetime
 
+from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo
+
 import redengine
 from redengine import Session
 from redengine.core.hook import clear_hooks
+from redengine.log.log_record import MinimalRecord
 
 # add helpers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
@@ -69,13 +73,22 @@ def script_files(tmpdir):
 
 @pytest.fixture(scope="function", autouse=True)
 def session():
-    session = Session(scheme="log_simple", config={
+
+
+
+    session = Session(config={
         "debug": True,
         "silence_task_prerun": False,
         "silence_cond_check": False,
     }, delete_existing_loggers=True)
     redengine.session = session
     session.set_as_default()
+
+    task_logger = logging.getLogger(session.config["task_logger_basename"])
+    task_logger.handlers = [
+        RepoHandler(repo=MemoryRepo(model=MinimalRecord)),
+        logging.StreamHandler(sys.stdout)
+    ]
 
     # enable logger
     # Some tests may disable especially scheduler logger if logging config has

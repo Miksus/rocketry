@@ -4,9 +4,11 @@ import os
 
 import pytest
 import pandas as pd
+from redengine.conditions.scheduler import SchedulerStarted
 from redengine.conditions.task import TaskTerminated
 
 from redengine.core import Scheduler
+from redengine.core.time.base import TimeDelta
 from redengine.tasks import FuncTask
 from redengine.core.exceptions import TaskTerminationException
 from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue, AlwaysFalse
@@ -41,18 +43,18 @@ def test_without_timeout(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
 
         scheduler = Scheduler(
-            shut_cond=TaskFinished(task="slow task but passing") >= 2,
+            shut_cond=(TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
             timeout="0.1 seconds"
         )
         scheduler()
 
-        history = pd.DataFrame(task.logger.get_records())
+        logger = task.logger
         # If Scheduler is quick, it may launch the task 3 times 
         # but there still should not be any terminations
-        assert 2 <= (history["action"] == "run").sum()
-        assert 0 == (history["action"] == "terminate").sum()
-        assert 2 <= (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
+        assert 2 <= logger.filter_by(action="run").count() 
+        assert 0 == logger.filter_by(action="terminate").count()
+        assert 2 <= logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
 
         assert os.path.exists("work.txt")
 
@@ -66,16 +68,16 @@ def test_task_timeout(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
         scheduler = Scheduler(
-            shut_cond=TaskStarted(task="slow task") >= 2,
+            shut_cond=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
             timeout="0.1 seconds"
         )
         scheduler()
 
-        history = pd.DataFrame(task.logger.get_records())
-        assert 2 == (history["action"] == "run").sum()
-        assert 2 == (history["action"] == "terminate").sum()
-        assert 0 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
+        logger = task.logger
+        assert 2 == logger.filter_by(action="run").count() 
+        assert 2 == logger.filter_by(action="terminate").count()
+        assert 0 == logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
 
         assert not os.path.exists("work.txt")
 
@@ -93,15 +95,15 @@ def test_task_terminate(tmpdir, execution, session):
 
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main")
         scheduler = Scheduler(
-            shut_cond=TaskStarted(task="slow task") >= 2,
+            shut_cond=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
         )
         scheduler()
 
-        history = pd.DataFrame(task.logger.get_records())
-        assert 2 == (history["action"] == "run").sum()
-        assert 2 == (history["action"] == "terminate").sum()
-        assert 0 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
+        logger = task.logger
+        assert 2 == logger.filter_by(action="run").count() 
+        assert 2 == logger.filter_by(action="terminate").count()
+        assert 0 == logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
 
         assert not os.path.exists("work.txt")
 
@@ -120,14 +122,14 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution)
 
         scheduler = Scheduler(
-            shut_cond=TaskTerminated(task="slow task") >= 1,
+            shut_cond=(TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
         )
         scheduler()
 
-        history = pd.DataFrame(task.logger.get_records())
-        assert 1 <= (history["action"] == "run").sum()
-        assert 1 <= (history["action"] == "terminate").sum()
-        assert 0 == (history["action"] == "success").sum()
-        assert 0 == (history["action"] == "fail").sum()
+        logger = task.logger
+        assert 1 <= logger.filter_by(action="run").count() 
+        assert 1 <=logger.filter_by(action="terminate").count()
+        assert 0 == logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
 
         assert not os.path.exists("work.txt")

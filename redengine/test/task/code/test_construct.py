@@ -1,6 +1,12 @@
 
+import logging
 from textwrap import dedent
 import pytest
+
+from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo
+
+from redengine.log.log_record import LogRecord
 from redengine.tasks import CodeTask
 from redengine.core import Scheduler
 from redengine.conditions import TaskStarted
@@ -57,6 +63,11 @@ def test_run_success_parametrize(session, execution):
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_fail(session, execution):
     
+    task_logger = logging.getLogger(session.config["task_logger_basename"])
+    task_logger.handlers = [
+        RepoHandler(repo=MemoryRepo(model=LogRecord))
+    ]
+
     task = CodeTask(dedent("""
         def main():
             raise RuntimeError('Failed')
@@ -68,6 +79,7 @@ def test_run_fail(session, execution):
     scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
     scheduler()
     assert task.status == 'fail'
-    records = list(session.get_task_log())
+
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     record_fail = [r for r in records if r['action'] == 'fail'][0]
     assert 'File "<string>", line 5, in <module>\n  File "<string>", line 3, in main\nRuntimeError: Failed' in record_fail['exc_text']

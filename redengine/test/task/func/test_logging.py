@@ -1,10 +1,14 @@
+import datetime
 import logging
 import pytest
 import multiprocessing
 from queue import Empty
 
 import pandas as pd
+from redbird.logging import RepoHandler
+
 from redengine import Session
+from redengine.log.log_record import MinimalRecord
 
 from redengine.tasks import FuncTask
 from redengine.log import MemoryHandler
@@ -105,8 +109,11 @@ def test_handle(tmpdir, session):
         assert "success" == task.status
         assert not task.is_running
 
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
+        records = session.get_task_log()
+        records = [
+            record.dict(exclude={"created"})
+            for record in records
+        ]
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -133,11 +140,11 @@ def test_without_handlers(tmpdir, session):
         # Test warnings
         
         #assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
-        assert str(warns[0].message) == "Logger hdlr_test.task cannot be read. Logging is set to memory. To supress this warning, please specify a scheme which creates a readable task logger (such as log_simple) or set one using logging."
+        assert str(warns[0].message) == "Logger hdlr_test.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)"
         assert len(warns) == 1
 
         assert len(logger.handlers) == 1
-        assert isinstance(logger.handlers[0], MemoryHandler)
+        assert isinstance(logger.handlers[0], RepoHandler)
 
 def test_without_handlers_status_warnings(tmpdir, session):
     session.config["force_status_from_logs"] = True
@@ -157,11 +164,17 @@ def test_without_handlers_status_warnings(tmpdir, session):
             )
         
         # Test warnings
-        assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
-        assert str(warns[1].message) == "Task 'task 1' logger is not readable. Latest run unknown."
-        assert str(warns[2].message) == "Task 'task 1' logger is not readable. Latest success unknown."
-        assert str(warns[3].message) == "Task 'task 1' logger is not readable. Latest fail unknown."
-        assert str(warns[4].message) == "Task 'task 1' logger is not readable. Latest terminate unknown."
+        expected_warnings = [
+            #'Logger redengine.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
+            "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
+            "Task 'task 1' logger is not readable. Latest run unknown.",
+            "Task 'task 1' logger is not readable. Latest success unknown.",
+            "Task 'task 1' logger is not readable. Latest fail unknown.",
+            "Task 'task 1' logger is not readable. Latest terminate unknown.",
+            "Task 'task 1' logger is not readable. Latest inaction unknown."
+        ]
+        actual_warnings = [str(warn.message) for warn in warns]
+        assert expected_warnings == actual_warnings
 
         task()
         # Cannot know the task.status as there is no log about it
@@ -204,22 +217,17 @@ def test_action_start(tmpdir, method, session):
         task.log_running()
         getattr(task, method)()
 
-        records = session.get_task_log()
+        records = list(map(lambda e: e.dict(), session.get_task_log()))
+        assert len(records) == 2
 
         # First should not have "end"
-        first = next(records)
-        assert "end" not in first
-        assert "2000-01-01" <= str(first["start"])
-        assert str(first["start"]) <= "2200-01-01"
+        first = records[0]
+        assert first['created'] >= datetime.datetime(2000, 1, 1).timestamp()
 
         # Second should and that should be datetime
-        last = next(records)
-        assert last["start"]
-        assert "2000-01-01" <= str(last["start"])
-        assert str(last["start"]) <= "2200-01-01"
-
-        assert "2000-01-01" <= str(last["end"])
-        assert str(last["end"]) <= "2200-01-01"
+        last = records[1]
+        assert first['created'] <= last['created']
+        assert last['created'] < datetime.datetime(2200, 1, 1).timestamp()
 
 def test_process_no_double_logging(tmpdir, session):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
@@ -276,15 +284,14 @@ def test_process_no_double_logging(tmpdir, session):
         handlers[1] # Checking it has atleast 2
         assert (
             isinstance(handlers[1], logging.StreamHandler)
-            and isinstance(handlers[0], MemoryHandler)
+            and isinstance(handlers[0], RepoHandler)
             and len(handlers) == 2
         ), f"Double logging. Too many handlers: {handlers}"
 
         # If fails here, double logging caused by Task.log_record
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
-        n_run = records.count({"task_name": "a task", "action": "run"})
-        n_success = records.count({"task_name": "a task", "action": "run"})
+        n_run = len(list(session.get_task_log(task_name="a task", action="run")))
+        n_success = len(list(session.get_task_log(task_name="a task", action="success")))
+
         assert n_run > 0 and n_success > 0, "No log records formed to log."
 
         assert n_run == 1 and n_success == 1, "Double logging. Bug in Task.log_record probably."

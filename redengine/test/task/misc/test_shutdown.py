@@ -34,6 +34,6 @@ def test_scheduler_shutdown(tmpdir, session):
             cont = f.read()
         assert "StartedShut" == cont
 
-        history = list(task.logger.get_records())
-        assert 1 == len([record for record in history if record["action"] == "run"])
-        assert 1 == len([record for record in history if record["action"] == "success"])
+        records = list(map(lambda e: e.dict(exclude={'created'}), task.logger.get_records()))
+        assert 1 == len([record for record in records if record["action"] == "run"])
+        assert 1 == len([record for record in records if record["action"] == "success"])

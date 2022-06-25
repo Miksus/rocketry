@@ -65,9 +65,8 @@ def test_param_failure(tmpdir, execution, session, fail_in):
     scheduler()
     assert task.status == "fail"
 
-    history = list(task.logger.get_records())
-    history = [{"task_name": rec['task_name'], "action": rec["action"]} for rec in history]
-    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == history
+    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 @pytest.mark.parametrize(
     "execution,fail_in", [
@@ -92,9 +91,8 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
     scheduler()
     assert task.status == "fail"
     
-    history = list(task.logger.get_records())
-    history = [{"task_name": rec['task_name'], "action": rec["action"]} for rec in history]
-    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == history
+    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 
 

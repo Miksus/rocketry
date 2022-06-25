@@ -28,10 +28,10 @@ def test_taskcond_true(capsys, session, execution):
 
     scheduler()
     
-    history = list(session.get_task_log())
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
-        {"task_name": rec['task_name'], "action": rec["action"]} 
-        for rec in history
+        rec
+        for rec in records
         if rec['task_name'] == "a task"
     ]
     assert history_task == [
@@ -47,8 +47,8 @@ def test_taskcond_true(capsys, session, execution):
 
     cond_task = cond_tasks[0]
     history_check = [
-        {"task_name": rec['task_name'], "action": rec["action"]} 
-        for rec in history
+        rec
+        for rec in records
         if rec['task_name'] == cond_task.name
     ]
     assert history_check == [
@@ -70,11 +70,11 @@ def test_taskcond_false(capsys, session, execution):
 
     scheduler()
     
-    history = list(session.get_task_log())
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
-        {"task_name": rec['task_name'], "action": rec["action"]} 
-        for rec in history
-        if rec['task_name'] == "a task"
+        rec
+        for rec in records
+        if rec["task_name"] == "a task"
     ]
     assert history_task == []
 
@@ -84,9 +84,9 @@ def test_taskcond_false(capsys, session, execution):
     
     cond_task = cond_tasks[0]
     history_check = [
-        {"task_name": rec['task_name'], "action": rec["action"]} 
-        for rec in history
-        if rec['task_name'] == cond_task.name
+        rec
+        for rec in records
+        if rec["task_name"] == cond_task.name
     ]
     assert history_check == [
         {"task_name": cond_task.name, "action": "run"},

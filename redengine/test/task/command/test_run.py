@@ -1,10 +1,15 @@
 
+import logging
 from pathlib import Path
 import platform
 import sys
 
 import pytest
 
+from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo
+
+from redengine.log.log_record import LogRecord
 from redengine.tasks import CommandTask
 
 from task_helpers import wait_till_task_finish
@@ -47,6 +52,11 @@ def test_success_command(tmpdir, session, cmd, params, systems,shell, execution)
 def test_fail_command(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
+        task_logger = logging.getLogger(session.config["task_logger_basename"])
+        task_logger.handlers = [
+            RepoHandler(repo=MemoryRepo(model=LogRecord))
+        ]
+
         task = CommandTask(
             command=["python", "--not_an_arg"], 
             name="a task",
@@ -59,10 +69,10 @@ def test_fail_command(tmpdir, execution, session):
 
         wait_till_task_finish(task)
 
-        logs = list(task.logger.get_records())
+        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
         assert "fail" == task.status
 
-        err = logs[1]["exc_text"].strip().replace('\r', '')
+        err = records[1]["exc_text"].strip().replace('\r', '')
         if (sys.version_info.major, sys.version_info.minor) >= (3, 8):
             expected = "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
         else:
