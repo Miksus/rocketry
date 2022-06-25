@@ -27,7 +27,7 @@ from log_helpers import log_task_record
                 "daemon": null,
                 "return_arg": "<class 'redengine.arguments.builtin.Return'>",
                 "name": "mytask",
-                "logger": "<TaskAdapter redengine.task (INFO)>",
+                "logger": "<TaskAdapter redengine.task (DEBUG)>",
                 "execution": "main",
                 "priority": 0,
                 "disabled": false,

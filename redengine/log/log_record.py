@@ -40,4 +40,5 @@ class TaskLogRecord(MinimalRecord):
     end: Optional[datetime.datetime]
     runtime: Optional[datetime.timedelta]
 
+    message: str
     exc_text: Optional[str]
