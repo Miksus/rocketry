@@ -8,6 +8,7 @@ about the scehuler/task/parameters etc.
 import logging
 from pathlib import Path
 import warnings
+from redengine.log.defaults import create_default_handler
 from redengine.pybox.io.read import read_yaml
 from typing import TYPE_CHECKING, Iterable, Dict, List, Tuple, Type, Union, Any
 from itertools import chain
@@ -241,16 +242,18 @@ class Session(RedBase):
 
     def _check_readable_logger(self):
         from redengine.core.log import TaskAdapter
-        logger = TaskAdapter(logging.getLogger(self.config['task_logger_basename']), None, ignore_warnings=True)
+        task_logger = logging.getLogger(self.config['task_logger_basename'])
+        logger = TaskAdapter(task_logger, None, ignore_warnings=True)
         if logger.is_readable_unset:
             # Setting memory logger 
             warnings.warn(
                 f"Logger {self.config['task_logger_basename']} cannot be read. " 
                 "Logging is set to memory. " 
                 "To supress this warning, "
-                "please specify a scheme which creates a readable task logger (such as log_simple) "
-                "or set one using logging.", UserWarning)
-            self.set_scheme("log_memory")
+                "please set a handler that can be read (redbird.logging.RepoHandler)", UserWarning)
+
+            # Setting memory logger
+            task_logger.addHandler(create_default_handler())
 
     def get_tasks(self) -> list:
         """Get session tasks as list.

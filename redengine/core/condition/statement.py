@@ -240,6 +240,22 @@ class Historical(Statement):
         kwargs["_end_"] = end
         return kwargs
 
+    def _to_timestamp(self, dt):
+        # pd.Timestamp(...).timestamp yields different result than datetime.datetime(...).timestamp()
+        if hasattr(dt, "to_pydatetime"):
+            dt = dt.to_pydatetime()
+        try:
+            return dt.timestamp()
+        except OSError:
+            # Less than timestamp "0"
+            return 0
+
+    def _get_field_value(self, record, field):
+        if isinstance(record, dict):
+            return record[field]
+        else:
+            return getattr(record, field)
+
     def __eq__(self, other):
         # self == other
         is_same_class = isinstance(other, type(self))

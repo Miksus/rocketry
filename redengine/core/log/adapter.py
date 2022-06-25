@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Iterable, List, Dict, Union
 
 from dateutil.parser import parse as _parse_datetime
 import pandas as pd
+from redbird import BaseRepo
 
 from redengine.core.utils import is_main_subprocess
 from redengine.pybox import query
@@ -42,7 +43,15 @@ class TaskAdapter(logging.LoggerAdapter):
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
-    def get_records(self, qry=None, **kwargs) -> Iterable[Dict]:
+    def filter_by(self, *args, **kwargs):
+        "Filter by the repo"
+        task_name = self.extra["task_name"]
+        if task_name is not None:
+            kwargs["task_name"] = task_name
+        repo = self._get_repo()
+        return repo.filter_by(*args, **kwargs)
+
+    def get_records(self, *args, **kwargs) -> Iterable[Dict]:
         r"""Get the log records of the task from the 
         handlers of the logger.
         
@@ -60,36 +69,17 @@ class TaskAdapter(logging.LoggerAdapter):
             Keyword arguments turned to a query (if qry is None)
 
         """
-        # TODO: Add examples in docstring
+        return self.filter_by(*args, **kwargs).all()
 
-        task_name = self.extra["task_name"]
+    def _get_repo(self) -> BaseRepo:
+        "Get repository where the log records are stored"
         handlers = self.logger.handlers
-
-        if task_name is not None:
-            kwargs["task_name"] = task_name
-
-        if qry is None:
-            qry = query.parser.from_kwargs(**kwargs)
-        elif isinstance(qry, list):
-            qry = query.parser.from_tuple(qry)
-        elif isinstance(qry, dict):
-            qry = query.parser.from_dict(qry)
         for handler in handlers:
-            if hasattr(handler, "query"):
-                records = handler.query(qry)
-                formatter = RecordFormatter()
-                for record in formatter(records):
-                    yield record
-                break
-            elif hasattr(handler, "read"):
-
-                formatter = RecordFormatter()
-                for record in formatter(handler.read()):
-                    if qry.match(record):
-                        yield record
-                break
+            repo = getattr(handler, 'repo', None)
+            if repo is not None:
+                return repo
         else:
-            raise AttributeError(f"Logger '{self.logger.name}' cannot be read. Missing readable handler.")
+            raise AttributeError(f"Logger '{self.logger.name}' has no handlers with repository. Cannot be read.")
 
     def get_latest(self, action:str=None) -> dict:
         """Get latest log record. Note that this
@@ -104,9 +94,7 @@ class TaskAdapter(logging.LoggerAdapter):
         """
         record = {}
         kwargs = {'action': action} if action is not None else {}
-        for record in self.get_records(**kwargs):
-            pass # Iterating the generator till the end
-        return record
+        return self.filter_by(**kwargs).last()
 
 # For some reason the logging.Adapter is missing some
 # methods that are on logging.Logger
@@ -133,7 +121,7 @@ class TaskAdapter(logging.LoggerAdapter):
         "bool: Whether the logger is also readable"
         handlers = self.logger.handlers
         for handler in handlers:
-            if hasattr(handler, 'read') or hasattr(handler, 'query'):
+            if hasattr(handler, 'repo'):
                 return True
         else:
             return False

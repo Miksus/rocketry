@@ -818,7 +818,7 @@ class Task(RedBase, metaclass=_TaskMeta):
                     return
             else:
                 
-                self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
+                #self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = self.session.get_task(record.task_name)
                 task.log_record(record)
 
@@ -905,7 +905,7 @@ class Task(RedBase, metaclass=_TaskMeta):
             if not record:
                 # No previous status
                 return None
-            return record["action"]
+            return record["action"] if isinstance(record, dict) else record.action
         else:
             # This is way faster
             return self._status
@@ -953,38 +953,41 @@ class Task(RedBase, metaclass=_TaskMeta):
         self._status = action
 
     @property
-    def last_success(self):
+    def last_success(self) -> datetime.datetime:
         """datetime.datetime: The lastest timestamp when the task succeeded."""
         return self._get_last_action("success")
 
     @property
-    def last_fail(self):
+    def last_fail(self) -> datetime.datetime:
         """datetime.datetime: The lastest timestamp when the task failed."""
         return self._get_last_action("fail")
 
     @property
-    def last_run(self):
+    def last_run(self) -> datetime.datetime:
         """datetime.datetime: The lastest timestamp when the task ran."""
         return self._get_last_action("run")
 
     @property
-    def last_terminate(self):
+    def last_terminate(self) -> datetime.datetime:
         """datetime.datetime: The lastest timestamp when the task terminated."""
         return self._get_last_action("terminate")
 
     @property
-    def last_inaction(self):
+    def last_inaction(self) -> datetime.datetime:
         """datetime.datetime: The lastest timestamp when the task inacted."""
         return self._get_last_action("inaction")
 
-    def _get_last_action(self, action):
+    def _get_last_action(self, action:str) -> datetime.datetime:
         cache_attr = f"_last_{action}"
 
         allow_cache = not self.session.config["force_status_from_logs"]
         if allow_cache: #  and getattr(self, cache_attr) is not None
-            return getattr(self, cache_attr)
+            value = getattr(self, cache_attr)
         else:
-            return self._get_last_action_from_log(action)
+            value = self._get_last_action_from_log(action)
+        if isinstance(value, float):
+            value = datetime.datetime.fromtimestamp(value)
+        return value
 
     def _get_last_action_from_log(self, action):
         """Get last action timestamp from log"""
@@ -997,7 +1000,7 @@ class Task(RedBase, metaclass=_TaskMeta):
         else:
             if not record:
                 return None
-            timestamp = record["timestamp"]
+            timestamp = record["created"] if isinstance(record, dict) else record.created
             return timestamp
 
     def __getstate__(self):

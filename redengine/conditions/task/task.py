@@ -3,6 +3,8 @@ import re, time
 import datetime
 from .utils import DependMixin, TaskStatusMixin
 
+from redbird.oper import between
+
 from redengine.core.condition import Statement, Historical, Comparable, All
 from redengine.core.time import TimeDelta
 from ..time import IsPeriod
@@ -44,8 +46,8 @@ class TaskStarted(Historical, Comparable):
         elif allow_optimization and self.equal_zero():
             return not bool(task.last_run)
         
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="run")
-        run_times = [record["timestamp"] for record in records]
+        records = task.logger.get_records(created=between(self._to_timestamp(_start_), self._to_timestamp(_end_)), action="run")
+        run_times = [self._get_field_value(record, "created") for record in records]
         return run_times
         
     def __str__(self):
@@ -182,7 +184,7 @@ class TaskRunning(Historical):
         record = task.logger.get_latest()
         if not record:
             return False
-        return record["action"] == "run"
+        return record.action == "run"
 
     def __str__(self):
         if hasattr(self, "_str"):

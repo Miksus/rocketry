@@ -2,6 +2,8 @@
 import re, time
 import datetime
 
+from redbird.oper import in_, between
+
 from redengine.core.condition import All, Any, Statement
 
 
@@ -36,8 +38,8 @@ class DependMixin:
         depend_task = self.session.get_task(depend_task)
 
         #! TODO: use Task._last_success & Task._last_run if not none and not forced
-        last_depend_finish = depend_task.logger.get_latest(action=self._dep_actions)
-        last_actual_start = actual_task.logger.get_latest(action=["run"])
+        last_depend_finish = depend_task.logger.get_latest(action=in_(self._dep_actions))
+        last_actual_start = actual_task.logger.get_latest(action="run")
 
         if not last_depend_finish:
             # Depend has not run at all
@@ -46,7 +48,7 @@ class DependMixin:
             # Depend has succeeded but the actual task has not
             return True
             
-        return last_depend_finish["timestamp"] > last_actual_start["timestamp"]
+        return self._get_field_value(last_depend_finish, "created") > self._get_field_value(last_actual_start, "created")
 
 class TaskStatusMixin:
 
@@ -97,8 +99,15 @@ class TaskStatusMixin:
                 elif occurred_on_period:
                     return True
 
-        records = task.logger.get_records(timestamp=(_start_, _end_), action=self._action)
-        return [record["timestamp"] for record in records]
+        
+        records = task.logger.get_records(
+            created=between(self._to_timestamp(_start_), self._to_timestamp(_end_)), 
+            action=in_(self._action) if isinstance(self._action, list) else self._action
+        )
+        return [
+            self._get_field_value(record, "created") 
+            for record in records
+        ]
 
     def __str__(self):
         if hasattr(self, "_str"):
