@@ -45,12 +45,8 @@ class CodeTask(Task):
         return_value = baz
         ''', parameters={'foo': 'a value', 'bar': 'a value'})
     """
-    output_variable : str = 'return_value'
+    output_variable: str = 'return_value'
     code: str
-
-    def __init__(self, code:str, **kwargs):
-        self.code = code
-        super().__init__(**kwargs)
 
     def execute(self, **params):
         loc = params

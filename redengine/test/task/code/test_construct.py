@@ -12,7 +12,7 @@ from redengine.core import Scheduler
 from redengine.conditions import TaskStarted
 
 def test_construct(session):
-    task = CodeTask(dedent("""
+    task = CodeTask(code=dedent("""
         def main():
             ...
         main()
@@ -22,7 +22,7 @@ def test_construct(session):
 
 def test_construct_missing_name(session):
     with pytest.raises(ValueError):
-        task = CodeTask(dedent("""
+        task = CodeTask(code=dedent("""
             def main():
                 ...
             main()
@@ -31,12 +31,12 @@ def test_construct_missing_name(session):
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success(session, execution):
     
-    task = CodeTask(dedent("""
+    task = CodeTask(code=dedent("""
         def main():
             return 'myvalue'
 
         return_value = main()
-        """), name="mytask")
+        """), execution=execution, name="mytask")
     task.force_run = True
 
     scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
@@ -47,12 +47,12 @@ def test_run_success(session, execution):
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success_parametrize(session, execution):
     
-    task = CodeTask(dedent("""
+    task = CodeTask(code=dedent("""
         def main(param):
             return 'myvalue' + param
 
         return_value = main(myparam)
-        """), name="mytask", parameters={'myparam': ' + myparam'})
+        """), name="mytask", execution=execution, parameters={'myparam': ' + myparam'})
     task.force_run = True
 
     scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
@@ -68,12 +68,12 @@ def test_run_fail(session, execution):
         RepoHandler(repo=MemoryRepo(model=LogRecord))
     ]
 
-    task = CodeTask(dedent("""
+    task = CodeTask(code=dedent("""
         def main():
             raise RuntimeError('Failed')
 
         return_value = main()
-        """), name="mytask")
+        """), execution=execution, name="mytask")
     task.force_run = True
 
     scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
