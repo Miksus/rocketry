@@ -3,7 +3,6 @@ from .session import Session
 from .core import Scheduler
 
 from ._setup import _setup_defaults
-from .config import *
 from . import (
     conditions,
     log,
