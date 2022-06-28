@@ -92,7 +92,6 @@ class TaskAdapter(logging.LoggerAdapter):
             Filtering with latest action of this
             type.
         """
-        record = {}
         kwargs = {'action': action} if action is not None else {}
         return self.filter_by(**kwargs).last()
 
