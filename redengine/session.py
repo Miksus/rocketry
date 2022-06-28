@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from redengine.parse import StaticParser
     from redengine.core import (
         Task,
-        BaseExtension,
         Scheduler,
         BaseCondition,
         Parameters,
@@ -42,14 +41,12 @@ class Session(RedBase):
         Tasks of the session. Can be formed later.
     parameters : parameter-like, optional
         Session level parameters.
-    extensions: dict, optional
-        Extensions of the session. Can be formed later.
     scheme : str or list, optional
         Premade scheme(s) to use to set up logging, 
         parameters, setup tasks etc.
     as_default : bool, default=True
         Whether to set the session as default for next
-        tasks, extensions etc. that don't have session
+        tasks etc. that don't have session
         specified.
     kwds_scheduler : dict, optional
         Keyword arguments passed to 
@@ -75,7 +72,6 @@ class Session(RedBase):
 
     tasks: Dict[str, 'Task']
     config: Dict[str, Any]
-    extensions: Dict[Type, Dict[str, 'BaseExtension']]
     parameters: 'Parameters'
     scheduler: 'Scheduler'
 
@@ -461,37 +457,6 @@ class Session(RedBase):
     def parameters(self, item:Union[Dict, 'Parameters']):
         from redengine.core import Parameters
         self._params = Parameters(item)
-
-    @property
-    def extensions(self) -> Dict[str, Dict[str, 'BaseExtension']]:
-        """Dict[str, Dict[str, BaseExtension]]: Dictionary of the extensions 
-        in the session. The first key is the parse keys of the extensions
-        and second key the names of the extension objects."""
-        return self._extensions
-
-    @extensions.setter
-    def extensions(self, item:Union[List['BaseExtension'], Dict[str, Dict[str, 'BaseExtension']]]):
-
-        # Prevent circular import
-        from redengine.core import BaseCondition, BaseExtension
-        
-        exts = {}
-        if item is None:
-            pass
-        elif isinstance(item, list):
-            for ext in item:
-                if not isinstance(ext, BaseExtension):
-                    raise TypeError(f"Session extensions must be type {BaseExtension}. Given: {type(ext)}")
-                key = ext.__parsekey__
-                if key not in exts:
-                    exts[key] = {}
-                exts[key][ext.name] = ext
-        elif isinstance(item, dict):
-            exts = item
-            #! TODO: Validate
-        else:
-            raise TypeError(f"Extensions must be either list or dict. Given: {type(item)}")
-        self._extensions = exts
 
     @classmethod
     def from_yaml(cls, file:Union[str, Path], **kwargs) -> 'Session':
