@@ -62,7 +62,7 @@ class TaskStatusMixin:
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
         
-        allow_optimization = not self.session.config["force_status_from_logs"]
+        allow_optimization = not self.session.config.force_status_from_logs
 
         if allow_optimization:
             

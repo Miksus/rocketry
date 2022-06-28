@@ -13,9 +13,10 @@ from . import (
 )
 from .tasks import FuncTask
 from . import views
+_setup_defaults()
 session = Session()
 session.set_as_default()
-_setup_defaults()
+
 
 
 from . import _version

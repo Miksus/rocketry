@@ -18,7 +18,7 @@ def test_construct(session):
         main()
         """), start_cond="daily", name="mytask")
     assert task.name == "mytask"
-    assert "mytask" in session.tasks
+    assert "mytask" in session
 
 def test_construct_missing_name(session):
     with pytest.raises(ValueError):
@@ -63,7 +63,7 @@ def test_run_success_parametrize(session, execution):
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_fail(session, execution):
     
-    task_logger = logging.getLogger(session.config["task_logger_basename"])
+    task_logger = logging.getLogger(session.config.task_logger_basename)
     task_logger.handlers = [
         RepoHandler(repo=MemoryRepo(model=LogRecord))
     ]

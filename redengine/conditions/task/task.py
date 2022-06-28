@@ -34,7 +34,7 @@ class TaskStarted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
-        allow_optimization = not self.session.config["force_status_from_logs"]
+        allow_optimization = not self.session.config.force_status_from_logs
         if allow_optimization and self.any_over_zero():
             # Condition only checks whether has run at least once
             if task.last_run is None:
@@ -178,7 +178,7 @@ class TaskRunning(Historical):
 
         task = Statement.session.get_task(task)
 
-        if not self.session.config["force_status_from_logs"]:
+        if not self.session.config.force_status_from_logs:
             return bool(task.last_run)
 
         record = task.logger.get_latest()

@@ -54,5 +54,5 @@ class CodeTask(Task):
         exec(self.code, glob, loc)
         return loc.get(self.output_variable, None)
 
-    def get_default_name(self):
+    def get_default_name(self, **kwargs):
         raise ValueError("CodeTask must have name defined")

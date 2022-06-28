@@ -32,7 +32,7 @@ def task_file(tmpdir):
     pytest.param(True, id="delay"), pytest.param(False, id="not delay")
 ])
 def test_func_str(session, delay, task_file, tmpdir):
-    task = parse_task({"class": "FuncTask", "func": "mypkg/mytask.py:do_stuff_1", "delay": delay})
+    task = parse_task({"class": "FuncTask", "func_name": "mypkg/mytask.py:do_stuff_1", "delay": delay})
     assert isinstance(task, FuncTask)
     if delay:
         assert task.is_delayed()

@@ -155,7 +155,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
     ],
 )
 def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
@@ -217,7 +217,7 @@ def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
@@ -317,7 +317,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
@@ -413,7 +413,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
     ],
 )
 def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
@@ -509,7 +509,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     ],
 )
 def test_fail(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:

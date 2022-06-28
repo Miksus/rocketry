@@ -18,13 +18,13 @@ def test_defaults(session):
 
 def test_delete(session):
     task = DummyTask(name="mytest")
-    assert session.tasks == {"mytest": task}
+    assert session.tasks == {task}
     task.delete()
-    assert session.tasks == {}
+    assert session.tasks == set()
 
 def test_set_invalid_status(session):
     task = DummyTask(name="mytest")
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         task.status = "not valid"
 
 def test_pickle(session):

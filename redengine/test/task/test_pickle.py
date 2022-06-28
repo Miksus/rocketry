@@ -64,7 +64,7 @@ class TestFunc:
         unpkl_task = FuncTask(func_nested, execution="thread", name="unpicklable")
         task = FuncTask(func_on_main_level, execution="process", name="picklable")
 
-        assert session.tasks == {"unpicklable": unpkl_task, "picklable": task}
+        assert session.tasks == {unpkl_task, task}
 
         pick_task = pickle_dump_read(task)
         assert pick_task.func.__name__ == "func_on_main_level"

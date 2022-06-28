@@ -7,11 +7,10 @@ import pytest
 from redengine import Session
 from redengine.parse import parse_condition, parse_time
 from redengine.tasks import FuncTask
-from redengine.extensions import Sequence
-from redengine.core import Task, Scheduler, BaseCondition, BaseArgument, BaseExtension, Parameters
+from redengine.core import Task, Scheduler, BaseCondition, BaseArgument, Parameters
 
 def assert_default(session:Session):
-    for cls in (Task, Scheduler, BaseCondition, BaseArgument, BaseExtension, Parameters):
+    for cls in (Task, Scheduler, BaseCondition, BaseArgument, Parameters):
         assert cls.session is session
 
 
@@ -23,8 +22,8 @@ class TestInit:
         assert session.returns.to_dict() == {}
         assert session.tasks == {}
 
-        assert not session.config["silence_task_prerun"]
-        assert not session.config["silence_cond_check"]
+        assert not session.config.silence_task_prerun
+        assert not session.config.silence_cond_check
         assert session.env is None
 
         assert_default(session)

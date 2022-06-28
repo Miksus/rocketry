@@ -51,13 +51,10 @@ def test_dependent(tmpdir, execution, session):
             execution=execution
         )
 
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="After all") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
-        )
+        session.config.shut_cond = (TaskStarted(task="After all") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))
+        session.start()
 
-        scheduler()
-
-        repo = logging.getLogger(session.config['task_logger_basename']).handlers[0].repo
+        repo = logging.getLogger(session.config.task_logger_basename).handlers[0].repo
 
         a_start = repo.filter_by(task_name="A", action="run").first().created
         b_start = repo.filter_by(task_name="B", action="run").first().created

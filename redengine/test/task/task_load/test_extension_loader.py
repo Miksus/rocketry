@@ -6,7 +6,6 @@ from textwrap import dedent
 import pytest
 
 from redengine.tasks import FuncTask
-from redengine.tasks.loaders import ExtensionLoader
 from redengine.time import TimeOfDay
 
 from io_helpers import create_file, delete_file

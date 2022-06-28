@@ -4,7 +4,9 @@ import sys
 import inspect
 import importlib
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, List, Optional, Union
+
+from pydantic import Field, root_validator, validator
 
 from redengine.core.task import Task
 from redengine.core.utils import is_pickleable
@@ -132,11 +134,41 @@ class FuncTask(Task):
         def my_task_func():
             ...
     """
-    func: Callable
+    func: Optional[Callable] = Field(description="Executed function")
 
-    def __init__(self, func=None, path=None, delay=None, sys_paths=None, **kwargs):
-        only_func_set = not kwargs and delay is None and path is None and sys_paths is None
-        if func is None and not delay:
+    path: Optional[Path] = Field(description="Path to the script that is executed")
+    func_name: Optional[str] = Field(default="main", description="Name of the function in given path. Pass path as well")
+    cache: bool = False
+
+    sys_paths: List[Path] = []
+
+    _delayed_kwargs: dict = {}
+    @property
+    def delayed(self):
+        return self.func is None
+
+    @validator('path')
+    def validate_path(cls, value: Path):
+        if value is not None and not value.is_file():
+            raise ValueError(f"Path {value} does not exists")
+        return value
+
+    @validator("func")
+    def validate_func(cls, value, values):
+        execution = values['execution']
+        func = value
+    
+        if execution == "process" and getattr(func, "__name__", None) == "<lambda>":
+            raise AttributeError(
+                f"Cannot pickle lambda function '{func}'. "
+                "The function must be pickleable if task's execution is 'process'. "
+            )
+        return value
+
+    def __init__(self, func=None, **kwargs):
+        only_func_set = func is not None and not kwargs
+        no_func_set = func is None and kwargs.get('path') is None
+        if no_func_set:
             # FuncTask was probably called like:
             # @FuncTask(...)
             # def myfunc(...): ...
@@ -144,9 +176,6 @@ class FuncTask(Task):
             # We initiate the class lazily by creating
             # almost empty shell class that is populated
             # in next __call__ (which should occur immediately)
-            kwargs["path"] = path
-            kwargs["delay"] = False
-            kwargs["sys_paths"] = sys_paths
             self._delayed_kwargs = kwargs
             return 
         elif only_func_set:
@@ -159,30 +188,15 @@ class FuncTask(Task):
             # as it's obvious it would not work.
             kwargs["execution"] = "thread"
 
-        sys_paths = [] if sys_paths is None else sys_paths
-        self._set_func(
-            func, 
-            path=path, 
-            execution=kwargs.get("execution", self.session.config['task_execution']),
-            delay=delay,
-            sys_paths=sys_paths
-        )
-        super().__init__(**kwargs)
+        super().__init__(func=func, **kwargs)
         self._set_descr()
 
     def __call__(self, *args, **kwargs):
-        if not hasattr(self, "_func"):
+        if not hasattr(self, "func"):
             func = args[0]
-            self._set_func(
-                func, 
-                path=self._delayed_kwargs.pop("path", None), 
-                execution=self._delayed_kwargs.get("execution", self.session.config['task_execution']),
-                delay=self._delayed_kwargs.pop("delay", None), 
-                sys_paths=self._delayed_kwargs.pop("sys_paths", None),
-            )
-            super().__init__(**self._delayed_kwargs)
+            super().__init__(func=func, **self._delayed_kwargs)
             self._set_descr()
-            del self._delayed_kwargs
+            self._delayed_kwargs = {}
 
             # Note that we must return the function or 
             # we are in deep shit with multiprocessing
@@ -191,84 +205,41 @@ class FuncTask(Task):
         else:
             return super().__call__(*args, **kwargs)
 
-    def _set_func(self, func, path, execution, sys_paths, delay=None):
-        if delay is None:
-            delay = path is not None
-        self.sys_paths = sys_paths
-
-        if delay:
-            # Lazy importing (importing only when 
-            # actually executing the func)
-            if path is None and ":" in func:
-                # path is defined in "func"
-                path, func = func.split(":")
-
-            self._path = Path(path if path is not None else '')
-            self._func_name = "main" if func is None else func 
-            self._func = None
-        else:
-            # Get the actual callable
-            if isinstance(func, str):
-                # path = Path(path)
-                if path is not None:
-                    source = path
-                    func_name = func
-                elif ":" in func:
-                    source, func_name = func.split(":")
-                else:
-                    source, func_name = func.rsplit('.', 1)
-
-                import_path = to_import_path(source)
-
-                with TempSysPath(sys_paths):
-                    module = importlib.import_module(import_path)
-                func = getattr(module, func_name)
-
-            if not callable(func):
-                raise TypeError(f"FuncTask's function must be callable. Got: {type(func)}")
-            elif execution == "process" and getattr(func, "__name__", None) == "<lambda>":
-                raise AttributeError(
-                    f"Cannot pickle lambda function '{func}'. "
-                    "The function must be pickleable if task's execution is 'process'. "
-                )
-            self._path = None
-            self._func_name = None
-            self._func = func
-
     def _set_descr(self):
         "Set description from func doc if desc missing"
-        if self.description is None and hasattr(self._func, "__doc__"):
-            self.description = self._func.__doc__
+        if self.description is None and hasattr(self.func, "__doc__"):
+            self.description = self.func.__doc__
 
     def execute(self, **params):
         "Run the actual, given, task"
-        func = self.get_func()
+        func = self.get_func(cache=self.cache)
         output = func(**params)
         return output
 
     def get_func(self, cache=True):
-        if self._func is None:
+        if self.func is None:
             # Add dir of self.path to sys.path so importing from that dir works
-            pkg_path = find_package_root(self._path)
-            root = str(Path(self._path).parent.absolute()) if not pkg_path else str(pkg_path)
+            pkg_path = find_package_root(self.path)
+            root = str(Path(self.path).parent.absolute()) if not pkg_path else str(pkg_path)
 
             # _task_func is cached to faster performance
             with TempSysPath([root] + self.sys_paths):
                 task_module = get_module(self.path, pkg_path=pkg_path)
-            task_func = getattr(task_module, self._func_name)
+            task_func = getattr(task_module, self.func_name)
 
             if cache:
-                self._func = task_func
-
-        return self._func
-
-    def get_default_name(self):
-        if self.is_delayed():
-            file = self._path
-            return '.'.join(file.parts).replace(".py", "") + f":{self._func_name}"
+                self.func = task_func
+            return task_func
         else:
-            func_module = self._func.__module__
-            func_name = getattr(self._func, "__name__", type(self._func).__name__)
+            return self.func
+
+    def get_default_name(self, func=None, path=None, func_name=None, **kwargs):
+        if func is None:
+            file = Path(path)
+            return '.'.join(file.parts).replace(".py", "") + f":{func_name}"
+        else:
+            func_module = func.__module__
+            func_name = getattr(func, "__name__", type(func).__name__)
             if func_module == "__main__":
                 # Showing as 'myfunc'
                 return func_name
@@ -284,7 +255,7 @@ class FuncTask(Task):
         super().process_finish(*args, **kwargs)
 
     def is_delayed(self):
-        return self._func_name is not None
+        return self.func is None
         
     def prefilter_params(self, params):
         if not self.is_delayed():
@@ -337,21 +308,3 @@ class FuncTask(Task):
             )
         ]
         return kw_args
-
-    @property
-    def func_name(self):
-        if self.is_delayed():
-            return self._func_name
-        else:
-            return self._func.__name__
-
-    @property
-    def path(self):
-        if self.is_delayed():
-            return self._path
-        else:
-            raise AttributeError("TaskFunc does not have path.")
-
-    @property
-    def func(self):
-        return self.get_func(cache=False)

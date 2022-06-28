@@ -5,15 +5,21 @@ Utilities for getting information
 about the scehuler/task/parameters etc.
 """
 
+import datetime
+from email.policy import default
 import logging
+from multiprocessing import cpu_count
+import multiprocessing
 from pathlib import Path
 import warnings
+
+from pydantic import BaseModel, PrivateAttr, validator
 from redengine.log.defaults import create_default_handler
 from redengine.pybox.io.read import read_yaml
-from typing import TYPE_CHECKING, Iterable, Dict, List, Tuple, Type, Union, Any
+from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
 from itertools import chain
 
-from redengine.config import get_default, DEFAULT_BASENAME_TASKS, DEFAULT_BASENAME_SCHEDULER
+from redbird.logging import RepoHandler
 from redengine._base import RedBase
 
 if TYPE_CHECKING:
@@ -27,6 +33,45 @@ if TYPE_CHECKING:
         BaseArgument,
         TimePeriod
     )
+
+class Config(BaseModel):
+    use_instance_naming: bool = False
+    task_priority: int = 0
+    task_execution: str = 'process'
+    task_pre_exist: str = 'raise'
+    force_status_from_logs: bool = False # Force to check status from logs every time (slow but robust)
+    
+    task_logger_basename: str = "redengine.task"
+    scheduler_logger_basename: str = "redengine.scheduler"
+
+    silence_task_prerun: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
+    cycle_sleep: int = None
+    debug: bool = False
+
+    max_process_count = cpu_count()
+    tasks_as_daemon: bool = True
+    restarting: str = 'replace'
+    instant_shutdown: bool = False
+
+    timeout: datetime.timedelta = datetime.timedelta(60*30)
+    shut_cond: Optional[Union[str, 'BaseCondition']] = None
+
+    @validator('shut_cond', pre=True)
+    def parse_shut_cond(cls, value):
+        from redengine.parse import parse_condition
+        from redengine.conditions import AlwaysFalse
+        if value is None:
+            return AlwaysFalse()
+        return parse_condition(value)
+
+class Hooks(BaseModel):
+    task_init: List[Callable] = []
+    task_execute: List[Callable] = []
+    
+    scheduler_startup: List[Callable] = []
+    scheduler_cycle: List[Callable] = []
+    scheduler_shutdown: List[Callable] = []
 
 class Session(RedBase):
     """Collection of the scheduler objects.
@@ -64,116 +109,74 @@ class Session(RedBase):
         Scheduler of the session.
     delete_existing_loggers : bool
         If True, all loggers that match the 
-        session.config['basename'] are deleted (by 
+        session.config.basename are deleted (by 
         default, deletes loggers starting with 
         'redengine.task').
 
     """
+    config: Config = Config()
+    class Config:
+        arbitrary_types_allowed = True
 
-    tasks: Dict[str, 'Task']
-    config: Dict[str, Any]
+    tasks: Set['Task']
+    hooks: Hooks
     parameters: 'Parameters'
-    scheduler: 'Scheduler'
+    _scheduler: 'Scheduler'
 
-    default_config = {
-        "use_instance_naming": False, # Whether to use id(task) as task.name if name not specified
-        "task_priority": 0, # Task priority if not specified
-        "task_execution": 'process', # Task execution if not specified
-        "task_pre_exist": "raise", # What to do if a task name is already taken
-        "force_status_from_logs": False, # Force to check status from logs every time (slow but robust)
-        "task_logger_basename": DEFAULT_BASENAME_TASKS,
-        "scheduler_logger_basename": DEFAULT_BASENAME_SCHEDULER,
+    _time_parsers: ClassVar[Dict] = {}
+    _cond_parsers: ClassVar[Dict] = {}
 
-        "silence_task_prerun": True, # Whether to silence errors occurred in setting a task to run
-        "silence_cond_check": True, # Whether to silence errors occurred in checking conditions
-        "cycle_sleep": None,
-        "debug": False,
-    }
+    _cls_tasks: ClassVar[Dict] = {}
 
-    parser: 'StaticParser' = None # Set later due to circular import
+    cond_cache: Dict = {}
 
-    _time_parsers: Dict[str, 'TimePeriod'] = {}
-    _cond_parsers: Dict[str, 'BaseCondition'] = {}
-    _ext_parsers: Dict[str, 'BaseExtension'] = {}
 
-    _cls_tasks: Dict[str, Type['Task']] = {}
+    def _get_parameters(self, value):
+        from redengine.core import Parameters
+        if value is None:
+            return Parameters()
+        elif not isinstance(value, Parameters):
+            value = Parameters(value)
+        return value
 
-    def __init__(self, 
-                 config:dict=None, 
-                 tasks:dict=None, 
-                 parameters:'Parameters'=None, 
-                 extensions:dict=None, 
-                 scheme:Union[str,list]=None, 
-                 as_default=True,
-                 kwds_scheduler=None, 
-                 delete_existing_loggers=False):
+    def _get_config(self, value):
+        if value is None:
+            return Config()
+        elif isinstance(value, dict):
+            return Config(**value)
+        elif isinstance(value, Config):
+            return value
+        else:
+            raise TypeError("Invalid config type")
 
-        # To prevent circular importing
-        from redengine.core import Parameters, Scheduler
-            
-        # Set defaults
-        config = {} if config is None else config
-        
-        extensions = {} if extensions is None else extensions
-
-        # Set attrs
-        self.config = self.default_config.copy()
-        self.config.update(config)
-
-        self.tasks = tasks
-        self.returns = Parameters()
-        self.parameters = parameters
-        self.extensions = extensions
-        self.cond_cache = {}
-
-        # Parsers
-        self.cond_parsers = self._cond_parsers.copy()
-        self.time_parsers = self._time_parsers.copy()
-        self.ext_parsers = self._ext_parsers.copy()
-        self.cls_tasks = self._cls_tasks.copy()
-
-        # Hooks
-        self.hooks = {
-            'task_init': [],
-            'task_execute': [],
-            
-            'scheduler_startup': [],
-            'scheduler_cycle': [],
-            'scheduler_shutdown': [],
-        }
-
+    def __init__(self, config=None, parameters=None, delete_existing_loggers=False):
+        from redengine.core import Scheduler
+        self.config = self._get_config(config)
+        self.parameters = self._get_parameters(parameters)
+        self.scheduler = Scheduler(self)
+        self.tasks = set()
+        self.hooks = Hooks()
+        self.returns = {}
         if delete_existing_loggers:
-            # Delete existing task loggers
-            # so that the old loggers won't
-            # interfere with the ones created 
-            # with schemes.
             self.delete_task_loggers()
 
-        kwds_scheduler = {} if kwds_scheduler is None else kwds_scheduler
-        self.scheduler = Scheduler(session=self, **kwds_scheduler)
-        if scheme is not None:
-            is_list_of_schemes = not isinstance(scheme, str)
-            if is_list_of_schemes:
-                for sch in scheme:
-                    self.set_scheme(sch)
-            else:
-                self.set_scheme(scheme)
-        if as_default:
-            self.set_as_default()
+    def __getitem__(self, task:Union['Task', str]):
+        "Get a task from the session"
+        task_name = task.name if not isinstance(task, str) else task
+        for task in self.tasks:
+            if task.name == task_name:
+                return task
+        else:
+            raise KeyError(f"Task '{task_name}' not found")
 
-    def set_scheme(self, scheme:str):
-        """Set logging/scheduling scheme from
-        default schemes.
-
-        Parameters
-        ----------
-        scheme : str
-            Name of the scheme. See redengine.config.defaults
-        """
-        #! TODO: A function to list existing defaults and help of them
-        scheduler_basename = self.config["scheduler_logger_basename"]
-        task_basename = self.config["task_logger_basename"]
-        get_default(scheme, scheduler_basename=scheduler_basename, task_basename=task_basename, session=self)
+    def __contains__(self, task: Union['Task', str]):
+        "Check if task is in session"
+        try:
+            self[task]
+        except KeyError:
+            return False
+        else:
+            return True
 
     def start(self):
         """Start the scheduling session.
@@ -213,7 +216,8 @@ class Session(RedBase):
         from redengine.conditions.scheduler import SchedulerCycles
 
         orig_vals = {}
-        for name, task in self.tasks.items():
+        for task in self.tasks:
+            name = task.name
             orig_vals[name] = {
                 attr: val for attr, val in task.__dict__.items()
                 if attr not in ("_status", "_last_run", "_last_success", "_last_fail", "_last_terminate")
@@ -238,18 +242,26 @@ class Session(RedBase):
 
     def _check_readable_logger(self):
         from redengine.core.log import TaskAdapter
-        task_logger = logging.getLogger(self.config['task_logger_basename'])
+        task_logger_basename = self.config.task_logger_basename
+        task_logger = logging.getLogger(task_logger_basename)
         logger = TaskAdapter(task_logger, None, ignore_warnings=True)
         if logger.is_readable_unset:
             # Setting memory logger 
             warnings.warn(
-                f"Logger {self.config['task_logger_basename']} cannot be read. " 
+                f"Logger {task_logger_basename} cannot be read. " 
                 "Logging is set to memory. " 
                 "To supress this warning, "
                 "please set a handler that can be read (redbird.logging.RepoHandler)", UserWarning)
 
             # Setting memory logger
             task_logger.addHandler(create_default_handler())
+        is_info_logged = logger.getEffectiveLevel() <= logging.INFO
+        if not is_info_logged:
+            level_name = logging.getLevelName(task_logger.getEffectiveLevel())
+            warnings.warn(
+                f"Logger {task_logger_basename} has too low level ({level_name}). " 
+                "Level is set to INFO to make sure the task logs get logged. ", UserWarning)
+            task_logger.setLevel(logging.INFO)
 
     def get_tasks(self) -> list:
         """Get session tasks as list.
@@ -259,12 +271,34 @@ class Session(RedBase):
         list[redengine.core.Task]
             List of tasks in the session.
         """
-        return self.tasks.values()
+        return self.tasks
 
     def get_task(self, task):
         #! TODO: Do we need this?
-        from redengine.core import Task
-        return self.tasks[task] if not isinstance(task, Task) else task
+        return self[task]
+
+    def add_task(self, task: 'Task'):
+        "Add the task to the session"
+        if_exists = self.config.task_pre_exist
+        exists = task in self
+        if exists:
+            if if_exists == 'ignore':
+                return
+            elif if_exists == 'replace':
+                self.tasks.remove(task)
+                self.tasks.add(task)
+            elif if_exists == 'raise':
+                raise KeyError(f"Task '{task.name}' already exists")
+        else:
+            self.tasks.add(task)
+
+    def task_exists(self, task: 'Task'):
+        task_name = task.name if not isinstance(task, str) else task
+        for task in self.tasks:
+            if task.name == task_name:
+                return True
+        else:
+            return False
 
     def get_task_loggers(self, with_adapters=True) -> Dict[str, Union['TaskAdapter', logging.Logger]]:
         """Get task logger(s) from the session.
@@ -285,7 +319,7 @@ class Session(RedBase):
         """
         from redengine.core.log import TaskAdapter
 
-        basename = self.config["task_logger_basename"]
+        basename = self.config.task_logger_basename
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
             name: TaskAdapter(logger, None) if with_adapters else logger 
@@ -314,7 +348,7 @@ class Session(RedBase):
 
         from redengine.core.log import TaskAdapter
 
-        basename = self.config["scheduler_logger_basename"]
+        basename = self.config.scheduler_logger_basename
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
             name: TaskAdapter(logger, None) if with_adapters else logger  
@@ -371,7 +405,7 @@ class Session(RedBase):
         """Delete the previous loggers from task logger"""
         loggers = logging.Logger.manager.loggerDict
         for name in list(loggers):
-            if name.startswith(self.config["task_logger_basename"]):
+            if name.startswith(self.config.task_logger_basename):
                 del loggers[name]
 
     def clear(self):
@@ -381,22 +415,17 @@ class Session(RedBase):
 
         self.tasks = {}
         self.parameters = Parameters()
-        self.scheduler = None
 
     def __getstate__(self):
         # NOTE: When a process task is executed, it will pickle
         # the task.session. Therefore removing unpicklable here.
         state = self.__dict__.copy()
-        state["_tasks"] = None
-        state["_extensions"] = None
-        state["scheduler"] = None
-        state["parser"] = None
+        state["tasks"] = set()
         state["cond_cache"] = None
+        state["_cond_parsers"] = None
         state["session"] = None
-
-        state["cond_parsers"] = None
-        state["time_parsers"] = None
-        state["ext_parsers"] = None
+        #state["parameters"] = None
+        state['scheduler'] = None
         return state
 
     @property
@@ -419,44 +448,6 @@ class Session(RedBase):
 
         import redengine
         redengine.session = self
-
-    @property
-    def tasks(self) -> Dict[str, 'Task']:
-        """Dict[str, redengine.core.Task]: Dictionary of the tasks in the session.
-        The key is the name of the task and values are the 
-        :py:class:`redengine.core.Task` objects."""
-        return self._tasks
-
-    @tasks.setter
-    def tasks(self, item:Union[List['Task'], Dict[str, 'Task']]):
-
-        # To prevent circular importing
-        from redengine.core import Task
-
-        tasks = {}
-        if item is None:
-            pass
-        elif isinstance(item, (list, tuple, set)):
-            for task in item:
-                if not isinstance(task, Task):
-                    raise TypeError(f"Session tasks must be type {Task}. Given: {type(task)}")
-                tasks[task.name] = task
-        elif isinstance(item, dict):
-            tasks = item
-            #! TODO: Validate
-        else:
-            raise TypeError(f"Tasks must be either list or dict. Given: {type(item)}")
-        self._tasks = tasks
-
-    @property
-    def parameters(self) -> 'Parameters':
-        """redengine.core.Parameters: Session level parameters."""
-        return self._params
-
-    @parameters.setter
-    def parameters(self, item:Union[Dict, 'Parameters']):
-        from redengine.core import Parameters
-        self._params = Parameters(item)
 
     @classmethod
     def from_yaml(cls, file:Union[str, Path], **kwargs) -> 'Session':

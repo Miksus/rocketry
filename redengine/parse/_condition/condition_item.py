@@ -24,7 +24,7 @@ def parse_condition_item(s:str) -> BaseCondition:
 
     session = Session.session
 
-    for statement, parser in session.cond_parsers.items():
+    for statement, parser in session._cond_parsers.items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
             if res:

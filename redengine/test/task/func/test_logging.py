@@ -120,8 +120,8 @@ def test_handle(tmpdir, session):
         ] == records
 
 def test_without_handlers(tmpdir, session):
-    session.config["force_status_from_logs"] = True
-    session.config["task_logger_basename"] = 'hdlr_test.task'
+    session.config.force_status_from_logs = True
+    session.config.task_logger_basename = 'hdlr_test.task'
     with tmpdir.as_cwd() as old_dir:
     
         logger = logging.getLogger("hdlr_test.task")
@@ -147,7 +147,7 @@ def test_without_handlers(tmpdir, session):
         assert isinstance(logger.handlers[0], RepoHandler)
 
 def test_without_handlers_status_warnings(tmpdir, session):
-    session.config["force_status_from_logs"] = True
+    session.config.force_status_from_logs = True
     with tmpdir.as_cwd() as old_dir:
     
         logger = logging.getLogger("redengine.task.test")
@@ -159,7 +159,7 @@ def test_without_handlers_status_warnings(tmpdir, session):
                 lambda : None, 
                 name="task 1",
                 start_cond="always true",
-                logger="redengine.task.test",
+                logger_name="redengine.task.test",
                 execution="main",
             )
         
@@ -182,7 +182,7 @@ def test_without_handlers_status_warnings(tmpdir, session):
             assert task.status is None
         assert str(warns[0].message) == "Task 'task 1' logger is not readable. Status unknown."
 
-        session.config["force_status_from_logs"] = False
+        session.config.force_status_from_logs = False
         with pytest.warns(UserWarning) as warns:
             task = FuncTask(
                 lambda : None, 

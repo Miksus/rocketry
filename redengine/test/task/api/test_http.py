@@ -436,8 +436,8 @@ def test_config_patch(client, session):
     )
     assert response.status_code == 200
 
-    assert session.config['task_execution'] == 'thread'
-    assert session.config['task_pre_exist'] == 'raise'
+    assert session.config.task_execution == 'thread'
+    assert session.config.task_pre_exist == 'raise'
 
 def test_params_patch(client, session):
     # Create couple of example tasks

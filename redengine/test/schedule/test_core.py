@@ -51,11 +51,10 @@ def test_task_execution(tmpdir, execution, session):
         # we test the task execution with a job that has
         # actual measurable impact outside redengine
         FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second")),
-        )
 
-        scheduler()
+        session.config.shut_cond = (TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second"))
+
+        session.start()
         # Sometimes in CI the task may end up to be started only twice thus we tolerate slightly
         with open("work.txt", "r") as file:
             assert 2 <= len(list(file))
@@ -98,17 +97,15 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         redengine.session = session
         session.set_as_default()
 
-        task_logger = logging.getLogger(session.config["task_logger_basename"])
+        task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             get_handler()
         ]
 
         task = FuncTask(task_func, name="mytask", start_cond=AlwaysTrue(), execution=execution)
 
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="mytask") >= run_count) | ~SchedulerStarted(period=TimeDelta("10 second"))
-        )
-        scheduler()
+        session.config.shut_cond = (TaskStarted(task="mytask") >= run_count) | ~SchedulerStarted(period=TimeDelta("10 second"))
+        session.start()
 
         assert bool(TaskStarted(task="mytask") >= run_count)
 
@@ -151,7 +148,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
 @pytest.mark.parametrize("mode", ["use logs", "use cache"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_status(session, execution, mode):
-    session.config["force_status_from_logs"] = True if mode == "use logs" else False
+    session.config.force_status_from_logs = True if mode == "use logs" else False
 
     task_success = FuncTask(
         run_succeeding, 
@@ -177,10 +174,8 @@ def test_task_status(session, execution, mode):
         name="task not run",
         execution=execution
     )
-    scheduler = Scheduler(
-        shut_cond=~SchedulerStarted(period=TimeDelta("10 seconds"))
-    )
-    scheduler()
+    session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("10 seconds"))
+    session.start()
     assert task_success.last_run is not None
     assert task_success.last_success is not None
     assert task_success.last_fail is None
@@ -212,10 +207,8 @@ def test_task_force_run(tmpdir, execution, session):
         )
         task.force_run = True
 
-        scheduler = Scheduler(
-            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
-        )
-        scheduler()
+        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.start()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
@@ -236,10 +229,8 @@ def test_task_disabled(tmpdir, execution, session):
         )
         task.disabled = True
 
-        scheduler = Scheduler(
-            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
-        )
-        scheduler()
+        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.start()
 
         history = task.logger.get_records()
         assert 0 == sum([record for record in history if record["action"] == "run"])
@@ -265,10 +256,8 @@ def test_task_force_disabled(tmpdir, execution, session):
         task.disabled = True
         task.force_run = True
 
-        scheduler = Scheduler(
-            shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
-        )
-        scheduler()
+        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.start()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
@@ -287,12 +276,10 @@ def test_priority(tmpdir, execution, session):
 
         assert 0 == task_4.priority
 
-        scheduler = Scheduler(
-            shut_cond=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
-        )
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
 
-        scheduler()
-        assert scheduler.n_cycles == 1 
+        session.start()
+        assert session.scheduler.n_cycles == 1 
 
         task_1_start = list(task_1.logger.get_records())[0].created
         task_2_start = list(task_2.logger.get_records())[0].created
@@ -307,15 +294,14 @@ def test_pass_params_as_global(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution)
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
-        )
+
+        session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
 
         # Passing global parameters
         session.parameters["int_5"] = 5
         session.parameters["extra_param"] = "something"
 
-        scheduler()
+        session.scheduler()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
@@ -338,11 +324,9 @@ def test_pass_params_as_local(tmpdir, execution, parameters, session):
             start_cond=AlwaysTrue(),
             execution=execution
         )
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
-        )
+        session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
 
-        scheduler()
+        session.start()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
@@ -360,14 +344,13 @@ def test_pass_params_as_local_and_global(tmpdir, execution, session):
             start_cond=AlwaysTrue(),
             execution=execution
         )
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
-        )
+
+        session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
 
         # Additional parameters
         session.parameters["extra_param"] = "something"
 
-        scheduler()
+        session.start()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
@@ -391,11 +374,9 @@ def test_startup_shutdown(tmpdir, execution, session):
         FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution)
         FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution)
 
-        scheduler = Scheduler(
-            shut_cond=AlwaysTrue()
-        )
+        session.config.shut_cond = AlwaysTrue()
 
-        scheduler()
+        session.start()
         if execution == "thread":
             # It may take a moment for the
             # thread to write to the file
@@ -435,12 +416,9 @@ def test_logging_repo(tmpdir, execution):
 
         assert 0 == task_4.priority
 
-        scheduler = Scheduler(
-            shut_cond=(SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
-        )
-
-        scheduler()
-        assert scheduler.n_cycles == 1 
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+        session.start()
+        assert session.scheduler.n_cycles == 1 
 
         task_1_start = list(task_1.logger.get_records())[0].created
         task_2_start = list(task_2.logger.get_records())[0].created

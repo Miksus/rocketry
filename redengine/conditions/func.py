@@ -98,7 +98,7 @@ class FuncCond(BaseCondition):
 
         syntaxes = [self.syntax] if not isinstance(self.syntax, (list, tuple, set)) else self.syntax
         for syntax in syntaxes:
-            session.cond_parsers[syntax] = self._recreate
+            session._cond_parsers[syntax] = self._recreate
 
     def __repr__(self):
         cls_name = type(self).__name__

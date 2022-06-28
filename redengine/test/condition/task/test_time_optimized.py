@@ -36,7 +36,7 @@ def to_epoch(dt):
     ]
 )
 def test_logs_not_used_false(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 
@@ -57,7 +57,7 @@ def test_logs_not_used_false(session, cls, mock_datetime_now):
     ]
 )
 def test_logs_not_used_true(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 
@@ -75,7 +75,7 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
     ]
 )
 def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 
@@ -94,7 +94,7 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     ]
 )
 def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 
@@ -113,7 +113,7 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
     ]
 )
 def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 
@@ -134,7 +134,7 @@ def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
     ]
 )
 def test_logs_used(session, cls, mock_datetime_now):
-    session.config["force_read_from_logs"] = False
+    session.config.force_read_from_logs = False
     
     task = FuncTask(
         lambda:None, 

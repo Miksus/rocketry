@@ -75,34 +75,15 @@ class Scheduler(RedBase):
     """
     session: 'Session'
 
-    def __init__(self, session=None, max_processes:Optional[int]=None, tasks_as_daemon:bool=True, timeout="30 minutes",
-                shut_cond:Optional[BaseCondition]=None, parameters:Optional[Parameters]=None,
-                logger=None, name:str=None,
-                restarting:str="replace", 
-                instant_shutdown:bool=False):
-        # MultiProcessing stuff
-        self.max_processes = cpu_count() if max_processes is None else max_processes
-        self.tasks_as_daemon = tasks_as_daemon
-        self.timeout = pd.Timedelta(timeout) if timeout is not None else timeout
-
-        self._log_queue = multiprocessing.Queue(-1)
+    def __init__(self, session=None,
+                logger=None, name:str=None):
 
         # Other
         self.session = session or self.session
 
-        self.shut_cond = False if shut_cond is None else copy(shut_cond)
-        self.instant_shutdown = instant_shutdown
-
-        # self.task_returns = Parameters() # TODO
-
         self.name = name if name is not None else id(self) #! TODO Is this needed?
-        self._register_instance()
         self.logger = logger
 
-        self.restarting = restarting
-
-        if parameters:
-            self.session.parameters.update(parameters)
 
         # Controlling runtime (used by scheduler.disabled)
         self._flag_enabled = threading.Event()
@@ -112,6 +93,8 @@ class Scheduler(RedBase):
         # is_alive is used by testing whether the scheduler is 
         # still running or not
         self.is_alive = None
+
+        self._log_queue = multiprocessing.Queue(-1)
 
     def _register_instance(self):
         self.session.scheduler = self
@@ -133,7 +116,7 @@ class Scheduler(RedBase):
         try:
             self.startup()
 
-            while not self.check_cond(self.shut_cond):
+            while not self.check_cond(self.session.config.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
 
@@ -180,7 +163,7 @@ class Scheduler(RedBase):
         self.logger.debug(f"Beginning cycle with {len(tasks)} tasks...", extra={"action": "run"})
 
         # Running hooks
-        hooker = _Hooker(self.session.hooks['scheduler_cycle'])
+        hooker = _Hooker(self.session.hooks.scheduler_cycle)
         hooker.prerun(self)
 
         for task in tasks:
@@ -210,7 +193,7 @@ class Scheduler(RedBase):
         try:
             return bool(cond)
         except:
-            if not self.session.config["silence_cond_check"]:
+            if not self.session.config.silence_cond_check:
                 raise
             return False
 
@@ -223,7 +206,7 @@ class Scheduler(RedBase):
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:
-            if not self.session.config["silence_task_prerun"]:
+            if not self.session.config.silence_task_prerun:
                 raise
         else:
             exception = None
@@ -243,7 +226,7 @@ class Scheduler(RedBase):
         if task.is_alive_as_thread():
             # We can only kindly ask the thread to...
             # get the fuck out please.
-            task.thread_terminate.set()
+            task._thread_terminate.set()
 
         elif task.is_alive_as_process():
             task._process.terminate()
@@ -273,26 +256,27 @@ class Scheduler(RedBase):
 
         timeout = (
             task.timeout if task.timeout is not None
-            else self.timeout
+            else self.session.config.timeout
         )
         
         if timeout is None:
             return False
-        run_duration = datetime.datetime.fromtimestamp(time.time()) - task.last_run
+        run_duration = datetime.datetime.fromtimestamp(time.time()) - task.get_last_run()
         return run_duration > timeout
 
     def is_task_runnable(self, task:Task):
         """Inspect whether the task should be run."""
         #! TODO: Can this be put to the Task?
-        if task.execution == "process":
+        execution = task.get_execution()
+        if execution == "process":
             is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
             is_condition = self.check_cond(task)
             return is_not_running and has_free_processors and is_condition
-        elif task.execution == "main":
+        elif execution == "main":
             is_condition = self.check_cond(task)
             return is_condition
-        elif task.execution == "thread":
+        elif execution == "thread":
             is_not_running = not task.is_alive()
             is_condition = self.check_cond(task)
             return is_not_running and is_condition
@@ -351,7 +335,7 @@ class Scheduler(RedBase):
 
     def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
-        delay = self.session.config.get("cycle_sleep")
+        delay = self.session.config.cycle_sleep
         if delay is not None:
             time.sleep(delay)
 
@@ -362,7 +346,7 @@ class Scheduler(RedBase):
         running tasks that have ``on_startup`` as ``True``."""
         #self.setup_listener()
         self.logger.info(f"Starting up...", extra={"action": "setup"})
-        hooker = _Hooker(self.session.hooks['scheduler_startup'])
+        hooker = _Hooker(self.session.hooks.scheduler_startup)
         hooker.prerun(self)
 
         self.n_cycles = 0
@@ -384,7 +368,7 @@ class Scheduler(RedBase):
     def has_free_processors(self) -> bool:
         """Whether the Scheduler has free processors to
         allocate more tasks."""
-        return self.n_alive <= self.max_processes
+        return self.n_alive <= self.session.config.max_process_count
 
     @property
     def n_alive(self) -> int:
@@ -403,7 +387,7 @@ class Scheduler(RedBase):
         
     def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
-        wait_for_finish = not self.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
+        wait_for_finish = not self.session.config.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
         if wait_for_finish:
             try:
                 # Gracefully shut down (allow remaining tasks to finish)
@@ -451,7 +435,7 @@ class Scheduler(RedBase):
         """
         
         self.logger.info(f"Beginning shutdown sequence...")
-        hooker = _Hooker(self.session.hooks['scheduler_shutdown'])
+        hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
 
         # Make sure the tasks run if start_cond not set
@@ -468,7 +452,7 @@ class Scheduler(RedBase):
         self.logger.info(f"Shutting down tasks...")
         self._shut_down_tasks(traceback, exception)
 
-        if not self.instant_shutdown:
+        if not self.session.config.instant_shutdown:
             self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
         # Running hooks
@@ -491,25 +475,26 @@ class Scheduler(RedBase):
         self.logger.debug(f"Restarting...", extra={"action": "restart"})
         python = sys.executable
 
-        if self.restarting == "replace":
+        restarting = self.session.config.restarting
+        if restarting == "replace":
             os.execl(python, python, *sys.argv)
             # After this, no code will be run. It all died :(
-        elif self.restarting == "relaunch":
+        elif restarting == "relaunch":
             # Relaunch the process
             subprocess.Popen([python, *sys.argv], shell=False, close_fds=True)
-        elif self.restarting == "fresh":
+        elif restarting == "fresh":
             # Relaunch the process in new window
             if platform.system() == "Windows":
                 subprocess.Popen([python, *sys.argv], shell=False, close_fds=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
             else:
                 # Linux does not have CREATE_NEW_CONSOLE creation flag but shell=True is pretty close
                 subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
-        elif self.restarting == "recall":
+        elif restarting == "recall":
             # Mostly useful for testing.
             # Restart by calling the self.__call__ again 
             return self()
         else:
-            raise ValueError(f"Invalid restaring: {self.restarting}")
+            raise ValueError(f"Invalid restaring: {restarting}")
 
 # System control
     @property
@@ -540,7 +525,7 @@ class Scheduler(RedBase):
 
     @logger.setter
     def logger(self, logger):
-        basename = self.session.config["scheduler_logger_basename"]
+        basename = self.session.config.scheduler_logger_basename
         if logger is None:
             # Get class logger (default logger)
             logger = logging.getLogger(basename)
@@ -579,7 +564,7 @@ class Scheduler(RedBase):
             ...     print("Scheduler started up.")
 
         """
-        cls.session.hooks['scheduler_startup'].append(func)
+        cls.session.hooks.scheduler_startup.append(func)
         return func
 
     @classmethod
@@ -603,7 +588,7 @@ class Scheduler(RedBase):
         ...     print("Scheduler is shut down.")
 
         """
-        cls.session.hooks['scheduler_shutdown'].append(func)
+        cls.session.hooks.scheduler_shutdown.append(func)
         return func
 
     @classmethod
@@ -627,5 +612,5 @@ class Scheduler(RedBase):
         ...     print("Scheduler finished a cycle.")
 
         """
-        cls.session.hooks['scheduler_cycle'].append(func)
+        cls.session.hooks.scheduler_cycle.append(func)
         return func

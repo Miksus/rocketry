@@ -7,7 +7,6 @@ import pytest
 
 from redengine.tasks.loaders import TaskLoader
 from redengine.core import Scheduler
-from redengine.tasks.loaders import ExtensionLoader
 from redengine.conditions import AlwaysTrue
 
 from io_helpers import create_file, delete_file

@@ -52,7 +52,7 @@ def test_success_command(tmpdir, session, cmd, params, systems,shell, execution)
 def test_fail_command(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
-        task_logger = logging.getLogger(session.config["task_logger_basename"])
+        task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=LogRecord))
         ]

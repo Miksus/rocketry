@@ -42,11 +42,9 @@ def test_without_timeout(tmpdir, execution, session):
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
 
-        scheduler = Scheduler(
-            shut_cond=(TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
-            timeout="0.1 seconds"
-        )
-        scheduler()
+        session.config.shut_cond = (TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.timeout = 0.1
+        session.start()
 
         logger = task.logger
         # If Scheduler is quick, it may launch the task 3 times 
@@ -67,11 +65,9 @@ def test_task_timeout(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
-            timeout="0.1 seconds"
-        )
-        scheduler()
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.timeout = 0.1
+        session.start()
 
         logger = task.logger
         assert 2 == logger.filter_by(action="run").count() 
@@ -86,7 +82,7 @@ def test_task_terminate(tmpdir, execution, session):
     """Test task termination due to the task was terminated by another task"""
 
     def terminate_task(_session_):
-        _session_.tasks["slow task"].force_termination = True
+        _session_["slow task"].force_termination = True
 
     with tmpdir.as_cwd() as old_dir:
 
@@ -94,10 +90,8 @@ def test_task_terminate(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
 
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main")
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
-        )
-        scheduler()
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.start()
 
         logger = task.logger
         assert 2 == logger.filter_by(action="run").count() 
@@ -121,10 +115,8 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution)
 
-        scheduler = Scheduler(
-            shut_cond=(TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds")),
-        )
-        scheduler()
+        session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.start()
 
         logger = task.logger
         assert 1 <= logger.filter_by(action="run").count() 

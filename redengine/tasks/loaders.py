@@ -1,12 +1,14 @@
 
+import datetime
 import importlib
-from typing import Union
+from typing import ClassVar, List, Union
 from pathlib import Path
 import time
 import re
 import sys
 
 import pandas as pd
+from pydantic import validator
 
 from redengine.core import Task
 from redengine.parse import parse_task
@@ -16,21 +18,26 @@ from redengine import Session
 
 class LoaderBase(Task):
     __register__ = False
-    default_glob = None
 
     file_parsers = {
         ".yaml": read_yaml,
     }
 
-    def __init__(self, path=None, glob=None, delay="1 minutes", execution=None, on_startup=True, **kwargs):
-        if execution == "process":
+    path: Path
+    glob: str
+    delay: float = 60.0
+
+    _found_items: List = []
+
+    @validator("delay", pre=True)
+    def parse_delay(cls, value):
+        return pd.Timedelta(value).total_seconds()
+
+    @validator("execution")
+    def validate_execution(cls, value):
+        if value == "process":
             raise ValueError("Loaders cannot be executed as 'process'.")
-        execution = "main" if execution is None else execution
-        self.path = Path.cwd() if path is None else path
-        self.glob = glob or self.default_glob
-        self.found_items = []
-        self.delay = pd.Timedelta(delay).total_seconds()
-        super().__init__(execution=execution, on_startup=on_startup, **kwargs)
+        return value
 
     def execute(self):
         if self.execution == "main":
@@ -41,8 +48,8 @@ class LoaderBase(Task):
                 time.sleep(self.delay)
 
     def load_items(self):
-        prev_found_items = self.found_items.copy()
-        self.found_items = []
+        prev_found_items = self._found_items.copy()
+        self._found_items = []
         root = Path(self.path)
         for conf_path in root.glob(self.glob):
             self.load_file(conf_path, root=root)

@@ -1,6 +1,9 @@
 
 import subprocess
+from typing import ClassVar, List, Literal, Optional, Union
 import warnings
+
+from pydantic import Field, validator
 
 from redengine.core.parameters.parameters import Parameters
 from redengine.core.task import Task
@@ -33,29 +36,33 @@ class CommandTask(Task):
 
     >>> task = CommandTask(["python", "-m", "pip", "install", "redengine"], name="my_cmd_task_2")
     """
-    timeout = None
 
-    argforms = {
-        "long": "--",
-        "--": "--",
-        "short": "-",
-        "-": "-",
-    }
+    command: Union[str, List[str]]
+    shell: bool = False
+    cwd: Optional[str]
+    kwds_popen: dict = {}
+    argform: Optional[Literal['-', '--', 'short', 'long']] = Field(description="Whether the arguments are turned as short or long form command line arguments")
 
-    def __init__(self, command=None, shell=False, cwd=None, kwds_popen=None, argform="-", **kwargs):
-        self.command = command
-        self.argform = self.argforms[argform]
-        super().__init__(**kwargs)
-        self.kwargs_popen = {
-            "cwd": cwd, 
-            "shell":shell, 
+    def get_kwargs_popen(self) -> dict:
+        kwargs = {
+            "cwd": self.cwd, 
+            "shell": self.shell, 
             "stdin": subprocess.PIPE,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE,
         }
-        if kwds_popen is not None:
-            self.kwargs_popen.update(kwds_popen)
-        # About shell: https://stackoverflow.com/a/36299483/13696660
+        kwargs.update(self.kwds_popen)
+        return kwargs
+
+    @validator('argform')
+    def parse_argform(cls, value):
+        return {
+            "long": "--",
+            "--": "--",
+            "short": "-",
+            "-": "-",
+            None: '--',
+        }[value]
 
     def execute(self, **parameters):
         """Run the command."""
@@ -71,7 +78,7 @@ class CommandTask(Task):
                 command += [param] + [val]
 
         # https://stackoverflow.com/a/5469427/13696660
-        pipe = subprocess.Popen(command, **self.kwargs_popen)
+        pipe = subprocess.Popen(command, **self.get_kwargs_popen())
         try:
             outs, errs = pipe.communicate(timeout=self.timeout)
         except subprocess.TimeoutExpired:
@@ -92,15 +99,5 @@ class CommandTask(Task):
         # for simplicity
         return params
 
-    def get_default_name(self):
-        command = self.action
+    def get_default_name(self, command, **kwargs):
         return command if isinstance(command, str) else ' '.join(command)
-
-    @property
-    def action(self):
-        "Alias for command. Deprecated."
-        warnings.warn(
-            'CommandTask.action is deprecated ' 
-            'and will be removed in the future release. '
-            'Please use CommandTask.command instead', FutureWarning)
-        return self.command

@@ -48,13 +48,14 @@ def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_c
     with tmpdir.as_cwd() as old_dir:
         
         task = FuncTask(task_func, name="task", start_cond=AlwaysFalse(), execution=execution)
+        logger = task.logger
 
-        scheduler = Scheduler()
+        scheduler = Scheduler(session)
         scheduler.run_task(task)
+        assert run_count == logger.filter_by(action="run").count()
+
         scheduler.wait_task_alive()
         scheduler.handle_logs()
 
-        logger = task.logger
-        assert run_count == logger.filter_by(action="run").count()
         assert success_count == logger.filter_by(action="success").count()
         assert fail_count == logger.filter_by(action="fail").count()

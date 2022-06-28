@@ -174,7 +174,7 @@ from redengine.tasks import FuncTask
     ],
 )
 def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session, from_logs):
-    session.config["force_status_from_logs"] = from_logs
+    session.config.force_status_from_logs = from_logs
     def to_epoch(dt):
         # Hack as time.tzlocal() does not work for 1970-01-01
         if dt.tz:

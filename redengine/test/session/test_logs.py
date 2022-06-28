@@ -98,7 +98,7 @@ class CustomRecord(MinimalRecord):
 )
 def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, session):
     with tmpdir.as_cwd() as old_dir:
-        task_logger = logging.getLogger(session.config["task_logger_basename"])
+        task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=CustomRecord))
         ]

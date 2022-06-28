@@ -31,11 +31,11 @@ from task_helpers import wait_till_task_finish
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
-    session.config["silence_task_prerun"] = True
+    session.config.silence_task_prerun = True
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path=script_path, 
             name="a task",
             execution=execution
@@ -67,7 +67,7 @@ def test_run_specified_func(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="myfunc",
+            func_name="myfunc",
             path="mytasks/myfile.py", 
             name="a task",
             execution="main"
@@ -96,7 +96,7 @@ def test_import_relative(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="mytasks/myfile.py", 
             name="a task",
             execution="main"
@@ -129,7 +129,7 @@ def test_import_package(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="mypkg6574/subpkg/myfile.py", 
             name="a task",
             execution="main"
@@ -158,7 +158,7 @@ def test_import_relative_with_params(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="mytasks/myfile.py", 
             name="a task",
             execution="main"
@@ -189,7 +189,7 @@ def test_additional_sys_paths(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="mytasks/myfile.py", 
             name="a task",
             execution="main",
@@ -208,7 +208,7 @@ def test_parametrization_runtime(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="scripts/parameterized_script.py", 
             name="a task",
             execution="main"
@@ -226,7 +226,7 @@ def test_parametrization_local(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="scripts/parameterized_script.py", 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
@@ -245,7 +245,7 @@ def test_parametrization_kwargs(tmpdir, script_files, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            func="main",
+            func_name="main",
             path="scripts/parameterized_kwargs_script.py", 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},

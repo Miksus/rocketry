@@ -28,7 +28,7 @@ class _ConditionMeta(type):
         else:
             # User defined conditions
             # storing to the object
-            _add_parser(cls, container=cls.session.cond_parsers)
+            _add_parser(cls, container=Session._cond_parsers)
         return cls
 
 

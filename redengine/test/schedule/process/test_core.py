@@ -23,12 +23,12 @@ def test_creating_child(tmpdir, session):
         # we test the task execution with a job that has
         # actual measurable impact outside redengine
         FuncTask(run_creating_child, name="task_1", start_cond=AlwaysTrue())
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="task_1") >= 1) | ~SchedulerStarted(period=TimeDelta("1 second")),
-            tasks_as_daemon=False
-        )
+ 
+        session.config.tasks_as_daemon = False
+        session.config.shut_cond = (TaskStarted(task="task_1") >= 1) | ~SchedulerStarted(period=TimeDelta("1 second"))
 
-        scheduler()
+    
+        session.start()
 
         logger = session.get_task("task_1").logger
         assert 1 == logger.filter_by(action="run").count()

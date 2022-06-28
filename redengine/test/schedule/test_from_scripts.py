@@ -34,23 +34,21 @@ import pandas as pd
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        task_logger = logging.getLogger(session.config["task_logger_basename"])
+        task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=LogRecord))
         ]
         task = FuncTask(
-            func="main",
+            func_name="main",
             path=script_path, 
             name="a task",
             start_cond=AlwaysTrue(),
             execution=execution
         )
-
-        scheduler = Scheduler(
-            shut_cond=(TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
-        )
-        scheduler()
         
+        session.config.shut_cond = (TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.start()
+
         if expected_outcome == "fail":
             failures = list(task.logger.get_records(action="fail"))
             assert 3 == len(failures)

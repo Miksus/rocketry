@@ -1,10 +1,13 @@
 from redengine.core import BaseCondition, Task
+from redengine.core.parameters.parameters import Parameters
+from redengine.core.schedule import Scheduler
 
 from redengine.session import Session
 from redengine.parse import add_condition_parser
 from redengine.parse.session import session_parser
 from redengine.conditions import true, false
 from redengine.tasks import CommandTask, FuncTask, CodeTask
+from redengine.tasks.maintain import ShutDown, Restart
 from redengine.tasks.maintain import Restart
 
 def _setup_defaults():
@@ -26,5 +29,15 @@ def _setup_defaults():
 
     Session.parser = session_parser
 
-    # Manually setting extra parsers
-    Session.parser["sequences"] = Session._ext_parsers["sequences"]
+    # Update type hints
+    cls_tasks = (
+        Task,
+        FuncTask, CommandTask, CodeTask,
+        ShutDown, Restart
+    )
+    for cls_task in cls_tasks:
+        cls_task.update_forward_refs(Session=Session, BaseCondition=BaseCondition)
+
+    #Session.update_forward_refs(
+    #    Task=Task, Parameters=Parameters, Scheduler=Scheduler
+    #)
