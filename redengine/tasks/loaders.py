@@ -11,7 +11,7 @@ import pandas as pd
 from redengine.core import Task
 from redengine.parse import parse_task
 from redengine.pybox.io import read_yaml
-from redengine import extensions, Session
+from redengine import Session
 
 
 class LoaderBase(Task):
