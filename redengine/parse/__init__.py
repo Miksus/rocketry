@@ -8,4 +8,3 @@ from .parameters import parse_session_params
 from ._condition import add_condition_parser
 
 from .utils import StaticParser, Field, CondParser, ParserError
-from .misc import parse_logging
