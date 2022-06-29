@@ -156,7 +156,7 @@ class Session(RedBase):
         self.scheduler = Scheduler(self)
         self.tasks = set()
         self.hooks = Hooks()
-        self.returns = {}
+        self.returns = self._get_parameters(None)
         if delete_existing_loggers:
             self.delete_task_loggers()
 
