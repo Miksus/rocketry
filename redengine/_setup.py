@@ -2,7 +2,7 @@ from redengine.core import BaseCondition, Task
 from redengine.core.parameters.parameters import Parameters
 from redengine.core.schedule import Scheduler
 
-from redengine.session import Session
+from redengine.session import Session, Config
 from redengine.parse import add_condition_parser
 from redengine.parse.session import session_parser
 from redengine.conditions import true, false
@@ -38,6 +38,7 @@ def _setup_defaults():
     for cls_task in cls_tasks:
         cls_task.update_forward_refs(Session=Session, BaseCondition=BaseCondition)
 
+    Config.update_forward_refs(BaseCondition=BaseCondition)
     #Session.update_forward_refs(
     #    Task=Task, Parameters=Parameters, Scheduler=Scheduler
     #)
