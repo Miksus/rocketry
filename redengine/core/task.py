@@ -423,7 +423,11 @@ class Task(RedBase, BaseModel):
         #    os.chdir(cwd)
 
         # (If SystemExit is raised, it won't be catched in except Exception)
-        hooker = _Hooker(self.session.hooks.task_execute)
+        if execution == "process":
+            hooks = kwargs.get('hooks', [])
+        else:
+            hooks = self.session.hooks.task_execute
+        hooker = _Hooker(hooks)
         hooker.prerun(self)
 
         status = None
@@ -526,19 +530,19 @@ class Task(RedBase, BaseModel):
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, daemon=None):
+    def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
 
         params = params.pre_materialize(task=self)
         direct_params = self.parameters.pre_materialize()
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
-        log_queue = self.session.scheduler._log_queue #multiprocessing.Queue(-1)
+        log_queue = multiprocessing.Queue() if log_queue is None else log_queue
 
         daemon = self.daemon if self.daemon is not None else self.session.config.tasks_as_daemon
         self._process = multiprocessing.Process(
             target=self._run_as_process, 
-            args=(params, direct_params, log_queue), 
+            args=(params, direct_params, log_queue, self.session.config, self._get_hooks("task_execute")), 
             daemon=daemon
         ) 
         #self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
@@ -550,7 +554,7 @@ class Task(RedBase, BaseModel):
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue):
+    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -583,7 +587,7 @@ class Task(RedBase, BaseModel):
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="process")
+            output = self._run_as_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
@@ -877,7 +881,10 @@ class Task(RedBase, BaseModel):
     def _get_last_action(self, action:str) -> datetime.datetime:
         cache_attr = f"last_{action}"
 
-        allow_cache = not self.session.config.force_status_from_logs
+        if self.session is None:
+            allow_cache = True
+        else:
+            allow_cache = not self.session.config.force_status_from_logs
         if allow_cache: #  and getattr(self, cache_attr) is not None
             value = getattr(self, cache_attr)
         else:
@@ -942,7 +949,7 @@ class Task(RedBase, BaseModel):
         # Removing possibly unpicklable manually. There is a problem in Pydantic
         # and for some reason it does not use Session's pickling
         #dict_state['session'].parameters = Parameters()
-        #dict_state['session'].scheduler = None
+        dict_state['session'] = None
 
         if not is_pickleable(state):
             if self._mark_running:
@@ -1050,6 +1057,9 @@ class Task(RedBase, BaseModel):
         """
         cls.session.hooks.task_execute.append(func)
         return func
+
+    def _get_hooks(self, name:str):
+        return getattr(self.session.hooks, name)
 
 # Other
     @property
