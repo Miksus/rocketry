@@ -12,6 +12,7 @@ from multiprocessing import cpu_count
 import multiprocessing
 from pathlib import Path
 import warnings
+import pandas as pd
 
 from pydantic import BaseModel, PrivateAttr, validator
 from redengine.log.defaults import create_default_handler
@@ -35,6 +36,10 @@ if TYPE_CHECKING:
     )
 
 class Config(BaseModel):
+    class Config:
+        validate_assignment = True
+        arbitrary_types_allowed = True
+
     use_instance_naming: bool = False
     task_priority: int = 0
     task_execution: str = 'process'
@@ -54,8 +59,8 @@ class Config(BaseModel):
     restarting: str = 'replace'
     instant_shutdown: bool = False
 
-    timeout: datetime.timedelta = datetime.timedelta(60*30)
-    shut_cond: Optional[Union[str, 'BaseCondition']] = None
+    timeout: datetime.timedelta = datetime.timedelta(minutes=30)
+    shut_cond: Optional['BaseCondition'] = None
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):
@@ -64,6 +69,15 @@ class Config(BaseModel):
         if value is None:
             return AlwaysFalse()
         return parse_condition(value)
+
+    @validator('timeout')
+    def parse_timeout(cls, value):
+        if isinstance(value, str):
+            return pd.Timedelta(value).to_pytimedelta()
+        elif isinstance(value, (float, int)):
+            return datetime.timedelta(milliseconds=value * 1000)
+        else:
+            return value
 
 class Hooks(BaseModel):
     task_init: List[Callable] = []
