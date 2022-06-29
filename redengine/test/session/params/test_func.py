@@ -26,13 +26,10 @@ def test_simple(session, execution):
         name="a task", 
         start_cond=AlwaysTrue()
     )
-
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) 
-    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
     assert task.status is None
-    scheduler()
+    session.start()
 
     assert "success" == task.status
 
@@ -58,10 +55,8 @@ def test_unpicklable(session, execution):
         start_cond=AlwaysTrue()
     )
 
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) 
-    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1) 
 
     assert task.status is None
-    scheduler()
+    session.start()
     assert "success" == task.status
