@@ -1,4 +1,5 @@
 
+import datetime
 import time
 import os
 
@@ -67,6 +68,7 @@ def test_task_timeout(tmpdir, execution, session):
 
         session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.config.timeout = 0.1
+        assert session.config.timeout == datetime.timedelta(milliseconds=100)
         session.start()
 
         logger = task.logger
