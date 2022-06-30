@@ -265,7 +265,9 @@ class FuncTask(Task):
         params = super().get_task_params()
 
         # Get params from the typehints
-        func_params = inspect.signature(self.get_func()).parameters
+        cache = False if self.path is not None else True
+        func = self.get_func(cache=cache)
+        func_params = inspect.signature(func).parameters
         for name, param in func_params.items():
             default = param.default
             if isinstance(default, BaseArgument):
