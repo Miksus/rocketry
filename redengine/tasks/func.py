@@ -5,6 +5,7 @@ import inspect
 import importlib
 from pathlib import Path
 from typing import Callable, List, Optional
+import warnings
 
 from pydantic import Field, validator
 from redengine.core.parameters.arguments import BaseArgument
@@ -149,14 +150,15 @@ class FuncTask(Task):
         return self.func is None
 
     @validator('path')
-    def validate_path(cls, value: Path):
+    def validate_path(cls, value: Path, values):
+        name = values['name']
         if value is not None and not value.is_file():
-            raise ValueError(f"Path {value} does not exists")
+            warnings.warn(f"Path {value} does not exists. Task '{name}' may fail.")
         return value
 
     @validator("func")
     def validate_func(cls, value, values):
-        execution = values['execution']
+        execution = values.get('execution')
         func = value
     
         if execution == "process" and getattr(func, "__name__", None) == "<lambda>":
