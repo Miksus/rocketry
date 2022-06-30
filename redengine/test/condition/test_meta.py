@@ -22,11 +22,8 @@ def test_taskcond_true(capsys, session, execution):
     
     task = FuncTask(lambda: None, start_cond="is foo true", name="a task", execution="main")
 
-    scheduler = Scheduler( # (TaskStarted(task="a task") >= 2) | 
-        shut_cond=(TaskStarted(task="a task") >= 2) | ~SchedulerStarted(period="past 5 seconds")
-    )
-
-    scheduler()
+    session.config.shut_cond = (TaskStarted(task="a task") >= 2) | ~SchedulerStarted(period="past 5 seconds")
+    session.start()
     
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
@@ -64,11 +61,8 @@ def test_taskcond_false(capsys, session, execution):
     
     task = FuncTask(lambda: None, start_cond="is foo false", name="a task", execution="main")
 
-    scheduler = Scheduler( # (TaskStarted(task="a task") >= 2) | 
-        shut_cond=SchedulerCycles() >= 3
-    )
-
-    scheduler()
+    session.config.shut_cond = SchedulerCycles() >= 3
+    session.start()
     
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
