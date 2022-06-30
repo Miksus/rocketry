@@ -257,6 +257,7 @@ def test_existing_ignore(session):
     task2 = FuncTask(lambda : None, name="a task", execution="main")
     assert session.tasks == {task1}
 
+@pytest.mark.skip(reason="No support for this yet")
 def test_existing_replace(session):
     session.config.task_pre_exist = 'replace'
     task1 = FuncTask(lambda : None, name="a task", execution="main")
