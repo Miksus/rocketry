@@ -32,7 +32,6 @@ def test_task_init(session):
         timeline.append("Generator hook called (post)")
 
     class DummyTask(Task):
-        __register__ = False
 
         def execute(self, *args, **kwargs):
             return 

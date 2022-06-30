@@ -5,7 +5,6 @@ from redengine.core import Task
 from redengine.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
 
 class DummyTask(Task):
-    __register__ = False
 
     def execute(self, *args, **kwargs):
         return 
