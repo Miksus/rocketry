@@ -11,7 +11,7 @@ class Restart(Task):
     def execute(self, **kwargs):
         raise SchedulerRestart()
 
-    def get_default_name(self):
+    def get_default_name(self, **kwargs):
         return "restart"
 
 
@@ -24,5 +24,5 @@ class ShutDown(Task):
     def execute(self, **kwargs):
         raise SchedulerExit()
 
-    def get_default_name(self):
+    def get_default_name(self, **kwargs):
         return "shutdown"
