@@ -6,10 +6,5 @@ pytest-cov
 pandas
 
 # Optional
-pyyaml
-pymongo
-waitress
-flask
-flask-restful
 networkx
 matplotlib

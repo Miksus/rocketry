@@ -4,5 +4,3 @@ pytest-cov
 
 # Package requirements
 pandas
-pyyaml
-pymongo

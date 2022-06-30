@@ -1,16 +1,9 @@
 # Minimum requirements
 pandas
+redbird
 
 # For config parsing
 pyyaml
-
-# For alternative Logging
-pymongo
-
-# For Flask API task
-flask
-flask-restful
-waitress
 
 # For dependency visualization
 networkx

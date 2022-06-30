@@ -36,6 +36,11 @@ setup(
      python_requires='>=3.6.0',
 
     install_requires = [
-        'pandas',
+        'pandas', 'redbird', 'pydantic'
     ],
+    extras_require={
+        "full": [
+            "networkx", "matplotlib"
+        ],
+    },
 )
