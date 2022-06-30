@@ -39,8 +39,8 @@ def test_run_success(session, execution):
         """), execution=execution, name="mytask")
     task.force_run = True
 
-    scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
-    scheduler()
+    session.config.shut_cond = TaskStarted(task='mytask') >= 1
+    session.start()
     assert task.status == 'success'
     assert session.returns['mytask'] == 'myvalue'
 
@@ -55,8 +55,9 @@ def test_run_success_parametrize(session, execution):
         """), name="mytask", execution=execution, parameters={'myparam': ' + myparam'})
     task.force_run = True
 
-    scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
-    scheduler()
+    session.config.shut_cond = TaskStarted(task='mytask') >= 1
+    session.start()
+
     assert task.status == 'success'
     assert session.returns['mytask'] == 'myvalue + myparam'
 
@@ -76,8 +77,9 @@ def test_run_fail(session, execution):
         """), execution=execution, name="mytask")
     task.force_run = True
 
-    scheduler = Scheduler(shut_cond=TaskStarted(task='mytask') >= 1)
-    scheduler()
+    session.config.shut_cond = TaskStarted(task='mytask') >= 1
+    session.start()
+    
     assert task.status == 'fail'
 
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))

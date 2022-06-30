@@ -85,12 +85,12 @@ def test_construct_delayed(tmpdir, session, execution):
 
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        task = FuncTask("myfunc", path="myfile.py", execution=execution)
+        task = FuncTask(func_name="myfunc", path="myfile.py", execution=execution)
         assert task.status is None
         assert task.is_delayed()
         assert task.func_name == "myfunc"
         assert task.path == Path("myfile.py")
-        assert task._func is None
+        assert task.func is None
 
 def test_construct_decorate(tmpdir, session):
     # Going to tempdir to dump the log files there
