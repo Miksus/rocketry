@@ -36,12 +36,12 @@ def test_normal(session, execution):
         parameters={"myparam": Return('return task')},
         execution=execution
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
 
     assert task.status is None
-    scheduler()
+
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
+
     assert dict(session.returns) == {"return task": "x"}
     assert "success" == task_return.status
     assert "success" == task.status
@@ -57,12 +57,10 @@ def test_missing(session, execution):
         force_run=True,
         execution=execution
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
-
+ 
     assert task.status is None
-    scheduler()
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
 
     assert "fail" == task.status
 
@@ -79,11 +77,9 @@ def test_default(session, execution):
         execution=execution, 
         force_run=True,
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
 
     assert task.status is None
-    scheduler()
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
 
     assert "success" == task.status
