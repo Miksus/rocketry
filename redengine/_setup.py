@@ -2,7 +2,6 @@ from redengine.core import BaseCondition, Task
 
 from redengine.session import Session, Config
 from redengine.parse import add_condition_parser
-from redengine.parse.session import session_parser
 from redengine.conditions import true, false
 from redengine.tasks import CommandTask, FuncTask, CodeTask
 from redengine.tasks.maintain import ShutDown, Restart
@@ -18,8 +17,6 @@ def _setup_defaults():
         "always false": false,
         "always true": true
     })
-
-    Session.parser = session_parser
 
     # Update type hints
     cls_tasks = (
