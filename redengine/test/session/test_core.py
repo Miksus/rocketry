@@ -2,66 +2,61 @@
 from redengine.tasks import FuncTask
 from redengine.core import Parameters, Scheduler
 
-def test_get_task(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+def test_get_task(session):
 
-        task = FuncTask(
-            lambda : None, 
-            name="example",
-            execution="main"
-        )
+    task = FuncTask(
+        lambda : None, 
+        name="example",
+        execution="main"
+    )
+    
+    # By string
+    t = session.get_task(task.name)
+    assert t is task
+
+    # By task (returns itself)
+    t = session.get_task(task)
+    assert t is task
+
+
+def test_tasks_attr(session):
+
+    task1 = FuncTask(
+        lambda : None, 
+        name="example 1",
+        execution="main"
+    )
+    task2 = FuncTask(
+        lambda : None, 
+        name="example 2",
+        execution="main"
+    )
         
-        # By string
-        t = session.get_task(task.name)
-        assert t is task
+    assert session.tasks == {task1, task2}
 
-        # By task (returns itself)
-        t = session.get_task(task)
-        assert t is task
+def test_clear(session):
 
+    assert session.tasks == set()
+    assert Parameters() == session.parameters
+    # assert session.scheduler is None
 
-def test_tasks_attr(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+    task1 = FuncTask(
+        lambda : None, 
+        name="example 1",
+        execution="main"
+    )
+    task2 = FuncTask(
+        lambda : None, 
+        name="example 2",
+        execution="main"
+    )
+    session.parameters["x"] = 1
+    
+    assert Parameters(x=1) == session.parameters
+    assert session.tasks == {task1, task2}
 
-        task1 = FuncTask(
-            lambda : None, 
-            name="example 1",
-            execution="main"
-        )
-        task2 = FuncTask(
-            lambda : None, 
-            name="example 2",
-            execution="main"
-        )
-        
-        assert {"example 1": task1, "example 2": task2} == session.tasks
+    session.clear()
 
-def test_clear(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+    assert session.tasks == set()
+    assert Parameters() == session.parameters
 
-        assert {} == session.tasks
-        assert Parameters() == session.parameters
-        # assert session.scheduler is None
-
-        task1 = FuncTask(
-            lambda : None, 
-            name="example 1",
-            execution="main"
-        )
-        task2 = FuncTask(
-            lambda : None, 
-            name="example 2",
-            execution="main"
-        )
-        session.parameters["x"] = 1
-        sched = Scheduler()
-        
-        assert Parameters(x=1) == session.parameters
-        assert {"example 1": task1, "example 2": task2} == session.tasks
-        assert session.scheduler is sched
-
-        session.clear()
-
-        assert {} == session.tasks
-        assert Parameters() == session.parameters
-        assert session.scheduler is not sched
