@@ -11,12 +11,6 @@ from redengine.tasks.maintain import Restart
 def _setup_defaults():
     "Set up the task classes and conditions Redengine provides out-of-the-box"
     
-    # Set default list of conds and tasks shared between any Session
-    Session._cls_tasks['CommandTask'] = CommandTask
-    Session._cls_tasks['CodeTask'] = CodeTask
-    Session._cls_tasks['FuncTask'] = FuncTask
-    Session._cls_tasks['Restart'] = Restart
-
     # Add some extra parsers from core 
     add_condition_parser({
         "true": true,

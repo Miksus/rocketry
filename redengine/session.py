@@ -138,8 +138,6 @@ class Session(RedBase):
     _time_parsers: ClassVar[Dict] = {}
     _cond_parsers: ClassVar[Dict] = {}
 
-    _cls_tasks: ClassVar[Dict] = {}
-
     cond_cache: Dict = {}
 
 
@@ -503,10 +501,6 @@ class Session(RedBase):
         session : Session, optional
             If provided, this session is appended with the parsed
             content instead of creating a new one.
-        kwds_fields: dict, optional
-            Additional keyword arguments passed to the subparsers.
-            For example, the values of key 'task' are passed to
-            redengine.parse.parse_tasks.
         **kwargs : dict
             Additional parameters passed to all subparsers.
         """

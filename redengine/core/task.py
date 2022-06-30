@@ -34,17 +34,6 @@ if TYPE_CHECKING:
 
 _IS_WINDOWS = platform.system()
 
-class _TaskMeta(type):
-    def __new__(mcs, name, bases, class_dict):
-
-        cls = type.__new__(mcs, name, bases, class_dict)
-
-        # Store the name and class for configurations
-        if cls.session is not None:
-            _register(cls, cls.session.cls_tasks)
-        return cls
-
-
 class Task(RedBase, BaseModel):
     """Base class for Tasks.
 
