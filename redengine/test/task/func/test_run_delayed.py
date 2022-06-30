@@ -43,7 +43,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         try:
             task()
         except:
-            if exc_cls and execution != "main":
+            if not exc_cls:
                 raise
 
         wait_till_task_finish(task)
