@@ -37,11 +37,11 @@ def test_parametrization_private(session):
 
 def test_params_failure(session):
     session.config.silence_task_prerun = True
-    @FuncArg.to_session()
-    def value():
+
+    def get_value():
         raise RuntimeError("Not working")
 
-    task = FuncTask(simple_task_func, name="a task", execution="main", force_run=True)
+    task = FuncTask(simple_task_func, parameters={'value': FuncArg(get_value)}, name="a task", execution="main", force_run=True)
 
     assert task.status is None
 

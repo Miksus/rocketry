@@ -42,7 +42,7 @@ def test_normal(session, execution):
     session.config.shut_cond = TaskStarted(task="a task") >= 1
     session.start()
 
-    assert dict(session.returns) == {"return task": "x"}
+    assert dict(session.returns) == {task_return: "x", task: None}
     assert "success" == task_return.status
     assert "success" == task.status
 
