@@ -78,4 +78,4 @@ class TestFunc:
         task = FuncTask(func_on_main_level, execution="process", name="picklable")
         pick_task = pickle_dump_read(task)
         
-        assert pick_task.session.parameters.to_dict() == {"picklable": "myval"}
+        assert pick_task.session is None

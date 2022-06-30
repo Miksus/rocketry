@@ -28,12 +28,11 @@ def test_scheduler_restart(tmpdir, session):
         task = Restart()
 
         task.force_run = True
+
+        session.config.shut_cond = TaskStarted(task=task) == 1
+        session.config.restarting = "recall"
         
-        scheduler = Scheduler(
-            shut_cond=TaskStarted(task=task) == 1,
-            restarting="recall"
-        )
-        scheduler()
+        session.start()
 
         with open("test.txt") as f:
             cont = f.read()

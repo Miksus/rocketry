@@ -27,8 +27,9 @@ def test_scheduler_shutdown(tmpdir, session):
 
         task.force_run = True
         
-        scheduler = Scheduler(shut_cond=AlwaysFalse())
-        scheduler()
+        session.config.shut_cond = AlwaysFalse()
+        
+        session.start()
 
         with open("test.txt") as f:
             cont = f.read()
