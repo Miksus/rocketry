@@ -46,9 +46,6 @@ class Scheduler(RedBase):
         Timeout of each task if not specified
         in the task itself. Must be timedelta
         string, by default "30 minutes"
-    shut_cond : BaseCondition, optional
-        Condition when the scheduler is allowed
-        to shut down, by default AlwaysFalse
     parameters : [type], optional
         Parameters of the session.
         Can also be passed directly to the 
@@ -374,16 +371,6 @@ class Scheduler(RedBase):
     def n_alive(self) -> int:
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
-
-    @property
-    def shut_cond(self):
-        return self._shut_cond
-    
-    @shut_cond.setter
-    def shut_cond(self, cond:Union[BaseCondition, str]):
-        from redengine.parse import parse_condition
-        cond = parse_condition(cond)
-        self._shut_cond = cond
         
     def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
@@ -520,7 +507,6 @@ class Scheduler(RedBase):
 # Logging
     @property
     def logger(self):
-        # TODO
         return self._logger
 
     @logger.setter
