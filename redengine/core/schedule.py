@@ -195,7 +195,7 @@ class Scheduler(RedBase):
         start_time = datetime.datetime.fromtimestamp(time.time())
 
         try:
-            task(log_queue=self._log_queue)
+            task()
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:

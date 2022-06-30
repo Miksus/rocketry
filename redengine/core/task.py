@@ -519,7 +519,7 @@ class Task(RedBase, BaseModel):
         direct_params = self.parameters.pre_materialize()
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
-        log_queue = multiprocessing.Queue() if log_queue is None else log_queue
+        log_queue = self.session.scheduler._log_queue if log_queue is None else log_queue
 
         daemon = self.daemon if self.daemon is not None else self.session.config.tasks_as_daemon
         self._process = multiprocessing.Process(
