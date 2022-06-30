@@ -7,7 +7,7 @@ from redengine.session import Session
 
 def parse_time_item(s:str):
     "Parse one condition"
-    parsers = Session.session.time_parsers
+    parsers = Session.session._time_parsers
     for statement, parser in parsers.items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
