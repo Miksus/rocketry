@@ -4,13 +4,12 @@ import sys
 import inspect
 import importlib
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional
 
-from pydantic import Field, root_validator, validator
+from pydantic import Field, validator
 from redengine.core.parameters.arguments import BaseArgument
 
 from redengine.core.task import Task
-from redengine.core.utils import is_pickleable
 from redengine.core.parameters import Parameters
 from redengine.pybox.pkg import find_package_root
 

@@ -1,5 +1,5 @@
 
-from typing import DefaultDict, List
+from typing import List
 from collections import Counter
 
 from .base import (

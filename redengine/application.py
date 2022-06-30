@@ -4,9 +4,7 @@
 import logging
 from pathlib import Path
 import tempfile
-from tkinter.messagebox import NO
 from typing import Optional
-from pydantic import BaseModel, validator
 
 from redbird import BaseRepo
 from redbird.logging import RepoHandler

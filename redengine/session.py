@@ -6,10 +6,8 @@ about the scehuler/task/parameters etc.
 """
 
 import datetime
-from email.policy import default
 import logging
 from multiprocessing import cpu_count
-import multiprocessing
 from pathlib import Path
 import warnings
 import pandas as pd

@@ -1,6 +1,4 @@
 from redengine.core import BaseCondition, Task
-from redengine.core.parameters.parameters import Parameters
-from redengine.core.schedule import Scheduler
 
 from redengine.session import Session, Config
 from redengine.parse import add_condition_parser
