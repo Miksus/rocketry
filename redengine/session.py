@@ -423,7 +423,7 @@ class Session(RedBase):
         #! TODO: Remove?
         from redengine.core import Parameters
 
-        self.tasks = {}
+        self.tasks = set()
         self.parameters = Parameters()
 
     def __getstate__(self):
