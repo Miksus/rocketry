@@ -42,7 +42,7 @@ def test_run_success(session, execution):
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
     session.start()
     assert task.status == 'success'
-    assert session.returns['mytask'] == 'myvalue'
+    assert session.returns[task] == 'myvalue'
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success_parametrize(session, execution):
@@ -59,7 +59,7 @@ def test_run_success_parametrize(session, execution):
     session.start()
 
     assert task.status == 'success'
-    assert session.returns['mytask'] == 'myvalue + myparam'
+    assert session.returns[task] == 'myvalue + myparam'
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_fail(session, execution):
