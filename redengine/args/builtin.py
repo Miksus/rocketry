@@ -4,7 +4,7 @@ from typing import Any, Callable
 from redengine.core.parameters import BaseArgument
 from redengine.core.utils import filter_keyword_args
 
-class Arg(BaseArgument):
+class SimpleArg(BaseArgument):
     """A simple argument.
 
     Parameters
@@ -30,10 +30,49 @@ class Arg(BaseArgument):
     def get_value(self, task=None) -> Any:
         return self._value
 
-    @classmethod
-    def to_session(cls, **kwargs):
-        for name, value in kwargs.items():
-            cls.session.parameters[name] = cls(value)
+class Arg(BaseArgument):
+    """A simple argument got from the session
+
+    Parameters
+    ----------
+    value : Any
+        Value of the argument.
+
+    Examples
+    --------
+
+    .. doctest:: arg
+
+        >>> from redengine.arguments import Arg
+        >>> Arg.to_session(my_param_1=1, my_param_2=2)
+
+        >>> from redengine import session
+        >>> session.parameters
+        Parameters(my_param_1=Arg(1), my_param_2=Arg(2))
+    """
+    def __init__(self, key:Any):
+        self.key = key
+
+    def get_value(self, task=None) -> Any:
+        return task.session.parameters[self.key]
+
+class Session(BaseArgument):
+    "An argument that represents the session"
+
+    def get_value(self, task=None) -> Any:
+        return task.session
+
+class Task(BaseArgument):
+    "An argument that represents a task"
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def get_value(self, task=None) -> Any:
+        if self.name is None:
+            return task
+        else:
+            return task.session[self.name]
 
 class Return(BaseArgument):
     """A return argument
@@ -71,18 +110,16 @@ class Return(BaseArgument):
         self.default = default
 
     def get_value(self, task=None) -> Any:
-        if self.task_name not in self.session.tasks:
-            raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
-        return self.session.returns.get(self.task_name, self.default)
+        input_task = task.session[self.task_name]
+        try:
+            return task.session.returns[input_task]
+        except KeyError:
+            if input_task not in task.session:
+                raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
+            return self.default
 
     def stage(self, task=None):
-        return Arg(self.get_value())
-
-    @classmethod
-    def to_session(cls, task_name, return_):
-        "Set the return to return parameters"
-        if return_ is not None:
-            cls.session.returns[task_name] = return_
+        return SimpleArg(self.get_value())
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
@@ -150,8 +187,8 @@ class FuncArg(BaseArgument):
         >>> session.parameters
         Parameters(myarg1=FuncArg(myarg1), myarg2=FuncArg(myfunc))
     """
-    def __init__(self, func:Callable, *args, **kwargs):
-        self.func = func
+    def __init__(self, __func:Callable, *args, **kwargs):
+        self.func = __func
         self.args = args
         self.kwargs = self._get_kwargs(kwargs)
 
@@ -169,30 +206,6 @@ class FuncArg(BaseArgument):
         kwargs.update(self.kwargs)
         kwargs = filter_keyword_args(self.func, kwargs)
         return self.func(*self.args, **kwargs)
-
-    @classmethod
-    def to_session(cls, name:str=None, *args, **kwargs):
-        """Create FuncArg from decorator
-        and put the argument to the session
-        parameters."""
-        def wrapper(func):
-            nonlocal name
-            if name is None:
-                name = func.__name__
-            cls.session.parameters[name] = cls(func, *args, **kwargs)
-
-            # NOTE: we need to return the function to prevent
-            # issues in pickling (does not like we return
-            # any other type).
-            return func
-
-        if callable(name):
-            raise TypeError(
-                "Argument name should be a string or None. " 
-                f"Given: {type(name)}. "
-                "Perhaps forgot to close .to_session()?"
-            )
-        return wrapper
 
     def __repr__(self):
         cls_name = type(self).__name__

@@ -112,7 +112,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
             Key or the name of the argument, 
             by default the name of the function
         """
-        from redengine.arguments import FuncArg
+        from redengine.args import FuncArg
         if _func is None:
             return partial(self.param_func, key=key)
 

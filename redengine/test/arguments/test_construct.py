@@ -1,7 +1,7 @@
 
 import pytest
 
-from redengine.arguments import FuncArg, Arg
+from redengine.args import FuncArg, Arg
 from redengine import Session
 
 def test_arg(session):

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from log_helpers import log_task_record
 
-from redengine.arguments.builtin import FuncArg
+from redengine.args.builtin import FuncArg
 from redengine.conditions.scheduler import SchedulerCycles
 from redengine.parse.condition import parse_condition
 

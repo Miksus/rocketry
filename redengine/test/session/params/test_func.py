@@ -1,13 +1,13 @@
 
 import pytest
 
-from redengine.arguments import Private, Return
+from redengine.args import Private, Return
 from redengine import Scheduler
 from redengine.conditions.scheduler import SchedulerCycles
 from redengine.core import parameters
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskStarted, AlwaysTrue
-from redengine.arguments import FuncArg, Arg
+from redengine.args import FuncArg, Arg
 
 
 def get_x():

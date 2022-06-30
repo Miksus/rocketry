@@ -91,13 +91,3 @@ class BaseArgument(RedBase):
 
     def __str__(self):
         return str(self.get_value())
-
-    @classmethod
-    @abstractmethod
-    def to_session(cls, *args, **kwargs):
-        """Put the argument(s) to session's 
-        parameters.
-
-        Override this with custom logic.
-        """
-        raise NotImplementedError(f"Method 'to_session' not implemented for {cls}.")

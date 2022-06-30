@@ -20,7 +20,7 @@ from redengine.test.task.func.test_run import run_inaction
 from redengine.time import TimeDelta
 from redengine.core.exceptions import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
-from redengine.arguments import Private
+from redengine.args import Private
 
 def run_failing():
     raise RuntimeError("Task failed")

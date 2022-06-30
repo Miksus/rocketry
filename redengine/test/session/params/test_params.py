@@ -1,12 +1,12 @@
 
 import pytest
 
-from redengine.arguments import Private, Return
+from redengine.args import Private, Return
 from redengine import Scheduler
 from redengine.core import parameters
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskStarted
-from redengine.arguments import FuncArg
+from redengine.args import FuncArg
 
 def run_task(secret, public, secret_list, task_secret, task_public):
     assert public == "hello"

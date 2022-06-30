@@ -1,7 +1,7 @@
 
 from textwrap import dedent
 import pytest
-from redengine.arguments import YamlArg
+from redengine.args import YamlArg
 
 def test_construct(tmpdir):
     pytest.importorskip("yaml")

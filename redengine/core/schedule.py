@@ -13,7 +13,7 @@ from copy import copy
 from queue import Empty
 
 import pandas as pd
-from redengine.arguments.builtin import Return
+from redengine.args.builtin import Return
 
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, set_statement_defaults, AlwaysFalse

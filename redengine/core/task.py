@@ -18,7 +18,7 @@ from queue import Empty
 
 import pandas as pd
 from pydantic import BaseModel, Field, PrivateAttr, validator
-from redengine.arguments.builtin import Return
+from redengine.args.builtin import Return
 
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysTrue, AlwaysFalse, All, set_statement_defaults
@@ -130,9 +130,6 @@ class Task(RedBase, BaseModel):
 
     Attributes
     ----------
-    return_arg: Type of :class:`.BaseArgument`
-        Argument class to use to store the return value,
-        by default :class:`.Return`
     session : redengine.session.Session
         Session the task is binded to.
     logger : TaskAdapter
@@ -171,7 +168,6 @@ class Task(RedBase, BaseModel):
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
-    return_arg: ClassVar['BaseArgument'] = Return
 
     # Instance
     name: Optional[str] = Field(description="Name of the task. Must be unique")
@@ -617,12 +613,16 @@ class Task(RedBase, BaseModel):
         """
         passed_params = Parameters(params)
         session_params = self.session.parameters
-        #task_params = Parameters(self.parameters)
+        task_params = Parameters(self.get_task_params())
         extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
 
         params = Parameters(self.prefilter_params(session_params | passed_params | extra_params))
 
         return params
+
+    def get_task_params(self):
+        "Get parameters passed to the task"
+        return self.parameters
 
     def prefilter_params(self, params:Parameters):
         """Pre filter the parameters.
@@ -970,7 +970,7 @@ class Task(RedBase, BaseModel):
 
     def _handle_return(self, value):
         "Handle the return value (ie. store to parameters)"
-        self.return_arg.to_session(self.name, value)
+        self.session.returns[self] = value
 
     def delete(self):
         """Delete the task from the session. 

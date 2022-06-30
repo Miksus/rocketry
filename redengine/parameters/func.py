@@ -1,6 +1,6 @@
 
 from typing import Callable
-from redengine.arguments import FuncArg
+from redengine.args import FuncArg
 
 class FuncParam:
     """A parameter from a function.

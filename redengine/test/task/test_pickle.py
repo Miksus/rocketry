@@ -8,7 +8,7 @@ import pytest
 
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskFailed
-from redengine.arguments import Arg
+from redengine.args import Arg
 
 
 def func_on_main_level():
