@@ -36,7 +36,7 @@ setup(
      python_requires='>=3.6.0',
 
     install_requires = [
-        'pandas', 'redbird', 'pydantic'
+        'pandas', 'redbird>=0.5.0', 'pydantic'
     ],
     extras_require={
         "full": [
