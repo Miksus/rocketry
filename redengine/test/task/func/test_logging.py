@@ -149,7 +149,7 @@ def test_without_handlers_status_warnings(tmpdir, session):
     session.config.force_status_from_logs = True
     with tmpdir.as_cwd() as old_dir:
     
-        logger = logging.getLogger("redengine.task.test")
+        logger = logging.getLogger("redengine.task")
         logger.handlers = []
         logger.propagate = False
 
@@ -161,25 +161,35 @@ def test_without_handlers_status_warnings(tmpdir, session):
                 logger_name="redengine.task.test",
                 execution="main",
             )
+        # Removing the handlers that were added
         
         # Test warnings
         expected_warnings = [
-            #'Logger redengine.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
-            "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
-            "Task 'task 1' logger is not readable. Latest run unknown.",
-            "Task 'task 1' logger is not readable. Latest success unknown.",
-            "Task 'task 1' logger is not readable. Latest fail unknown.",
-            "Task 'task 1' logger is not readable. Latest terminate unknown.",
-            "Task 'task 1' logger is not readable. Latest inaction unknown."
+            'Logger redengine.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)'
+            #"Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
+            #"Task 'task 1' logger is not readable. Latest run unknown.",
+            #"Task 'task 1' logger is not readable. Latest success unknown.",
+            #"Task 'task 1' logger is not readable. Latest fail unknown.",
+            #"Task 'task 1' logger is not readable. Latest terminate unknown.",
+            #"Task 'task 1' logger is not readable. Latest inaction unknown."
         ]
         actual_warnings = [str(warn.message) for warn in warns]
         assert expected_warnings == actual_warnings
 
+        # Removing the handlers that were added
+        # to test without handlers
+        logger.handlers = []
+
         task()
         # Cannot know the task.status as there is no log about it
+        assert task.status == 'success'
         with pytest.warns(UserWarning) as warns:
-            assert task.status is None
-        assert str(warns[0].message) == "Task 'task 1' logger is not readable. Status unknown."
+            assert task.get_status() is None
+        
+        assert list(str(w.message) for w in warns) == [
+            "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
+            "Task 'task 1' logger is not readable. Status unknown."
+        ]
 
         session.config.force_status_from_logs = False
         with pytest.warns(UserWarning) as warns:
@@ -190,11 +200,14 @@ def test_without_handlers_status_warnings(tmpdir, session):
                 logger="redengine.task.test",
                 execution="main",
             )
-        assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 2' does not have ability to be read. Past history of the task cannot be utilized."
+        assert list(str(w.message) for w in warns) == [
+            'Logger redengine.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)'
+        ]
 
         task()
         # Can know the task.status as stored in a variable
         assert task.status == "success"
+        assert task.get_status() == "success"
 
 @pytest.mark.parametrize("method",
     [
