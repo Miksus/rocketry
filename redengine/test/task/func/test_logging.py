@@ -11,7 +11,6 @@ from redengine import Session
 from redengine.log.log_record import MinimalRecord
 
 from redengine.tasks import FuncTask
-from redengine.log import MemoryHandler
 
 def run_success():
     pass
