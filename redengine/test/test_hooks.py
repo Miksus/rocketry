@@ -21,7 +21,6 @@ def test_task_init(session):
         timeline.append("Function hook called")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
-        task.myattr = "x"
     
     @Task.hook_init
     def mygenerhook(task):
@@ -49,7 +48,6 @@ def test_task_init(session):
         "Generator hook called (pre)",
         "Generator hook called (post)",
     ]
-    assert mytask.myattr == "x"
 
 
 def test_scheduler_startup(session):
@@ -98,7 +96,7 @@ def test_scheduler_startup(session):
     FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=true)
     FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main")
 
-    session.scheduler.shut_cond = SchedulerCycles(_eq_=2)
+    session.config.shut_cond = SchedulerCycles(_eq_=2)
     session.start()
     
     assert session.hooks.scheduler_startup == [my_startup_hook, my_startup_hook_generator]
@@ -157,7 +155,7 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
         f.write("\nStarting\n")
 
     task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
-    session.scheduler.shut_cond = SchedulerCycles(_ge_=1)
+    session.config.shut_cond = SchedulerCycles(_ge_=1)
     session.start()
     with open(file) as f:
         cont = f.read()
