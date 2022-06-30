@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 from pydantic import Field, root_validator, validator
+from redengine.core.parameters.arguments import BaseArgument
 
 from redengine.core.task import Task
 from redengine.core.utils import is_pickleable
@@ -143,6 +144,7 @@ class FuncTask(Task):
     sys_paths: List[Path] = []
 
     _delayed_kwargs: dict = {}
+    _name_template: str = '{module_name}:{func_name}'
     @property
     def delayed(self):
         return self.func is None
@@ -233,19 +235,20 @@ class FuncTask(Task):
         else:
             return self.func
 
-    def get_default_name(self, func=None, path=None, func_name=None, **kwargs):
+    def get_default_name(self, func=None, path=None, func_name=None, _name_template=None, **kwargs):
         if func is None:
             file = Path(path)
-            return '.'.join(file.parts).replace(".py", "") + f":{func_name}"
+            module_name = '.'.join(file.parts).replace(".py", "")
         else:
-            func_module = func.__module__
+            module_name = func.__module__
             func_name = getattr(func, "__name__", type(func).__name__)
-            if func_module == "__main__":
+            if module_name == "__main__":
                 # Showing as 'myfunc'
                 return func_name
-            else:
-                # Showing as 'path.to.module:myfunc'
-                return f"{func_module}:{func_name}"
+        if _name_template is not None:
+            return _name_template.format(module_name=module_name, func_name=func_name)
+        else:
+            return f'{module_name}:{func_name}'
 
     def process_finish(self, *args, **kwargs):
         if self.is_delayed():
@@ -257,6 +260,17 @@ class FuncTask(Task):
     def is_delayed(self):
         return self.func is None
         
+    def get_task_params(self):
+        params = super().get_task_params()
+
+        # Get params from the typehints
+        func_params = inspect.signature(self.get_func()).parameters
+        for name, param in func_params.items():
+            default = param.default
+            if isinstance(default, BaseArgument):
+                params[name] = default.get_value(task=self)
+        return params
+
     def prefilter_params(self, params):
         if not self.is_delayed():
             # Filter the parameters now so that 
