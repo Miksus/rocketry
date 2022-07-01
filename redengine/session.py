@@ -230,7 +230,7 @@ class Session(RedBase):
             name = task.name
             orig_vals[name] = {
                 attr: val for attr, val in task.__dict__.items()
-                if attr not in ("_status", "_last_run", "_last_success", "_last_fail", "_last_terminate")
+                if attr not in ("status", "last_run", "last_success", "last_fail", "last_terminate")
             }
             if name in task_names:
                 if not obey_cond:
@@ -240,15 +240,15 @@ class Session(RedBase):
             else:
                 task.disabled = True
         
-        orig_shut_cond = self.scheduler.shut_cond
+        orig_shut_cond = self.config.shut_cond
         try:
-            self.scheduler.shut_cond = SchedulerCycles() >= 1
-            self.scheduler()
+            self.config.shut_cond = SchedulerCycles() >= 1
+            self.start()
         finally:
-            self.scheduler.shut_cond = orig_shut_cond
+            self.config.shut_cond = orig_shut_cond
             # Set back the disabled, execution etc.
-            for name, task in self.tasks.items():
-                task.__dict__.update(orig_vals[name])
+            for task in self.tasks:
+                task.__dict__.update(orig_vals[task.name])
 
     def _check_readable_logger(self):
         from redengine.core.log import TaskAdapter
