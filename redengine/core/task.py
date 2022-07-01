@@ -488,7 +488,7 @@ class Task(RedBase, BaseModel):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self)
-        direct_params = self.parameters.pre_materialize()
+        direct_params = self.parameters.pre_materialize(task=self)
 
         self._thread_terminate.clear()
 
@@ -516,7 +516,7 @@ class Task(RedBase, BaseModel):
         """Create a new process and run the task on that."""
 
         params = params.pre_materialize(task=self)
-        direct_params = self.parameters.pre_materialize()
+        direct_params = self.parameters.pre_materialize(task=self)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         log_queue = self.session.scheduler._log_queue if log_queue is None else log_queue

@@ -110,16 +110,17 @@ class Return(BaseArgument):
         self.default = default
 
     def get_value(self, task=None) -> Any:
-        input_task = task.session[self.task_name]
+        session = task.session
+        input_task = session[self.task_name]
         try:
-            return task.session.returns[input_task]
+            return session.returns[input_task]
         except KeyError:
-            if input_task not in task.session:
+            if input_task not in session:
                 raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
             return self.default
 
     def stage(self, task=None):
-        return SimpleArg(self.get_value())
+        return SimpleArg(self.get_value(task))
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
