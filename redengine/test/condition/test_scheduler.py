@@ -26,7 +26,7 @@ def test_scheduler_cycles(session):
 
 def test_scheduler_started(session):
 
-    session.config.startup_time = datetime.datetime.now() - datetime.timedelta(0, 20, 0) # 20 seconds ago
+    session.scheduler.startup_time = datetime.datetime.now() - datetime.timedelta(0, 20, 0) # 20 seconds ago
     # Imitating the __bool__
     assert bool(SchedulerStarted(period=TimeDelta("30 seconds")))
     assert not bool(SchedulerStarted(period=TimeDelta("10 seconds")))
