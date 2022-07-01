@@ -136,8 +136,7 @@ class Session(RedBase):
     _scheduler: 'Scheduler'
 
     _time_parsers: ClassVar[Dict] = {}
-    _cond_parsers: ClassVar[Dict] = {}
-
+    _cls_cond_parsers: ClassVar[Dict] = {} # Default condition parsers
 
     def _get_parameters(self, value):
         from redengine.core import Parameters
@@ -165,7 +164,9 @@ class Session(RedBase):
         self.tasks = set()
         self.hooks = Hooks()
         self.returns = self._get_parameters(None)
-        self.cond_cache: Dict = {} # Cached FuncConds (expensive conditions)
+        self._cond_parsers = self._cls_cond_parsers.copy()
+        self._cond_cache: Dict = {} # Cached by CondParser to speed up expensive conditions
+        self._cond_states = {} # Used by FuncConds to relay condiiton states to conditions
         if delete_existing_loggers:
             self.delete_task_loggers()
 
@@ -285,6 +286,10 @@ class Session(RedBase):
     def get_task(self, task):
         #! TODO: Do we need this?
         return self[task]
+
+    def get_cond_parsers(self):
+        "Used by the actual string condition parser"
+        return self._cond_parsers
 
     def add_task(self, task: 'Task'):
         "Add the task to the session"
@@ -430,7 +435,7 @@ class Session(RedBase):
         # the task.session. Therefore removing unpicklable here.
         state = self.__dict__.copy()
         state["tasks"] = set()
-        state["cond_cache"] = None
+        state["_cond_cache"] = None
         state["_cond_parsers"] = None
         state["session"] = None
         #state["parameters"] = None

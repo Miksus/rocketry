@@ -48,7 +48,7 @@ def _set_is_period_parsing():
         period = period_constructor(*args, **kwargs)
         return IsPeriod(period=period)
 
-    cond_parsers = Session._cond_parsers
+    cond_parsers = Session._cls_cond_parsers
     time_parsers = Session._time_parsers
     
     cond_parsers.update(
@@ -60,7 +60,7 @@ def _set_is_period_parsing():
 
 def _set_task_has_parsing():
 
-    cond_parsers = Session._cond_parsers
+    cond_parsers = Session._cls_cond_parsers
 
     clss = [
         ("failed", TaskFailed),
@@ -88,7 +88,7 @@ def _set_task_has_parsing():
 
 def _set_scheduler_parsing():
 
-    cond_parsers = Session._cond_parsers
+    cond_parsers = Session._cls_cond_parsers
 
     cls = SchedulerStarted
     func = partial(_from_period_task_has, cls=cls)

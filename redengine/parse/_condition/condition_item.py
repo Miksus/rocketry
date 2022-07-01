@@ -16,7 +16,7 @@ def add_condition_parser(d: Dict[Union[str, Pattern], Union[Callable, 'BaseCondi
     d : dict
         TODO
     """
-    parsers = Session._cond_parsers #! TODO
+    parsers = Session._cls_cond_parsers #! TODO
     parsers.update(d)
 
 def parse_condition_item(s:str, session=None) -> BaseCondition:
@@ -25,7 +25,7 @@ def parse_condition_item(s:str, session=None) -> BaseCondition:
     # TODO: Don't use global
     session = Session.session if session is None else session
 
-    for statement, parser in session._cond_parsers.items():
+    for statement, parser in session.get_cond_parsers().items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)
             if res:

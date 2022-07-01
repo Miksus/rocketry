@@ -1,20 +1,18 @@
 
 import copy
+from functools import partial
 from typing import Callable, Pattern, Union
 
 from redengine.core.condition import BaseCondition #, Task
 from redengine.core.parameters.arguments import BaseArgument
+from redengine.tasks.func import FuncTask
 
-class _CondStatus(BaseArgument):
 
-    @classmethod
-    def to_session(cls, task_name, return_):
-        if not isinstance(return_, bool):
-            raise TypeError(f"Condition {task_name} state must be boolean. Given: {type(return_)}")
-        if not hasattr(cls.session, "_cond_states"):
-            cls.session._cond_states = {}
-        cls.session._cond_states[task_name] = return_
+class _FuncTaskCondWrapper(FuncTask):
 
+    def _handle_return(self, value):
+        # Handle the return value of the function
+        self.session._cond_states[self.name] = value
 
 class TaskCond(BaseCondition):
     """Condition which state is defined by a task
@@ -75,6 +73,7 @@ class TaskCond(BaseCondition):
     """
 
     def __init__(self,
+                 session,
                  func: Callable[..., bool]=None,
                  active_time:str ="always",
                  syntax:Union[str, Pattern]=None, 
@@ -83,29 +82,26 @@ class TaskCond(BaseCondition):
 
         self.func = func
         self.syntax = syntax
-        self.active_time = parse_time(active_time)
+        self.active_time = parse_time(active_time, session=session)
 
         self.kwds_task = kwargs
 
         if self.func is not None:
             self._set_parsing()
 
-        if not hasattr(self.session, "_cond_states"):
-            self.session._cond_states = {}
+        self.session = session
 
     def _set_task(self, *args, **kwargs) -> 'TaskCond':
         "Recreate the condition using args and kwargs"
-        from redengine.tasks.func import FuncTask
         new_self = copy.copy(self)
 
-        new_self.task = FuncTask(
+        new_self.task = _FuncTaskCondWrapper(
             func=self.func,
-            on_exists="rename",
+            #on_exists="rename",
             name=f"_condition-{self._get_func_name(self.func)}",
             parameters=kwargs,
             **self.kwds_task
         )
-        new_self.task.return_arg = _CondStatus
 
         return new_self
 
@@ -126,7 +122,7 @@ class TaskCond(BaseCondition):
 
     def _set_parsing(self):
         from redengine.parse import CondParser
-        self.session.cond_parsers[self.syntax] = CondParser(func=self._set_task, cached=True)
+        self.session._cond_parsers[self.syntax] = CondParser(func=self._set_task, session=self.session, cached=True)
 
     def _get_func_name(self, func):
         func_module = func.__module__
