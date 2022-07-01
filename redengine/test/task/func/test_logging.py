@@ -139,8 +139,8 @@ def test_without_handlers(tmpdir, session):
         # Test warnings
         
         #assert str(warns[0].message) == "Logger 'redengine.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
-        assert str(warns[0].message) == "Logger hdlr_test.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)"
-        assert len(warns) == 1
+        warn_messages = [str(w.message) for w in warns]
+        assert warn_messages == ["Logger hdlr_test.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)"]
 
         assert len(logger.handlers) == 1
         assert isinstance(logger.handlers[0], RepoHandler)
