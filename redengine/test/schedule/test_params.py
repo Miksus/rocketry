@@ -82,8 +82,6 @@ def test_return(execution, session):
     session.config.shut_cond = (TaskStarted(task="task_use_output") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))
     session.start()
 
-    assert session.returns[input_task] == 'some value'
-
     logger = task.logger
     assert 1 == logger.filter_by(action="run").count()
     assert 1 == logger.filter_by(action="success").count()
@@ -93,6 +91,8 @@ def test_return(execution, session):
     assert 1 == logger.filter_by(action="run").count()
     assert 1 == logger.filter_by(action="success").count()
     assert 0 == logger.filter_by(action="fail").count()
+
+    assert session.returns[input_task] == 'some value'
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_session_as_arg(execution, session):
