@@ -93,8 +93,8 @@ def test_scheduler_startup(session):
     
 
     FuncTask(lambda: timeline.append("ran TASK (startup)"), name="start", on_startup=True, execution="main")
-    task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true)
-    task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1))
+    task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true, priority=1)
+    task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1), priority=0)
     FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main")
 
     session.config.shut_cond = SchedulerCycles(_eq_=2)
