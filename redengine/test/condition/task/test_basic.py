@@ -8,7 +8,9 @@ from redengine.conditions import (
 
     DependFinish,
     DependFailure,
-    DependSuccess
+    DependSuccess,
+    TaskStarted,
+    TaskTerminated,
 )
 from redengine.core.task import Task
 from redengine.tasks import FuncTask
@@ -235,3 +237,22 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         assert not bool(condition)
 
 
+@pytest.mark.parametrize(
+    "cls,string",
+    [
+        pytest.param(TaskFinished, "task 'mytask' finished", id="TaskFinished"), 
+        pytest.param(TaskFailed, "task 'mytask' failed", id="TaskFailed"), 
+        pytest.param(TaskSucceeded, "task 'mytask' succeeded", id="TaskSucceeded"),
+        pytest.param(TaskStarted, "task 'mytask' started", id="TaskStarted"),
+        pytest.param(TaskTerminated, "task 'mytask' terminated", id="TaskStarted"),
+
+        pytest.param(DependFinish, "task 'mydep' finished before 'mytask' started", id="DependFinish"),
+        pytest.param(DependFailure, "task 'mydep' failed before 'mytask' started", id="DependFailure"),
+        pytest.param(DependSuccess, "task 'mydep' succeeded before 'mytask' started", id="DependSuccess"),
+    ],
+)
+def test_display(cls, string):
+    task = FuncTask(func=lambda: None, name="mytask")
+    depend_task = FuncTask(func=lambda: None, name="mydep")
+    s = str(cls(task=task, depend_task=depend_task))
+    assert s == string
