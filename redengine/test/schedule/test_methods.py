@@ -8,7 +8,6 @@ executing one task)
 import time
 
 import pytest
-import pandas as pd
 
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
@@ -43,19 +42,18 @@ def run_inacting():
             id="Inacting task"),
     ],
 )
-def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_count, session):
+def test_run_task(execution, task_func, run_count, fail_count, success_count, session):
     "Example of how to run only one task once using the scheduler"
-    with tmpdir.as_cwd() as old_dir:
         
-        task = FuncTask(task_func, name="task", start_cond=AlwaysFalse(), execution=execution)
-        logger = task.logger
+    task = FuncTask(func=task_func, name="task", start_cond=AlwaysFalse(), execution=execution, session=session)
+    logger = task.logger
 
-        scheduler = Scheduler(session)
-        scheduler.run_task(task)
-        assert run_count == logger.filter_by(action="run").count()
+    scheduler = Scheduler(session=session)
+    scheduler.run_task(task)
+    assert run_count == logger.filter_by(action="run").count()
 
-        scheduler.wait_task_alive()
-        scheduler.handle_logs()
+    scheduler.wait_task_alive()
+    scheduler.handle_logs()
 
-        assert success_count == logger.filter_by(action="success").count()
-        assert fail_count == logger.filter_by(action="fail").count()
+    assert success_count == logger.filter_by(action="success").count()
+    assert fail_count == logger.filter_by(action="fail").count()
