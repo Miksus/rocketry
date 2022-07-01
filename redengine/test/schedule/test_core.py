@@ -174,7 +174,7 @@ def test_task_status(session, execution, mode):
         name="task not run",
         execution=execution
     )
-    session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("10 seconds"))
+    session.config.shut_cond = SchedulerCycles() >= 5
     session.start()
     assert task_success.last_run is not None
     assert task_success.last_success is not None
@@ -207,7 +207,7 @@ def test_task_force_run(tmpdir, execution, session):
         )
         task.force_run = True
 
-        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.config.shut_cond = SchedulerCycles() >= 5
         session.start()
 
         logger = task.logger
@@ -229,7 +229,7 @@ def test_task_disabled(tmpdir, execution, session):
         )
         task.disabled = True
 
-        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.config.shut_cond = SchedulerCycles() >= 5
         session.start()
 
         history = task.logger.get_records()
@@ -256,11 +256,12 @@ def test_task_force_disabled(tmpdir, execution, session):
         task.disabled = True
         task.force_run = True
 
-        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.config.shut_cond = SchedulerCycles() >= 5
         session.start()
 
         logger = task.logger
         assert 1 == logger.filter_by(action="run").count()
+        assert 1 == logger.filter_by(action="success").count()
 
         assert task.disabled
         assert not task.force_run # This should be reseted
