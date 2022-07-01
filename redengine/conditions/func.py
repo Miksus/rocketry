@@ -94,7 +94,7 @@ class FuncCond(BaseCondition):
 
     def _set_parsing(self):
 
-        session = Session.session
+        session = self.session
 
         syntaxes = [self.syntax] if not isinstance(self.syntax, (list, tuple, set)) else self.syntax
         for syntax in syntaxes:
