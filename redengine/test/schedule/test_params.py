@@ -1,6 +1,7 @@
 
 import pytest
 import redengine
+from redengine.conditions import DependSuccess
 
 
 from redengine.tasks import FuncTask
@@ -77,7 +78,7 @@ def test_session_arg(execution, session):
 def test_return(execution, session):
 
     input_task = FuncTask(func=run_with_output, name="task_with_output", start_cond=AlwaysTrue(), execution=execution, session=session)
-    task = FuncTask(func=run_with_return, name="task_use_output", start_cond=AlwaysTrue(), execution=execution, session=session)
+    task = FuncTask(func=run_with_return, name="task_use_output", start_cond=DependSuccess(depend_task=input_task), execution=execution, session=session)
 
     session.config.shut_cond = (TaskStarted(task="task_use_output") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))
     session.start()
