@@ -14,7 +14,6 @@ import pandas as pd
 
 from pydantic import BaseModel, PrivateAttr, validator
 from redengine.log.defaults import create_default_handler
-from redengine.pybox.io.read import read_yaml
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
 from itertools import chain
 
