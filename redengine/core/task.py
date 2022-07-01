@@ -1101,14 +1101,3 @@ class Task(RedBase, BaseModel):
             kwargs['exclude'] = set()
         kwargs['exclude'].update({'session'})
         return super().json(**kwargs)
-
-    @classmethod
-    def from_dict(cls, conf:dict):
-        """Create a task from dict
-        
-        If called from the base class (``Task.from_dict(...)``)
-        the dict should also have specified ``class`` as a key."""
-        if cls == Task:
-            cls_name = conf.pop('class')
-            cls = cls.session.cls_tasks[cls_name]
-        return cls(**conf)
