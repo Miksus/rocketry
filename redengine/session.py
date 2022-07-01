@@ -343,35 +343,6 @@ class Session(RedBase):
             and not name.endswith("_process") # No private
         }
 
-    def get_scheduler_loggers(self, with_adapters=True) -> Dict[str, Union['TaskAdapter', logging.Logger]]:
-        """Get scheduler logger(s) from the session.
-
-        Parameters
-        ----------
-        with_adapters : bool, optional
-            Whether get the loggers wrapped to 
-            redengine.core.log.TaskAdapter, by default True
-
-        Returns
-        -------
-        Dict[str, Union[TaskAdapter, logging.Logger]]
-            Dictionary of the loggers (or adapters)
-            in which the key is the logger name.
-            Placeholders and private loggers are ignored.
-        """
-
-        from redengine.core.log import TaskAdapter
-
-        basename = self.config.scheduler_logger_basename
-        return {
-            # The adapter should not be used to log (but to read) thus task_name = None
-            name: TaskAdapter(logger, None) if with_adapters else logger  
-            for name, logger in logging.root.manager.loggerDict.items() 
-            if name.startswith(basename) 
-            and not isinstance(logger, logging.PlaceHolder)
-            and not name.startswith("_") # No private
-        }
-
 # Log data
     def get_task_log(self, *args, **kwargs) -> Iterable[Dict]:
         """Get task log records from all of the 
@@ -392,27 +363,6 @@ class Session(RedBase):
         data = iter(())
         for logger in loggers.values():
             data = chain(data, logger.get_records(*args, **kwargs))
-        return data
-
-    def get_scheduler_log(self, **kwargs) -> Iterable[Dict]:
-        """Get scheduler log records from all of the 
-        readable handlers in the session.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Query parameters passed to 
-            redengine.core.log.TaskAdapter.get_records
-
-        Returns
-        -------
-        Iterable[Dict]
-            Generator of the task log records.
-        """
-        loggers = self.get_scheduler_loggers(with_adapters=True)
-        data = iter(())
-        for logger in loggers.values():
-            data = chain(data, logger.get_records(**kwargs))
         return data
         
     def delete_task_loggers(self):
