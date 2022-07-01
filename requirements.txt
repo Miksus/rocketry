@@ -1,10 +1,4 @@
 # Minimum requirements
 pandas
-redbird
-
-# For config parsing
-pyyaml
-
-# For dependency visualization
-networkx
-matplotlib
+pydantic
+redbird>=0.5.0
