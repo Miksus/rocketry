@@ -79,7 +79,7 @@ def test_return(execution, session):
     input_task = FuncTask(func=run_with_output, name="task_with_output", start_cond=AlwaysTrue(), execution=execution, session=session)
     task = FuncTask(func=run_with_return, name="task_use_output", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (TaskStarted(task="task_use_output") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="task_use_output") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))
     session.start()
 
     assert session.returns[input_task] == 'some value'
