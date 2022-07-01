@@ -12,17 +12,6 @@ class SimpleArg(BaseArgument):
     value : Any
         Value of the argument.
 
-    Examples
-    --------
-
-    .. doctest:: arg
-
-        >>> from redengine.arguments import Arg
-        >>> Arg.to_session(my_param_1=1, my_param_2=2)
-
-        >>> from redengine import session
-        >>> session.parameters
-        Parameters(my_param_1=Arg(1), my_param_2=Arg(2))
     """
     def __init__(self, value:Any):
         self._value = value
@@ -38,17 +27,6 @@ class Arg(BaseArgument):
     value : Any
         Value of the argument.
 
-    Examples
-    --------
-
-    .. doctest:: arg
-
-        >>> from redengine.arguments import Arg
-        >>> Arg.to_session(my_param_1=1, my_param_2=2)
-
-        >>> from redengine import session
-        >>> session.parameters
-        Parameters(my_param_1=Arg(1), my_param_2=Arg(2))
     """
     def __init__(self, key:Any):
         self.key = key
@@ -158,27 +136,6 @@ class FuncArg(BaseArgument):
     .. doctest:: funcarg
 
         >>> from redengine.arguments import FuncArg
-
-    FuncArg can also set arguments directly to 
-    ``session.parameters``. For example by decorating 
-    a function:
-
-    .. doctest:: funcarg
-
-        >>> @FuncArg.to_session()
-        ... def myarg1():
-        ...     ...
-
-    Note that the name of the argument in 
-    ``session.parameters`` is the name of the 
-    function ("myarg1"). The name can also
-    be passed:
-
-    .. doctest:: funcarg
-
-        >>> @FuncArg.to_session("myarg2")
-        ... def myfunc(session):
-        ...     ... # FuncArgs can also operate on session
 
     The ``session.parameters`` were updated.
 
