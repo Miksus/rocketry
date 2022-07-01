@@ -138,8 +138,6 @@ class Session(RedBase):
     _time_parsers: ClassVar[Dict] = {}
     _cond_parsers: ClassVar[Dict] = {}
 
-    cond_cache: Dict = {}
-
 
     def _get_parameters(self, value):
         from redengine.core import Parameters
@@ -167,6 +165,7 @@ class Session(RedBase):
         self.tasks = set()
         self.hooks = Hooks()
         self.returns = self._get_parameters(None)
+        self.cond_cache: Dict = {} # Cached FuncConds (expensive conditions)
         if delete_existing_loggers:
             self.delete_task_loggers()
 
