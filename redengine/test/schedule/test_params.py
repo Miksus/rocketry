@@ -109,7 +109,7 @@ def test_session_as_arg(execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_as_arg(execution, session):
-    another_task = FuncTask(func=lambda: None, name="another_task", session=session)
+    another_task = FuncTask(func=run_with_output, name="another_task", session=session)
     task = FuncTask(func=run_with_task, name="my_task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
     session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
