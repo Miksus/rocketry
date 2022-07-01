@@ -463,6 +463,36 @@ class Session(RedBase):
         import redengine
         redengine.session = self
 
+    def hook_startup(self):
+        def wrapper(func):
+            self.hooks.scheduler_startup.append(func)
+            return func
+        return wrapper
+
+    def hook_shutdown(self):
+        def wrapper(func):
+            self.hooks.scheduler_shutdown.append(func)
+            return func
+        return wrapper
+
+    def hook_scheduler_cycle(self):
+        def wrapper(func):
+            self.hooks.scheduler_cycle.append(func)
+            return func
+        return wrapper
+
+    def hook_task_init(self):
+        def wrapper(func):
+            self.hooks.task_init.append(func)
+            return func
+        return wrapper
+
+    def hook_task_execute(self):
+        def wrapper(func):
+            self.hooks.task_execute.append(func)
+            return func
+        return wrapper
+
     @classmethod
     def from_yaml(cls, file:Union[str, Path], **kwargs) -> 'Session':
         """Create session from a YAML file.

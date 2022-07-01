@@ -1,4 +1,5 @@
 
+from functools import partial
 from textwrap import dedent
 
 import pytest
@@ -16,13 +17,13 @@ def do_fail(**kwargs):
 def test_task_init(session):
     timeline = []
 
-    @Task.hook_init
+    @session.hook_task_init()
     def myhook(task):
         timeline.append("Function hook called")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
     
-    @Task.hook_init
+    @session.hook_task_init()
     def mygenerhook(task):
         timeline.append("Generator hook called (pre)")
         assert isinstance(task, DummyTask)
@@ -52,37 +53,37 @@ def test_task_init(session):
 def test_scheduler_startup(session):
     timeline = []
 
-    @Scheduler.hook_startup
+    @session.hook_startup()
     def my_startup_hook(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (startup)")
 
-    @Scheduler.hook_cycle
+    @session.hook_scheduler_cycle()
     def my_cycle_hook(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (cycle)")
 
-    @Scheduler.hook_shutdown
+    @session.hook_shutdown()
     def my_shutdown_hook(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (shutdown)")
 
 
-    @Scheduler.hook_startup
+    @session.hook_startup()
     def my_startup_hook_generator(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (startup, generator first)")
         yield
         timeline.append("ran hook (startup, generator second)")
 
-    @Scheduler.hook_cycle
+    @session.hook_scheduler_cycle()
     def my_cycle_hook_generator(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (cycle, generator first)")
         yield
         timeline.append("ran hook (cycle, generator second)")
 
-    @Scheduler.hook_shutdown
+    @session.hook_shutdown()
     def my_shutdown_hook_generator(sched):
         assert isinstance(sched, Scheduler)
         timeline.append("ran hook (shutdown, generator first)")
@@ -127,13 +128,13 @@ def test_scheduler_startup(session):
     ]
 
 # Hooks
-def myhook_normal(task):
-    file = task.parameters['testfile']
+def myhook_normal(task, file):
+    assert isinstance(task, Task)
     with open(file, "a") as f:
         f.write("Function hook called\n")
 
-def myhook_gener(task):
-    file = task.parameters['testfile']
+def myhook_gener(task, file):
+    assert isinstance(task, Task)
     with open(file, "a") as f:
         f.write("Generator hook inited\n")
     exc_type, exc, tb = yield
@@ -147,8 +148,8 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
 
     file = tmpdir.join("timeline.txt")
 
-    Task.hook_execute(myhook_normal)
-    Task.hook_execute(myhook_gener)
+    session.hook_task_execute()(partial(myhook_normal, file=file))
+    session.hook_task_execute()(partial(myhook_gener, file=file))
 
     with open(file, "w") as f:
         f.write("\nStarting\n")
