@@ -1004,17 +1004,6 @@ class Task(RedBase, BaseModel):
         # that the user should be allowed to interact with it
         return self._lock
 
-    def to_dict(self) -> dict:
-        """Get dict representation of a task"""
-        string_typehints = {'Session': 'Session', 'BaseArgument': 'BaseArgument'}
-        cls = type(self)
-        type_hints = get_type_hints(cls, string_typehints)
-        return {
-            attr: getattr(self, attr)
-            for attr in type_hints
-            if not attr.startswith("_") # ignore private
-        }
-
     def json(self, **kwargs):
         if 'exclude' not in kwargs:
             kwargs['exclude'] = set()

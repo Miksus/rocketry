@@ -183,7 +183,3 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def to_dict(self):
         return self._params
-
-    @classmethod
-    def from_yaml(cls, path, type_=None):
-        return cls(read_yaml(path), type_=type_)
