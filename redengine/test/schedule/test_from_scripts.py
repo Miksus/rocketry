@@ -46,11 +46,11 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             execution=execution
         )
         
-        session.config.shut_cond = (TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("15 seconds"))
         session.start()
 
         if expected_outcome == "fail":
-            failures = list(task.logger.get_records(action="fail"))
+            failures = list(task.logger.filter_by(action="fail").all())
             assert 3 == len(failures)
 
             # Check it has correct traceback in message
@@ -59,6 +59,6 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
                 assert "Traceback (most recent call last):" in tb
                 assert "RuntimeError: This task failed" in tb
         else:
-            success = list(task.logger.get_records(action="success"))
+            success = list(task.logger.filter_by(action="success").all())
             assert 3 == len(success)
 
