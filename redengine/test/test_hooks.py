@@ -3,6 +3,7 @@ from functools import partial
 from textwrap import dedent
 
 import pytest
+from redengine.conditions.task.task import DependSuccess
 from redengine.core import Task, Scheduler
 
 from redengine.tasks import FuncTask
@@ -92,8 +93,8 @@ def test_scheduler_startup(session):
     
 
     FuncTask(lambda: timeline.append("ran TASK (startup)"), name="start", on_startup=True, execution="main")
-    FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true)
-    FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=true)
+    task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true)
+    task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1))
     FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main")
 
     session.config.shut_cond = SchedulerCycles(_eq_=2)
