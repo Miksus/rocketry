@@ -38,8 +38,7 @@ class TaskAdapter(logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         ""
-        if "extra" not in kwargs:
-            kwargs["extra"] = {}
+        kwargs["extra"] = kwargs.get("extra", {})
         kwargs["extra"].update(self.extra)
         return msg, kwargs
 
@@ -130,48 +129,3 @@ class TaskAdapter(logging.LoggerAdapter):
         "bool: Whether the logger is for main process"
         is_process_dummy = self.logger.name.endswith("_process")
         return not self.is_readable and not is_process_dummy and is_main_subprocess()
-
-# Utils
-def parse_datetime(dt):
-    return _parse_datetime(dt) if not isinstance(dt, (datetime.datetime, pd.Timestamp)) and dt is not None else dt
-
-class RecordFormatter:
-
-    def __call__(self, data:List[Union[Dict, logging.LogRecord]]):
-        for record in data:
-            if isinstance(record, logging.LogRecord):
-                # Turn the LogRecord to dict
-                record = vars(record)
-            self.format(record)
-            yield record
-
-    def format(self, record:dict):
-        self.format_timestamp(record)
-        self.format_runtime(record)
-        self.format_runstamps(record)
-
-    def format_runstamps(self, record):
-        "Format 'start' and 'end' if found"
-        for dt_key in ("start", "end"):
-            if dt_key in record and record[dt_key]:
-                record[dt_key] = pd.Timestamp(record[dt_key])
-
-    def format_runtime(self, record:dict):
-        # This is not required
-        if "runtime" in record:
-            record["runtime"] = pd.Timedelta(record["runtime"])
-
-    def format_timestamp(self, record:dict):
-        if "timestamp" in record:
-            timestamp = pd.Timestamp(record['timestamp'])
-        elif "created" in record:
-            # record.create is in every LogRecord (but not necessarily end up to handler msg)
-            created = record["created"]
-            timestamp = pd.Timestamp.fromtimestamp(float(created))
-        elif "asctime" in record:
-            # asctime is most likely in handler message when formatted
-            asctime = record["asctime"]
-            timestamp = pd.Timestamp(asctime)
-        else:
-            raise KeyError(f"Cannot determine 'timestamp' for record: {record}")
-        record["timestamp"] = timestamp
