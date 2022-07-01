@@ -5,7 +5,7 @@ from ._condition import parse_condition_string
 from .utils import ParserPicker, DictInstanceParser
 
 def _parse_condition_string(s:str, **kwargs) -> BaseCondition:
-    cond = parse_condition_string(s)
+    cond = parse_condition_string(s, **kwargs)
     cond._str = s
     return cond
 

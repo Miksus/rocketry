@@ -189,17 +189,19 @@ class Task(RedBase, BaseModel):
     _mark_running = False
 
     @validator('start_cond', pre=True)
-    def parse_start_cond(cls, value):
+    def parse_start_cond(cls, value, values):
         from redengine.parse.condition import parse_condition
+        session = values['session']
         if isinstance(value, str):
-            value = parse_condition(value)
+            value = parse_condition(value, session=session)
         return copy(value)
 
     @validator('end_cond', pre=True)
-    def parse_end_cond(cls, value):
+    def parse_end_cond(cls, value, values):
         from redengine.parse.condition import parse_condition
+        session = values['session']
         if isinstance(value, str):
-            value = parse_condition(value)
+            value = parse_condition(value, session=session)
         return copy(value)
 
     @validator('logger_name', pre=True, always=True)

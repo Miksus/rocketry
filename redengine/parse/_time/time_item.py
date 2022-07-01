@@ -5,9 +5,12 @@ from ..utils import ParserError
 from redengine.core.time.base import PARSERS, TimePeriod
 from redengine.session import Session
 
-def parse_time_item(s:str):
+def parse_time_item(s:str, session=None):
     "Parse one condition"
-    parsers = Session.session._time_parsers
+    if session is None:
+        # Old way
+        session = Session.session
+    parsers = session._time_parsers
     for statement, parser in parsers.items():
         if isinstance(statement, Pattern):
             res = statement.fullmatch(s)

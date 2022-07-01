@@ -15,7 +15,7 @@ class InstructionParser:
         self.operators = operators
         self.symbols = set([oper["symbol"] for oper in operators])
 
-    def __call__(self, s:str):
+    def __call__(self, s:str, **kwargs):
         """Parse a string to condition. Allows logical operators.
 
         Reserved keywords:
@@ -41,18 +41,19 @@ class InstructionParser:
         # 2a. Remove extra tuples
         v.apply(l, _flatten_tuples)
         
-        v.assign_elements(l, self._parse)
+        v.assign_elements(l, partial(self._parse, **kwargs))
         
         e = v.reduce(l, self._assemble) 
         return e
 
-    def _parse(self, s:tuple):
+    def _parse(self, __s:tuple, **kwargs):
+        s = __s
         def parse_string(s):
             s = s.strip()
             if s in ("&", "|", "~"):
                 return s
             else:
-                return self.item_parser(s)
+                return self.item_parser(s, **kwargs)
 
         if isinstance(s, str):
             return parse_string(s)
