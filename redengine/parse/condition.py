@@ -2,7 +2,7 @@
 from redengine.core.condition.base import CLS_CONDITIONS, BaseCondition
 from redengine.conditions import true, false
 from ._condition import parse_condition_string
-from .utils import ParserPicker, DictInstanceParser
+from .utils import ParserPicker
 
 def _parse_condition_string(s:str, **kwargs) -> BaseCondition:
     cond = parse_condition_string(s, **kwargs)
@@ -15,7 +15,6 @@ def _parse_bool(b:bool) -> BaseCondition:
 PARSER = ParserPicker(
     {
         str: _parse_condition_string,
-        dict: DictInstanceParser(classes=CLS_CONDITIONS),
         bool: _parse_bool
     }
 )

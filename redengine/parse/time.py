@@ -12,6 +12,5 @@ def _parse_time_string(s:str, **kwargs):
 parse_time = ParserPicker(
     {
         str: _parse_time_string,
-        #dict: DictInstanceParser(classes=CLS_CONDITIONS),
     }
 ) 
