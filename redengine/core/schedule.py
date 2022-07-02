@@ -16,7 +16,7 @@ import pandas as pd
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysFalse
 from redengine.core.task import Task
-from redengine.core.exceptions import SchedulerRestart, SchedulerExit
+from redengine.exc import SchedulerRestart, SchedulerExit
 from redengine.core.hook import _Hooker
 
 if TYPE_CHECKING:
@@ -81,6 +81,7 @@ class Scheduler(RedBase):
         # Controlling runtime (used by scheduler.disabled)
         self._flag_enabled = threading.Event()
         self._flag_shutdown = threading.Event()
+        self._flag_restart = threading.Event()
         self._flag_enabled.set() # Not on hold by default
 
         # is_alive is used by testing whether the scheduler is 
@@ -104,6 +105,11 @@ class Scheduler(RedBase):
     def __call__(self):
         """Start and run the scheduler. Will block till the end of the scheduling
         session."""
+        # Unsetting some flags
+        self._flag_shutdown.clear()
+        self._flag_restart.clear()
+        self._flag_enabled.set()
+
         self.is_alive = True
         exception = None
         try:
@@ -112,6 +118,8 @@ class Scheduler(RedBase):
             while not self.check_cond(self.session.config.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
+                elif self._flag_restart.is_set():
+                    raise SchedulerRestart()
 
                 self._hibernate()
                 self.run_cycle()

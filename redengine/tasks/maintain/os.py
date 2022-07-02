@@ -1,6 +1,6 @@
 
 from redengine.core.task import Task
-from redengine.core.exceptions import SchedulerRestart, SchedulerExit
+from redengine.exc import SchedulerRestart, SchedulerExit
 
 
 class Restart(Task):

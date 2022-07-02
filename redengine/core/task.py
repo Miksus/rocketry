@@ -23,7 +23,7 @@ from redengine.core.time import TimePeriod
 from redengine.core.parameters import Parameters
 from redengine.core.log import TaskAdapter
 from redengine.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
-from redengine.core.exceptions import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
+from redengine.exc import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from redengine.core.meta import _register
 from redengine.core.hook import _Hooker
 from redengine.log import QueueHandler

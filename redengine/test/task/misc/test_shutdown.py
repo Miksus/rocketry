@@ -4,7 +4,7 @@ import pytest
 from redengine.conditions import AlwaysFalse
 from redengine.tasks.maintain import ShutDown
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import SchedulerExit
+from redengine.exc import SchedulerExit
 from redengine.core import Scheduler
 
 def write_file(text):

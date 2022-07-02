@@ -3,7 +3,7 @@ import pytest
 
 from redengine.tasks.maintain import Restart
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import SchedulerRestart
+from redengine.exc import SchedulerRestart
 from redengine.core import Scheduler
 from redengine.conditions import TaskStarted
 

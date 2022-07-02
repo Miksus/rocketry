@@ -11,7 +11,7 @@ from redengine.conditions.task import TaskTerminated
 from redengine.core import Scheduler
 from redengine.core.time.base import TimeDelta
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import TaskTerminationException
+from redengine.exc import TaskTerminationException
 from redengine.conditions import TaskFinished, TaskStarted, AlwaysTrue, AlwaysFalse
 
 def run_slow():

@@ -5,7 +5,7 @@ import pandas as pd
 
 from redengine.tasks import FuncTask
 from redengine.core.task import Task
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import AlwaysFalse, AlwaysTrue
 
 from task_helpers import wait_till_task_finish

@@ -18,7 +18,7 @@ from redengine.log.log_record import MinimalRecord
 from redengine.tasks import FuncTask
 from redengine.test.task.func.test_run import run_inaction
 from redengine.time import TimeDelta
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from redengine.args import Private
 

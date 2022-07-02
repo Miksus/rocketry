@@ -11,7 +11,7 @@ import pytest
 
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import AlwaysFalse
 
 def run_failing():

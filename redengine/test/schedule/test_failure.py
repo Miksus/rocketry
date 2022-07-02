@@ -14,7 +14,7 @@ from redengine.core import Scheduler, Parameters
 from redengine.core import BaseCondition
 from redengine.tasks import FuncTask
 from redengine.time import TimeDelta
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from redengine.core import BaseArgument
 
