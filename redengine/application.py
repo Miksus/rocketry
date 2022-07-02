@@ -83,28 +83,3 @@ class RedEngine(_AppMixin):
             return CSVFileRepo(filename=filepath, model=LogRecord)
         else:
             raise NotImplementedError(f"Repo creation for {repo} not implemented")
-
-    def include_grouper(self, group:'TaskGrouper'):
-        group_params = group.parameters if group.parameters is not None else {}
-        for task in group.session.tasks:
-            task.name = group.suffix + task.name
-            if group.start_cond:
-                task.start_cond = task.start_cond & group.start_cond
-            task.execution = group.execution if task.execution is None else task.execution
-
-            for name, arg in group_params.items():
-                if name not in task.parameters:
-                    task.parameters[name] = arg
-            
-            self.session.add_task(task)
-
-
-class TaskGrouper(_AppMixin):
-
-    def __init__(self, suffix:str=None, start_cond=None, execution=None, parameters=None):
-        self.suffix = suffix
-        self.start_cond = start_cond
-        self.execution = execution
-        self.parameters = parameters
-
-        self.session = Session()
