@@ -249,6 +249,14 @@ class Session(RedBase):
             for task in self.tasks:
                 task.__dict__.update(orig_vals[task.name])
 
+    def restart(self):
+        "Restart the scheduler"
+        self.scheduler._flag_restart.set()
+
+    def shutdown(self):
+        "Shut down the scheduler"
+        self.scheduler._flag_shutdown.set()
+
     def _check_readable_logger(self):
         from redengine.core.log import TaskAdapter
         task_logger_basename = self.config.task_logger_basename
