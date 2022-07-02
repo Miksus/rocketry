@@ -10,13 +10,6 @@ def do_daily_after_seven():
 def do_hourly_at_night():
     ...
 
-@app.task("weekly on Monday | weekly on Saturday")
-def do_twice_a_week():
-    ...
-
-@app.task("""hourly & (
-    time of day between 09:00 and 12:00 
-    | time of week between Sat and Sun
-)""")
-def do_complex():
+@app.task("(weekly on Monday | weekly on Saturday) & time of day after 10:00")
+def do_twice_a_week_after_ten():
     ...
