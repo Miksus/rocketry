@@ -82,7 +82,6 @@ And the rest :ref:`tutorials <tutorials>`.
    condition_syntax/index
    how_it_works
    contributing
-   faqs
    versions
 
 
