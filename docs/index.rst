@@ -1,4 +1,8 @@
 
+.. meta::
+   :description: Red Engine, modern scheduling framework
+   :keywords: schedule, task, script, run, Python
+
 :red:`Red` Engine
 =================
 
