@@ -19,10 +19,10 @@ Fixed time interval
 
 .. code-block:: python
 
-    FuncTask(..., start_cond="time of hour before 45:00")
-    FuncTask(..., start_cond="time of day between 10:00 and 16:00")
-    FuncTask(..., start_cond="time of week after Monday")
-    FuncTask(..., start_cond="time of month after 5th")
+    app.task("time of hour before 45:00")
+    app.task("time of day between 10:00 and 16:00")
+    app.task("time of week after Monday")
+    app.task("time of month after 5th")
 
 .. warning::
     Be careful for not to use these as your only condition in the 

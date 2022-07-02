@@ -1,10 +1,10 @@
 
 import pytest
 import redengine
-from redengine.arguments import FuncArg
+from redengine.args import FuncArg
 
 from redengine.core import Parameters
-from redengine.arguments import Private
+from redengine.args import Private
 from redengine.parameters import FuncParam
 
 @pytest.mark.parametrize(

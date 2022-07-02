@@ -1,4 +1,4 @@
-from typing import Generator, Iterable, Iterator, List
+from typing import Iterable, Iterator
 import datetime
 import pandas as pd
 

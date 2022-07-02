@@ -12,7 +12,7 @@ from redengine.time import (
 
 def test_scheduler_cycles(session):
 
-    session.scheduler.shut_cond = SchedulerCycles(_eq_=3)
+    session.config.shut_cond = SchedulerCycles(_eq_=3)
     session.start()
     # Imitating the __bool__
     assert bool(SchedulerCycles(_eq_=3))

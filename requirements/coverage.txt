@@ -4,12 +4,4 @@ pytest-cov
 
 # Package requirements
 pandas
-
-# Optional
-pyyaml
-pymongo
-waitress
-flask
-flask-restful
-networkx
-matplotlib
+redbird>=0.5.0

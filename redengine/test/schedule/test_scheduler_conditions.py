@@ -6,19 +6,15 @@ from redengine.conditions import SchedulerCycles, SchedulerStarted
 def test_scheduler_started(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
-        scheduler = Scheduler(
-            [], shut_cond=~SchedulerStarted(period=TimeDelta("1 second"))
-        )
-        scheduler()
+        session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("1 second"))
+        session.start()
 
-        assert scheduler.n_cycles > 1
+        assert session.scheduler.n_cycles > 1
 
 def test_scheduler_cycles(tmpdir, session):
     with tmpdir.as_cwd() as old_dir:
 
-        scheduler = Scheduler(
-            [], shut_cond=SchedulerCycles() >= 4
-        )
-        scheduler()
+        session.config.shut_cond = SchedulerCycles() >= 4
+        session.start()
 
-        assert scheduler.n_cycles == 4
+        assert session.scheduler.n_cycles == 4

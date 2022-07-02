@@ -8,11 +8,10 @@ executing one task)
 import time
 
 import pytest
-import pandas as pd
 
 from redengine.core import Scheduler
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import AlwaysFalse
 
 def run_failing():
@@ -43,18 +42,18 @@ def run_inacting():
             id="Inacting task"),
     ],
 )
-def test_run_task(tmpdir, execution, task_func, run_count, fail_count, success_count, session):
+def test_run_task(execution, task_func, run_count, fail_count, success_count, session):
     "Example of how to run only one task once using the scheduler"
-    with tmpdir.as_cwd() as old_dir:
         
-        task = FuncTask(task_func, name="task", start_cond=AlwaysFalse(), execution=execution)
+    task = FuncTask(func=task_func, name="task", start_cond=AlwaysFalse(), execution=execution, session=session)
+    logger = task.logger
 
-        scheduler = Scheduler()
-        scheduler.run_task(task)
-        scheduler.wait_task_alive()
-        scheduler.handle_logs()
+    scheduler = Scheduler(session=session)
+    scheduler.run_task(task)
+    assert run_count == logger.filter_by(action="run").count()
 
-        history = pd.DataFrame(task.logger.get_records())
-        assert run_count == (history["action"] == "run").sum()
-        assert success_count == (history["action"] == "success").sum()
-        assert fail_count == (history["action"] == "fail").sum()
+    scheduler.wait_task_alive()
+    scheduler.handle_logs()
+
+    assert success_count == logger.filter_by(action="success").count()
+    assert fail_count == logger.filter_by(action="fail").count()

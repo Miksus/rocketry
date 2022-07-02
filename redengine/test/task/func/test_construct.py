@@ -85,12 +85,12 @@ def test_construct_delayed(tmpdir, session, execution):
 
     # Going to tempdir to dump the log files there
     with tmpdir.as_cwd() as old_dir:
-        task = FuncTask("myfunc", path="myfile.py", execution=execution)
+        task = FuncTask(func_name="myfunc", path="myfile.py", execution=execution)
         assert task.status is None
         assert task.is_delayed()
         assert task.func_name == "myfunc"
         assert task.path == Path("myfile.py")
-        assert task._func is None
+        assert task.func is None
 
 def test_construct_decorate(tmpdir, session):
     # Going to tempdir to dump the log files there
@@ -103,20 +103,20 @@ def test_construct_decorate(tmpdir, session):
         
         assert isinstance(do_stuff, types.FunctionType)
 
-        do_stuff_task = session.tasks["mytask"]
+        do_stuff_task = session["mytask"]
         assert isinstance(do_stuff_task, FuncTask)
         assert do_stuff_task.status is None
         assert do_stuff_task.start_cond == AlwaysTrue()
         assert do_stuff_task.name == "mytask"
 
-        assert {"mytask": do_stuff_task} == session.tasks 
+        assert {do_stuff_task} == session.tasks 
 
 def test_construct_decorate_minimal(tmpdir, session):
     """This is an exception when FuncTask returns itself 
     (__init__ cannot return anything else)"""
     # Going to tempdir to dump the log files there
-    orig_default_exec = session.config['task_execution']
-    session.config['task_execution'] = 'main'
+    orig_default_exec = session.config.task_execution
+    session.config.task_execution = 'main'
     try:
         with tmpdir.as_cwd() as old_dir:
 
@@ -129,9 +129,9 @@ def test_construct_decorate_minimal(tmpdir, session):
             assert do_stuff.start_cond == AlwaysFalse()
             assert do_stuff.name.endswith(":do_stuff")
 
-            assert [do_stuff] == list(session.tasks.values())
+            assert {do_stuff} == session.tasks
     finally:
-        session.config['task_execution'] = orig_default_exec
+        session.config.task_execution = orig_default_exec
 
 def test_construct_decorate_default_name(tmpdir, session):
     # Going to tempdir to dump the log files there
@@ -143,13 +143,13 @@ def test_construct_decorate_default_name(tmpdir, session):
             pass
         
         assert isinstance(do_stuff, types.FunctionType)
-        do_stuff_task = list(session.tasks.values())[-1]
+        do_stuff_task = list(session.tasks)[-1]
         assert isinstance(do_stuff_task, FuncTask)
         assert do_stuff_task.status is None
         assert do_stuff_task.start_cond == AlwaysTrue()
         assert do_stuff_task.name.endswith(":do_stuff")
 
-        assert [do_stuff_task] == list(session.tasks.values())
+        assert [do_stuff_task] == list(session.tasks)
 
 @pytest.mark.parametrize(
     "start_cond,depend,expected",
@@ -215,38 +215,61 @@ def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
 def test_failure(session, exc, get_task):
     with pytest.raises(exc):
         get_task()
-    assert session.tasks == {}
+    assert session.tasks == set()
 
 def test_rename(session):
-    task = FuncTask(lambda : None, name="a task", execution="main")
-    assert session.tasks == {"a task": task}
-    task.name = "renamed task"
-    assert task.name == "renamed task"
-    assert session.tasks == {"renamed task": task}
+    task1 = FuncTask(lambda : None, name="a task 1", execution="main")
+    task2 = FuncTask(lambda : None, name="a task 2", execution="main")
+    assert session.tasks == {task1, task2}
+    assert 'renamed task' not in session
+    assert 'a task 1' in session
 
-def test_existing_default(session):
-    task1 = FuncTask(lambda : None, name="a task", execution="main")
-    with pytest.raises(KeyError):
-        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
-    assert session.tasks == {"a task": task1}
+    task1.name = "renamed task"
+    assert task1.name == "renamed task"
+    assert session.tasks == {task1, task2}
+    assert 'renamed task' in session
+    assert 'a task 1' not in session
+
+def test_rename_conflict(session):
+    task1 = FuncTask(lambda : None, name="a task 1", execution="main")
+    task2 = FuncTask(lambda : None, name="a task 2", execution="main")
+    assert session.tasks == {task1, task2}
+    assert 'renamed task' not in session
+    assert 'a task 1' in session
+
+    with pytest.raises(ValueError):
+        task1.name = "a task 2"
+    assert session.tasks == {task1, task2}
+    assert session['a task 2'] is task2
+    assert session['a task 2'] is not task1
 
 def test_existing_raise(session):
+    assert session.config.task_pre_exist == 'raise'
+
     task1 = FuncTask(lambda : None, name="a task", execution="main")
-    with pytest.raises(KeyError):
-        task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="raise")
-    assert session.tasks == {"a task": task1}
+    with pytest.raises(ValueError):
+        task2 = FuncTask(lambda : None, name="a task", execution="main")
+    assert session.tasks == {task1}
 
 def test_existing_ignore(session):
+    session.config.task_pre_exist = 'ignore'
     task1 = FuncTask(lambda : None, name="a task", execution="main")
-    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="ignore")
-    assert session.tasks == {"a task": task1}
+    task2 = FuncTask(lambda : None, name="a task", execution="main")
+    assert session.tasks == {task1}
 
+@pytest.mark.skip(reason="No support for this yet")
 def test_existing_replace(session):
+    session.config.task_pre_exist = 'replace'
     task1 = FuncTask(lambda : None, name="a task", execution="main")
-    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="replace")
+    task2 = FuncTask(lambda : None, name="a task", execution="main")
     assert session.tasks == {"a task": task2}
 
 def test_existing_rename(session):
+    session.config.task_pre_exist = 'rename'
     task1 = FuncTask(lambda : None, name="a task", execution="main")
-    task2 = FuncTask(lambda : None, name="a task", execution="main", on_exists="rename")
-    assert session.tasks == {"a task": task1, "a task0": task2}
+    task2 = FuncTask(lambda : None, name="a task", execution="main")
+    assert session.tasks == {task1, task2}
+    assert task2.name == 'a task - 1'
+
+    assert session['a task'] is task1
+    assert session['a task - 1'] is task2

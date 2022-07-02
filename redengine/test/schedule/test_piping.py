@@ -1,8 +1,11 @@
 
+import logging
 import time
 
 import pytest
 import pandas as pd
+from redengine.conditions.scheduler import SchedulerStarted
+from redengine.core.time.base import TimeDelta
 
 from redengine.tasks import FuncTask
 from redengine.core import Scheduler
@@ -48,20 +51,16 @@ def test_dependent(tmpdir, execution, session):
             execution=execution
         )
 
-        scheduler = Scheduler(
-            shut_cond=TaskStarted(task="After all") >= 1
-        )
+        session.config.shut_cond = (TaskStarted(task="After all") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))
+        session.start()
 
-        scheduler()
+        repo = logging.getLogger(session.config.task_logger_basename).handlers[0].repo
 
-        history = pd.DataFrame(session.get_task_log())
-        history = history.set_index("action")
+        a_start = repo.filter_by(task_name="A", action="run").first().created
+        b_start = repo.filter_by(task_name="B", action="run").first().created
+        after_a_start = repo.filter_by(task_name="After A", action="run").first().created
+        after_b_start = repo.filter_by(task_name="After B", action="run").first().created
+        after_all_start = repo.filter_by(task_name="After all", action="run").first().created
 
-        a_start = history[(history["task_name"] == "A")].loc["run", "timestamp"]
-        b_start = history[(history["task_name"] == "B")].loc["run", "timestamp"]
-        after_a_start = history[(history["task_name"] == "After A")].loc["run", "timestamp"]
-        after_b_start = history[(history["task_name"] == "After B")].loc["run", "timestamp"]
-        after_all_start = history[(history["task_name"] == "After all")].loc["run", "timestamp"]
-        
         assert a_start < after_a_start < after_all_start
         assert b_start < after_b_start < after_all_start

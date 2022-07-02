@@ -1,19 +1,9 @@
 pandas >= 1.0.0
-pytest >= 5.0.1
-psutil >= 5.7.0
-pyyaml >= 5.3.1
-
-# Optional
-gitpython >= 3.1.12
-pymongo
-
-# For HTTP API
-PyJWT>=2.0.1
-Flask >= 1.1.2
-requests >= 2.25.1
-psutil >= 5.8.0
+pydantic
+redbird>=0.5.0
 
 versioneer
 sphinx >= 1.7.5
 pydata-sphinx-theme
-sphinx_rtd_theme
+sphinx_book_theme
+sphinx-copybutton

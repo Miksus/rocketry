@@ -8,7 +8,7 @@ import pytest
 
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskFailed
-from redengine.arguments import Arg
+from redengine.args import Arg
 
 
 def func_on_main_level():
@@ -64,7 +64,7 @@ class TestFunc:
         unpkl_task = FuncTask(func_nested, execution="thread", name="unpicklable")
         task = FuncTask(func_on_main_level, execution="process", name="picklable")
 
-        assert session.tasks == {"unpicklable": unpkl_task, "picklable": task}
+        assert session.tasks == {unpkl_task, task}
 
         pick_task = pickle_dump_read(task)
         assert pick_task.func.__name__ == "func_on_main_level"
@@ -78,4 +78,4 @@ class TestFunc:
         task = FuncTask(func_on_main_level, execution="process", name="picklable")
         pick_task = pickle_dump_read(task)
         
-        assert pick_task.session.parameters.to_dict() == {"picklable": "myval"}
+        assert pick_task.session is None

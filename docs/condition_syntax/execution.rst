@@ -25,7 +25,7 @@ Execution on fixed time interval
 
 .. code-block:: python
 
-    FuncTask(..., start_cond="hourly")
-    FuncTask(..., start_cond="daily between 22:00 and 23:00")
-    FuncTask(..., start_cond="weekly before Friday")
-    FuncTask(..., start_cond="monthly starting 3rd")
+    app.task("hourly")
+    app.task("daily between 22:00 and 23:00")
+    app.task("weekly before Friday")
+    app.task("monthly starting 3rd")

@@ -1,13 +1,13 @@
 
 import pytest
 
-from redengine.arguments import Private, Return
+from redengine.args import Private, Return
 from redengine import Scheduler
 from redengine.conditions.scheduler import SchedulerCycles
 from redengine.core import parameters
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskStarted, AlwaysTrue
-from redengine.arguments import FuncArg, Arg
+from redengine.args import FuncArg, Arg
 
 
 def get_x():
@@ -26,16 +26,30 @@ def test_simple(session, execution):
         name="a task", 
         start_cond=AlwaysTrue()
     )
-
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) 
-    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
     assert task.status is None
-    scheduler()
+    session.start()
 
     assert "success" == task.status
 
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_session(session, execution):
+
+    session.parameters["myparam"] = FuncArg(get_x)
+
+    task = FuncTask(
+        func_x_with_arg, 
+        execution=execution, 
+        name="a task", 
+        start_cond=AlwaysTrue()
+    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1)
+
+    assert task.status is None
+    session.start()
+
+    assert "success" == task.status
 
 class UnPicklable:
     def __getstate__(self):
@@ -58,10 +72,8 @@ def test_unpicklable(session, execution):
         start_cond=AlwaysTrue()
     )
 
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) 
-    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1) 
 
     assert task.status is None
-    scheduler()
+    session.start()
     assert "success" == task.status

@@ -24,11 +24,11 @@ class _ConditionMeta(type):
         if cls.session is None:
             # Red engine default conditions
             # storing to the class
-            _add_parser(cls, container=Session._cond_parsers)
+            _add_parser(cls, container=Session._cls_cond_parsers)
         else:
             # User defined conditions
             # storing to the object
-            _add_parser(cls, container=cls.session.cond_parsers)
+            _add_parser(cls, container=Session._cls_cond_parsers)
         return cls
 
 

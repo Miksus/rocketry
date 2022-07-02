@@ -14,7 +14,7 @@ from redengine.core import Scheduler, Parameters
 from redengine.core import BaseCondition
 from redengine.tasks import FuncTask
 from redengine.time import TimeDelta
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from redengine.core import BaseArgument
 
@@ -56,18 +56,15 @@ def do_stuff_with_arg(arg):
     ]
 )
 def test_param_failure(tmpdir, execution, session, fail_in):
-    session.config["silence_task_prerun"] = True # Prod setting
+    session.config.silence_task_prerun = True # Prod setting
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution)
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second")),
-    )
 
-    scheduler()
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
+    session.start()
     assert task.status == "fail"
 
-    history = list(task.logger.get_records())
-    history = [{"task_name": rec['task_name'], "action": rec["action"]} for rec in history]
-    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == history
+    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 @pytest.mark.parametrize(
     "execution,fail_in", [
@@ -81,20 +78,17 @@ def test_param_failure(tmpdir, execution, session, fail_in):
     ]
 )
 def test_session_param_failure(tmpdir, execution, session, fail_in):
-    session.config["silence_task_prerun"] = True # Prod setting
+    session.config.silence_task_prerun = True # Prod setting
     session.parameters["arg"] = FailingArgument(fail_in)
 
     task = FuncTask(do_stuff_with_arg, name="a task", start_cond=AlwaysTrue(), execution=execution)
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second")),
-    )
 
-    scheduler()
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
+    session.start()
     assert task.status == "fail"
     
-    history = list(task.logger.get_records())
-    history = [{"task_name": rec['task_name'], "action": rec["action"]} for rec in history]
-    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == history
+    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 
 
@@ -110,29 +104,30 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
     ]
 )
 def test_raise_param_failure(tmpdir, execution, session, fail_in):
-    session.config["silence_task_prerun"] = False
+    session.config.silence_task_prerun = False
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution)
-    scheduler = Scheduler(
-        shut_cond=(TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second")),
-    )
-
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
+    
     with pytest.raises(RuntimeError):
-        scheduler()
+        session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_raise_cond_failure(tmpdir, execution, session):
-    session.config["silence_cond_check"] = False
+    session.config.silence_cond_check = False
     task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution)
-    scheduler = Scheduler(shut_cond=~SchedulerStarted(period=TimeDelta("5 second")))
 
+
+    session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("5 second"))
+    
     with pytest.raises(RuntimeError):
-        scheduler()
+        session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_silence_cond_failure(tmpdir, execution, session):
-    session.config["silence_cond_check"] = True
+    session.config.silence_cond_check = True
     task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution)
-    scheduler = Scheduler(shut_cond=SchedulerCycles() >= 3)
 
-    scheduler()
+    session.config.shut_cond = shut_cond=SchedulerCycles() >= 3
+    session.start()
+
     assert task.status is None

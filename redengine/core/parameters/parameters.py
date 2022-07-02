@@ -7,7 +7,6 @@ from functools import partial
 from redengine._base import RedBase
 from .arguments import BaseArgument
 from redengine.core.utils import is_pickleable
-from redengine.pybox.io import read_yaml
 from redengine.core.utils import filter_keyword_args
 
 if TYPE_CHECKING:
@@ -112,7 +111,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
             Key or the name of the argument, 
             by default the name of the function
         """
-        from redengine.arguments import FuncArg
+        from redengine.args import FuncArg
         if _func is None:
             return partial(self.param_func, key=key)
 
@@ -183,7 +182,3 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def to_dict(self):
         return self._params
-
-    @classmethod
-    def from_yaml(cls, path, type_=None):
-        return cls(read_yaml(path), type_=type_)

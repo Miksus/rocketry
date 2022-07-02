@@ -3,7 +3,7 @@ import pytest
 
 from redengine.tasks.maintain import Restart
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import SchedulerRestart
+from redengine.exc import SchedulerRestart
 from redengine.core import Scheduler
 from redengine.conditions import TaskStarted
 
@@ -28,19 +28,18 @@ def test_scheduler_restart(tmpdir, session):
         task = Restart()
 
         task.force_run = True
+
+        session.config.shut_cond = TaskStarted(task=task) == 1
+        session.config.restarting = "recall"
         
-        scheduler = Scheduler(
-            shut_cond=TaskStarted(task=task) == 1,
-            restarting="recall"
-        )
-        scheduler()
+        session.start()
 
         with open("test.txt") as f:
             cont = f.read()
         assert "StartedShutStartedShut" == cont
 
-        history = list(task.logger.get_records())
-        assert 1 == len([record for record in history if record["action"] == "run"])
-        assert 1 == len([record for record in history if record["action"] == "success"])
+        records = list(map(lambda e: e.dict(exclude={'created'}), task.logger.get_records()))
+        assert 1 == len([record for record in records if record["action"] == "run"])
+        assert 1 == len([record for record in records if record["action"] == "success"])
 
 # TODO: Test 

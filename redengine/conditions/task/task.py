@@ -3,6 +3,8 @@ import re, time
 import datetime
 from .utils import DependMixin, TaskStatusMixin
 
+from redbird.oper import between
+
 from redengine.core.condition import Statement, Historical, Comparable, All
 from redengine.core.time import TimeDelta
 from ..time import IsPeriod
@@ -32,7 +34,7 @@ class TaskStarted(Historical, Comparable):
             interv = task.period.rollback(now)
             _start_, _end_ = interv.left, interv.right
 
-        allow_optimization = not self.session.config["force_status_from_logs"]
+        allow_optimization = not self.session.config.force_status_from_logs
         if allow_optimization and self.any_over_zero():
             # Condition only checks whether has run at least once
             if task.last_run is None:
@@ -44,8 +46,8 @@ class TaskStarted(Historical, Comparable):
         elif allow_optimization and self.equal_zero():
             return not bool(task.last_run)
         
-        records = task.logger.get_records(timestamp=(_start_, _end_), action="run")
-        run_times = [record["timestamp"] for record in records]
+        records = task.logger.get_records(created=between(self._to_timestamp(_start_), self._to_timestamp(_end_)), action="run")
+        run_times = [self._get_field_value(record, "created") for record in records]
         return run_times
         
     def __str__(self):
@@ -53,7 +55,9 @@ class TaskStarted(Historical, Comparable):
             return self._str
         period = self.period
         task = self.kwargs["task"]
-        return f"task '{task}' started {period}"
+        task_name = getattr(task, 'name', str(task))
+        period = '' if period is None else f' {period}'
+        return f"task '{task_name}' started{period}"
 
 
 class TaskFailed(TaskStatusMixin, Historical, Comparable):
@@ -77,7 +81,9 @@ class TaskFailed(TaskStatusMixin, Historical, Comparable):
             return self._str
         period = self.period
         task = self.kwargs["task"]
-        return f"task '{task}' failed {period}"
+        task_name = getattr(task, 'name', str(task))
+        period = '' if period is None else f' {period}'
+        return f"task '{task_name}' failed{period}"
 
 
 class TaskTerminated(TaskStatusMixin, Historical, Comparable):
@@ -100,7 +106,9 @@ class TaskTerminated(TaskStatusMixin, Historical, Comparable):
             return self._str
         period = self.period
         task = self.kwargs["task"]
-        return f"task '{task}' terminated {period}"
+        task_name = getattr(task, 'name', str(task))
+        period = '' if period is None else f' {period}'
+        return f"task '{task_name}' terminated{period}"
 
 
 class TaskSucceeded(TaskStatusMixin, Historical, Comparable):
@@ -124,7 +132,9 @@ class TaskSucceeded(TaskStatusMixin, Historical, Comparable):
             return self._str
         period = self.period
         task = self.kwargs["task"]
-        return f"task 'task '{task}' succeeded {period}"
+        task_name = getattr(task, 'name', str(task))
+        period = '' if period is None else f' {period}'
+        return f"task '{task_name}' succeeded{period}"
 
 
 class TaskFinished(TaskStatusMixin, Historical, Comparable):
@@ -148,7 +158,9 @@ class TaskFinished(TaskStatusMixin, Historical, Comparable):
             return self._str
         period = self.period
         task = self.kwargs["task"]
-        return f"task '{task}' finished {period}"
+        task_name = getattr(task, 'name', str(task))
+        period = '' if period is None else f' {period}'
+        return f"task '{task_name}' finished" + period
 
 
 class TaskRunning(Historical):
@@ -176,19 +188,20 @@ class TaskRunning(Historical):
 
         task = Statement.session.get_task(task)
 
-        if not self.session.config["force_status_from_logs"]:
+        if not self.session.config.force_status_from_logs:
             return bool(task.last_run)
 
         record = task.logger.get_latest()
         if not record:
             return False
-        return record["action"] == "run"
+        return record.action == "run"
 
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
         task = self.kwargs["task"]
-        return f"task '{task}' is running"
+        task_name = getattr(task, 'name', str(task))
+        return f"task '{task_name}' is running"
 
 
 class TaskInacted(TaskStatusMixin, Historical, Comparable):
@@ -210,7 +223,8 @@ class TaskInacted(TaskStatusMixin, Historical, Comparable):
         if hasattr(self, "_str"):
             return self._str
         task = self.kwargs["task"]
-        return f"task '{task}' inacted"
+        task_name = getattr(task, 'name', str(task))
+        return f"task '{task_name}' inacted"
 
 
 class TaskExecutable(Historical):
@@ -328,7 +342,9 @@ class DependFinish(DependMixin, Historical):
             return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
-        return f"task '{depend_task}' finished before {task} started"
+        task_name = getattr(task, 'name', str(task))
+        depend_task_name = getattr(depend_task, 'name', str(depend_task))
+        return f"task '{depend_task_name}' finished before '{task_name}' started"
 
 
 class DependSuccess(DependMixin, Historical):
@@ -360,7 +376,9 @@ class DependSuccess(DependMixin, Historical):
             return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
-        return f"task '{depend_task}' finished before {task} started"
+        task_name = getattr(task, 'name', str(task))
+        depend_task_name = getattr(depend_task, 'name', str(depend_task))
+        return f"task '{depend_task_name}' succeeded before '{task_name}' started"
 
 
 class DependFailure(DependMixin, Historical):
@@ -391,4 +409,6 @@ class DependFailure(DependMixin, Historical):
             return self._str
         task = self.kwargs["task"]
         depend_task = self.kwargs["depend_task"]
-        return f"task '{depend_task}' finished before {task} started"
+        task_name = getattr(task, 'name', str(task))
+        depend_task_name = getattr(depend_task, 'name', str(depend_task))
+        return f"task '{depend_task_name}' failed before '{task_name}' started"

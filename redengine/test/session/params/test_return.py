@@ -1,12 +1,12 @@
 
 import pytest
 
-from redengine.arguments import Private, Return
+from redengine.args import Private, Return
 from redengine import Scheduler
 from redengine.core import parameters
 from redengine.tasks import FuncTask
 from redengine.conditions import TaskStarted
-from redengine.arguments import FuncArg
+from redengine.args import FuncArg
 
 
 def func_with_arg(value):
@@ -36,19 +36,19 @@ def test_normal(session, execution):
         parameters={"myparam": Return('return task')},
         execution=execution
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
 
     assert task.status is None
-    scheduler()
-    assert dict(session.returns) == {"return task": "x"}
+
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
+
+    assert dict(session.returns) == {task_return: "x", task: None}
     assert "success" == task_return.status
     assert "success" == task.status
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_missing(session, execution):
-    session.config["silence_task_prerun"] = True # Default in prod
+    session.config.silence_task_prerun = True # Default in prod
     
     task = FuncTask(
         func_with_arg, 
@@ -57,12 +57,10 @@ def test_missing(session, execution):
         force_run=True,
         execution=execution
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
-
+ 
     assert task.status is None
-    scheduler()
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
 
     assert "fail" == task.status
 
@@ -79,11 +77,9 @@ def test_default(session, execution):
         execution=execution, 
         force_run=True,
     )
-    scheduler = Scheduler(
-        shut_cond=TaskStarted(task="a task") >= 1
-    )
 
     assert task.status is None
-    scheduler()
+    session.config.shut_cond = TaskStarted(task="a task") >= 1
+    session.start()
 
     assert "success" == task.status

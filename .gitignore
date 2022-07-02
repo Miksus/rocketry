@@ -17,6 +17,7 @@ prototype*
 .scrapy
 
 draft/
+private/
 
 # Environments
 .env

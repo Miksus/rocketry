@@ -88,19 +88,6 @@ class Statement(BaseCondition):
         else:
             return False
 
-    def __repr__(self):
-        cls_name = type(self).__name__
-        arg_str = ', '.join(map(repr, self.args))
-        kwargs_str = ', '.join(f'{key}={repr(val)}' for key, val in self.kwargs.items())
-        param_str = ""
-        if arg_str:
-            param_str = arg_str
-        if kwargs_str:
-            if param_str:
-                param_str = param_str + ", "
-            param_str = param_str + kwargs_str
-        return f'{cls_name}({param_str})'
-
 
 class Comparable(Statement):
     """Statement that can be compared.
@@ -240,6 +227,22 @@ class Historical(Statement):
         kwargs["_end_"] = end
         return kwargs
 
+    def _to_timestamp(self, dt):
+        # pd.Timestamp(...).timestamp yields different result than datetime.datetime(...).timestamp()
+        if hasattr(dt, "to_pydatetime"):
+            dt = dt.to_pydatetime()
+        try:
+            return dt.timestamp()
+        except OSError:
+            # Less than timestamp "0"
+            return 0
+
+    def _get_field_value(self, record, field):
+        if isinstance(record, dict):
+            return record[field]
+        else:
+            return getattr(record, field)
+
     def __eq__(self, other):
         # self == other
         is_same_class = isinstance(other, type(self))
@@ -249,14 +252,3 @@ class Historical(Statement):
             has_same_period = self.period == other.period
             return super().__eq__(other) and has_same_period
         return super().__eq__(other)
-
-    def __repr__(self):
-        string = super().__repr__()
-        period = self.period
-        if period is not None:
-            base_string = string[:-1]
-            if base_string[-1] != "(":
-                base_string = base_string + ", "
-            return base_string + f"period={repr(self.period)})"
-        else:
-            return string

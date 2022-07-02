@@ -1,6 +1,6 @@
 
 from typing import Callable
-from redengine.arguments import FuncArg
+from redengine.args import FuncArg
 
 class FuncParam:
     """A parameter from a function.
@@ -33,11 +33,12 @@ class FuncParam:
         ... # Send email list
 
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, session=None):
         self.name = name
+        self.session = session
 
     def __call__(self, func: Callable):
-        session = FuncArg.session
+        session = FuncArg.session if self.session is None else self.session
         name = self._get_name(func)
         session.parameters[name] = FuncArg(func)
         return func

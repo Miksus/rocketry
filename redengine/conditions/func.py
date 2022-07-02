@@ -64,12 +64,15 @@ class FuncCond(BaseCondition):
                  func:Callable[..., bool]=None,
                  syntax:Union[str, Pattern, List[Union[str, Pattern]]]=None, 
                  args:Optional[tuple]=None, 
-                 kwargs:Optional[dict]=None):
+                 kwargs:Optional[dict]=None,
+                 session=None):
 
         self.func = func
         self.syntax = syntax
         self.args = () if args is None else args
         self.kwargs = {} if kwargs is None else kwargs
+        if session:
+            self.session = session
         if self.syntax is not None:
             self._set_parsing()
 
@@ -91,11 +94,11 @@ class FuncCond(BaseCondition):
 
     def _set_parsing(self):
 
-        session = Session.session
+        session = self.session
 
         syntaxes = [self.syntax] if not isinstance(self.syntax, (list, tuple, set)) else self.syntax
         for syntax in syntaxes:
-            session.cond_parsers[syntax] = self._recreate
+            session._cond_parsers[syntax] = self._recreate
 
     def __repr__(self):
         cls_name = type(self).__name__

@@ -4,7 +4,7 @@ import pytest
 from redengine.conditions import AlwaysFalse
 from redengine.tasks.maintain import ShutDown
 from redengine.tasks import FuncTask
-from redengine.core.exceptions import SchedulerExit
+from redengine.exc import SchedulerExit
 from redengine.core import Scheduler
 
 def write_file(text):
@@ -27,13 +27,14 @@ def test_scheduler_shutdown(tmpdir, session):
 
         task.force_run = True
         
-        scheduler = Scheduler(shut_cond=AlwaysFalse())
-        scheduler()
+        session.config.shut_cond = AlwaysFalse()
+        
+        session.start()
 
         with open("test.txt") as f:
             cont = f.read()
         assert "StartedShut" == cont
 
-        history = list(task.logger.get_records())
-        assert 1 == len([record for record in history if record["action"] == "run"])
-        assert 1 == len([record for record in history if record["action"] == "success"])
+        records = list(map(lambda e: e.dict(exclude={'created'}), task.logger.get_records()))
+        assert 1 == len([record for record in records if record["action"] == "run"])
+        assert 1 == len([record for record in records if record["action"] == "success"])

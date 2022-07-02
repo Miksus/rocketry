@@ -4,14 +4,13 @@ from ._time import parse_time_string
 
 from .utils import ParserPicker
 
-def _parse_time_string(s:str):
-    time = parse_time_string(s)
+def _parse_time_string(s:str, **kwargs):
+    time = parse_time_string(s, **kwargs)
     time._str = s
     return time
 
 parse_time = ParserPicker(
     {
         str: _parse_time_string,
-        #dict: DictInstanceParser(classes=CLS_CONDITIONS),
     }
 ) 

@@ -3,20 +3,16 @@
 Tutorials
 =========
 
-Welcome to Red Engine tutorials. This section
-consists of tutorial sets to show how you can 
-use Red Engine.
+Welcome to Red Engine's tutorials. This section
+consists of tutorial sets to introduce to the 
+framework with varying degree of complexity.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :caption: Contents:
 
-   installing
    quick_start
-   short_guide
-   advanced_guide
-   scheduling_guide
-   pipeline_guide
-   api_guide
-   logging_guide
-   extending_guide
+   basic
+   intermediate
+   advanced
+   expert

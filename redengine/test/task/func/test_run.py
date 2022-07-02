@@ -5,7 +5,7 @@ import pandas as pd
 
 from redengine.tasks import FuncTask
 from redengine.core.task import Task
-from redengine.core.exceptions import TaskInactionException
+from redengine.exc import TaskInactionException
 from redengine.conditions import AlwaysFalse, AlwaysTrue
 
 from task_helpers import wait_till_task_finish
@@ -78,8 +78,7 @@ def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution, session):
   
         assert task.status == expected_outcome
 
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
+        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": expected_outcome},
@@ -148,8 +147,7 @@ def test_parametrization_runtime(tmpdir, session):
 
         task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
+        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -167,8 +165,7 @@ def test_parametrization_local(tmpdir, session):
 
         task()
 
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
+        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -186,8 +183,7 @@ def test_parametrization_kwargs(tmpdir, session):
 
         task()
 
-        df = pd.DataFrame(session.get_task_log())
-        records = df[["task_name", "action"]].to_dict(orient="records")
+        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
