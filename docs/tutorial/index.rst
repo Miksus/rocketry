@@ -15,4 +15,3 @@ framework with varying degree of complexity.
    basic
    intermediate
    advanced
-   expert
