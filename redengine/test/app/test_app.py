@@ -1,9 +1,17 @@
 
+import logging
+
 from redengine import RedEngine
 from redengine.conditions.task.task import TaskStarted
 from redengine.args import Return, Arg, FuncArg
 
+def set_logging_defaults():
+    task_logger = logging.getLogger("redengine.task")
+    task_logger.handlers = []
+    task_logger.setLevel(logging.WARNING)
+
 def test_app():
+    set_logging_defaults()
 
     # Creating app
     app = RedEngine(config={'task_execution': 'main'})
