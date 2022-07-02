@@ -24,7 +24,7 @@ Timedelta
 
 .. code-block:: python
 
-    FuncTask(..., start_cond="every 1 hour")
-    FuncTask(..., start_cond="every 30 sec")
-    FuncTask(..., start_cond="every 2 hours, 30 minutes")
-    FuncTask(..., start_cond="every 1 day, 12 hour, 30 min, 20 sec")
+    app.task("every 1 hour")
+    app.task("every 30 sec")
+    app.task("every 2 hours, 30 minutes")
+    app.task("every 1 day, 12 hour, 30 min, 20 sec")

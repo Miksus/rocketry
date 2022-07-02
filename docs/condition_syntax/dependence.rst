@@ -30,11 +30,13 @@ Task Dependence
 .. code-block:: python
 
     # Creating a dummy task
-    FuncTask(..., name="a task")
+    @app.task()
+    def a_task():
+        ...
     
     # Examples
-    FuncTask(..., start_cond="after task 'a task'")
-    FuncTask(..., start_cond="after task 'a task' succeeded")
-    FuncTask(..., start_cond="after task 'a task' failed")
-    FuncTask(..., start_cond="after task 'a task' finished")
-    FuncTask(..., start_cond="after tasks 'a task', 'another task' finished")
+    app.task("after task 'a_task'")
+    app.task("after task 'a_task' succeeded")
+    app.task("after task 'a_task' failed")
+    app.task("after task 'a_task' finished")
+    app.task("after tasks 'a_task', 'another_task' finished")

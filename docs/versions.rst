@@ -2,6 +2,11 @@
 Version history
 ===============
 
+- ``2.0.0``
+
+    - Update: Completely refactored the interface
+    - Remove: Removed a lot of old, poorly supported code
+
 - ``1.2.0``
 
     - Add: shortcut condition syntax for multiple dependencies

@@ -25,8 +25,8 @@ Task Status
 
 .. code-block:: python
 
-    FuncTask(..., start_cond="has succeeded this hour")
-    FuncTask(..., start_cond="has failed today between 08:00 and 16:00")
-    FuncTask(..., start_cond="has started this week before Friday")
-    FuncTask(..., start_cond="has terminated this month after 6th")
-    FuncTask(..., start_cond="has succeeded past 2 hours, 30 minutes")
+    app.task("has succeeded this hour")
+    app.task("has failed today between 08:00 and 16:00")
+    app.task("has started this week before Friday")
+    app.task("has terminated this month after 6th")
+    app.task("has succeeded past 2 hours, 30 minutes")

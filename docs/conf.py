@@ -10,7 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import sphinx_rtd_theme
+import sphinx_book_theme
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
@@ -33,7 +33,8 @@ extensions = [
     'sphinx.ext.autodoc', 
     'sphinx.ext.coverage', 
     'sphinx.ext.napoleon',
-    'sphinx_rtd_theme'
+    'sphinx_book_theme',
+    'sphinx_copybutton',
 ]
 rst_prolog = """
 .. include:: <s5defs.txt>
@@ -63,13 +64,13 @@ autodoc_typehints = 'none'
 autodoc_member_order = 'bysource'
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+#templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
+#html_sidebars = {}
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -77,7 +78,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_title = "Advanced Scheduler for Python"
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
+html_logo = "logo.svg"
+html_favicon = 'favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
