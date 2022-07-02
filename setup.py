@@ -15,10 +15,10 @@ setup(
     description="Advanced scheduling framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
-     classifiers=[
-         "Development Status :: 5 - Production/Stable",
-         "License :: OSI Approved :: MIT License",
-         "Operating System :: OS Independent",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
 
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
@@ -26,11 +26,17 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
 
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Office/Business :: Scheduling",
 
+        "Topic :: System",
+
         "Intended Audience :: Developers",
-        "Intended Audience :: Financial and Insurance Industry",
-     ],
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Information Technology",
+    ],
      include_package_data=True, # for MANIFEST.in
      python_requires='>=3.7.0',
 
