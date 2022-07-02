@@ -35,7 +35,7 @@ applications. It is simple, clean and extensive.
 
 **It looks like this:**
 
-.. literalinclude:: /code/demo_basic.py
+.. literalinclude:: /code/demo_minimal.py
     :language: py
 
 Why Red Engine?
@@ -80,6 +80,7 @@ And the rest :ref:`tutorials <tutorials>`.
 
    tutorial/index
    condition_syntax/index
+   examples/index
    how_it_works
    contributing
    versions
