@@ -28,4 +28,4 @@ def go_to_sleep(receivers):
     )
 
 if __name__ == "__main__":
-    app.start()
+    app.run()

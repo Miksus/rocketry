@@ -22,4 +22,4 @@ def do_after_another(arg=Return('do_daily')):
 
 if __name__ == "__main__":
     # Start the scheduler
-    app.start()
+    app.run()

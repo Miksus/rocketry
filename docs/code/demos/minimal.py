@@ -8,4 +8,4 @@ def do_things():
 
 
 if __name__ == "__main__":
-    app.start()
+    app.run()

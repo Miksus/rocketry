@@ -24,4 +24,4 @@ def do_with_funcarg(arg=FuncArg(lambda: 'hello world')):
     assert arg == 'stuff'
 
 if __name__ == "__main__":
-    app.start()
+    app.run()

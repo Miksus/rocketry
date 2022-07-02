@@ -24,4 +24,4 @@ def do_after(arg1=Return('do_on_process')):
 
 
 if __name__ == "__main__":
-    app.start()
+    app.run()
