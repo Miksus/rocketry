@@ -43,9 +43,4 @@ setup(
     install_requires = [
         'pandas', 'redbird>=0.5.0', 'pydantic'
     ],
-    extras_require={
-        "full": [
-            "networkx", "matplotlib"
-        ],
-    },
 )
