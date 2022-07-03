@@ -4,7 +4,7 @@
 import logging
 from pathlib import Path
 import tempfile
-from typing import Optional
+import warnings
 
 from redbird import BaseRepo
 from redbird.logging import RepoHandler
