@@ -329,6 +329,13 @@ class Session(RedBase):
         else:
             return False
 
+    def get_repo(self):
+        "Get log repo where the task logs are stored"
+        from redengine.core.log import TaskAdapter
+        basename = self.config.task_logger_basename
+        logger = logging.getLogger(basename)
+        return TaskAdapter(logger, task=None)._get_repo()
+
     def get_task_loggers(self, with_adapters=True) -> Dict[str, Union['TaskAdapter', logging.Logger]]:
         """Get task logger(s) from the session.
 
