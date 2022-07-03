@@ -39,7 +39,7 @@ applications. It is simple, clean and extensive.
 
 **It looks like this:**
 
-.. literalinclude:: /code/demo_minimal.py
+.. literalinclude:: /code/demos/minimal.py
     :language: py
 
 Why Red Engine?
@@ -61,7 +61,7 @@ unlike Airflow, but it is fantastic to power your Python applications.
 
 Here is a demonstration of more advanced case:
 
-.. literalinclude:: /code/demo_intermediate.py
+.. literalinclude:: /code/demos/intermediate.py
     :language: py
 
 
