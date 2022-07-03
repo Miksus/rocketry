@@ -77,9 +77,7 @@ class RedEngine(_AppMixin):
         elif repo is None:
             repo = MemoryRepo(model=LogRecord)
         logger = self._get_task_logger()
-        logger.handlers = [
-            RepoHandler(repo=repo)
-        ]
+        logger.handlers.insert(0, RepoHandler(repo=repo))
     
     def _get_repo(self, repo:str):
         if repo == "memory":

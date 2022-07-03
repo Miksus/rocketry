@@ -4,13 +4,41 @@ import logging
 from redengine import RedEngine
 from redengine.conditions.task.task import TaskStarted
 from redengine.args import Return, Arg, FuncArg
+from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo, CSVFileRepo
+
+from redengine import Session
 
 def set_logging_defaults():
     task_logger = logging.getLogger("redengine.task")
     task_logger.handlers = []
     task_logger.setLevel(logging.WARNING)
 
-def test_app():
+def test_app_create(session, tmpdir):
+    set_logging_defaults()
+
+    app = RedEngine()
+
+    # Test logging
+    task_logger = logging.getLogger("redengine.task")
+    
+    # Till Red Bird supports equal, we need to test the handler one obj at a time
+    assert len(task_logger.handlers) == 1
+    assert isinstance(task_logger.handlers[0], RepoHandler)
+    assert isinstance(task_logger.handlers[0].repo, MemoryRepo)
+
+    assert isinstance(app.session, Session)
+
+    # Test setting SQL repo
+    with tmpdir.as_cwd():
+        app = RedEngine(logger_repo=CSVFileRepo(filename="myrepo.csv"))
+    assert len(task_logger.handlers) == 2
+    assert isinstance(task_logger.handlers[0], RepoHandler)
+    assert isinstance(task_logger.handlers[0].repo, CSVFileRepo)
+
+    assert isinstance(app.session, Session)
+
+def test_app_run():
     set_logging_defaults()
 
     # Creating app
