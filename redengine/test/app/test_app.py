@@ -8,6 +8,8 @@ from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo, CSVFileRepo
 
 from redengine import Session
+from redengine.tasks import CommandTask
+from redengine.tasks import FuncTask
 
 def set_logging_defaults():
     task_logger = logging.getLogger("redengine.task")
@@ -37,6 +39,27 @@ def test_app_create(session, tmpdir):
     assert isinstance(task_logger.handlers[0].repo, CSVFileRepo)
 
     assert isinstance(app.session, Session)
+
+def test_app_tasks():
+    set_logging_defaults()
+
+    app = RedEngine(config={'task_execution': 'main'})
+
+    # Creating some tasks
+    @app.task('daily')
+    def do_func():
+        ...
+        return 'return value'
+
+    app.task('daily', name="do_command", command="echo 'hello world'")
+    app.task('daily', name="do_script", path=__file__)
+
+    # Assert and test tasks
+    assert len(app.session.tasks) == 3
+
+    assert isinstance(app.session['do_func'], FuncTask)
+    assert isinstance(app.session['do_command'], CommandTask)
+    assert isinstance(app.session['do_script'], FuncTask)
 
 def test_app_run():
     set_logging_defaults()
