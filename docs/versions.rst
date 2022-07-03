@@ -2,6 +2,12 @@
 Version history
 ===============
 
+- ``2.0.1``
+
+    - Fix: ``RedEngine(logger_repo=...)`` now does not remove previous handlers
+    - Deprecate: Deprecated ``RedEngine(...).set_logger`` method
+    - Docs: Fixed typos in documentation and added docstrings
+
 - ``2.0.0``
 
     - Update: Completely refactored the interface
