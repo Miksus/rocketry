@@ -63,6 +63,10 @@ class RedEngine(_AppMixin):
         self.session.parameters.update(kwargs)
 
     def set_logger(self):
+        warnings.warn((
+            "set_logger is deprecated and will be removed in the future. " 
+            "Please set the logger using logging.getLogger"
+        ), DeprecationWarning)
         def wrapper(func):
             func(self._get_task_logger())
         return wrapper
