@@ -250,11 +250,19 @@ class Session(RedBase):
                 task.__dict__.update(orig_vals[task.name])
 
     def restart(self):
-        "Restart the scheduler"
+        """Restart the scheduler
+        
+        The restart is not instantenous and 
+        will occur after the scheduler finishes
+        checking one cycle of tasks."""
         self.scheduler._flag_restart.set()
 
     def shutdown(self):
-        "Shut down the scheduler"
+        """Shut down the scheduler
+        
+        The shut down is not instantenous and 
+        will occur after the scheduler finishes
+        checking one cycle of tasks."""
         self.scheduler._flag_shutdown.set()
 
     def _check_readable_logger(self):
