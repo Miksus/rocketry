@@ -4,6 +4,7 @@
 import logging
 from pathlib import Path
 import tempfile
+from typing import List, Optional, Pattern, Union
 import warnings
 
 from redbird import BaseRepo
@@ -19,9 +20,12 @@ from redengine import Session
 class _AppMixin:
 
     def task(self, start_cond=None, name=None, *, command=None, path=None, **kwargs):
+        "Create a task"
+
         kwargs['session'] = self.session
         kwargs['start_cond'] = start_cond
         kwargs['name'] = name
+
         if command is not None:
             return CommandTask(command=command, **kwargs)
         elif path is not None:
@@ -30,14 +34,15 @@ class _AppMixin:
         else:
             return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
 
-    def param(self, name=None):
-        "Create one param"
+    def param(self, name:Optional[str]=None):
+        "Set one session parameter (decorator)"
         return FuncParam(name, session=self.session)
 
 
 class RedEngine(_AppMixin):
+    """Red Engine scheduling application"""
 
-    def __init__(self, session=None, logger_repo:Optional[BaseRepo]=None, execution=None, **kwargs):
+    def __init__(self, session:Session=None, logger_repo:Optional[BaseRepo]=None, execution=None, **kwargs):
 
         self.session = session if session is not None else Session(**kwargs)
 
@@ -50,12 +55,13 @@ class RedEngine(_AppMixin):
         self._set_logger_with_repo(logger_repo)
 
     def run(self, debug=False):
+        "Run the scheduler"
         self.session.config.debug = debug
         self.session.set_as_default()
         self.session.start()
 
-    def cond(self, syntax=None):
-        "Create condition"
+    def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
+        "Create a condition (decorator)"
         return FuncCond(syntax=syntax, session=self.session)
 
     def params(self, **kwargs):
