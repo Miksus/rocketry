@@ -17,7 +17,7 @@ def do_daily():
     return ...
 
 @app.task("after task 'do_daily'")
-def do_after(arg1=Return('do_on_process')):
+def do_after(arg1=Return('do_daily')):
     """This task runs after 'do_daily' and it has its the 
     return argument as an input"""
     ...
