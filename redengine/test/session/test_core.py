@@ -1,4 +1,6 @@
 
+import logging
+from redengine.core.log.adapter import TaskAdapter
 from redengine.tasks import FuncTask
 from redengine.core import Parameters, Scheduler
 
@@ -60,3 +62,10 @@ def test_clear(session):
     assert session.tasks == set()
     assert Parameters() == session.parameters
 
+def test_get_repo(session):
+
+    logger = logging.getLogger("redengine.task")
+    assert session.get_repo() is logger.handlers[0].repo
+
+    # Test the one used in the task logging is also the same
+    assert session.get_repo() is TaskAdapter(logger, task=None)._get_repo()

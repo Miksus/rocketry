@@ -22,7 +22,7 @@ Minimal Example
 
 Next, we make a quick and minimal application:
 
-.. literalinclude:: /code/minimal.py
+.. literalinclude:: /code/demos/minimal.py
     :language: py
 
 We initialized the RedEngine application, created one task
