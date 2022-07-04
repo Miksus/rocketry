@@ -26,7 +26,7 @@ Next, we make a quick and minimal application:
     :language: py
 
 We initialized the RedEngine application, created one task
-which runs every 10 seconds and then we started the app.
+which runs every day and then we started the app.
 This is nothing fancy but gets you stared. 
 
 What next
