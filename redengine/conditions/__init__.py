@@ -1,5 +1,7 @@
 from functools import partial
 
+from redengine.time.interval import TimeOfHour, TimeOfMinute, TimeOfMonth
+
 from .func import FuncCond
 from .task import *
 from .scheduler import *
@@ -99,6 +101,72 @@ def _set_scheduler_parsing():
         }
     )
 
+def _set_task_exec_parsing():
+    cond_parsers = Session._cls_cond_parsers
+
+    conds = {
+        "minutely": minutely,
+        "hourly": hourly,
+        "daily": daily,
+        "weekly": weekly,
+        "monthly": monthly,
+    }
+    options = {
+        r' (?P<span_type>before) (?P<end>.+)': 'before',
+        r' (?P<span_type>between) (?P<start>.+) and (?P<end>.+)': 'between',
+        r' (?P<span_type>after) (?P<start>.+)': 'after',
+        r' (?P<span_type>starting) (?P<start>.+)': 'starting',
+        r' (?P<span_type>on) (?P<start>.+)': 'on',
+    }
+
+    for str_period, cond in conds.items():
+        
+        for str_option, method_name in options.items():
+            syntax = f"{str_period}{str_option}"
+            method = getattr(cond, method_name)
+
+            # Add to the syntax
+            cond_parsers[syntax] = method
+
+class _TimeCondition(BaseCondition):
+
+    def __init__(self, cls_cond, cls_period):
+        self._cls_cond = cls_cond
+        self._cls_period = cls_period
+
+    def between(self, start, end):
+        period = self._cls_period(start, end)
+        return self._cls_cond(period=period)
+
+    def before(self, end):
+        period = self._cls_period(None, end)
+        return self._cls_cond(period=period)
+
+    def after(self, start):
+        period = self._cls_period(start, None)
+        return self._cls_cond(period=period)
+
+    def on(self, span):
+        period = self._cls_period(span, time_period=True)
+        return self._cls_cond(period=period)
+
+    def starting(self, start):
+        period = self._cls_period(start, start)
+        return self._cls_cond(period=period)
+
+    def __bool__(self):
+        period = self._cls_period(None, None)
+        return bool(self._cls_cond(period=period))
+
+# Task finish 
+minutely = _TimeCondition(TaskExecutable, TimeOfMinute)
+hourly = _TimeCondition(TaskExecutable, TimeOfHour)
+daily = _TimeCondition(TaskExecutable, TimeOfDay)
+weekly = _TimeCondition(TaskExecutable, TimeOfWeek)
+monthly = _TimeCondition(TaskExecutable, TimeOfMonth)
+
+
 _set_is_period_parsing()
 _set_task_has_parsing()
 _set_scheduler_parsing()
+_set_task_exec_parsing()

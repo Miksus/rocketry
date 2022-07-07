@@ -304,16 +304,6 @@ class TaskExecutable(Historical):
         period = period_func(**kwargs)
         return cls(period=period)
 
-    __parsers__ = {
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>starting) (?P<start>.+)"): "_from_period",
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>between) (?P<start>.+) and (?P<end>.+)"): "_from_period",
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>after) (?P<start>.+)"): "_from_period",
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>before) (?P<end>.+)"): "_from_period",
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely)"): "_from_period",
-        re.compile(r"(run )?(?P<type_>monthly|weekly|daily|hourly|minutely) (?P<span_type>on) (?P<start>.+)"): "_from_period",
-        re.compile(r"(run )?(?P<span_type>every) (?P<past>.+)"): "_from_period",
-    }
-
 
 class DependFinish(DependMixin, Historical):
     """Condition for checking whether a given
