@@ -11,8 +11,6 @@ import platform
 from copy import copy
 from queue import Empty
 
-import pandas as pd
-
 from redengine._base import RedBase
 from redengine.core.condition import BaseCondition, AlwaysFalse
 from redengine.core.task import Task

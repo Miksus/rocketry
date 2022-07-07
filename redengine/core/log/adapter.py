@@ -5,7 +5,6 @@ import datetime
 from typing import TYPE_CHECKING, Iterable, List, Dict, Union
 
 from dateutil.parser import parse as _parse_datetime
-import pandas as pd
 from redbird import BaseRepo
 
 from redengine.core.utils import is_main_subprocess

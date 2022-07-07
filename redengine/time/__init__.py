@@ -1,10 +1,6 @@
 from .interval import *
 from redengine.core.time import TimeDelta, StaticInterval, All, Any
 
-# Syntax
-import pandas as pd
-import calendar
-
 from .construct import get_between, get_before, get_after, get_full_cycle, get_on
 
 from redengine.session import Session
