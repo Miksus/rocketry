@@ -35,8 +35,8 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
     """
 
     resolution = pd.Timestamp.resolution
-    min = pd.Timestamp.min
-    max = pd.Timestamp.max
+    min = datetime.datetime(1970, 1, 1, 2, 0)
+    max = datetime.datetime(2260, 1, 1, 0, 0)
 
     def __contains__(self, other):
         """Whether a given point of time is in
