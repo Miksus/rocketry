@@ -1,8 +1,8 @@
-from redengine import RedEngine
-from redengine.args import Arg
+from rocketry import Rocketry
+from rocketry.args import Arg
 from redmail import EmailSender
 
-app = RedEngine()
+app = Rocketry()
 app.params(receivers=['me@example.com'])
 email = EmailSender(
     host="smtp.myserver.com", port=584,

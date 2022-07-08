@@ -15,7 +15,7 @@ The configurations can be set by:
 
 .. code-block:: python
 
-    app = RedEngine(config={
+    app = Rocketry(config={
         'task_execution': 'process',
         'task_pre_exist': 'raise',
         'force_status_from_logs': True,
@@ -121,7 +121,7 @@ To alter the session:
 
 .. code-block:: python
 
-    from redengine.args import Session
+    from rocketry.args import Session
 
     @app.task('every 20 hours', execution="thread")
     def do_shutdown(session=Session()):

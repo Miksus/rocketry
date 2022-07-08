@@ -79,7 +79,7 @@ Here is an illustration:
 
 .. code-block:: python
 
-    from redengine.args import Arg
+    from rocketry.args import Arg
 
     # Setting arguments to the session
     app.params(
@@ -102,7 +102,7 @@ this:
 
 .. code-block:: python
 
-    from redengine.args import SimpleArg
+    from rocketry.args import SimpleArg
 
     @app.task("every 10 seconds")
     def do_things(item = SimpleArg('Hello world')):
@@ -125,7 +125,7 @@ set a session level function argument:
 
 .. code-block:: python
 
-    from redengine.args import FuncArg
+    from rocketry.args import FuncArg
 
     def get_item():
         return 'hello world'
@@ -138,7 +138,7 @@ To set task level function argument:
 
 .. code-block:: python
 
-    from redengine.args import Arg
+    from rocketry.args import Arg
 
     @app.param('my_arg')
     def get_item():
@@ -163,7 +163,7 @@ An example of the session argument:
 
 .. code-block:: python
 
-    from redengine.args import Session
+    from rocketry.args import Session
 
     @app.task("every 10 seconds")
     def manipulate_session(session = Session()):
@@ -173,7 +173,7 @@ An example of the task argument:
 
 .. code-block:: python
 
-    from redengine.args import Task
+    from rocketry.args import Task
 
     @app.task("every 10 seconds")
     def manipulate_task(this_task=Task(), another_task = Task('do_things')):
@@ -182,7 +182,7 @@ An example of the task argument:
 Customizing Logging Handlers
 ----------------------------
 
-Red Engine uses `Red Bird's <https://red-bird.readthedocs.io/>`_
+Rocketry uses `Red Bird's <https://red-bird.readthedocs.io/>`_
 `logging handler <https://red-bird.readthedocs.io/en/latest/logging_handler.html>`_
 for implementing a logger that can be read programmatically.
 Red Bird is a repository pattern library that abstracts 
@@ -197,21 +197,21 @@ you may add other logging handlers as well:
 .. code-block:: python
 
     import logging
-    from redengine import RedEngine
+    from rocketry import Rocketry
 
-    app = RedEngine()
+    app = Rocketry()
 
     # Create a handler
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
 
     # Add the handler
-    task_logger = logging.getLogger('redengine.task')
+    task_logger = logging.getLogger('rocketry.task')
     task_logger.addHandler(handler)
 
 .. warning::
 
-    Make sure the logger ``redengine.task`` has at least 
+    Make sure the logger ``rocketry.task`` has at least 
     one ``redbird.logging.RepoHandler`` in handlers or 
     the system cannot read the log information.
 
@@ -227,7 +227,7 @@ Simply
 
     import logging
     
-    task_logger = logging.getLogger('redengine.task')
+    task_logger = logging.getLogger('rocketry.task')
 
     # Getting a RepoHandler
     for handler in task_logger.handlers:

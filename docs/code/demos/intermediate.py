@@ -1,7 +1,7 @@
-from redengine import RedEngine
-from redengine.args import Return, Arg, FuncArg
+from rocketry import Rocketry
+from rocketry.args import Return, Arg, FuncArg
 
-app = RedEngine()
+app = Rocketry()
 
 @app.cond('is foo')
 def is_foo():

@@ -14,7 +14,7 @@ Topics of the tutorial:
 Time Scheduling
 ---------------
 
-There are a lot of scheduling options in Red Engine:
+There are a lot of scheduling options in Rocketry:
 the tasks can run at specific time, after some other 
 tasks have run or when other conditions are met. In 
 this tutorial we focus on the time specific scheduling
@@ -75,7 +75,7 @@ if there is one that you prefer in your project:
 
 .. code-block:: python
 
-    app = RedEngine(config={'task_execution': 'main'})
+    app = Rocketry(config={'task_execution': 'main'})
 
     @app.task("daily")
     def do_main():
@@ -95,13 +95,13 @@ Execution   Parallerized?  Can be terminated?      Can modify the session?
 Changing Logging Destination
 ----------------------------
 
-Logging the states of the tasks is vital for Red Engine's system.
+Logging the states of the tasks is vital for Rocketry's system.
 This includes the logs about when each task started, succeeded 
 and failed. This information is used in many of the scheduling 
 statements and to prevent setting the same task running multiple
 times.
 
-Red Engine extends `logging library's <https://docs.python.org/3/library/logging.html>`_ 
+Rocketry extends `logging library's <https://docs.python.org/3/library/logging.html>`_ 
 loggers extending them with `Red Bird <https://red-bird.readthedocs.io/>`_
 to enable reading the logs. 
 
@@ -114,10 +114,10 @@ pass that as the ``logger_repo`` to the application.
 
 .. code-block:: python
 
-    from redengine import RedEngine
+    from rocketry import Rocketry
     from redbird.repos import MemoryRepo
 
-    app = RedEngine(
+    app = Rocketry(
         logger_repo=MemoryRepo()
     )
 
@@ -125,10 +125,10 @@ pass that as the ``logger_repo`` to the application.
 
 .. code-block:: python
 
-    from redengine import RedEngine
+    from rocketry import Rocketry
     from redbird.repos import CSVFileRepo
 
-    app = RedEngine(
+    app = Rocketry(
         logger_repo=CSVFileRepo(
             filename="logs.csv"
         )

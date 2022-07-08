@@ -1,6 +1,6 @@
-from redengine import RedEngine
+from rocketry import Rocketry
 
-app = RedEngine()
+app = Rocketry()
 
 @app.task('daily')
 def do_things():
