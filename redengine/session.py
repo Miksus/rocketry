@@ -48,7 +48,7 @@ class Config(BaseModel):
 
     silence_task_prerun: bool = False # Whether to silence errors occurred in setting a task to run
     silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
-    cycle_sleep: int = None
+    cycle_sleep: float = 0.1
     debug: bool = False
 
     max_process_count = cpu_count()
