@@ -24,7 +24,9 @@ The configurations can be set by:
         'silence_cond_check': False,
 
         'max_process_count': 5,
-        'restarting': 'replace'
+        'restarting': 'replace',
+
+        'cycle_sleep': 0.1
     })
 
 These are the default options. 
@@ -67,6 +69,10 @@ These are the default options.
     - ``fresh``: Restart by starting a new process (on new window on Windows)
     - ``recall``: Restart by calling the start method again. Useful for testing the restart
 
+- **cycle_sleep**: How long is waited (in seconds) after the scheduler goes through one round of tasks. 
+  If ``None``, no sleep.
+
+    - By default, 0.1
 
 Task Types
 ----------
