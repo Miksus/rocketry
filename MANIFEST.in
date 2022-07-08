@@ -1,9 +1,9 @@
-include redengine/test/test_files/*.ipynb
-include redengine/test/test_files/*.py
-include redengine/config/defaults/*.json
+include rocketry/test/test_files/*.ipynb
+include rocketry/test/test_files/*.py
+include rocketry/config/defaults/*.json
 include versioneer.py
-include redengine/_session.py
-include redengine/_setup.py
-include redengine/_pkg.py
-include redengine/_version.py
-recursive-include redengine/templates *
+include rocketry/_session.py
+include rocketry/_setup.py
+include rocketry/_pkg.py
+include rocketry/_version.py
+recursive-include rocketry/templates *
