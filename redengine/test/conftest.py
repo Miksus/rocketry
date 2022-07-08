@@ -77,6 +77,7 @@ def session():
         "debug": True,
         "silence_task_prerun": False,
         "silence_cond_check": False,
+        "cycle_sleep": 0.001
     }, delete_existing_loggers=True)
     redengine.session = session
     session.set_as_default()
