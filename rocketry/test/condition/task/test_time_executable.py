@@ -214,6 +214,8 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         mock_datetime_now(time_after)
 
         if outcome:
-            assert bool(condition) 
+            assert condition.observe(session=session)
+            assert condition.observe(task=task)
         else:
-            assert not bool(condition)
+            assert not condition.observe(session=session)
+            assert not condition.observe(task=task)

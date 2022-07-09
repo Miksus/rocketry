@@ -49,7 +49,7 @@ def test_logs_not_used_false(session, cls, mock_datetime_now):
     ]
     setup_task_state(mock_datetime_now, logs, task=task)
     cond = cls(task=task)
-    assert not cond
+    assert not cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
@@ -67,7 +67,7 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, pd.Timestamp("2000-01-01 12:00:00"))
     cond = cls(task=task)
-    assert cond
+    assert cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
@@ -84,9 +84,12 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, pd.Timestamp("2000-01-01 12:00:00"))
-    cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
+    if cls == TaskRunning:
+        cond = cls(task=task)
+    else:
+        cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     mock_datetime_now("2000-01-01 14:00")
-    assert bool(cond)
+    assert cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
@@ -105,7 +108,7 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
         setattr(task, attr, pd.Timestamp("2000-01-01 05:00:00"))
     cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     mock_datetime_now("2000-01-01 14:00")
-    assert not cond
+    assert not cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
@@ -126,7 +129,7 @@ def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
     ]
     setup_task_state(mock_datetime_now, logs, task=task)
     cond = cls(task=task) == 0
-    assert cond
+    assert cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
@@ -154,4 +157,4 @@ def test_logs_used(session, cls, mock_datetime_now):
         cond = cls(task=task) == 3
     else:
         cond = cls(task=task) == 1 
-    assert cond
+    assert cond.observe(session=session)

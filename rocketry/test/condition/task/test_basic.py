@@ -88,7 +88,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         )
 
         # Has not yet ran
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
         # Now has
         try:
@@ -104,7 +104,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         # in memory logging is way too fast. Therefore we just wait
         # 20ms to fix the issue
         # time.sleep(0.02) 
-        assert bool(condition) if expected else not bool(condition)
+        assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
 @pytest.mark.parametrize(
@@ -144,33 +144,33 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         )
 
         # ------------------------ t0
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
         # depend_task
         # -----|------------------- t0
         try: depend_task(params={"fail": True})
         except: pass
-        assert bool(condition) if expected else not bool(condition)
+        assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
         # depend_task     task
         # -----|-----------|------- t0
         task()
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
         # depend_task     task     depend_task
         # -----|-----------|-----------|----------- t0
         try: depend_task(params={"fail": True})
         except: pass
-        assert bool(condition) if expected else not bool(condition)
+        assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
         # depend_task     task     depend_task     task
         # -----|-----------|-----------|------------|-------- t0
         task()
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
 @pytest.mark.parametrize(
@@ -210,31 +210,31 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         )
 
         # ------------------------ t0
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
         # depend_task
         # -----|------------------- t0
         depend_task(params={"fail": False})
-        assert bool(condition) if expected else not bool(condition)
+        assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
         # depend_task     task
         # -----|-----------|------- t0
         task()
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
         # depend_task     task     depend_task
         # -----|-----------|-----------|----------- t0
         depend_task(params={"fail": False})
-        assert bool(condition) if expected else not bool(condition)
+        assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
         # depend_task     task     depend_task     task
         # -----|-----------|-----------|------------|-------- t0
         task()
-        assert not bool(condition)
+        assert not condition.observe(task=task)
 
 
 @pytest.mark.parametrize(

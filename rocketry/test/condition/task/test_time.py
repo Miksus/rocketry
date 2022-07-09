@@ -154,14 +154,16 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             id="Is not running (but does in the future)", marks=pytest.mark.xfail(reason="Bug but not likely to encounter")),
     ],
 )
-def test_running(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    setup_task_state(mock_datetime_now, logs, time_after)
+    task = setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
-        assert bool(cond)
+        assert cond.observe(session=session)
+        assert cond.observe(task=session['the task'])
     else:
-        assert not bool(cond)
+        assert not cond.observe(session=session)
+        assert not cond.observe(task=session['the task'])
 
 
 @pytest.mark.parametrize(
@@ -221,9 +223,11 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
-        assert bool(cond)
+        assert cond.observe(session=session)
+        assert cond.observe(task=session['the task'])
     else:
-        assert not bool(cond)
+        assert not cond.observe(session=session)
+        assert not cond.observe(task=session['the task'])
 
 
 
@@ -321,9 +325,9 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
-        assert bool(cond)
+        assert cond.observe(session=session)
     else:
-        assert not bool(cond)
+        assert not cond.observe(session=session)
 
 
 @pytest.mark.parametrize(
@@ -417,9 +421,9 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
-        assert bool(cond)
+        assert cond.observe(session=session)
     else:
-        assert not bool(cond)
+        assert not cond.observe(session=session)
 
 
 @pytest.mark.parametrize(
@@ -508,11 +512,11 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             
     ],
 )
-def test_fail(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
+def test_fail(mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
     setup_task_state(mock_datetime_now, logs, time_after)
     cond = get_condition()
     if outcome:
-        assert bool(cond)
+        assert cond.observe(session=session)
     else:
-        assert not bool(cond)
+        assert not cond.observe(session=session)

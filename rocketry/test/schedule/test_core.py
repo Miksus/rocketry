@@ -107,7 +107,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         session.config.shut_cond = (TaskStarted(task="mytask") >= run_count) | ~SchedulerStarted(period=TimeDelta("10 second"))
         session.start()
 
-        assert bool(TaskStarted(task="mytask") >= run_count)
+        assert (TaskStarted(task="mytask") >= run_count).observe(session=session)
 
         # Test history
         history = list(task.logger.get_records())
