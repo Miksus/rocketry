@@ -120,7 +120,8 @@ def _set_task_exec_parsing():
     }
 
     for str_period, cond in conds.items():
-        
+        cond_parsers[str_period] = cond
+
         for str_option, method_name in options.items():
             syntax = f"{str_period}{str_option}"
             method = getattr(cond, method_name)
