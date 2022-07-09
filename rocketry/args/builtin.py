@@ -16,7 +16,7 @@ class SimpleArg(BaseArgument):
     def __init__(self, value:Any):
         self._value = value
 
-    def get_value(self, task=None) -> Any:
+    def get_value(self, task=None, **kwargs) -> Any:
         return self._value
 
 class Arg(BaseArgument):
@@ -31,14 +31,17 @@ class Arg(BaseArgument):
     def __init__(self, key:Any):
         self.key = key
 
-    def get_value(self, task=None) -> Any:
+    def get_value(self, task=None, **kwargs) -> Any:
         return task.session.parameters[self.key]
 
 class Session(BaseArgument):
     "An argument that represents the session"
 
-    def get_value(self, task=None) -> Any:
-        return task.session
+    def get_value(self, task=None, session=None, **kwargs) -> Any:
+        if session is not None:
+            return session
+        else:
+            return task.session
 
 class Task(BaseArgument):
     "An argument that represents a task"
@@ -46,7 +49,7 @@ class Task(BaseArgument):
     def __init__(self, name=None):
         self.name = name
 
-    def get_value(self, task=None) -> Any:
+    def get_value(self, task=None, **kwargs) -> Any:
         if self.name is None:
             return task
         else:
@@ -87,7 +90,7 @@ class Return(BaseArgument):
         self.task_name = task_name
         self.default = default
 
-    def get_value(self, task=None) -> Any:
+    def get_value(self, task=None, **kwargs) -> Any:
         session = task.session
         input_task = session[self.task_name]
         try:
@@ -157,7 +160,7 @@ class FuncArg(BaseArgument):
         defaults.update(kwargs)
         return filter_keyword_args(self.func, defaults)
 
-    def get_value(self, task=None):
+    def get_value(self, task=None, **kwargs):
         return self(task=task)
 
     def __call__(self, **kwargs):
