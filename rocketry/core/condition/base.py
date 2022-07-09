@@ -1,3 +1,4 @@
+from copy import copy
 import datetime
 from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
@@ -279,3 +280,103 @@ class AlwaysFalse(BaseCondition):
             return super().__str__()
         except AttributeError:
             return 'false'
+
+
+class BaseComparable(BaseCondition):
+
+    _comp_attrs = ("__eq__", "__ne__", "__lt__", "__gt__", "__le__", "__ge__")
+
+    def __init__(self):
+        self._comps = {}
+        super().__init__()
+
+    def observe(self, **kwargs):
+        params = Parameters._from_signature(self.get_measurement, **kwargs)
+        value = self.get_measurement(**params)
+        if isinstance(value, bool):
+            # Possibly has some optimization and already did the comparison
+            return value
+        return self.get_state(value)
+
+    @abstractmethod
+    def get_measurement(self):
+        "Get measurement (something that can be compared)"
+
+    def get_state(self, res:int):
+        compares = self._comps
+
+        res = len(res) if hasattr(res, "__len__") else res
+
+        comps = {
+            f"_{comp}_": compares[comp]
+            for comp in self._comp_attrs
+            if comp in compares
+        }
+        if not comps:
+            return res > 0
+        return all(
+            getattr(res, comp)(val) # Comparison is magic method (==, !=, etc.)
+            for comp, val in comps.items()
+        )
+
+    def _is_any_over_zero(self):
+        # Useful for optimization: just find any observation and the statement is true
+        comps = {
+            comp: self._comps[comp]
+            for comp in self._comp_attrs
+            if comp in self._comps
+        }
+        if comps == {"__gt__": 0} or comps == {"__ge__": 1} or comps == {"__gt__": 0, "__ge__": 1}:
+            return True
+        return not comps
+
+    def _is_equal_zero(self):
+        comps = {
+            comp: self._comps[comp]
+            for comp in self._comp_attrs
+            if comp in self._comps
+        }
+        return comps == {"__eq__": 0}
+
+    def __eq__(self, other):
+        # self == other
+        is_same_class = isinstance(other, BaseComparable)
+        if is_same_class:
+            # Not storing as parameter to statement but
+            # check whether the statements are same
+            return super().__eq__(other)
+        return self._set_comparison("__eq__", other)
+
+    def __ne__(self, other):
+        # self != other
+        return self._set_comparison("__ne__", other)
+
+    def __lt__(self, other):
+        # self < other
+        return self._set_comparison("__lt__", other)
+
+    def __gt__(self, other):
+        # self > other
+        return self._set_comparison("__gt__", other)
+
+    def __le__(self, other):
+        # self <= other
+        return self._set_comparison("__le__", other)
+        
+    def __ge__(self, other):
+        # self >= other
+        return self._set_comparison("__ge__", other)        
+
+    def _set_comparison(self, key, val):
+        obj = copy(self)
+        obj._comps[key] = val
+        return obj
+
+    @classmethod
+    def from_magic(cls, **kwargs):
+        for key in kwargs:
+            if key not in cls._comp_attrs:
+                raise ValueError(f"Unknown comparison: {key}")
+        obj = cls()
+        obj._comps = kwargs
+        return obj

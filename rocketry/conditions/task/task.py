@@ -1,17 +1,24 @@
 
 import re, time
 import datetime
+from typing import Tuple
+from rocketry.core import task
+from rocketry.core.condition import BaseCondition
+
+from rocketry.core.time import TimePeriod
+from rocketry.core.time.utils import get_period_span, to_timestamp
 from .utils import DependMixin, TaskStatusMixin
 
 from redbird.oper import between
 
-from rocketry.core.condition import Statement, Historical, Comparable, All
+from rocketry.core.condition import Statement, Historical, BaseComparable, All
 from rocketry.core.time import TimeDelta
 from ..time import IsPeriod
 from rocketry.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
+from rocketry.args import Task, Session
+from rocketry.log.utils import get_field_value
 
-
-class TaskStarted(Historical, Comparable):
+class TaskStarted(BaseComparable):
 
     """Condition for whether a task has started
     (for given period).
@@ -26,16 +33,17 @@ class TaskStarted(Historical, Comparable):
     TaskStarted(task='mytask', period=TimeOfDay(None, None))
     """
 
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
+    def __init__(self, task=None, period=None):
+        self.task = task
+        self.period = period
+        super().__init__()
 
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
+    def get_measurement(self, task=Task(), session=Session()):
+        task = task if self.task is None else session[self.task]
+        _start_, _end_ = get_period_span(self.period if self.period is not None else task.period)
 
         allow_optimization = not self.session.config.force_status_from_logs
-        if allow_optimization and self.any_over_zero():
+        if allow_optimization and self._is_any_over_zero():
             # Condition only checks whether has run at least once
             if task.last_run is None:
                 return False
@@ -43,12 +51,12 @@ class TaskStarted(Historical, Comparable):
                 # Can probably be optimized only if inside the period (--> True)
                 # else the old records must be fetched in case the task ran multiple times
                 return True
-        elif allow_optimization and self.equal_zero():
+        elif allow_optimization and self._is_equal_zero():
             return not bool(task.last_run)
         
-        records = task.logger.get_records(created=between(self._to_timestamp(_start_), self._to_timestamp(_end_)), action="run")
-        run_times = [self._get_field_value(record, "created") for record in records]
-        return run_times
+        records = task.logger.get_records(created=between(to_timestamp(_start_), to_timestamp(_end_)), action="run")
+        run_times = [get_field_value(record, "created") for record in records]
+        return len(run_times)
         
     def __str__(self):
         if hasattr(self, "_str"):
@@ -60,7 +68,7 @@ class TaskStarted(Historical, Comparable):
         return f"task '{task_name}' started{period}"
 
 
-class TaskFailed(TaskStatusMixin, Historical, Comparable):
+class TaskFailed(TaskStatusMixin):
     """Condition for whether the given task has failed
     (in given period).
 
@@ -86,7 +94,7 @@ class TaskFailed(TaskStatusMixin, Historical, Comparable):
         return f"task '{task_name}' failed{period}"
 
 
-class TaskTerminated(TaskStatusMixin, Historical, Comparable):
+class TaskTerminated(TaskStatusMixin):
     """Condition for whether the given task has terminated
     (in given period).
 
@@ -111,7 +119,7 @@ class TaskTerminated(TaskStatusMixin, Historical, Comparable):
         return f"task '{task_name}' terminated{period}"
 
 
-class TaskSucceeded(TaskStatusMixin, Historical, Comparable):
+class TaskSucceeded(TaskStatusMixin):
     """Condition for whether the given task has succeeded
     (in given period).
 
@@ -137,7 +145,7 @@ class TaskSucceeded(TaskStatusMixin, Historical, Comparable):
         return f"task '{task_name}' succeeded{period}"
 
 
-class TaskFinished(TaskStatusMixin, Historical, Comparable):
+class TaskFinished(TaskStatusMixin):
     """Condition for whether the given task has finished
     (in given period).
 
@@ -163,7 +171,7 @@ class TaskFinished(TaskStatusMixin, Historical, Comparable):
         return f"task '{task_name}' finished" + period
 
 
-class TaskRunning(Historical):
+class TaskRunning(BaseCondition):
 
     """Condition for whether a task is currently
     running.
@@ -184,10 +192,13 @@ class TaskRunning(Historical):
         re.compile(r"task '(?P<task>.+)' is running"): "__init__",
     }
 
-    def observe(self, task, **kwargs):
+    def __init__(self, task=None):
+        self.task = task
+        super().__init__()
 
-        task = Statement.session.get_task(task)
-
+    def get_state(self, task=Task(), session=Session()):
+        task = session[self.task] if self.task is not None else task
+        
         if not self.session.config.force_status_from_logs:
             return bool(task.last_run)
 
@@ -204,7 +215,7 @@ class TaskRunning(Historical):
         return f"task '{task_name}' is running"
 
 
-class TaskInacted(TaskStatusMixin, Historical, Comparable):
+class TaskInacted(TaskStatusMixin):
     """Condition for whether the given task has inacted
     (in given period).
 
@@ -227,7 +238,7 @@ class TaskInacted(TaskStatusMixin, Historical, Comparable):
         return f"task '{task_name}' inacted"
 
 
-class TaskExecutable(Historical):
+class TaskExecutable(BaseCondition):
     """Condition for checking whether a given
     task has not finished (for given period).
     Useful to set the given task to run once 
@@ -244,10 +255,11 @@ class TaskExecutable(Historical):
 
     """
 
-    def __init__(self, retries=None, task=None, period=None, **kwargs):
-        if retries is not None:
-            kwargs["retries"] = retries
-        super().__init__(period=period, task=task, **kwargs)
+    def __init__(self, retries=None, task=None, period=None):
+        self.retries = retries
+        self.period = period
+        self.task = task
+        super().__init__()
 
         # TODO: If constant launching (allow launching alive tasks)
         # is to be implemented, there should be one more condition:
@@ -256,10 +268,10 @@ class TaskExecutable(Historical):
         # TODO: How to consider termination? Probably should be considered as failures without retries
         # NOTE: inaction is not considered at all
 
-    def __bool__(self):
+    def get_state(self, task=Task(), session=Session()):
+        task = self.task if self.task is not None else task
         period = self.period
-        retries = self.kwargs.get("retries", 0)
-        task = self.kwargs["task"]
+        retries = 0 if self.retries is None else self.retries
 
         # Form the sub statements
         has_not_succeeded = TaskSucceeded(period=period, task=task) == 0
@@ -276,11 +288,11 @@ class TaskExecutable(Historical):
         )
 
         return (
-            bool(isin_period)
-            and bool(has_not_inacted)
-            and bool(has_not_succeeded)
-            and bool(has_not_failed)
-            and bool(has_not_terminated)
+            isin_period.observe()
+            and has_not_inacted.observe(task=task, session=session)
+            and has_not_succeeded.observe(task=task, session=session)
+            and has_not_failed.observe(task=task, session=session)
+            and has_not_terminated.observe(task=task, session=session)
         )
 
     def __str__(self):
@@ -305,7 +317,7 @@ class TaskExecutable(Historical):
         return cls(period=period)
 
 
-class DependFinish(DependMixin, Historical):
+class DependFinish(DependMixin):
     """Condition for checking whether a given
     task has not finished after running a dependent 
     task. Useful to set the given task to run after
@@ -337,7 +349,7 @@ class DependFinish(DependMixin, Historical):
         return f"task '{depend_task_name}' finished before '{task_name}' started"
 
 
-class DependSuccess(DependMixin, Historical):
+class DependSuccess(DependMixin):
     """Condition for checking whether a given
     task has not succeeded after running a dependent 
     task. Useful to set the given task to run after
@@ -371,7 +383,7 @@ class DependSuccess(DependMixin, Historical):
         return f"task '{depend_task_name}' succeeded before '{task_name}' started"
 
 
-class DependFailure(DependMixin, Historical):
+class DependFailure(DependMixin):
     """Condition for checking whether a given
     task has not failed after running a dependent 
     task. Useful to set the given task to run after
