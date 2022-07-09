@@ -305,8 +305,8 @@ class Task(RedBase, BaseModel):
 
     def _set_default_task(self):
         "Set the task in subconditions that are missing "
-        set_statement_defaults(self.start_cond, task=self)
-        set_statement_defaults(self.end_cond, task=self)
+        #set_statement_defaults(self.start_cond, task=self)
+        #set_statement_defaults(self.end_cond, task=self)
 
     def __hash__(self):
         return id(self)
