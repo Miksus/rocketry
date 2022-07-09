@@ -1,6 +1,7 @@
 
 import copy
 from typing import Callable, List, Optional, Pattern, Union
+from rocketry.core.parameters.parameters import Parameters
 
 
 from rocketry.session import Session
@@ -91,6 +92,13 @@ class FuncCond(BaseCondition):
 
     def __bool__(self):
         return self.func(*self.args, **self.kwargs)
+
+    def observe(self, **kwargs) -> bool:
+        func_params = Parameters._from_signature(self.func, **kwargs)
+        return self.get_state(*self.args, **self.kwargs, **func_params)
+
+    def get_state(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
 
     def _set_parsing(self):
 

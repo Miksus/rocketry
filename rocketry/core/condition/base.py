@@ -4,6 +4,7 @@ from typing import Callable, Dict, Pattern, Union, Type
 
 from rocketry._base import RedBase
 from rocketry.core.meta import _add_parser, _register
+from rocketry.core.parameters.parameters import Parameters
 from rocketry.session import Session
 
 
@@ -89,9 +90,20 @@ class BaseCondition(RedBase, metaclass=_ConditionMeta):
     __parsers__ = {}
     __register__ = False
 
-    @abstractmethod
+    def observe(self, **kwargs):
+        "Observe the status of the condition"
+        cond_params = Parameters._from_signature(self.get_state, **kwargs)
+        return self.get_state(**cond_params)
+
     def __bool__(self) -> bool:
-        """Check whether the condition holds.
+        """Check whether the condition holds."""
+        return self.observe()
+
+    @abstractmethod
+    def get_state(self):
+        """Get the status of the condition 
+        (using arguments)
+        
         Override this method."""
 
     def __and__(self, other):
@@ -156,8 +168,11 @@ class Any(_ConditionContainer, BaseCondition):
             conds = cond.subconditions if isinstance(cond, self_type) else [cond]
             self.subconditions += conds
 
-    def __bool__(self):
-        return any(self.subconditions)
+    def observe(self, **kwargs) -> bool:
+        for subcond in self.subconditions:
+            if subcond.observe(**kwargs):
+                return True
+        return False
 
     def __str__(self):
         try:
@@ -178,8 +193,11 @@ class All(_ConditionContainer, BaseCondition):
             conds = cond.subconditions if isinstance(cond, self_type) else [cond]
             self.subconditions += conds
 
-    def __bool__(self):
-        return all(self.subconditions)
+    def observe(self, **kwargs) -> bool:
+        for subcond in self.subconditions:
+            if not subcond.observe(**kwargs):
+                return False
+        return True
 
     def __str__(self):
         try:
@@ -198,8 +216,8 @@ class Not(_ConditionContainer, BaseCondition):
         # TODO: rename condition as child
         self.condition = condition
 
-    def __bool__(self):
-        return not(self.condition)
+    def observe(self, **kwargs):
+        return not(self.condition.observe(**kwargs))
 
     def __repr__(self):
         string = repr(self.condition)
@@ -234,7 +252,7 @@ class Not(_ConditionContainer, BaseCondition):
 
 class AlwaysTrue(BaseCondition):
     "Condition that is always true"
-    def __bool__(self):
+    def observe(self, **kwargs):
         return True
 
     def __repr__(self):
@@ -250,7 +268,7 @@ class AlwaysTrue(BaseCondition):
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
 
-    def __bool__(self):
+    def observe(self, **kwargs):
         return False
 
     def __repr__(self):

@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from typing import Callable, Type, Union, TYPE_CHECKING
 from functools import partial
+import inspect
 
 from rocketry._base import RedBase
 from .arguments import BaseArgument
@@ -47,6 +48,19 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
             }
         self._params = params
     
+    @classmethod
+    def _from_signature(cls, __func:Callable, **kwargs) -> 'Parameters':
+        # Get parameters from a function signature
+        # ie.
+        # def myfunc(task=Task(), session=Session()): ...
+        func_params = inspect.signature(__func).parameters
+        params = cls()
+        for name, param in func_params.items():
+            default = param.default
+            if isinstance(default, BaseArgument):
+                params[name] = default.get_value(**kwargs)
+        return params
+
 # For mapping interface
     def get(self, item, default=None):
         try:
