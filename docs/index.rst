@@ -1,16 +1,16 @@
 
 .. meta::
-   :description: Red Engine, modern scheduling framework
+   :description: Rocketry, modern scheduling framework
    :keywords: schedule, task, script, run, Python
 
-:red:`Red` Engine
-=================
+Rocketry
+========
 
-.. image:: https://badgen.net/pypi/v/redengine
-   :target: https://pypi.org/project/redengine/
+.. image:: https://badgen.net/pypi/v/rocketry
+   :target: https://pypi.org/project/rocketry/
 
-.. image:: https://badgen.net/pypi/python/redengine
-   :target: https://pypi.org/project/redengine/
+.. image:: https://badgen.net/pypi/python/rocketry
+   :target: https://pypi.org/project/rocketry/
 
 .. raw:: html
 
@@ -18,7 +18,7 @@
 
 No time to read? :ref:`Get started then. <getting-started>`
 
-Red Engine is a modern scheduling framework for Python 
+Rocketry is a modern scheduling framework for Python 
 applications. It is simple, clean and extensive.
 
 **Key features:**
@@ -42,7 +42,7 @@ applications. It is simple, clean and extensive.
 .. literalinclude:: /code/demos/minimal.py
     :language: py
 
-Why Red Engine?
+Why Rocketry?
 ---------------
 
 There are a lot of options for scheduler:
@@ -51,12 +51,12 @@ There are a lot of options for scheduler:
 - APScheduler
 - Airflow
 
-Red Engine provides more features than Crontab and APScheduler
-and it is much easier to use than Airflow. Red Engine
+Rocketry provides more features than Crontab and APScheduler
+and it is much easier to use than Airflow. Rocketry
 has by far the cleanest syntax compared to the alternatives and it is 
 the most productive.
 
-Red Engine is not meant to be the scheduler for enterprise pipelines,
+Rocketry is not meant to be the scheduler for enterprise pipelines,
 unlike Airflow, but it is fantastic to power your Python applications.
 
 Here is a demonstration of more advanced case:
@@ -72,7 +72,7 @@ Just install the library:
 
 .. code-block:: console
 
-    pip install redengine
+    pip install rocketry
 
 There is much more to offer. See :ref:`quick start <getting-started>`
 And the rest :ref:`tutorials <tutorials>`.

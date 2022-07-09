@@ -18,7 +18,7 @@ print(f"Root dir: {sys.path[0]}")
 
 # -- Project information -----------------------------------------------------
 
-project = 'redengine'
+project = 'rocketry'
 copyright = '2021, Mikael Koli'
 author = 'Mikael Koli'
 
@@ -43,8 +43,8 @@ rst_prolog = """
 
 doctest_global_setup = '''
 def cleanup():
-    from redengine import Session
-    from redengine.core.hook import clear_hooks
+    from rocketry import Session
+    from rocketry.core.hook import clear_hooks
     Session.default_config['task_pre_exist'] = 'replace'
 
     clear_hooks()
@@ -77,7 +77,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_title = "Red Engine: Advanced Scheduler"
+html_title = "Rocketry: Advanced Scheduler"
 html_theme = 'sphinx_book_theme'
 html_logo = "logo.svg"
 html_favicon = 'favicon.ico'

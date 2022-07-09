@@ -1,18 +1,18 @@
 
-# <span style="color:red">Red</span> Engine
+# Rocketry
 > Powering your Python Apps
 
 -----------------
 
-[![Pypi version](https://badgen.net/pypi/v/redengine)](https://pypi.org/project/redengine/)
-[![build](https://github.com/Miksus/red-engine/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/Miksus/red-engine/actions/workflows/main.yml)
-[![codecov](https://codecov.io/gh/Miksus/red-engine/branch/master/graph/badge.svg?token=U2KF1QA5HT)](https://codecov.io/gh/Miksus/red-engine)
-[![Documentation Status](https://readthedocs.org/projects/red-engine/badge/?version=latest)](https://red-engine.readthedocs.io/en/latest/?badge=latest)
-[![PyPI pyversions](https://badgen.net/pypi/python/redengine)](https://pypi.org/project/redengine/)
+[![Pypi version](https://badgen.net/pypi/v/rocketry)](https://pypi.org/project/rocketry/)
+[![build](https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/Miksus/rocketry/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/Miksus/rocketry/branch/master/graph/badge.svg?token=U2KF1QA5HT)](https://codecov.io/gh/Miksus/rocketry)
+[![Documentation Status](https://readthedocs.org/projects/rocketry/badge/?version=latest)](https://rocketry.readthedocs.io/en/latest/?badge=latest)
+[![PyPI pyversions](https://badgen.net/pypi/python/rocketry)](https://pypi.org/project/rocketry/)
 
 ## What is it?
 
-Red Engine is a modern scheduling framework for Python 
+Rocketry is a modern scheduling framework for Python 
 applications. It is simple, clean and extensive. It is 
 the engine that sets your Python programs alive.
 
@@ -20,9 +20,9 @@ The library is minimal on the surface but extensive
 and customizable underneath. The syntax very clean:
 
 ```python
-from redengine import RedEngine
+from rocketry import Rocketry
 
-app = RedEngine()
+app = Rocketry()
 
 @app.task('daily')
 def do_daily():
@@ -32,17 +32,17 @@ if __name__ == '__main__':
     app.run()
 ```
 
-Compared to alternatives, Red Engine has perhaps the most elegant syntax and is the most productive. It offers more features than Crontab or APScheduler but is much
+Compared to alternatives, Rocketry has perhaps the most elegant syntax and is the most productive. It offers more features than Crontab or APScheduler but is much
 easier to work with than Airflow. It does not make assumptions of your project.
 
-Read more from the documentations: [Red Engine, documentations](https://red-engine.readthedocs.io/en/stable/)
+Read more from the documentations: [Rocketry, documentations](https://rocketry.readthedocs.io/en/stable/)
 
 ## Installation
 
-Install Red Engine from [PyPI](https://pypi.org/project/redengine/):
+Install Rocketry from [PyPI](https://pypi.org/project/rocketry/):
 
 ```shell
-pip install redengine
+pip install rocketry
 ```
 
 
@@ -71,7 +71,7 @@ def do_twice_a_week_after_ten():
 **Pipelining tasks:**
 
 ```python
-from redengine.args import Return
+from rocketry.args import Return
 
 @app.task("daily after 07:00")
 def do_first():

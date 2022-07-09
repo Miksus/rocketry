@@ -3,9 +3,9 @@
 How it works?
 =============
 
-There are four core components in Red Engine's ecosystem:
+There are four core components in Rocketry's ecosystem:
 
-- **RedEngine**: acts as the top level interface
+- **Rocketry**: acts as the top level interface
 - **Session**: handles the configuration and act as a medium level interface
 - **Scheduler**: handles the flow of the system
 - **Task**: handles how to execute a task
