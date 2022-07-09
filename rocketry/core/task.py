@@ -373,6 +373,12 @@ class Task(RedBase, BaseModel):
             raise
 
     def __bool__(self):
+        return self.is_runnable()
+
+    def is_terminable(self):
+        return self.end_cond.observe(task=self)
+
+    def is_runnable(self):
         """Check whether the task can be run or not.
         
         If force_run is True, the task can be run regardless.
@@ -391,7 +397,7 @@ class Task(RedBase, BaseModel):
         elif self.disabled:
             return False
 
-        cond = bool(self.start_cond)
+        cond = self.start_cond.observe(task=self)
 
         return cond
 
