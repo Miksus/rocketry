@@ -1,6 +1,6 @@
 from functools import partial
 
-from redengine.time.interval import TimeOfHour, TimeOfMinute, TimeOfMonth
+from rocketry.time.interval import TimeOfHour, TimeOfMinute, TimeOfMonth
 
 from .func import FuncCond
 from .task import *
