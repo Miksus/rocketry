@@ -98,6 +98,10 @@ def _set_scheduler_parsing():
         {
             re.compile(fr"scheduler has run over (?P<past>.+)"): partial(func, span_type='past', inverse=True),
             re.compile(fr"scheduler started (?P<past>.+) ago"): partial(func, span_type='past'),
+
+            re.compile(r"scheduler has more than (?P<__gt__>[0-9]+) cycles"): SchedulerCycles.from_magic,
+            re.compile(r"scheduler has less than (?P<__lt__>[0-9]+) cycles"): SchedulerCycles.from_magic,
+            re.compile(r"scheduler has (?P<__eq__>[0-9]+) cycles"): SchedulerCycles.from_magic,
         }
     )
 
@@ -112,11 +116,11 @@ def _set_task_exec_parsing():
         "monthly": monthly,
     }
     options = {
-        r' (?P<span_type>before) (?P<end>.+)': 'before',
-        r' (?P<span_type>between) (?P<start>.+) and (?P<end>.+)': 'between',
-        r' (?P<span_type>after) (?P<start>.+)': 'after',
-        r' (?P<span_type>starting) (?P<start>.+)': 'starting',
-        r' (?P<span_type>on) (?P<start>.+)': 'on',
+        r' before (?P<end>.+)': 'before',
+        r' between (?P<start>.+) and (?P<end>.+)': 'between',
+        r' after (?P<start>.+)': 'after',
+        r' starting (?P<start>.+)': 'starting',
+        r' on (?P<span>.+)': 'on',
     }
 
     for str_period, cond in conds.items():
@@ -127,9 +131,11 @@ def _set_task_exec_parsing():
             method = getattr(cond, method_name)
 
             # Add to the syntax
-            cond_parsers[syntax] = method
+            cond_parsers[re.compile(syntax)] = method
+    # Add "every ..."
+    cond_parsers[re.compile(r"every (?P<past>.+)")] = every
 
-class _TimeCondition(BaseCondition):
+class TimeCondWrapper(BaseCondition):
 
     def __init__(self, cls_cond, cls_period):
         self._cls_cond = cls_cond
@@ -148,24 +154,33 @@ class _TimeCondition(BaseCondition):
         return self._cls_cond(period=period)
 
     def on(self, span):
-        period = self._cls_period(span, time_period=True)
+        period = self._cls_period(span, time_point=True)
         return self._cls_cond(period=period)
 
     def starting(self, start):
         period = self._cls_period(start, start)
         return self._cls_cond(period=period)
 
-    def __bool__(self):
+    def observe(self, **kwargs):
         period = self._cls_period(None, None)
-        return bool(self._cls_cond(period=period))
+        cond = self._cls_cond(period=period)
+        return cond.observe(**kwargs)
+
+def every(past:str):
+    return TaskExecutable(period=TimeDelta(past))
 
 # Task finish 
-minutely = _TimeCondition(TaskExecutable, TimeOfMinute)
-hourly = _TimeCondition(TaskExecutable, TimeOfHour)
-daily = _TimeCondition(TaskExecutable, TimeOfDay)
-weekly = _TimeCondition(TaskExecutable, TimeOfWeek)
-monthly = _TimeCondition(TaskExecutable, TimeOfMonth)
+minutely = TimeCondWrapper(TaskExecutable, TimeOfMinute)
+hourly = TimeCondWrapper(TaskExecutable, TimeOfHour)
+daily = TimeCondWrapper(TaskExecutable, TimeOfDay)
+weekly = TimeCondWrapper(TaskExecutable, TimeOfWeek)
+monthly = TimeCondWrapper(TaskExecutable, TimeOfMonth)
 
+time_of_minute = TimeCondWrapper(IsPeriod, TimeOfMinute)
+time_of_hour = TimeCondWrapper(IsPeriod, TimeOfHour)
+time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
+time_of_week = TimeCondWrapper(IsPeriod, TimeOfWeek)
+time_of_month = TimeCondWrapper(IsPeriod, TimeOfMonth)
 
 _set_is_period_parsing()
 _set_task_has_parsing()
