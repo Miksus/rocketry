@@ -2,9 +2,6 @@
 import copy
 from typing import Callable, List, Optional, Pattern, Union
 from rocketry.core.parameters.parameters import Parameters
-
-
-from rocketry.session import Session
 from rocketry.core.condition import BaseCondition
 
 class FuncCond(BaseCondition):

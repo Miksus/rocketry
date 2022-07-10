@@ -6,11 +6,8 @@ from typing import Callable, Dict, Pattern, Union, Type
 from rocketry._base import RedBase
 from rocketry.core.meta import _add_parser, _register
 from rocketry.core.parameters.parameters import Parameters
-from rocketry.session import Session
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}
-
-
 
 
 class BaseCondition(RedBase):
@@ -64,8 +61,6 @@ class BaseCondition(RedBase):
     IsFooBar('bar')
 
     """
-    # The session (set in rocketry.session)
-    session: Session
 
     def observe(self, **kwargs):
         "Observe the status of the condition"

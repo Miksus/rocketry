@@ -9,5 +9,4 @@ from .time import *
 from .parameter import ParamExists, IsEnv
 from .meta import TaskCond
 
-from rocketry.session import Session
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
