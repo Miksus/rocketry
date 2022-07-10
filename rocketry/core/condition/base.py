@@ -329,7 +329,7 @@ class BaseComparable(BaseCondition):
 
     def __eq__(self, other):
         # self == other
-        is_same_class = isinstance(other, BaseComparable)
+        is_same_class = isinstance(other, BaseCondition)
         if is_same_class:
             # Not storing as parameter to statement but
             # check whether the statements are same
