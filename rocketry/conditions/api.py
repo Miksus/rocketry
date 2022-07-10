@@ -6,6 +6,7 @@ from rocketry.core import (
 from rocketry.core.condition import (
     AlwaysTrue, AlwaysFalse,
 )
+from rocketry.core.condition.base import All, Any
 from rocketry.core.task import Task
 from .time import IsPeriod
 from .task import TaskExecutable
@@ -97,3 +98,23 @@ def after_fail(task):
 
 def after_finish(task):
     return DependFinish(depend_task=_to_task_reference(task))
+
+
+def after_all_success(*tasks):
+    return All(*(after_success(task) for task in tasks))
+
+def after_all_fail(*tasks):
+    return All(*(after_fail(task) for task in tasks))
+
+def after_all_finish(*tasks):
+    return All(*(after_finish(task) for task in tasks))
+
+
+def after_any_success(*tasks):
+    return Any(*(after_success(task) for task in tasks))
+
+def after_any_fail(*tasks):
+    return Any(*(after_fail(task) for task in tasks))
+
+def after_any_finish(*tasks):
+    return Any(*(after_finish(task) for task in tasks))

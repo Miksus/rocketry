@@ -4,11 +4,13 @@ from rocketry.conds import (
     true, false,
     minutely, hourly, daily, weekly, monthly,
     time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
-    after_finish, after_success, after_fail
+    after_finish, after_success, after_fail,
+
+    after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
 )
 
 from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish
-from rocketry.core.condition.base import AlwaysFalse, AlwaysTrue
+from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek
 
 params_basic = [
@@ -47,6 +49,14 @@ params_pipeline = [
     pytest.param(after_finish("other"), DependFinish(depend_task="other"), id="after finish"),
     pytest.param(after_success("other"), DependSuccess(depend_task="other"), id="after success"),
     pytest.param(after_fail("other"), DependFailure(depend_task="other"), id="after fail"),
+
+    pytest.param(after_all_finish("do_a", "do_b"), All(DependFinish(depend_task="do_a"), DependFinish(depend_task="do_b")), id="after all finish"),
+    pytest.param(after_all_success("do_a", "do_b"), All(DependSuccess(depend_task="do_a"), DependSuccess(depend_task="do_b")), id="after all success"),
+    pytest.param(after_all_fail("do_a", "do_b"), All(DependFailure(depend_task="do_a"), DependFailure(depend_task="do_b")), id="after all fail"),
+
+    pytest.param(after_any_finish("do_a", "do_b"), Any(DependFinish(depend_task="do_a"), DependFinish(depend_task="do_b")), id="after any finish"),
+    pytest.param(after_any_success("do_a", "do_b"), Any(DependSuccess(depend_task="do_a"), DependSuccess(depend_task="do_b")), id="after any success"),
+    pytest.param(after_any_fail("do_a", "do_b"), Any(DependFailure(depend_task="do_a"), DependFailure(depend_task="do_b")), id="after any fail"),
 ]
 
 
