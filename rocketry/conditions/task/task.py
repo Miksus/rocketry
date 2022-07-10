@@ -187,10 +187,6 @@ class TaskRunning(BaseCondition):
     """
     #! TODO: Does this need to be Historical?
 
-    __parsers__ = {
-        re.compile(r"while task '(?P<task>.+)' is running"): "__init__",
-        re.compile(r"task '(?P<task>.+)' is running"): "__init__",
-    }
 
     def __init__(self, task=None):
         self.task = task
@@ -332,11 +328,7 @@ class DependFinish(DependMixin):
     >>> parse_condition("after task 'other' finished")
     DependFinish(task=None, depend_task='other')
     """
-    __parsers__ = {
-        re.compile(r"after task '(?P<depend_task>.+)' finished"): "__init__",
-        re.compile(r"after tasks '(?P<depend_tasks>.+)' finished"): "_parse_multi_all",
-        re.compile(r"after any tasks '(?P<depend_tasks>.+)' finished"): "_parse_multi_any",
-    }
+
     _dep_actions = ['success', 'fail']
 
     def __str__(self):
@@ -366,11 +358,6 @@ class DependSuccess(DependMixin):
 
     """
 
-    __parsers__ = {
-        re.compile(r"after task '(?P<depend_task>.+)'( succeeded)?"): "__init__",
-        re.compile(r"after tasks '(?P<depend_tasks>.+)'( succeeded)?"): "_parse_multi_all",
-        re.compile(r"after any tasks '(?P<depend_tasks>.+)'( succeeded)?"): "_parse_multi_any",
-    }
     _dep_actions = ['success']
 
     def __str__(self):
@@ -399,11 +386,6 @@ class DependFailure(DependMixin):
     DependFailure(task=None, depend_task='other')
     """
 
-    __parsers__ = {
-        re.compile(r"after task '(?P<depend_task>.+)' failed"): "__init__",
-        re.compile(r"after tasks '(?P<depend_tasks>.+)' failed"): "_parse_multi_all",
-        re.compile(r"after any tasks '(?P<depend_tasks>.+)' failed"): "_parse_multi_any",
-    }
     _dep_actions = ['fail']
 
     def __str__(self):
