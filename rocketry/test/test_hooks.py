@@ -7,7 +7,8 @@ from rocketry.conditions.task.task import DependSuccess
 from rocketry.core import Task, Scheduler
 
 from rocketry.tasks import FuncTask
-from rocketry.conditions import SchedulerCycles, true
+from rocketry.conditions import SchedulerCycles
+from rocketry.conds import true
 
 def do_success(**kwargs):
     ...
