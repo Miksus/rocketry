@@ -16,8 +16,8 @@ from rocketry.conditions import (
         pytest.param(lambda: Any(AlwaysTrue(), AlwaysTrue()), id="Any"),
         pytest.param(lambda: Not(AlwaysTrue()), id="Not"),
         pytest.param(lambda: Not(Any(AlwaysTrue(), All(AlwaysTrue(), AlwaysTrue()))), id="Nested"),
-        pytest.param(lambda: TaskFinished(task="mytask"), id="Statement (historical & comparable)"),
-        pytest.param(lambda: TaskRunning(task="mytask"), id="Statement (not historical & not comparable)"),
+        pytest.param(lambda: TaskFinished(task="mytask"), id="Comparable 1"),
+        pytest.param(lambda: TaskRunning(task="mytask"), id="Comparable 2"),
     ],
 )
 def test_equal(get_cond):

@@ -11,7 +11,7 @@ from .utils import DependMixin, TaskStatusMixin
 
 from redbird.oper import between
 
-from rocketry.core.condition import Statement, Historical, BaseComparable, All
+from rocketry.core.condition import BaseComparable, All
 from rocketry.core.time import TimeDelta
 from ..time import IsPeriod
 from rocketry.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
@@ -185,8 +185,6 @@ class TaskRunning(BaseCondition):
     >>> parse_condition("task 'mytask' is running")
     TaskRunning(task='mytask')
     """
-    #! TODO: Does this need to be Historical?
-
 
     def __init__(self, task=None):
         self.task = task

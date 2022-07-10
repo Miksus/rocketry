@@ -2,7 +2,6 @@
 import re
 from rocketry.args.builtin import Session
 
-from rocketry.core.condition import Comparable, Historical
 from rocketry.core.condition.base import BaseComparable, BaseCondition
 from rocketry.core.time.utils import get_period_span
 

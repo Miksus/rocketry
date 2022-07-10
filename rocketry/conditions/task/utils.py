@@ -5,7 +5,7 @@ from typing import Tuple
 
 from redbird.oper import in_, between
 
-from rocketry.core.condition import All, Any, Statement
+from rocketry.core.condition import All, Any
 from rocketry.args import Task, Session
 from rocketry.core.condition import BaseCondition
 from rocketry.core.condition.base import BaseComparable
