@@ -10,7 +10,6 @@ from .parameter import ParamExists, IsEnv
 from .meta import TaskCond
 
 from rocketry.session import Session
-from rocketry.core.condition import CLS_CONDITIONS
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
 
 true = AlwaysTrue()

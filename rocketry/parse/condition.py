@@ -1,5 +1,5 @@
 
-from rocketry.core.condition.base import CLS_CONDITIONS, BaseCondition
+from rocketry.core.condition.base import BaseCondition
 from rocketry.conditions import true, false
 from ._condition import parse_condition_string
 from .utils import ParserPicker

@@ -8,33 +8,12 @@ from rocketry.core.meta import _add_parser, _register
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.session import Session
 
-
-CLS_CONDITIONS: Dict[str, Type['BaseCondition']] = {}
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}
 
 
-class _ConditionMeta(type):
-    def __new__(mcs, name, bases, class_dict):
-
-        cls = type.__new__(mcs, name, bases, class_dict)
-
-        # Store the name and class for configurations
-        # so they can be used in dict construction
-        _register(cls, CLS_CONDITIONS)
-
-        # Add the parsers
-        if cls.session is None:
-            # Rocketry's default conditions
-            # storing to the class
-            _add_parser(cls, container=Session._cls_cond_parsers)
-        else:
-            # User defined conditions
-            # storing to the object
-            _add_parser(cls, container=Session._cls_cond_parsers)
-        return cls
 
 
-class BaseCondition(RedBase, metaclass=_ConditionMeta):
+class BaseCondition(RedBase):
     """A condition is a thing/occurence that should happen in 
     order to something happen.
 
@@ -87,9 +66,6 @@ class BaseCondition(RedBase, metaclass=_ConditionMeta):
     """
     # The session (set in rocketry.session)
     session: Session
-
-    __parsers__ = {}
-    __register__ = False
 
     def observe(self, **kwargs):
         "Observe the status of the condition"
