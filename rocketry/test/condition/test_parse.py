@@ -32,7 +32,7 @@ from rocketry.time import (
     TimeOfMonth
 )
 
-from rocketry.conditions import (
+from rocketry.conds import (
     minutely, hourly, daily, weekly, monthly
 )
 

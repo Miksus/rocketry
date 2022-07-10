@@ -2,9 +2,11 @@
 import pytest
 
 from rocketry.conditions import (
-    true, false, ParamExists, IsPeriod,
+    ParamExists, IsPeriod,
     Any, All
 )
+from rocketry.conds import true, false
+
 from rocketry.core.condition import Statement, Comparable, Historical
 
 from rocketry.time import TimeDelta
