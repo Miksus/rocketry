@@ -35,6 +35,11 @@ class SchedulerCycles(BaseComparable):
             s = s + " has " + comps.get(key, key) + " " + str(val) + " cycles"
         return s
 
+    @classmethod
+    def from_magic(cls, **kwargs):
+        kwargs = {key: int(value) for key, value in kwargs.items()}
+        return super(SchedulerCycles, cls).from_magic(**kwargs)
+
 class SchedulerStarted(BaseCondition):
     """Condition for whether the scheduler had started
     in given period.
