@@ -62,7 +62,7 @@ class TaskStarted(BaseComparable):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         period = '' if period is None else f' {period}'
         return f"task '{task_name}' started{period}"
@@ -88,7 +88,7 @@ class TaskFailed(TaskStatusMixin):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         period = '' if period is None else f' {period}'
         return f"task '{task_name}' failed{period}"
@@ -113,7 +113,7 @@ class TaskTerminated(TaskStatusMixin):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         period = '' if period is None else f' {period}'
         return f"task '{task_name}' terminated{period}"
@@ -139,7 +139,7 @@ class TaskSucceeded(TaskStatusMixin):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         period = '' if period is None else f' {period}'
         return f"task '{task_name}' succeeded{period}"
@@ -165,7 +165,7 @@ class TaskFinished(TaskStatusMixin):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         period = '' if period is None else f' {period}'
         return f"task '{task_name}' finished" + period
@@ -210,7 +210,7 @@ class TaskRunning(BaseCondition):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         return f"task '{task_name}' is running"
 
@@ -233,7 +233,7 @@ class TaskInacted(TaskStatusMixin):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
+        task = self.task
         task_name = getattr(task, 'name', str(task))
         return f"task '{task_name}' inacted"
 
@@ -298,7 +298,7 @@ class TaskExecutable(BaseCondition):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
+        task = self.task
         period = self.period
         return f"task '{task}' {self.period}"
 
@@ -342,8 +342,8 @@ class DependFinish(DependMixin):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
-        depend_task = self.kwargs["depend_task"]
+        task = self.task
+        depend_task = self.depend_task
         task_name = getattr(task, 'name', str(task))
         depend_task_name = getattr(depend_task, 'name', str(depend_task))
         return f"task '{depend_task_name}' finished before '{task_name}' started"
@@ -376,8 +376,8 @@ class DependSuccess(DependMixin):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
-        depend_task = self.kwargs["depend_task"]
+        task = self.task
+        depend_task = self.depend_task
         task_name = getattr(task, 'name', str(task))
         depend_task_name = getattr(depend_task, 'name', str(depend_task))
         return f"task '{depend_task_name}' succeeded before '{task_name}' started"
@@ -409,8 +409,8 @@ class DependFailure(DependMixin):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        task = self.kwargs["task"]
-        depend_task = self.kwargs["depend_task"]
+        task = self.task
+        depend_task = self.depend_task
         task_name = getattr(task, 'name', str(task))
         depend_task_name = getattr(depend_task, 'name', str(depend_task))
         return f"task '{depend_task_name}' failed before '{task_name}' started"
