@@ -204,6 +204,13 @@ class FuncTask(Task):
             # Note that we must return the function or 
             # we are in deep shit with multiprocessing
             # (or pickling the function).
+
+            # As we return the function, the name of the
+            # task might be missing. We set the name so
+            # that condition API can identify the name.
+            # If the task is renamed, the link is lost. (TODO)
+            func.__rocketry__ = {'name': self.name}
+
             return func
         else:
             return super().__call__(*args, **kwargs)

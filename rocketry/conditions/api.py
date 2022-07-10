@@ -1,3 +1,4 @@
+from typing import Callable, Union
 from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess
 from rocketry.core import (
     BaseCondition
@@ -5,6 +6,7 @@ from rocketry.core import (
 from rocketry.core.condition import (
     AlwaysTrue, AlwaysFalse,
 )
+from rocketry.core.task import Task
 from .time import IsPeriod
 from .task import TaskExecutable
 from rocketry.time import (
@@ -44,6 +46,19 @@ class TimeCondWrapper(BaseCondition):
         cond = self._cls_cond(period=period)
         return cond.observe(**kwargs)
 
+def _to_task_reference(task:Union[str, Callable]):
+    if isinstance(task, Task):
+        return task
+    elif callable(task):
+        # It's a function, the best we could do is to 
+        # guess get the name from the func name
+        if hasattr(task, "__rocketry__"):
+            return task.__rocketry__["name"]
+        else:
+            raise ValueError(f"Cannot determine task name: {task}")
+    else:
+        return task
+
 # Basics
 # ------
 
@@ -75,10 +90,10 @@ def every(past:str):
 # ---------------
 
 def after_success(task):
-    return DependSuccess(depend_task=task)
+    return DependSuccess(depend_task=_to_task_reference(task))
 
 def after_fail(task):
-    return DependFailure(depend_task=task)
+    return DependFailure(depend_task=_to_task_reference(task))
 
 def after_finish(task):
-    return DependFinish(depend_task=task)
+    return DependFinish(depend_task=_to_task_reference(task))
