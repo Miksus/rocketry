@@ -296,16 +296,11 @@ class BaseComparable(BaseCondition):
 
         res = len(res) if hasattr(res, "__len__") else res
 
-        comps = {
-            f"_{comp}_": compares[comp]
-            for comp in self._comp_attrs
-            if comp in compares
-        }
-        if not comps:
+        if not compares:
             return res > 0
         return all(
             getattr(res, comp)(val) # Comparison is magic method (==, !=, etc.)
-            for comp, val in comps.items()
+            for comp, val in compares.items()
         )
 
     def _is_any_over_zero(self):
