@@ -104,7 +104,20 @@ class BaseCondition(RedBase):
     def __eq__(self, other):
         "Equal operation"
         is_same_class = isinstance(other, type(self))
-        return is_same_class
+        if is_same_class:
+            # Check equality of the attributes except
+            # those that are only for display purposes
+            repr_attrs = ("_str",)
+            self_dict = {
+                key: val for key, val in self.__dict__.items()
+                if key not in repr_attrs
+            }
+            other_dict = {
+                key: val for key, val in other.__dict__.items()
+                if key not in repr_attrs
+            }
+            return self_dict == other_dict
+        return False
 
     def __str__(self):
         if hasattr(self, "_str"):
