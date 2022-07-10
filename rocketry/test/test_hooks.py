@@ -98,7 +98,7 @@ def test_scheduler_startup(session):
     task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1), priority=0)
     FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main")
 
-    session.config.shut_cond = SchedulerCycles(_eq_=2)
+    session.config.shut_cond = SchedulerCycles() == 2
     session.start()
     
     assert session.hooks.scheduler_startup == [my_startup_hook, my_startup_hook_generator]
@@ -157,7 +157,7 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
         f.write("\nStarting\n")
 
     task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
-    session.config.shut_cond = SchedulerCycles(_ge_=1)
+    session.config.shut_cond = SchedulerCycles() >= 1
     session.start()
     with open(file) as f:
         cont = f.read()

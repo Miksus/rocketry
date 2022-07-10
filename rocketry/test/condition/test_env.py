@@ -7,10 +7,10 @@ from rocketry.conditions import (
 def test_env(session):
     
     cond = IsEnv("test")
-    assert not bool(cond)
+    assert not cond.observe(session=session)
 
     session.env = "test"
-    assert bool(cond)
+    assert cond.observe(session=session)
 
     session.env = "prod"
-    assert not bool(cond)
+    assert not cond.observe(session=session)

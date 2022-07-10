@@ -34,8 +34,8 @@ class FailingArgument(BaseArgument):
 
 
 class FailingCondition(BaseCondition):
-    __register__ = False
-    def __bool__(self):
+
+    def get_state(self):
         raise RuntimeError("Deliberate failure")
 
 def do_stuff():

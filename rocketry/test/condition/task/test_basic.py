@@ -254,5 +254,8 @@ def test_task_depend_success(tmpdir, session, cls, expected):
 def test_display(cls, string):
     task = FuncTask(func=lambda: None, name="mytask")
     depend_task = FuncTask(func=lambda: None, name="mydep")
-    s = str(cls(task=task, depend_task=depend_task))
+    if cls in (DependFinish, DependSuccess, DependFailure):
+        s = str(cls(task=task, depend_task=depend_task))
+    else:
+        s = str(cls(task=task))
     assert s == string
