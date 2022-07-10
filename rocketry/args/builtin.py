@@ -90,8 +90,9 @@ class Return(BaseArgument):
         self.task_name = task_name
         self.default = default
 
-    def get_value(self, task=None, **kwargs) -> Any:
-        session = task.session
+    def get_value(self, task=None, session=None, **kwargs) -> Any:
+        if session is None:
+            session = task.session
         input_task = session[self.task_name]
         try:
             return session.returns[input_task]

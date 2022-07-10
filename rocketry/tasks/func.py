@@ -267,7 +267,7 @@ class FuncTask(Task):
         # Get params from the typehints
         cache = False if self.path is not None else True
         func = self.get_func(cache=cache)
-        params.update(Parameters._from_signature(func))
+        params.update(Parameters._from_signature(func, task=self, session=self.session))
         return params
 
     def prefilter_params(self, params):
