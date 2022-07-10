@@ -1,7 +1,11 @@
 
 import copy
 from functools import partial
-from typing import Callable, Pattern, Union
+from typing import Callable, Optional, Pattern, Union
+
+from pydantic import Field
+from rocketry.args import Session
+from rocketry import Session as _Session
 
 from rocketry.core.condition import BaseCondition #, Task
 from rocketry.core.parameters.arguments import BaseArgument
@@ -9,6 +13,10 @@ from rocketry.tasks.func import FuncTask
 
 
 class _FuncTaskCondWrapper(FuncTask):
+
+    # For some reason, the order of cls attrs broke here so we need to reorder then:
+    session: _Session
+    name: Optional[str] = Field(description="Name of the task. Must be unique")
 
     def _handle_return(self, value):
         # Handle the return value of the function
@@ -100,6 +108,7 @@ class TaskCond(BaseCondition):
             #on_exists="rename",
             name=f"_condition-{self._get_func_name(self.func)}",
             parameters=kwargs,
+            session=self.session,
             **self.kwds_task
         )
 
@@ -110,9 +119,9 @@ class TaskCond(BaseCondition):
         self._set_parsing()
         return func
 
-    def __bool__(self):
+    def get_state(self, session=Session()):
 
-        task_state = self.session._cond_states.get(self.task.name, False)
+        task_state = session._cond_states.get(self.task.name, False)
         if self.task.last_success is None or self.task.last_success not in self.active_time:
             # The cooldown period is gone --> setting to default
             self.state = False
