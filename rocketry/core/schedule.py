@@ -190,13 +190,9 @@ class Scheduler(RedBase):
         
         self.n_cycles += 1
 
-    def check_cond(self, cond: Union[BaseCondition, Task]) -> bool:
-        try:
-            return cond.observe(scheduler=self, session=self.session)
-        except:
-            if not self.session.config.silence_cond_check:
-                raise
-            return False
+    def check_cond(self, cond: BaseCondition) -> bool:
+        # Note that failure in scheduler shut_cond always crashes the system
+        return cond.observe(scheduler=self, session=self.session)
 
     def check_task_cond(self, task:Task):
         try:
