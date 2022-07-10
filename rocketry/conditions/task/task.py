@@ -284,11 +284,11 @@ class TaskExecutable(BaseCondition):
             #   And please tell why this does not raise an exception then? - Future me
             True  
             if isinstance(period, TimeDelta) 
-            else IsPeriod(period=period)
+            else IsPeriod(period=period).observe()
         )
 
         return (
-            isin_period.observe()
+            isin_period
             and has_not_inacted.observe(task=task, session=session)
             and has_not_succeeded.observe(task=task, session=session)
             and has_not_failed.observe(task=task, session=session)
