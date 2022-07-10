@@ -119,5 +119,5 @@ class TaskStatusMixin(BaseComparable):
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         return f"task 'task '{task}' {self._action} {period}"
