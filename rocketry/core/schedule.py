@@ -115,7 +115,7 @@ class Scheduler(RedBase):
         try:
             self.startup()
 
-            while not self.check_cond(self.session.config.shut_cond):
+            while not self.check_shut_cond(self.session.config.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
                 elif self._flag_restart.is_set():
@@ -190,8 +190,10 @@ class Scheduler(RedBase):
         
         self.n_cycles += 1
 
-    def check_cond(self, cond: BaseCondition) -> bool:
+    def check_shut_cond(self, cond: Optional[BaseCondition]) -> bool:
         # Note that failure in scheduler shut_cond always crashes the system
+        if cond is None:
+            return False
         return cond.observe(scheduler=self, session=self.session)
 
     def check_task_cond(self, task:Task):
