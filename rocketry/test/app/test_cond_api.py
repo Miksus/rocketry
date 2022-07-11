@@ -2,11 +2,12 @@
 import logging
 
 from rocketry import Rocketry
+from rocketry.args.builtin import Return
 from rocketry.conditions import TaskStarted
 from rocketry.conditions.api import after_success
 
 from rocketry.conds import (
-    false,
+    false, true,
     daily, time_of_hour,
     after_fail, after_success, after_finish
 )
@@ -43,4 +44,46 @@ def test_app_run():
     app.run()
 
     logger = app.session['do_after'].logger
+    assert logger.filter_by(action="success").count() == 1
+
+def test_pipe():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    # Creating some tasks
+    @app.task(true)
+    def do_first():
+        return 'hello'
+
+    @app.task(after_success(do_first))
+    def do_second(arg=Return(do_first)):
+        assert arg == 'hello'
+
+    app.session.config.shut_cond = TaskStarted(task=do_second)
+    app.run()
+
+    logger = app.session['do_second'].logger
+    assert logger.filter_by(action="success").count() == 1
+
+def test_custom_cond():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    # Creating some tasks
+    @app.cond('is foo')
+    def is_foo():
+        return True
+
+    @app.task(true & is_foo)
+    def do_things():
+        ...
+
+    app.session.config.shut_cond = TaskStarted(task=do_things)
+    app.run()
+
+    logger = app.session['do_things'].logger
     assert logger.filter_by(action="success").count() == 1
