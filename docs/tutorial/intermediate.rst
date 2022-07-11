@@ -4,6 +4,31 @@ Intermediate Tutorial
 =====================
 
 This is an intermediate level tutorial.
+In this tutorial we go through aspects
+that you might not come across in very
+simple applications but you eventually
+need to know.
+
+
+Using the Condition API
+-----------------------
+
+Previously we have used only the string syntax for scheduling.
+For simple use cases that is sufficient but if your project 
+grows the strings may become a burden. The code analyzers cannot
+identify possible typos or other problems in them and there is a 
+limitation in reuse. To fix these, there is a condition API that
+provides functions and instances that are quite similar than the
+components in the string syntax.
+
+Here are some examples of how the condition API looks like:
+
+.. literalinclude:: /code/conds/api/simple.py
+    :language: py
+
+Read more about the condition API in :ref:`the handbook <condition-api>`.
+From now on, we swith to the condition API but you are free to use the 
+string syntax. Most things work very similarly in both.
 
 Condition Logic
 ----------------
@@ -24,35 +49,46 @@ Using these are pretty simple:
 
 We used conditions ``true`` and ``false`` but you 
 may replace these with other conditions (ie. ``daily``) 
-from previous examples.
+from previous examples. Also note how we can use parentheses
 
-You may also add parentheses for extra logic:
+.. note::
 
-.. code-block:: python
-
-    @app.task('(true & false) | (~false)')
-    def do_constantly():
-        ...
-
-Scheduling strings may become quite long some times.
-The strings can also be broken down to multiple lines:
-
-.. code-block:: python
-
-    @app.task('''
-        daily between 07:00 and 10:00
-        & (time of week on Monday | time of week on Friday)
-    ''')
-    def do_on_monday_or_friday_morning():
-        ...
+    The operations are the same with string syntax. 
+    This is valid condition syntax: 
+    
+    ``"(true & false) | (false & ~true)"``
 
 
-Pipelining with Conditions
---------------------------
+Pipelining
+----------
 
-Tasks can also be piped by setting a task to 
-run after another, setting a output of a task
-as the input for another or both. 
+Rocketry supports two types of task pipelining:
+
+- Run a task after another has succeeded, failed or both
+- Put the return or output value of a task as an input argument to another
+
+Run Task After Another
+^^^^^^^^^^^^^^^^^^^^^^
+
+There is are conditions that can be used for this purpose:
+
+.. literalinclude:: /code/conds/api/pipe_single.py
+    :language: py
+
+Set Output as an Input
+^^^^^^^^^^^^^^^^^^^^^^
+
+To pipeline the output-input, there is an *argument*
+for the problem. We go through arguments and parametrization
+with more detail soon but here is an example to pipeline
+the task returns:
+
+.. literalinclude:: /code/params/return.py
+    :language: py
+
+Of course, the second task is not quaranteed to run after 
+the first. You can combine the both to achieve proper
+pipelining:
 
 .. literalinclude:: /code/conds/api/pipe_with_return.py
     :language: py

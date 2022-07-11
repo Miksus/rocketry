@@ -7,12 +7,28 @@ This is a basic level tutorial.
 
 Topics of the tutorial:
 
-- Time scheduling
+- Scheduling basics
 - Execution options
 - Changing log destination
 
-Time Scheduling
----------------
+Scheduling Basics
+-----------------
+
+Rocketry's scheduling system works with conditions
+that are either true or false. A simple condition
+could be *time is now between 8:00 (8 am) and 14:00 (2 pm)*.
+If current time is inside this range, the condition
+is true and if not, then it's false. If this is a condition 
+for a task, it runs if the the current time is in this range. 
+
+There are three ways of creating conditions:
+
+- String syntax
+- Condition API
+- Condition classes
+
+In this tutorial we will stick with the string syntax to keep
+things simple. Read more about the options in :ref:`the handbook <condition-handbook>`.
 
 There are a lot of scheduling options in Rocketry:
 the tasks can run at specific time, after some other 
@@ -21,7 +37,11 @@ this tutorial we focus on the time specific scheduling
 as that is most used. In later tutorials we discuss 
 other options.
 
-.. literalinclude:: /code/schedule/time_of.py
+Perhaps the simplest scheduling problem is to run a task
+after a given time has passed. Here are some examples 
+for such a scheduling:
+
+.. literalinclude:: /code/conds/syntax/every.py
     :language: py
 
 You may also schedule tasks to run on fixed time 
@@ -31,12 +51,18 @@ periods (ie. daily, weekly, monthly):
     :language: py
 
 
-But what if you wanted to schedule to run on
-specific time on those periods? That's also easy:
+But what if you wanted to schedule to run, for example,
+daily but only in the afternoon? 
+That's also easy:
 
 .. literalinclude:: /code/conds/syntax/periodical_restricted.py
     :language: py
 
+Notice how all of those support ``before``, ``after``, ``between``
+and ``starting``. Running ``on`` something only makes sense on 
+periods in which the time element is actually a time span, for 
+example, Monday usually means Monday 00:00 to Monday 24:00 in 
+natural language but 10 o'clock means exactly at 10:00.
 
 Our previous examples were scheduled to run once in the
 time periods we specified. There are also ``time of ...``
@@ -55,6 +81,8 @@ if you wish to add them to other scheduling options
     def do_constantly_during_weekend():
         ...
 
+The handbook's :ref:`condition section <condition-handbook>`
+has more examples if you wish to read more.
 
 Execution Options
 -----------------
