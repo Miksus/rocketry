@@ -27,14 +27,14 @@ other options.
 You may also schedule tasks to run on fixed time 
 periods (ie. daily, weekly, monthly):
 
-.. literalinclude:: /code/schedule/fixed_period.py
+.. literalinclude:: /code/conds/syntax/periodical.py
     :language: py
 
 
 But what if you wanted to schedule to run on
 specific time on those periods? That's also easy:
 
-.. literalinclude:: /code/schedule/fixed_period_with_args.py
+.. literalinclude:: /code/conds/syntax/periodical_restricted.py
     :language: py
 
 

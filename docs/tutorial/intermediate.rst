@@ -19,7 +19,7 @@ For such purpose, there are logical operations:
 
 Using these are pretty simple:
 
-.. literalinclude:: /code/schedule/logic.py
+.. literalinclude:: /code/conds/api/logic.py
     :language: py
 
 We used conditions ``true`` and ``false`` but you 
@@ -54,7 +54,7 @@ Tasks can also be piped by setting a task to
 run after another, setting a output of a task
 as the input for another or both. 
 
-.. literalinclude:: /code/snippets/pipeline.py
+.. literalinclude:: /code/conds/api/pipe_with_return.py
     :language: py
 
 The second task runs when the first has succeeded
