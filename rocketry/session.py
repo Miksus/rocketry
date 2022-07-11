@@ -336,6 +336,11 @@ class Session(RedBase):
             self.tasks.add(task)
 
     def task_exists(self, task: 'Task'):
+        warnings.warn((
+            "Method task_exists will be removed in the future version." 
+            "Please use instead: 'task name' in session"
+        ), DeprecationWarning)
+
         task_name = self._get_task_name(task)
         for task in self.tasks:
             if task.name == task_name:
