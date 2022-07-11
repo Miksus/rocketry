@@ -32,6 +32,40 @@ def test_get_repo(session):
     # Test the one used in the task logging is also the same
     assert session.get_repo() is TaskAdapter(logger, task=None)._get_repo()
 
+def test_getitem(session):
+
+    task_1 = FuncTask(
+        lambda : None, 
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    task_2 = FuncTask(
+        lambda : None, 
+        name="task 2",
+        execution="main",
+        session=session
+    )
+
+    @FuncTask(execution="main", session=session)
+    def do_things():
+        pass
+        
+    @FuncTask(name="task 3", execution="main", session=session)
+    def do_things_2():
+        pass
+
+    assert session['task 1'] is task_1
+    assert session[task_2] is task_2
+    assert isinstance(session[do_things], FuncTask)
+    assert session[do_things_2].name == "task 3"
+
+    with pytest.raises(TypeError):
+        session[1234]
+    with pytest.raises(KeyError):
+        session["non existing"]
+
+
 # Old interface
 # -------------
 
