@@ -19,7 +19,7 @@ print(f"Root dir: {sys.path[0]}")
 # -- Project information -----------------------------------------------------
 
 project = 'rocketry'
-copyright = '2021, Mikael Koli'
+copyright = '2022, Mikael Koli'
 author = 'Mikael Koli'
 
 
@@ -77,7 +77,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_title = "Rocketry: Advanced Scheduler"
+html_title = "Rocketry:<br>Advanced Scheduler"
 html_theme = 'sphinx_book_theme'
 html_logo = "logo.svg"
 html_favicon = 'favicon.ico'
