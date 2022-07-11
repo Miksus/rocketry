@@ -42,15 +42,30 @@ patterns. The <SECTION> supports three logical operators:
 
 It also supports parentheses to nest the conditions.
 
-**Condition Syntax**
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/logic.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/logic.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 Floating Period Scheduling
 --------------------------
@@ -58,15 +73,29 @@ Floating Period Scheduling
 Perhaps the most common scheduling problem is to run
 a task after a specific time has passed.
 
-**Condition Syntax**
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/every.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/every.py
     :language: py
+
+.. raw:: html
+
+   </details>
 
 
 Fixed Period Scheduling
@@ -86,15 +115,31 @@ every time after 60 minutes has passed but the latter every
 full hour. If time is now 07:15, the former will run at 
 08:15 but the latter will run at 08:00.
 
-**Condition Syntax**
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/periodical.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/periodical.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 Constrained Fixed Period Scheduling
 -----------------------------------
@@ -126,15 +171,33 @@ There are also *on* and *starting* arguments:
 For example, *on Friday* means Friday 00:00 (0 am) to Friday 24:00 (12 pm)
 and *starting Friday* means the week is set to start on Friday.
 
-**Condition Syntax**
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/periodical_restricted.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/periodical_restricted.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
+
 
 .. note::
 
@@ -145,15 +208,32 @@ and *starting Friday* means the week is set to start on Friday.
 There are also **time of ...** conditions check if the current time
 is within the given period.
 
-**Condition Syntax**
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/time_of.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/time_of.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 
 Pipelining Task
@@ -164,29 +244,63 @@ runned/succeeded/failed before the task we are setting the
 starting condition. These are useful for creating task 
 depenencies or task pipelines. 
 
-**Condition Syntax**
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/pipe_single.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/pipe_single.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 
 You can also pipe multiple at the same time to avoid long
 logical statements:
 
-**Condition Syntax**
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition Syntax</a></summary>
 
 .. literalinclude:: /code/conds/syntax/pipe_multiple.py
     :language: py
 
-**Condition API**
+.. raw:: html
+
+   </details>
+
+.. raw:: html
+
+   <details>
+   <summary><a>Condition API</a></summary>
 
 .. literalinclude:: /code/conds/api/pipe_multiple.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 
 .. toctree::

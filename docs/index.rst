@@ -3,14 +3,27 @@
    :description: Rocketry, modern scheduling framework
    :keywords: schedule, task, script, run, Python
 
-Rocketry
-========
 
-.. image:: https://badgen.net/pypi/v/rocketry
-   :target: https://pypi.org/project/rocketry/
+.. raw:: html
 
-.. image:: https://badgen.net/pypi/python/rocketry
-   :target: https://pypi.org/project/rocketry/
+    <h1 align="center"><a href="https://rocketry.readthedocs.io">Rocketry</a></h1>
+    <p align="center">
+        <em>The engine to power your Python apps</em>
+    </p>
+    <p align="center">
+        <a href="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" target="_blank">
+            <img src="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" alt="Test">
+        </a>
+        <a href="https://codecov.io/gh/Miksus/rocketry" target="_blank">
+            <img src="https://codecov.io/gh/Miksus/rocketry/branch/master/graph/badge.svg?token=U2KF1QA5HT" alt="Test coverage">
+        </a>
+        <a href="https://pypi.org/project/rocketry" target="_blank">
+            <img src="https://badgen.net/pypi/v/rocketry?color=969696" alt="Package version">
+        </a>
+        <a href="https://pypi.org/project/rocketry" target="_blank">
+            <img src="https://badgen.net/pypi/python/rocketry?color=969696&labelColor=black" alt="Supported Python versions">
+        </a>
+    </p>
 
 .. raw:: html
 
@@ -32,6 +45,7 @@ applications. It is simple, clean and extensive.
 **Core functionalities:**
 
 - Powerful scheduling syntax
+- A lot of built-in scheduling options
 - Task parallelization
 - Task parametrization
 - Task pipelining
@@ -41,6 +55,20 @@ applications. It is simple, clean and extensive.
 
 .. literalinclude:: /code/demos/minimal.py
     :language: py
+
+.. raw:: html
+
+   <details>
+   <summary><a>Dislike the syntax?</a></summary>
+
+You can also use the condition API for the 
+
+.. literalinclude:: /code/demos/minimal.py
+    :language: py
+
+.. raw:: html
+
+   </details>
 
 Why Rocketry?
 ---------------
@@ -56,8 +84,10 @@ and it is much easier to use than Airflow. Rocketry
 has by far the cleanest syntax compared to the alternatives and it is 
 the most productive.
 
-Rocketry is not meant to be the scheduler for enterprise pipelines,
-unlike Airflow, but it is fantastic to power your Python applications.
+Rocketry is the automation backend that sets your applications alive. 
+It has customization built into it and it is possible to build really
+complex systems that are can self update, self restart and interact with 
+users. And all of these are easy to implement.
 
 Here is a demonstration of more advanced case:
 
@@ -75,7 +105,8 @@ Just install the library:
     pip install rocketry
 
 There is much more to offer. See :ref:`quick start <getting-started>`
-And the rest :ref:`tutorials <tutorials>`.
+and get started with :ref:`tutorials <tutorials>`. There are also 
+:ref:`handbooks <handbooks>` to check options and details.
 
 
 .. toctree::
