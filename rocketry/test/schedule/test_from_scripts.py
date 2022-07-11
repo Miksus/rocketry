@@ -13,7 +13,6 @@ from rocketry.log.log_record import LogRecord
 from rocketry.tasks import FuncTask
 
 import pytest
-import pandas as pd
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])

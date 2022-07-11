@@ -2,7 +2,6 @@
 import logging
 
 import pytest
-import pandas as pd
 from rocketry.conditions.scheduler import SchedulerStarted
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo

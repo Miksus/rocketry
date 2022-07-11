@@ -1,7 +1,4 @@
 
-import pytest
-import pandas as pd
-
 from rocketry.time.interval import (
     TimeOfHour,
     TimeOfDay, 

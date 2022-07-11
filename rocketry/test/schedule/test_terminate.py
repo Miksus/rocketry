@@ -4,7 +4,6 @@ import time
 import os
 
 import pytest
-import pandas as pd
 from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conditions.task import TaskTerminated
 

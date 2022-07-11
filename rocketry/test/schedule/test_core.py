@@ -6,7 +6,6 @@ import os, re
 import multiprocessing
 
 import pytest
-import pandas as pd
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 

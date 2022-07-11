@@ -3,7 +3,6 @@ import logging
 import time
 
 import pytest
-import pandas as pd
 from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.core.time.base import TimeDelta
 
