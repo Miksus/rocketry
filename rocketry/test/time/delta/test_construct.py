@@ -1,7 +1,6 @@
 
+import datetime
 import pytest
-import pandas as pd
-import numpy as np
 from rocketry.time import (
     TimeDelta, TimeOfDay
 )
@@ -11,30 +10,13 @@ from rocketry.time import (
     [
         pytest.param(
             "10:20:30",
-            pd.Timedelta(hours=10, minutes=20, seconds=30),
+            datetime.timedelta(hours=10, minutes=20, seconds=30),
             id="String"),
     ],
 )
 def test_construct(offset, expected):
     time = TimeDelta(offset)
     assert expected == time.past
-
-@pytest.mark.parametrize(
-    "kwargs,exc",
-    [
-        pytest.param(
-            {"past": np.nan},
-            TypeError,
-            id="Invalid past"),
-        pytest.param(
-            {"future": np.nan},
-            TypeError,
-            id="Invalid future"),
-    ],
-)
-def test_fail(kwargs, exc):
-    with pytest.raises(exc):
-        time = TimeDelta(**kwargs)
 
 def test_equal():
     assert TimeDelta("2 days") == TimeDelta("2 days")
