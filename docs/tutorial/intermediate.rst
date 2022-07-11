@@ -93,12 +93,9 @@ pipelining:
 .. literalinclude:: /code/conds/api/pipe_with_return.py
     :language: py
 
-The second task runs when the first has succeeded
-and the input argument gets the value of the output
-argument of the first task.
 
-Parameterize Tasks
-------------------
+Parameterizing
+--------------
 
 Parameters are key-value pairs passed to the tasks.
 The value of the pair is called *argument*. The 
@@ -107,29 +104,29 @@ task, from the return value of a function or
 a component of the scheduling framework.
 
 There are also two scopes of parameters: session level
-and task level. When a task is run, the argument is 
-looked from the task level arguments and then from the 
-session level arguments.
+and task level. Most of the time you are using session 
+level parameters.
 
-Here is an illustration:
+Here is an illustration of using a session level parameter:
 
 .. code-block:: python
 
     from rocketry.args import Arg
 
-    # Setting arguments to the session
+    # Setting parameters to the session
     app.params(
         my_arg='Hello world'
     )
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = Arg('my_arg')):
         ...
 
-We set a session level argument (``my_arg``)
-and we used that in the task ``do_things``. 
-The session level argument is turned as a 
-task level argument with ``Arg('my_arg'`)``.
+We set a session level parameter (``my_arg``)
+and we used that in the task ``do_things``.
+When the task is run, function argument ``item``
+will get the value of ``my_arg`` from session
+level arguments which is ``"Hello world"``.
 This argument can be reused in multiple tasks
 as it was set on session level. 
 
@@ -140,7 +137,7 @@ this:
 
     from rocketry.args import SimpleArg
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = SimpleArg('Hello world')):
         ...
 
@@ -161,28 +158,30 @@ set a session level function argument:
 
 .. code-block:: python
 
-    from rocketry.args import FuncArg
-
-    def get_item():
-        return 'hello world'
-
-    @app.task("every 10 seconds")
-    def do_things(item = FuncArg(get_item)):
-        ...
-
-To set task level function argument:
-
-.. code-block:: python
-
     from rocketry.args import Arg
 
     @app.param('my_arg')
     def get_item():
         return 'hello world'
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = Arg('my_arg')):
         ...
+
+
+To set task-level-only function argument:
+
+.. code-block:: python
+
+    from rocketry.args import FuncArg
+
+    def get_item():
+        return 'hello world'
+
+    @app.task()
+    def do_things(item = FuncArg(get_item)):
+        ...
+
 
 Meta Argments
 ^^^^^^^^^^^^^
@@ -201,7 +200,7 @@ An example of the session argument:
 
     from rocketry.args import Session
 
-    @app.task("every 10 seconds")
+    @app.task()
     def manipulate_session(session = Session()):
         ...
 
@@ -211,9 +210,11 @@ An example of the task argument:
 
     from rocketry.args import Task
 
-    @app.task("every 10 seconds")
-    def manipulate_task(this_task=Task(), another_task = Task('do_things')):
+    @app.task()
+    def manipulate_task(this_task=Task(), another_task=Task('do_things')):
         ...
+
+This is more advanced and we will get to the usage of these later.
 
 Customizing Logging Handlers
 ----------------------------
