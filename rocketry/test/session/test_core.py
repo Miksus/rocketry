@@ -65,6 +65,17 @@ def test_getitem(session):
     with pytest.raises(KeyError):
         session["non existing"]
 
+def test_task_exists(session):
+    task_1 = FuncTask(
+        lambda : None, 
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    with pytest.warns(DeprecationWarning):
+        assert session.task_exists("task 1")
+        assert not session.task_exists("task not exists")
+        assert session.task_exists(task_1)
 
 # Old interface
 # -------------
