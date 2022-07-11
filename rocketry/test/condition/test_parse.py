@@ -37,11 +37,13 @@ from rocketry.conds import (
 )
 
 cases_time = [
+    pytest.param("minutely", minutely, id="hourly"),
     pytest.param("hourly", hourly, id="hourly"),
     pytest.param("daily", daily, id="daily"),
     pytest.param("weekly", weekly, id="weekly"),
     pytest.param("monthly", monthly, id="monthly"),
 
+    pytest.param("minutely starting 45:00",   TaskExecutable(period=TimeOfMinute("45:00", "45:00")), id="hourly starting"),
     pytest.param("hourly starting 45:00",   TaskExecutable(period=TimeOfHour("45:00", "45:00")), id="hourly starting"),
     pytest.param("daily starting 10:00",    TaskExecutable(period=TimeOfDay("10:00", "10:00")),  id="daily starting"),
     pytest.param("weekly starting Tuesday", TaskExecutable(period=TimeOfWeek("Tue", "Tue")),     id="weekly starting"),
