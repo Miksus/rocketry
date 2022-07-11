@@ -3,7 +3,7 @@
 Tutorials
 =========
 
-Welcome to Red Engine's tutorials. This section
+Welcome to Rocketry's tutorials. This section
 consists of tutorial sets to introduce to the 
 framework with varying degree of complexity.
 

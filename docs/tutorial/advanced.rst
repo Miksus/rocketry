@@ -1,7 +1,7 @@
-.. _advanced-guide:
+.. _advanced-tutorial:
 
-Advanced Guide
-==============
+Advanced Tutorial
+=================
 
 This is an advanced level tutorial.
 
@@ -15,7 +15,7 @@ The configurations can be set by:
 
 .. code-block:: python
 
-    app = RedEngine(config={
+    app = Rocketry(config={
         'task_execution': 'process',
         'task_pre_exist': 'raise',
         'force_status_from_logs': True,
@@ -24,10 +24,9 @@ The configurations can be set by:
         'silence_cond_check': False,
 
         'max_process_count': 5,
-        'restarting': 'replace'
+        'restarting': 'replace',
+        'cycle_sleep': 0.1
     })
-
-These are the default options. 
 
 - **task_execution**: How tasks are run by default. Options: 
 
@@ -67,6 +66,38 @@ These are the default options.
     - ``fresh``: Restart by starting a new process (on new window on Windows)
     - ``recall``: Restart by calling the start method again. Useful for testing the restart
 
+- **cycle_sleep**: How long is waited (in seconds) after the scheduler goes through one round of tasks. 
+  If ``None``, no sleep.
+
+    - By default, 0.1
+
+
+Task References
+---------------
+
+Each task should have a unique name within
+the session. So far we have not set the name
+ourselves and let Rocketry to come up with
+such (from the functions we used as tasks).
+
+You can pass the name yourself:
+
+.. literalinclude:: /code/naming.py
+    :language: py
+
+If you don't give a name for the task, the 
+task itself will make up a name for it. For
+function tasks, the name of the task is the 
+name of the function (combined with import path).
+
+Function tasks created by decorating functions 
+(the method we have done so far) can also be 
+addressed using the function instance. There 
+is a special attribute stored in the function
+that contains the real name of the task so 
+the session can look it up if you ask the task 
+from the session.
+
 
 Task Types
 ----------
@@ -98,8 +129,8 @@ Here are the ways to initialize tasks:
     app.task('daily', code='print("Hello world")')
 
 
-Modifying the System on Runtime
--------------------------------
+Metatasks
+---------
 
 The scheduler system can be modified in runtime.
 You could during the runtime:
@@ -112,7 +143,8 @@ You could during the runtime:
 
 To do there, you can create a task that
 runs either as a separate thread or on 
-the main loop. Tasks parallelized as 
+the main loop and pass the session or a
+task in the task parameters. Tasks parallelized as 
 separate processes cannot alter the 
 scheduling environment due to limitations 
 with sharing memory. 
@@ -121,17 +153,17 @@ To alter the session:
 
 .. code-block:: python
 
-    from redengine.args import Session
+    from rocketry.args import Session
 
-    @app.task('every 20 hours', execution="thread")
+    @app.task(execution="thread")
     def do_shutdown(session=Session()):
         session.shutdown()
 
-    @app.task('every 20 hours', execution="thread")
+    @app.task(execution="thread")
     def do_restart(session=Session()):
         session.restart()
 
-    @app.task('every 10 minutes', execution="thread")
+    @app.task(execution="thread")
     def do_modify_tasks(session=Session()):
 
         task = session['do_restart']

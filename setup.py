@@ -5,12 +5,12 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-    name="redengine",
+    name="rocketry",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Mikael Koli",
     author_email="koli.mikael@gmail.com",
-    url="https://github.com/Miksus/red-engine.git",
+    url="https://github.com/Miksus/rocketry.git",
     packages=find_packages(),
     description="Advanced scheduling framework",
     long_description=long_description,

@@ -1,7 +1,7 @@
-from redengine import RedEngine
-from redengine.args import Arg, Return, FuncArg
+from rocketry import Rocketry
+from rocketry.args import Arg, Return, FuncArg
 
-app = RedEngine()
+app = Rocketry()
 app.params(my_arg='hello')
 
 @app.task("every 10 seconds")

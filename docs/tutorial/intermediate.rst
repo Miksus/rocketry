@@ -4,6 +4,31 @@ Intermediate Tutorial
 =====================
 
 This is an intermediate level tutorial.
+In this tutorial we go through aspects
+that you might not come across in very
+simple applications but you eventually
+need to know.
+
+
+Using the Condition API
+-----------------------
+
+Previously we have used only the string syntax for scheduling.
+For simple use cases that is sufficient but if your project 
+grows the strings may become a burden. The code analyzers cannot
+identify possible typos or other problems in them and there is a 
+limitation in reuse. To fix these, there is a condition API that
+provides functions and instances that are quite similar than the
+components in the string syntax.
+
+Here are some examples of how the condition API looks like:
+
+.. literalinclude:: /code/conds/api/simple.py
+    :language: py
+
+Read more about the condition API in :ref:`the handbook <condition-api>`.
+From now on, we swith to the condition API but you are free to use the 
+string syntax. Most things work very similarly in both.
 
 Condition Logic
 ----------------
@@ -19,50 +44,58 @@ For such purpose, there are logical operations:
 
 Using these are pretty simple:
 
-.. literalinclude:: /code/schedule/logic.py
+.. literalinclude:: /code/conds/api/logic.py
     :language: py
 
 We used conditions ``true`` and ``false`` but you 
 may replace these with other conditions (ie. ``daily``) 
-from previous examples.
+from previous examples. Also note how we can use parentheses
 
-You may also add parentheses for extra logic:
+.. note::
 
-.. code-block:: python
-
-    @app.task('(true & false) | (~false)')
-    def do_constantly():
-        ...
-
-Scheduling strings may become quite long some times.
-The strings can also be broken down to multiple lines:
-
-.. code-block:: python
-
-    @app.task('''
-        daily between 07:00 and 10:00
-        & (time of week on Monday | time of week on Friday)
-    ''')
-    def do_on_monday_or_friday_morning():
-        ...
+    The operations are the same with string syntax. 
+    This is valid condition syntax: 
+    
+    ``"(true & false) | (false & ~true)"``
 
 
-Pipelining with Conditions
---------------------------
+Pipelining
+----------
 
-Tasks can also be piped by setting a task to 
-run after another, setting a output of a task
-as the input for another or both. 
+Rocketry supports two types of task pipelining:
 
-.. literalinclude:: /code/snippets/pipeline.py
+- Run a task after another has succeeded, failed or both
+- Put the return or output value of a task as an input argument to another
+
+Run Task After Another
+^^^^^^^^^^^^^^^^^^^^^^
+
+There is are conditions that can be used for this purpose:
+
+.. literalinclude:: /code/conds/api/pipe_single.py
     :language: py
 
-The second task runs when the first has succeeded
-and the input argument gets the value of the output
-argument of the first task.
+Set Output as an Input
+^^^^^^^^^^^^^^^^^^^^^^
 
-Parameterize Tasks
-------------------
+To pipeline the output-input, there is an *argument*
+for the problem. We go through arguments and parametrization
+with more detail soon but here is an example to pipeline
+the task returns:
+
+.. literalinclude:: /code/params/return.py
+    :language: py
+
+Of course, the second task is not quaranteed to run after 
+the first. You can combine the both to achieve proper
+pipelining:
+
+.. literalinclude:: /code/conds/api/pipe_with_return.py
+    :language: py
+
+
+Parameterizing
+--------------
 
 Parameters are key-value pairs passed to the tasks.
 The value of the pair is called *argument*. The 
@@ -71,29 +104,29 @@ task, from the return value of a function or
 a component of the scheduling framework.
 
 There are also two scopes of parameters: session level
-and task level. When a task is run, the argument is 
-looked from the task level arguments and then from the 
-session level arguments.
+and task level. Most of the time you are using session 
+level parameters.
 
-Here is an illustration:
+Here is an illustration of using a session level parameter:
 
 .. code-block:: python
 
-    from redengine.args import Arg
+    from rocketry.args import Arg
 
-    # Setting arguments to the session
+    # Setting parameters to the session
     app.params(
         my_arg='Hello world'
     )
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = Arg('my_arg')):
         ...
 
-We set a session level argument (``my_arg``)
-and we used that in the task ``do_things``. 
-The session level argument is turned as a 
-task level argument with ``Arg('my_arg'`)``.
+We set a session level parameter (``my_arg``)
+and we used that in the task ``do_things``.
+When the task is run, function argument ``item``
+will get the value of ``my_arg`` from session
+level arguments which is ``"Hello world"``.
 This argument can be reused in multiple tasks
 as it was set on session level. 
 
@@ -102,9 +135,9 @@ this:
 
 .. code-block:: python
 
-    from redengine.args import SimpleArg
+    from rocketry.args import SimpleArg
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = SimpleArg('Hello world')):
         ...
 
@@ -125,28 +158,30 @@ set a session level function argument:
 
 .. code-block:: python
 
-    from redengine.args import FuncArg
-
-    def get_item():
-        return 'hello world'
-
-    @app.task("every 10 seconds")
-    def do_things(item = FuncArg(get_item)):
-        ...
-
-To set task level function argument:
-
-.. code-block:: python
-
-    from redengine.args import Arg
+    from rocketry.args import Arg
 
     @app.param('my_arg')
     def get_item():
         return 'hello world'
 
-    @app.task("every 10 seconds")
+    @app.task()
     def do_things(item = Arg('my_arg')):
         ...
+
+
+To set task-level-only function argument:
+
+.. code-block:: python
+
+    from rocketry.args import FuncArg
+
+    def get_item():
+        return 'hello world'
+
+    @app.task()
+    def do_things(item = FuncArg(get_item)):
+        ...
+
 
 Meta Argments
 ^^^^^^^^^^^^^
@@ -163,9 +198,9 @@ An example of the session argument:
 
 .. code-block:: python
 
-    from redengine.args import Session
+    from rocketry.args import Session
 
-    @app.task("every 10 seconds")
+    @app.task()
     def manipulate_session(session = Session()):
         ...
 
@@ -173,16 +208,18 @@ An example of the task argument:
 
 .. code-block:: python
 
-    from redengine.args import Task
+    from rocketry.args import Task
 
-    @app.task("every 10 seconds")
-    def manipulate_task(this_task=Task(), another_task = Task('do_things')):
+    @app.task()
+    def manipulate_task(this_task=Task(), another_task=Task('do_things')):
         ...
+
+This is more advanced and we will get to the usage of these later.
 
 Customizing Logging Handlers
 ----------------------------
 
-Red Engine uses `Red Bird's <https://red-bird.readthedocs.io/>`_
+Rocketry uses `Red Bird's <https://red-bird.readthedocs.io/>`_
 `logging handler <https://red-bird.readthedocs.io/en/latest/logging_handler.html>`_
 for implementing a logger that can be read programmatically.
 Red Bird is a repository pattern library that abstracts 
@@ -197,21 +234,21 @@ you may add other logging handlers as well:
 .. code-block:: python
 
     import logging
-    from redengine import RedEngine
+    from rocketry import Rocketry
 
-    app = RedEngine()
+    app = Rocketry()
 
     # Create a handler
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
 
     # Add the handler
-    task_logger = logging.getLogger('redengine.task')
+    task_logger = logging.getLogger('rocketry.task')
     task_logger.addHandler(handler)
 
 .. warning::
 
-    Make sure the logger ``redengine.task`` has at least 
+    Make sure the logger ``rocketry.task`` has at least 
     one ``redbird.logging.RepoHandler`` in handlers or 
     the system cannot read the log information.
 
@@ -227,7 +264,7 @@ Simply
 
     import logging
     
-    task_logger = logging.getLogger('redengine.task')
+    task_logger = logging.getLogger('rocketry.task')
 
     # Getting a RepoHandler
     for handler in task_logger.handlers:

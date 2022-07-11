@@ -1,5 +1,5 @@
 [run]
-source = redengine
+source = rocketry
 branch = False
 omit = 
     test/*
@@ -10,9 +10,9 @@ data_file = cov_data/.coverage
 [report]
 
 omit = 
-    redengine/test/*
-    redengine/_version.py
-    redengine/__main__.py
+    rocketry/test/*
+    rocketry/_version.py
+    rocketry/__main__.py
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
