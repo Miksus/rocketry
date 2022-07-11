@@ -1,0 +1,3 @@
+@app.task(name="mytask")
+def do_things():
+    ...

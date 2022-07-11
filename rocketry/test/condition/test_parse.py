@@ -32,12 +32,18 @@ from rocketry.time import (
     TimeOfMonth
 )
 
-cases_time = [
-    pytest.param("hourly",  TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),
-    pytest.param("daily",   TaskExecutable(period=TimeOfDay(None, None)), id="daily"),
-    pytest.param("weekly",  TaskExecutable(period=TimeOfWeek(None, None)), id="weekly"),
-    pytest.param("monthly",  TaskExecutable(period=TimeOfMonth(None, None)), id="monthly"),
+from rocketry.conds import (
+    minutely, hourly, daily, weekly, monthly
+)
 
+cases_time = [
+    pytest.param("minutely", minutely, id="hourly"),
+    pytest.param("hourly", hourly, id="hourly"),
+    pytest.param("daily", daily, id="daily"),
+    pytest.param("weekly", weekly, id="weekly"),
+    pytest.param("monthly", monthly, id="monthly"),
+
+    pytest.param("minutely starting 45:00",   TaskExecutable(period=TimeOfMinute("45:00", "45:00")), id="hourly starting"),
     pytest.param("hourly starting 45:00",   TaskExecutable(period=TimeOfHour("45:00", "45:00")), id="hourly starting"),
     pytest.param("daily starting 10:00",    TaskExecutable(period=TimeOfDay("10:00", "10:00")),  id="daily starting"),
     pytest.param("weekly starting Tuesday", TaskExecutable(period=TimeOfWeek("Tue", "Tue")),     id="weekly starting"),
@@ -108,8 +114,8 @@ cases_task = [
 ]
 
 cases_scheduler = [
-    pytest.param("scheduler has more than 3 cycles", SchedulerCycles(_gt_=3), id="scheduler cycles greater than"),
-    pytest.param("scheduler has less than 3 cycles", SchedulerCycles(_lt_=3), id="scheduler cycles less than"),
+    pytest.param("scheduler has more than 3 cycles", SchedulerCycles() > 3, id="scheduler cycles greater than"),
+    pytest.param("scheduler has less than 3 cycles", SchedulerCycles() < 3, id="scheduler cycles less than"),
     pytest.param("scheduler started 20 minutes ago", SchedulerStarted(period=TimeDelta("20 minutes")), id="scheduler started in"),
     pytest.param("scheduler has run over 20 minutes", Not(SchedulerStarted(period=TimeDelta("20 minutes"))), id="scheduler run over"),
 ]

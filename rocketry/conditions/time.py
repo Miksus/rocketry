@@ -34,7 +34,7 @@ class IsPeriod(BaseCondition):
             raise AttributeError("TimeDelta does not have __contains__.")
         self.period = period
 
-    def __bool__(self):
+    def get_state(self):
         return datetime.datetime.now() in self.period
 
     def __str__(self):

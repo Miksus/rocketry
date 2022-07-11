@@ -2,7 +2,7 @@ from rocketry.core import BaseCondition, Task
 
 from rocketry.session import Session, Config
 from rocketry.parse import add_condition_parser
-from rocketry.conditions import true, false
+from rocketry.conds import true, false
 from rocketry.tasks import CommandTask, FuncTask, CodeTask
 from rocketry.tasks.maintain import ShutDown, Restart
 from rocketry.tasks.maintain import Restart

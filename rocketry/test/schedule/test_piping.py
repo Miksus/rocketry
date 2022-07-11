@@ -29,8 +29,8 @@ def test_dependent(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
         # Running the master tasks only once
-        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(task="A"), execution=execution)
-        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(task="B"), execution=execution)
+        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(), execution=execution)
+        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(), execution=execution)
 
         task_after_a = FuncTask(
             run_succeeding, 

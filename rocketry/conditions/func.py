@@ -1,9 +1,7 @@
 
 import copy
 from typing import Callable, List, Optional, Pattern, Union
-
-
-from rocketry.session import Session
+from rocketry.core.parameters.parameters import Parameters
 from rocketry.core.condition import BaseCondition
 
 class FuncCond(BaseCondition):
@@ -65,12 +63,14 @@ class FuncCond(BaseCondition):
                  syntax:Union[str, Pattern, List[Union[str, Pattern]]]=None, 
                  args:Optional[tuple]=None, 
                  kwargs:Optional[dict]=None,
+                 decor_return_func=False,
                  session=None):
 
         self.func = func
         self.syntax = syntax
         self.args = () if args is None else args
         self.kwargs = {} if kwargs is None else kwargs
+        self.decor_return_func = decor_return_func
         if session:
             self.session = session
         if self.syntax is not None:
@@ -87,10 +87,20 @@ class FuncCond(BaseCondition):
         if self.func is not None:
             raise ValueError("Function for the condition is already set")
         self.func = func
-        return func # To prevent problems with pickling
+        if self.decor_return_func:
+            return func # To prevent problems with pickling
+        else:
+            return self
 
     def __bool__(self):
         return self.func(*self.args, **self.kwargs)
+
+    def observe(self, **kwargs) -> bool:
+        func_params = Parameters._from_signature(self.func, **kwargs)
+        return self.get_state(*self.args, **self.kwargs, **func_params)
+
+    def get_state(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
 
     def _set_parsing(self):
 

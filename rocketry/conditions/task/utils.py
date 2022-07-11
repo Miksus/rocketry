@@ -1,18 +1,26 @@
 
 import re, time
 import datetime
+from typing import Tuple
 
 from redbird.oper import in_, between
 
-from rocketry.core.condition import All, Any, Statement
+from rocketry.core.condition import All, Any
+from rocketry.args import Task, Session
+from rocketry.core.condition import BaseCondition
+from rocketry.core.condition.base import BaseComparable
+from rocketry.core.time import TimePeriod
+from rocketry.core.time.utils import get_period_span, to_timestamp
+from rocketry.log.utils import get_field_value
 
-
-class DependMixin:
+class DependMixin(BaseCondition):
 
     _dep_actions = None
 
-    def __init__(self, depend_task, task=None, **kwargs):
-        super().__init__(task=task, depend_task=depend_task, **kwargs)
+    def __init__(self, depend_task, task=None):
+        self.task = task
+        self.depend_task = depend_task
+        super().__init__()
 
     @classmethod
     def _parse_multi_all(cls, depend_tasks:str, task=None):
@@ -30,12 +38,9 @@ class DependMixin:
             raise ParserError
         return Any(*(cls(depend_task=dep_task, task=task) for dep_task in tasks))
 
-    def observe(self, task, depend_task, **kwargs):
-        """True when the "depend_task" has succeeded and "task" has not yet ran after it.
-        Useful for start cond for task that should be run after success of another task.
-        """
-        actual_task = self.session.get_task(task)
-        depend_task = self.session.get_task(depend_task)
+    def get_state(self, task=Task(), session=Session()):
+        actual_task = session[self.task] if self.task is not None else task
+        depend_task = session[self.depend_task]
 
         #! TODO: use Task._last_success & Task._last_run if not none and not forced
         last_depend_finish = depend_task.logger.get_latest(action=in_(self._dep_actions))
@@ -48,19 +53,20 @@ class DependMixin:
             # Depend has succeeded but the actual task has not
             return True
             
-        return self._get_field_value(last_depend_finish, "created") > self._get_field_value(last_actual_start, "created")
+        return get_field_value(last_depend_finish, "created") > get_field_value(last_actual_start, "created")
 
-class TaskStatusMixin:
+class TaskStatusMixin(BaseComparable):
 
     _action = None
 
-    def observe(self, task, _start_=None, _end_=None, **kwargs):
+    def __init__(self, period=None, task=None):
+        self.task = task
+        self.period = period
+        super().__init__()
 
-        task = Statement.session.get_task(task)
-        if _start_ is None and _end_ is None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            interv = task.period.rollback(now)
-            _start_, _end_ = interv.left, interv.right
+    def get_measurement(self, task=Task(), session=Session()):
+        task = session[self.task] if self.task is not None else task
+        _start_, _end_ = get_period_span(self.period if self.period is not None else task.period)
         
         allow_optimization = not self.session.config.force_status_from_logs
 
@@ -87,12 +93,12 @@ class TaskStatusMixin:
             
             # Check if can be determined without reading logs
             # NOTE: if the last_occurred > _end_, we cannot determine whether the cond is true or not
-            if self.equal_zero():
+            if self._is_equal_zero():
                 if cannot_have_occurred:
                     return True
                 elif occurred_on_period:
                     return False
-            elif self.any_over_zero():
+            elif self._is_any_over_zero():
                 if cannot_have_occurred:
                     # If never occurred, it hasn't occurred on the period either
                     return False
@@ -101,11 +107,11 @@ class TaskStatusMixin:
 
         
         records = task.logger.get_records(
-            created=between(self._to_timestamp(_start_), self._to_timestamp(_end_)), 
+            created=between(to_timestamp(_start_), to_timestamp(_end_)), 
             action=in_(self._action) if isinstance(self._action, list) else self._action
         )
         return [
-            self._get_field_value(record, "created") 
+            get_field_value(record, "created") 
             for record in records
         ]
 
@@ -113,5 +119,5 @@ class TaskStatusMixin:
         if hasattr(self, "_str"):
             return self._str
         period = self.period
-        task = self.kwargs["task"]
+        task = self.task
         return f"task 'task '{task}' {self._action} {period}"

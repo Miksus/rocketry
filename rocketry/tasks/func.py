@@ -204,6 +204,13 @@ class FuncTask(Task):
             # Note that we must return the function or 
             # we are in deep shit with multiprocessing
             # (or pickling the function).
+
+            # As we return the function, the name of the
+            # task might be missing. We set the name so
+            # that condition API can identify the name.
+            # If the task is renamed, the link is lost. (TODO)
+            func.__rocketry__ = {'name': self.name}
+
             return func
         else:
             return super().__call__(*args, **kwargs)
@@ -267,11 +274,7 @@ class FuncTask(Task):
         # Get params from the typehints
         cache = False if self.path is not None else True
         func = self.get_func(cache=cache)
-        func_params = inspect.signature(func).parameters
-        for name, param in func_params.items():
-            default = param.default
-            if isinstance(default, BaseArgument):
-                params[name] = default.get_value(task=self)
+        params.update(Parameters._from_signature(func, task=self, session=self.session))
         return params
 
     def prefilter_params(self, params):

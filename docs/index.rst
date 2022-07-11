@@ -83,6 +83,7 @@ And the rest :ref:`tutorials <tutorials>`.
    :caption: Contents:
 
    tutorial/index
+   handbooks/index
    condition_syntax/index
    examples/index
    how_it_works

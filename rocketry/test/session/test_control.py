@@ -7,7 +7,7 @@ from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conditions import TaskStarted
 from rocketry.core.time.base import TimeDelta
 from rocketry.tasks import FuncTask
-from rocketry.conditions import true
+from rocketry.conds import true
 
 
 @pytest.mark.parametrize("execution", ["main", "thread"])

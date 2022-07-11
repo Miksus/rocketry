@@ -18,7 +18,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, PrivateAttr, validator
 
 from rocketry._base import RedBase
-from rocketry.core.condition import BaseCondition, AlwaysFalse, All, set_statement_defaults
+from rocketry.core.condition import BaseCondition, AlwaysFalse, All
 from rocketry.core.time import TimePeriod
 from rocketry.core.parameters import Parameters
 from rocketry.core.log import TaskAdapter
@@ -247,8 +247,6 @@ class Task(RedBase, BaseModel):
         # Set default readable logger if missing 
         self.session._check_readable_logger()
 
-        self._set_default_task()
-
         self.register()
         
         # Hooks
@@ -302,11 +300,6 @@ class Task(RedBase, BaseModel):
             return value
         else:
             return Parameters(value)
-
-    def _set_default_task(self):
-        "Set the task in subconditions that are missing "
-        set_statement_defaults(self.start_cond, task=self)
-        set_statement_defaults(self.end_cond, task=self)
 
     def __hash__(self):
         return id(self)
@@ -373,6 +366,12 @@ class Task(RedBase, BaseModel):
             raise
 
     def __bool__(self):
+        return self.is_runnable()
+
+    def is_terminable(self):
+        return self.end_cond.observe(task=self)
+
+    def is_runnable(self):
         """Check whether the task can be run or not.
         
         If force_run is True, the task can be run regardless.
@@ -391,7 +390,7 @@ class Task(RedBase, BaseModel):
         elif self.disabled:
             return False
 
-        cond = bool(self.start_cond)
+        cond = self.start_cond.observe(task=self)
 
         return cond
 

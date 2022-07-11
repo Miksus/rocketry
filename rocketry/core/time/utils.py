@@ -1,4 +1,10 @@
 
+import time
+import datetime
+from typing import Tuple
+
+from .base import TimePeriod
+
 # Conversions
 def to_dict(dt):
     return {
@@ -155,3 +161,25 @@ def timedelta_to_str(dt,
         if is_min_reached:
             break
     return s
+
+def to_timestamp(dt) -> float:
+    if hasattr(dt, "to_pydatetime"):
+        dt = dt.to_pydatetime()
+    return dt.timestamp()
+
+
+def get_period_span(period:'TimePeriod') -> Tuple[datetime.datetime, datetime.datetime]:
+
+    # To prevent circular import
+    from rocketry.parse import parse_time
+
+    if period is None:
+        return TimePeriod.min, TimePeriod.max
+    elif isinstance(period, str):
+        period = parse_time(period)
+    dt = datetime.datetime.fromtimestamp(time.time())
+
+    interval = period.rollback(dt)
+    start = interval.left
+    end = interval.right
+    return start, end

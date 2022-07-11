@@ -62,7 +62,7 @@ class Rocketry(_AppMixin):
 
     def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
         "Create a condition (decorator)"
-        return FuncCond(syntax=syntax, session=self.session)
+        return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)
 
     def params(self, **kwargs):
         "Set session parameters"

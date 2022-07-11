@@ -155,6 +155,20 @@ class Session(RedBase):
         else:
             raise TypeError("Invalid config type")
 
+    @staticmethod
+    def _get_task_name(task):
+        from rocketry.core import Task
+        if isinstance(task, str):
+            task_name = task
+        elif hasattr(task, "__rocketry__"):
+            # Function that FuncTask set the rocketry info
+            task_name = task.__rocketry__['name']
+        elif isinstance(task, Task):
+            task_name = task.name
+        else:
+            raise TypeError(f"Cannot determine task name from: {type(task)}")
+        return task_name
+
     def __init__(self, config=None, parameters=None, delete_existing_loggers=False):
         from rocketry.core import Scheduler
         self.config = self._get_config(config)
@@ -171,7 +185,7 @@ class Session(RedBase):
 
     def __getitem__(self, task:Union['Task', str]):
         "Get a task from the session"
-        task_name = task.name if not isinstance(task, str) else task
+        task_name = self._get_task_name(task)
         for task in self.tasks:
             if task.name == task_name:
                 return task
@@ -322,7 +336,12 @@ class Session(RedBase):
             self.tasks.add(task)
 
     def task_exists(self, task: 'Task'):
-        task_name = task.name if not isinstance(task, str) else task
+        warnings.warn((
+            "Method task_exists will be removed in the future version." 
+            "Please use instead: 'task name' in session"
+        ), DeprecationWarning)
+
+        task_name = self._get_task_name(task)
         for task in self.tasks:
             if task.name == task_name:
                 return True

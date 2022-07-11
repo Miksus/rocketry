@@ -22,6 +22,8 @@ from rocketry.exc import TaskInactionException
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from rocketry.args import Private
 
+from rocketry.conds import true, false
+
 def run_failing():
     raise RuntimeError("Task failed")
 
@@ -43,6 +45,13 @@ def run_creating_child():
     proc = multiprocessing.Process(target=run_succeeding, daemon=True)
     proc.start()
 
+def test_scheduler_shut_cond(session):
+    assert not session.scheduler.check_shut_cond(None)
+    
+    assert session.scheduler.check_shut_cond(true)
+    assert not session.scheduler.check_shut_cond(~true)
+    assert session.scheduler.check_shut_cond(true & true)
+    assert not session.scheduler.check_shut_cond(false)
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_execution(tmpdir, execution, session):
@@ -107,7 +116,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         session.config.shut_cond = (TaskStarted(task="mytask") >= run_count) | ~SchedulerStarted(period=TimeDelta("10 second"))
         session.start()
 
-        assert bool(TaskStarted(task="mytask") >= run_count)
+        assert (TaskStarted(task="mytask") >= run_count).observe(session=session)
 
         # Test history
         history = list(task.logger.get_records())

@@ -3,7 +3,7 @@ import re
 from typing import Union
 
 from rocketry.core.condition import BaseCondition
-
+from rocketry.args import Session
 
 class IsEnv(BaseCondition):
     """Condition checks whether session parameter `env`
@@ -36,8 +36,8 @@ class IsEnv(BaseCondition):
     def __init__(self, env):
         self.env = env
     
-    def __bool__(self):
-        return self.session.parameters.get("env", None) == self.env
+    def get_state(self, session=Session()):
+        return session.parameters.get("env", None) == self.env
 
 class ParamExists(BaseCondition):
     """Condition to check whether parameter(s) (and their values)

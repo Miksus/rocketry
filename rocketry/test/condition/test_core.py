@@ -2,11 +2,10 @@
 import pytest
 
 from rocketry.conditions import (
-    true, false, ParamExists, IsPeriod,
+    ParamExists, IsPeriod,
     Any, All
 )
-from rocketry.core.condition import Statement, Comparable, Historical
-
+from rocketry.conds import true, false
 from rocketry.time import TimeDelta
 
 def test_true():
@@ -77,13 +76,6 @@ def test_parameter_exists(session):
     session.parameters["y"] = "no"
     assert not bool(cond)
 
-
-# Test no unexpected errors in all
-@pytest.mark.parametrize("cls", set(Statement.__subclasses__() + Comparable.__subclasses__() + Historical.__subclasses__()))
-def test_magic_noerror(cls):
-    if cls.__name__ in ('TaskSucceeded', 'DependFinish', 'TaskTerminated', 'TaskFinished', 'TaskFailed', 'DependFailure', 'TaskStarted', 'DependSuccess', 'TaskInacted', 'TaskRunning'):
-        pytest.skip("Initing requires task as argument")
-    str(cls())
 
 @pytest.mark.parametrize("get_cond,exc",
     [

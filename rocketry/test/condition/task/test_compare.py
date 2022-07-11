@@ -22,18 +22,18 @@ def test_task_finish_compare(tmpdir, session):
         )
 
         # Has not yet ran
-        assert not bool(equals)
-        assert not bool(greater)
-        assert bool(less)
+        assert not bool(equals.observe(session=session))
+        assert not bool(greater.observe(session=session))
+        assert bool(less.observe(session=session))
 
         task()
         task()
 
-        assert bool(equals)
-        assert not bool(greater)
-        assert not bool(less)
+        assert bool(equals.observe(session=session))
+        assert not bool(greater.observe(session=session))
+        assert not bool(less.observe(session=session))
 
         task()
-        assert not bool(equals)
-        assert bool(greater)
-        assert not bool(less)
+        assert not bool(equals.observe(session=session))
+        assert bool(greater.observe(session=session))
+        assert not bool(less.observe(session=session))

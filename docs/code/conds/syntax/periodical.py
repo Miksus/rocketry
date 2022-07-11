@@ -1,3 +1,11 @@
+@app.task('minutely')
+def do_minutely():
+    ...
+
+@app.task('hourly')
+def do_hourly():
+    ...
+
 @app.task('daily')
 def do_daily():
     ...

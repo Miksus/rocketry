@@ -115,7 +115,7 @@ class Scheduler(RedBase):
         try:
             self.startup()
 
-            while not self.check_cond(self.session.config.shut_cond):
+            while not self.check_shut_cond(self.session.config.shut_cond):
                 if self._flag_shutdown.is_set():
                     break
                 elif self._flag_restart.is_set():
@@ -190,9 +190,15 @@ class Scheduler(RedBase):
         
         self.n_cycles += 1
 
-    def check_cond(self, cond: Union[BaseCondition, Task]) -> bool:
+    def check_shut_cond(self, cond: Optional[BaseCondition]) -> bool:
+        # Note that failure in scheduler shut_cond always crashes the system
+        if cond is None:
+            return False
+        return cond.observe(scheduler=self, session=self.session)
+
+    def check_task_cond(self, task:Task):
         try:
-            return bool(cond)
+            return task.is_runnable()
         except:
             if not self.session.config.silence_cond_check:
                 raise
@@ -269,17 +275,15 @@ class Scheduler(RedBase):
         """Inspect whether the task should be run."""
         #! TODO: Can this be put to the Task?
         execution = task.get_execution()
+        is_condition = self.check_task_cond(task)
         if execution == "process":
             is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
-            is_condition = self.check_cond(task)
             return is_not_running and has_free_processors and is_condition
         elif execution == "main":
-            is_condition = self.check_cond(task)
             return is_condition
         elif execution == "thread":
             is_not_running = not task.is_alive()
-            is_condition = self.check_cond(task)
             return is_not_running and is_condition
         else:
             raise NotImplementedError(task.execution)
@@ -297,7 +301,7 @@ class Scheduler(RedBase):
             return True
 
         else:
-            return self.check_cond(task.end_cond)
+            return task.is_terminable()
             
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""

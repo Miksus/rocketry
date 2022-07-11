@@ -1,5 +1,5 @@
 
-.. _condition-syntax:
+.. _condition-syntax-specs:
 
 Condition Syntax
 ================
