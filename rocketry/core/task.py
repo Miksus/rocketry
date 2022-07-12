@@ -95,8 +95,7 @@ class Task(RedBase, BaseModel):
         If the task has not run in given timeout
         the task will be terminated. Only applicable
         for tasks with execution='process' or 
-        with execution='thread'. Passed to 
-        ``pandas.Timedelta``.
+        with execution='thread'.
     daemon : Bool, optional
         Whether run the task as daemon process
         or not. Only applicable for execution='process',
