@@ -1,0 +1,60 @@
+from datetime import timedelta, datetime
+import pytest
+from rocketry.pybox.time import Interval, to_datetime
+
+@pytest.mark.parametrize("l,r",
+    [
+        pytest.param(
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-30")),
+            Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15")),
+            id="right inside left"
+        ),
+        pytest.param(
+            Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15")),
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-30")),
+            id="left inside right"
+        ),
+
+        pytest.param(
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-15"), closed="neither"),
+            Interval(to_datetime("2022-07-14"), to_datetime("2022-07-30"), closed="neither"),
+            id="left partially right (right)"
+        ),
+        pytest.param(
+            Interval(to_datetime("2022-07-14"), to_datetime("2022-07-30"), closed="neither"),
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-15"), closed="neither"),
+            id="left partially right (left)"
+        ),
+
+        pytest.param(
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-12"), closed="both"),
+            Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15"), closed="both"),
+            id=f"left edges right (right)"
+        ),
+        pytest.param(
+            Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15"), closed="both"),
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-12"), closed="both"),
+            id=f"left edges right (left)"
+        ),
+    ]
+)
+def test_overlaps(l, r):
+    assert l.overlaps(r)
+
+
+@pytest.mark.parametrize("l,r",
+    [
+        pytest.param(
+            Interval(to_datetime("2022-07-01"), to_datetime("2022-07-12"), closed=l_closed),
+            Interval(to_datetime("2022-07-12"), to_datetime("2022-07-30"), closed=r_closed),
+            id=f"right edge ({l_closed}, {r_closed})"
+        )
+        for l_closed, r_closed in [
+            ("left", 'left'), ('left', 'both'), ('left', 'neither'), 
+            ("left", 'right'), ('both', 'right'), ('neither', 'right'),
+            ("neither", 'both'), ('neither', 'neither'),
+        ]
+    ]
+)
+def test_not_overlaps(l, r):
+    assert not l.overlaps(r)

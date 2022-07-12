@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import pytest
 from rocketry.pybox.time import to_timedelta, to_datetime, Interval
 
@@ -22,6 +22,32 @@ from rocketry.pybox.time import to_timedelta, to_datetime, Interval
         ("--1 days 5 hours 10 minutes 20 seconds", timedelta(days=1, hours=5, minutes=10, seconds=20)),
     ]
 )
-def test_timedelta(s, expected):
+def test_timedelta_from_string(s, expected):
     assert to_timedelta(s) == expected
 
+@pytest.mark.parametrize("unit,n,expected",
+    [
+        pytest.param('ns', 0, timedelta(), id="0 ns"),
+        pytest.param('ns', 1e+9, timedelta(seconds=1), id="nanoseconds"),
+        pytest.param('μs', 1e+6, timedelta(seconds=1), id="microseconds"),
+        pytest.param('ms', 1000, timedelta(seconds=1), id="milliseconds"),
+        pytest.param('s', 1, timedelta(seconds=1), id="seconds"),
+        pytest.param('m', 1, timedelta(minutes=1), id="minutes"),
+        pytest.param('h', 1, timedelta(hours=1), id="hours"),
+    ]
+)
+def test_timedelta_from_int(unit, n, expected):
+    assert to_timedelta(n, unit=unit) == expected
+
+def test_timedelta_from_timedelta():
+    assert to_timedelta(timedelta(hours=5)) == timedelta(hours=5)
+
+@pytest.mark.parametrize("obj",
+    [
+        pytest.param(datetime(2022, 1, 1,), id="datetime"),
+        pytest.param(datetime, id="class"),
+    ]
+)
+def test_timedelta_fail(obj):
+    with pytest.raises(TypeError):
+        to_timedelta(obj)
