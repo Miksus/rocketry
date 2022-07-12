@@ -1,9 +1,10 @@
 
 from functools import partial
 from textwrap import dedent
+import sys
 
 import pytest
-from rocketry.conditions.task.task import DependSuccess
+from rocketry.conditions.task.task import DependSuccess, TaskStarted
 from rocketry.core import Task, Scheduler
 
 from rocketry.tasks import FuncTask
@@ -147,7 +148,8 @@ def myhook_gener(task, file):
 @pytest.mark.parametrize("func,exc_type,exc", [pytest.param(do_success, None, None, id="success"), pytest.param(do_fail, RuntimeError, RuntimeError('Deliberate fail'), id="fail")])
 @pytest.mark.parametrize("execution", ['main', 'thread', 'process'])
 def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
-
+    if sys.version_info < (3, 8):
+        pytest.skip(reason="Generator hook does not work for Python <=3.7")
     file = tmpdir.join("timeline.txt")
 
     session.hook_task_execute()(partial(myhook_normal, file=file))
@@ -157,10 +159,12 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
         f.write("\nStarting\n")
 
     task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
-    session.config.shut_cond = SchedulerCycles() >= 1
+    session.config.shut_cond = TaskStarted(task="mytask") >= 1
     session.start()
     with open(file) as f:
         cont = f.read()
+
+    assert 1 == task.logger.filter_by(action="run").count()
     assert dedent(f"""
     Starting
     Function hook called

@@ -1,6 +1,11 @@
 
 import subprocess
-from typing import List, Literal, Optional, Union
+from typing import List, Optional, Union
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 from pydantic import Field, validator
 

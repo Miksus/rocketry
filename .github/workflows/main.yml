@@ -23,7 +23,7 @@ jobs:
     
     strategy:
       matrix:
-        python-version: [3.6.x, 3.8.x, 3.10.x]
+        python-version: [3.7.x, 3.8.x, 3.10.x]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -33,14 +33,14 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements/build.txt
         python -m pip install -e .
-     
+        
     - name: Run test suite
       run: |
         python -m pytest --pyargs rocketry
