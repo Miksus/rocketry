@@ -9,6 +9,16 @@ that you might not come across in very
 simple applications but you eventually
 need to know.
 
+Session Configurations
+----------------------
+
+There are several options to tune the scheduling session.
+You might want to change some of the default configurations
+depending on your project. You might want to silence more 
+errors on production than by default and you might want 
+to change the default execution type.
+
+Read more from the :ref:`the config handbook <config-handbook>`.
 
 Using the Condition API
 -----------------------
@@ -258,7 +268,8 @@ Reading from the Logs
 Reading programmatically from the logs is easy due to unified 
 querying syntax of Red Bird.
 
-Simply 
+We first need to find the handler that has the repository
+and then we can query it:
 
 .. code-block:: python
 
