@@ -2,6 +2,15 @@ import datetime
 from typing import Union
 from dateutil.parser import parse
 
+ABBREVIATIONS = {
+    'ns': 'nanosecond',
+    'μs': 'microsecond',
+    'ms': 'millisecond',
+    's': 'second',
+    'm': 'minute',
+    'h': 'hour',
+}
+
 def to_datetime(s):
     if isinstance(s, datetime.datetime):
         return s
@@ -32,11 +41,12 @@ def string_to_datetime(s):
 
 
 def numb_to_timedelta(n: Union[float, int], unit="ms"):
-    multip = {
-        "ns": 1/1000,
-        "ms": 1,
-    }[unit]
-    return datetime.timedelta(microseconds=n * multip)
+    
+    if unit == "ns":
+        unit = 'μs'
+        n = n / 1000
+    units = ABBREVIATIONS[unit] + "s"
+    return datetime.timedelta(**{units: n})
 
 def string_to_timedelta(s:str):
     "Convert string to timedelta"
