@@ -52,7 +52,7 @@ def run_with_session(arg=Session()):
 def run_with_termination_flag(flag=TerminationFlag(), task=Task()):
     if task.execution == "process":
         return
-    assert isinstance(flag, threading.Event)
+    assert isinstance(flag, threading.Event), f"Flag incorrect type: {type(flag)}"
     assert not flag.is_set()
 
     if task.execution == "main":
