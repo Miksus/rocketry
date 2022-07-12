@@ -8,6 +8,7 @@ Version history
     - Add: Now ``rocketry.args.Return`` accepts passing the task function
     - Add: Now ``app.cond(..)`` decorator returns the condition (instead of the function)
     - Add: Now conditions accept verbose arguments similarly as tasks do
+    - Fix: typing import error for Python 3.7
     - Update: Now conditions are less stateful and they require passing the context when the status is inspected
     - Refactor: The condition mechanism under the hood
     - Requirements: Removed Pandas from dependencies
