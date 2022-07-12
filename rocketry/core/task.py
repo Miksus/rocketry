@@ -963,6 +963,10 @@ class Task(RedBase, BaseModel):
         Overried if needed additional cleaning."""
         self.session.tasks.remove(self)
 
+    def terminate(self):
+        "Terminate this task"
+        self.force_termination = True
+
     def _get_hooks(self, name:str):
         return getattr(self.session.hooks, name)
 

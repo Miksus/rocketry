@@ -1,5 +1,6 @@
 
 from typing import Any, Callable
+import warnings
 
 from rocketry.core.parameters import BaseArgument
 from rocketry.core.utils import filter_keyword_args
@@ -54,6 +55,7 @@ class Task(BaseArgument):
             return task
         else:
             return task.session[self.name]
+
 
 class Return(BaseArgument):
     """A return argument
@@ -172,3 +174,11 @@ class FuncArg(BaseArgument):
     def __repr__(self):
         cls_name = type(self).__name__
         return f'{cls_name}({self.func.__name__})'
+
+class TerminationFlag(BaseArgument):
+
+    def get_value(self, task=None, session=None, **kwargs) -> Any:
+        execution = task.execution
+        if execution in ("process", "main"):
+            warnings.warn(f"Passing termination flag to task with 'execution_type={execution}''. Flag cannot be used.")
+        return task._thread_terminate
