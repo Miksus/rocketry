@@ -12,3 +12,4 @@ operates.
    :caption: Contents:
 
    conditions/index
+   config
