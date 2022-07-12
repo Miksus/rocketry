@@ -1,6 +1,7 @@
 
 from functools import partial
 from textwrap import dedent
+import sys
 
 import pytest
 from rocketry.conditions.task.task import DependSuccess, TaskStarted
@@ -147,7 +148,8 @@ def myhook_gener(task, file):
 @pytest.mark.parametrize("func,exc_type,exc", [pytest.param(do_success, None, None, id="success"), pytest.param(do_fail, RuntimeError, RuntimeError('Deliberate fail'), id="fail")])
 @pytest.mark.parametrize("execution", ['main', 'thread', 'process'])
 def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
-
+    if sys.version_info < (3, 8):
+        pytest.skip(reason="Generator hook does not work for Python <=3.7")
     file = tmpdir.join("timeline.txt")
 
     session.hook_task_execute()(partial(myhook_normal, file=file))
