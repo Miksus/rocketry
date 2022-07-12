@@ -42,7 +42,7 @@ jobs:
         python -m pip install -e .
        
     - name: Uninstall typing (Red Bird installs typing, not needed on newer Python)
-      if: ${{ matrix.python-version == 3.7.x }}
+      if: ${{ matrix.python-version == '3.7.x' }}
       run: |
         python -m pip uninstall typing
         
