@@ -41,6 +41,6 @@ setup(
      python_requires='>=3.7.0',
 
     install_requires = [
-        'pandas', 'redbird>=0.5.0', 'pydantic'
+        'python-dateutil', 'redbird>=0.5.0', 'pydantic'
     ],
 )
