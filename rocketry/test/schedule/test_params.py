@@ -1,14 +1,17 @@
 
+import threading
+from time import sleep
 import pytest
 import rocketry
 from rocketry.conditions import DependSuccess
+from rocketry.exc import TaskTerminationException
 
 
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 
-from rocketry.args import Arg, Return, Session, Task, FuncArg #, Param, Session
+from rocketry.args import Arg, Return, Session, Task, FuncArg, TerminationFlag #, Param, Session
 
 # Example functions
 # -----------------
@@ -45,6 +48,25 @@ def run_with_task(arg = Task(), arg2 = Task('another_task')):
 def run_with_session(arg=Session()):
     assert isinstance(arg, rocketry.Session)
     assert arg.parameters['my_arg'] == 'some session value'
+
+def run_with_termination_flag(flag=TerminationFlag(), task=Task()):
+    if task.execution == "process":
+        return
+    assert isinstance(flag, threading.Event), f"Flag incorrect type: {type(flag)}"
+    assert not flag.is_set()
+
+    if task.execution == "main":
+        return
+
+    waited = 0
+    while True:
+        if flag.is_set():
+            raise TaskTerminationException("Flag raised")
+
+        sleep(0.001)
+        waited += 0.001
+        if waited > 1:
+            raise RuntimeError("Did not terminate")
 
 # Tests
 # -----
@@ -120,3 +142,30 @@ def test_task_as_arg(execution, session):
     assert 1 == logger.filter_by(action="run").count()
     assert 1 == logger.filter_by(action="success").count()
     assert 0 == logger.filter_by(action="fail").count()
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_termination_flag_as_arg(execution, session):
+    if execution == "process":
+        pytest.skip("For some reason CI fails on process. Termination flag should not be used with process tasks anyways.")
+    
+    task = FuncTask(func=run_with_termination_flag, name="my_task", start_cond=AlwaysTrue(), execution=execution, session=session)
+    task.terminate()
+
+    @FuncTask(name="terminator", execution="main", start_cond="task 'my_task' has started")
+    def task_terminate(session=Session()):
+        session["my_task"].terminate()
+
+    session.config.shut_cond = (TaskStarted(task="my_task") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+
+    if execution in ("main", "process"):
+        with pytest.warns(UserWarning):
+            session.start()
+    else:
+        session.start()
+
+    logger = task.logger
+    assert 1 == logger.filter_by(action="run").count()
+    if execution == "thread":
+        assert 1 == logger.filter_by(action="terminate").count()
+    else:
+        assert 1 == logger.filter_by(action="success").count()
