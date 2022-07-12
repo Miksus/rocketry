@@ -46,6 +46,10 @@ def test_app_tasks():
     app = Rocketry(config={'task_execution': 'main'})
 
     # Creating some tasks
+    @app.task()
+    def do_never():
+        ...
+
     @app.task('daily')
     def do_func():
         ...
@@ -55,7 +59,7 @@ def test_app_tasks():
     app.task('daily', name="do_script", path=__file__)
 
     # Assert and test tasks
-    assert len(app.session.tasks) == 3
+    assert len(app.session.tasks) == 4
 
     assert isinstance(app.session['do_func'], FuncTask)
     assert isinstance(app.session['do_command'], CommandTask)
