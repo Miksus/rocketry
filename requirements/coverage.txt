@@ -3,5 +3,5 @@ pytest
 pytest-cov
 
 # Package requirements
-pandas
+python-dateutil
 redbird>=0.5.0

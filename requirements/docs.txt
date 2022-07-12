@@ -1,4 +1,4 @@
-pandas >= 1.0.0
+python-dateutil
 pydantic
 redbird>=0.5.0
 
