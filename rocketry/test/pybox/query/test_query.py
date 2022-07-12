@@ -1,6 +1,6 @@
 
+import datetime
 import pytest
-import pandas as pd
 from rocketry.pybox import query
 
 @pytest.mark.parametrize('qry,data,expected',
@@ -18,11 +18,11 @@ from rocketry.pybox import query
         pytest.param(
             query.Key('mydate') == '2021-01-01',
             [
-                {'mydate': pd.Timestamp('2020-12-31')},
-                {'mydate': pd.Timestamp('2021-01-01')},
-                {'mydate': pd.Timestamp('2020-01-02')},
+                {'mydate': datetime.datetime.fromisoformat('2020-12-31')},
+                {'mydate': datetime.datetime.fromisoformat('2021-01-01')},
+                {'mydate': datetime.datetime.fromisoformat('2020-01-02')},
             ],
-            [{'mydate': pd.Timestamp('2021-01-01')}],
+            [{'mydate': datetime.datetime.fromisoformat('2021-01-01')}],
             id="string to datetime"
         ),
     ]

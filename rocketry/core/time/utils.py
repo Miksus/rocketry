@@ -1,9 +1,10 @@
 
 import time
 import datetime
-from typing import Tuple
+from typing import Tuple, Union
 
 from .base import TimePeriod
+from rocketry.pybox.time import to_nanoseconds, to_timedelta
 
 # Conversions
 def to_dict(dt):
@@ -18,9 +19,6 @@ def to_dict(dt):
         "nanosecond": dt.nanosecond if hasattr(dt, "nanosecond") else 0
     }
 
-def to_nanoseconds(day=0, hour=0, minute=0, second=0, microsecond=0, nanosecond=0) -> int:
-    "Turn time components to nanoseconds"
-    return nanosecond + microsecond * 1_000 + second * int(1e+9) + minute * int(6e+10) + hour * int(3.6e+12) + day * int(8.64e+13)
 
 def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     

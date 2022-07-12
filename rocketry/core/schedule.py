@@ -11,8 +11,6 @@ import platform
 from copy import copy
 from queue import Empty
 
-import pandas as pd
-
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse
 from rocketry.core.task import Task

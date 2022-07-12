@@ -5,7 +5,6 @@ import os, re
 import multiprocessing
 
 import pytest
-import pandas as pd
 
 import rocketry
 from rocketry import Session

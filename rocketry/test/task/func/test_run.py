@@ -1,8 +1,6 @@
 
 import pytest
 
-import pandas as pd
-
 from rocketry.tasks import FuncTask
 from rocketry.core.task import Task
 from rocketry.exc import TaskInactionException

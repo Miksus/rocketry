@@ -4,10 +4,9 @@ from abc import abstractmethod
 from typing import Callable, Dict, List, Pattern, Union
 import itertools
 
-import pandas as pd
-
 from rocketry._base import RedBase
 from rocketry.core.meta import _add_parser
+from rocketry.pybox.time import to_datetime, to_timedelta, Interval
 from rocketry.session import Session
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
@@ -34,9 +33,9 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
     is in a given time span.
     """
 
-    resolution = pd.Timestamp.resolution
-    min = pd.Timestamp.min
-    max = pd.Timestamp.max
+    resolution = datetime.timedelta.resolution
+    min = datetime.datetime(1970, 1, 3, 2, 0)
+    max = datetime.datetime(2260, 1, 1, 0, 0)
 
     def __contains__(self, other):
         """Whether a given point of time is in
@@ -133,7 +132,7 @@ class TimeInterval(TimePeriod):
         raise NotImplementedError("Contains not implemented.")
 
     @abstractmethod
-    def from_between(start, end) -> pd.Interval:
+    def from_between(start, end) -> Interval:
         raise NotImplementedError("__between__ not implemented.")
 
     def rollforward(self, dt):
@@ -142,21 +141,21 @@ class TimeInterval(TimePeriod):
         start = self.rollstart(dt)
         end = self.next_end(dt)
 
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
+        start = to_datetime(start)
+        end = to_datetime(end)
         
-        return pd.Interval(start, end, closed="both")
+        return Interval(start, end, closed="both")
     
-    def rollback(self, dt) -> pd.Interval:
+    def rollback(self, dt) -> Interval:
         "Get previous time interval of the period"
 
         end = self.rollend(dt)
         start = self.prev_start(dt)
 
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(end)
+        start = to_datetime(start)
+        end = to_datetime(end)
         
-        return pd.Interval(start, end, closed="both")
+        return Interval(start, end, closed="both")
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
@@ -188,8 +187,8 @@ class TimeDelta(TimePeriod):
         kws_past = {} if kws_past is None else kws_past
         kws_future = {} if kws_future is None else kws_future
         
-        self.past = abs(pd.Timedelta(past, **kws_past))
-        self.future = abs(pd.Timedelta(future, **kws_future))
+        self.past = abs(to_timedelta(past, **kws_past))
+        self.future = abs(to_timedelta(future, **kws_future))
 
     @abstractmethod
     def __contains__(self, dt):
@@ -202,16 +201,16 @@ class TimeDelta(TimePeriod):
     def rollback(self, dt):
         "Get previous interval (including currently ongoing)"
         start = dt - abs(self.past)
-        start = pd.Timestamp(start)
-        end = pd.Timestamp(dt)
-        return pd.Interval(start, end) 
+        start = to_datetime(start)
+        end = to_datetime(dt)
+        return Interval(start, end) 
 
     def rollforward(self, dt):
         "Get next interval (including currently ongoing)"
         end = dt + abs(self.future)
-        start = pd.Timestamp(dt)
-        end = pd.Timestamp(end)
-        return pd.Interval(start, end)
+        start = to_datetime(dt)
+        end = to_datetime(end)
+        return Interval(start, end)
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
@@ -232,7 +231,7 @@ class TimeDelta(TimePeriod):
     def __repr__(self):
         return f"TimeDelta(past={repr(self.past)}, future={repr(self.future)})"
 
-def all_overlap(times:List[pd.Interval]):
+def all_overlap(times:List[Interval]):
     return all(a.overlaps(b) for a, b in itertools.combinations(times, 2))
 
 def get_overlapping(times):
@@ -246,7 +245,7 @@ def get_overlapping(times):
 
     start = max(starts)
     end = min(ends)
-    return pd.Interval(start, end)
+    return Interval(start, end)
 
 class All(TimePeriod):
 
@@ -349,7 +348,7 @@ class Any(TimePeriod):
             period.rollback(start - datetime.datetime.resolution)
             for period in self.periods
         ]
-        if any(pd.Interval(start, end).overlaps(interval) for interval in next_intervals):
+        if any(Interval(start, end).overlaps(interval) for interval in next_intervals):
             # Example:
             # A:    <-->   
             # B:    <--->     <--->
@@ -358,7 +357,7 @@ class Any(TimePeriod):
             extended = self.rollback(start - datetime.datetime.resolution)
             start = extended.left
 
-        return pd.Interval(start, end)
+        return Interval(start, end)
 
     def rollforward(self, dt):
         intervals = [
@@ -377,7 +376,7 @@ class Any(TimePeriod):
             for period in self.periods
         ]
 
-        if any(pd.Interval(start, end).overlaps(interval) for interval in next_intervals):
+        if any(Interval(start, end).overlaps(interval) for interval in next_intervals):
             # Example:
             # A:    <-->   
             # B:    <--->     <--->
@@ -386,7 +385,7 @@ class Any(TimePeriod):
             extended = self.rollforward(end + datetime.datetime.resolution)
             end = extended.right
 
-        return pd.Interval(start, end)
+        return Interval(start, end)
 
     def __eq__(self, other):
         # self | other
@@ -404,20 +403,20 @@ class StaticInterval(TimePeriod):
         self.end = end if end is not None else self.max
 
     def rollback(self, dt):
-        dt = pd.Timestamp(dt)
-        start = pd.Timestamp(self.start)
+        dt = to_datetime(dt)
+        start = to_datetime(self.start)
         if start > dt:
             # The actual interval is in the future
-            return pd.Interval(self.min, self.min)
-        return pd.Interval(start, dt)
+            return Interval(self.min, self.min)
+        return Interval(start, dt)
 
     def rollforward(self, dt):
-        dt = pd.Timestamp(dt)
-        end = pd.Timestamp(self.end)
+        dt = to_datetime(dt)
+        end = to_datetime(self.end)
         if end < dt:
             # The actual interval is already gone
-            return pd.Interval(self.max, self.max, closed="both")
-        return pd.Interval(dt, end, closed="both")
+            return Interval(self.max, self.max, closed="both")
+        return Interval(dt, end, closed="both")
 
     @property
     def is_max_interval(self):

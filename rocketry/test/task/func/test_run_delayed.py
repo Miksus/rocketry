@@ -2,7 +2,6 @@
 from rocketry.tasks.func import FuncTask
 from textwrap import dedent
 import pytest
-import pandas as pd
 
 from rocketry.tasks import FuncTask
 

@@ -1,13 +1,14 @@
 
 import calendar
+import datetime
 import re
 
 import dateutil
-import pandas as pd
 
 from rocketry.core.time.anchor import AnchoredInterval
 from rocketry.core.time.base import TimeInterval
 from rocketry.core.time.utils import timedelta_to_str, to_dict, to_nanoseconds
+from rocketry.pybox.time.interval import Interval
 
 
 class TimeOfMinute(AnchoredInterval):
@@ -22,7 +23,7 @@ class TimeOfMinute(AnchoredInterval):
     """
 
     _scope = "minute"
-    _scope_max = to_nanoseconds(minute=1) - 1 # See: pd.Timedelta(59999999999, unit="ns")
+    _scope_max = to_nanoseconds(minute=1) - 1
     _unit_resolution = to_nanoseconds(second=1)
 
     def anchor_str(self, s, **kwargs):
@@ -298,23 +299,26 @@ class RelativeDay(TimeInterval):
     """
 
     offsets = {
-        "today": pd.Timedelta("0 day"),
-        "yesterday": pd.Timedelta("1 day"),
-        "the_day_before": pd.Timedelta("2 day"),
+        "today": datetime.timedelta(),
+        "yesterday": datetime.timedelta(days=1),
+        "the_day_before":datetime.timedelta(days=2),
         #"first_day_of_year": get_first_day_of_year,
     }
 
+    min_time = datetime.time.min
+    max_time = datetime.time.max
+
     def __init__(self, day, *, start_time=None, end_time=None):
         self.day = day
-        self.start_time = self.min.date() if start_time is None else start_time
-        self.end_time = self.max.date() if end_time is None else end_time
+        self.start_time = self.min_time if start_time is None else start_time
+        self.end_time = self.max_time if end_time is None else end_time
 
     def rollback(self, dt):
         offset = self.offsets[self.day]
         dt = dt - offset
-        return pd.Interval(
-            pd.Timestamp.combine(dt, self.start_time),
-            pd.Timestamp.combine(dt, self.end_time)
+        return Interval(
+            datetime.datetime.combine(dt, self.start_time),
+            datetime.datetime.combine(dt, self.end_time)
         )
 
     def rollforward(self, dt):

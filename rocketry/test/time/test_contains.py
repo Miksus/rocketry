@@ -6,7 +6,7 @@ wrapper for periods.
 """
 
 import pytest
-import pandas as pd
+from rocketry.pybox.time.convert import to_datetime
 
 from rocketry.time.interval import (
     TimeOfHour,
@@ -341,14 +341,14 @@ def _to_pyparams(cases):
 
 @_to_pyparams(true_cases)
 def test_in(dt, start, end, cls, time_point):
-    dt = pd.Timestamp(dt)
+    dt = to_datetime(dt)
     time = cls(start, end, time_point=time_point)
 
     assert dt in time
 
 @_to_pyparams(false_cases)
 def test_not(dt, start, end, cls, time_point):
-    dt = pd.Timestamp(dt)
+    dt = to_datetime(dt)
     time = cls(start, end, time_point=time_point)
     
     assert dt not in time

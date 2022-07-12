@@ -3,8 +3,6 @@ import logging
 from typing import List, Tuple
 
 import pytest
-import pandas as pd
-from dateutil.tz import tzlocal
 
 from rocketry.conditions import (
     TaskStarted, 
@@ -16,6 +14,7 @@ from rocketry.conditions import (
     TaskRunning
 )
 from rocketry.conditions.task import TaskInacted, TaskTerminated
+from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
     TimeDelta, 
     TimeOfDay
@@ -24,11 +23,6 @@ from rocketry.tasks import FuncTask
 
 from .test_time import setup_task_state
 
-def to_epoch(dt):
-    # Hack as time.tzlocal() does not work for 1970-01-01
-    if dt.tz:
-        dt = dt.tz_convert("utc").tz_localize(None)
-    return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
 @pytest.mark.parametrize("cls",
     [
@@ -65,7 +59,7 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
         execution="main"
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
-        setattr(task, attr, pd.Timestamp("2000-01-01 12:00:00"))
+        setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
     cond = cls(task=task)
     assert cond.observe(session=session)
 
@@ -83,7 +77,7 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
         execution="main"
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
-        setattr(task, attr, pd.Timestamp("2000-01-01 12:00:00"))
+        setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
     if cls == TaskRunning:
         cond = cls(task=task)
     else:
@@ -105,7 +99,7 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
         execution="main"
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
-        setattr(task, attr, pd.Timestamp("2000-01-01 05:00:00"))
+        setattr(task, attr, to_datetime("2000-01-01 05:00:00"))
     cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     mock_datetime_now("2000-01-01 14:00")
     assert not cond.observe(session=session)

@@ -4,7 +4,6 @@ import pytest
 import multiprocessing
 from queue import Empty
 
-import pandas as pd
 from redbird.logging import RepoHandler
 
 from rocketry import Session
@@ -286,8 +285,8 @@ def test_process_no_double_logging(tmpdir, session):
 
         # Testing there is no log records yet in the log
         # (as the records should not been handled yet)
-        df = pd.DataFrame(session.get_task_log())
-        assert df.empty, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
+        recs = list(session.get_task_log())
+        assert len(recs) == 0, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
         
         for record in records:
             task.log_record(record)
