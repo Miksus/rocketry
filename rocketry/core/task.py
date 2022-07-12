@@ -518,17 +518,18 @@ class Task(RedBase, BaseModel):
 
     def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
+        session = self.session
 
-        params = params.pre_materialize(task=self)
-        direct_params = self.parameters.pre_materialize(task=self)
+        params = params.pre_materialize(task=self, session=session)
+        direct_params = self.parameters.pre_materialize(task=self, session=session)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
-        log_queue = self.session.scheduler._log_queue if log_queue is None else log_queue
+        log_queue = session.scheduler._log_queue if log_queue is None else log_queue
 
-        daemon = self.daemon if self.daemon is not None else self.session.config.tasks_as_daemon
+        daemon = self.daemon if self.daemon is not None else session.config.tasks_as_daemon
         self._process = multiprocessing.Process(
             target=self._run_as_process, 
-            args=(params, direct_params, log_queue, self.session.config, self._get_hooks("task_execute")), 
+            args=(params, direct_params, log_queue, session.config, self._get_hooks("task_execute")), 
             daemon=daemon
         ) 
         #self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination

@@ -58,7 +58,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         for name, param in func_params.items():
             default = param.default
             if isinstance(default, BaseArgument):
-                params[name] = default.get_value(**kwargs)
+                params[name] = default
         return params
 
 # For mapping interface

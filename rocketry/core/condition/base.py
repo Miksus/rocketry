@@ -65,7 +65,8 @@ class BaseCondition(RedBase):
     def observe(self, **kwargs):
         "Observe the status of the condition"
         cond_params = Parameters._from_signature(self.get_state, **kwargs)
-        return self.get_state(**cond_params)
+        param_dict = cond_params.materialize(**kwargs)
+        return self.get_state(**param_dict)
 
     def __bool__(self) -> bool:
         """Check whether the condition holds."""
@@ -276,7 +277,8 @@ class BaseComparable(BaseCondition):
 
     def observe(self, **kwargs):
         params = Parameters._from_signature(self.get_measurement, **kwargs)
-        value = self.get_measurement(**params)
+        param_dict = params.materialize(**kwargs)
+        value = self.get_measurement(**param_dict)
         if isinstance(value, bool):
             # Possibly has some optimization and already did the comparison
             return value
