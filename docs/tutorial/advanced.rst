@@ -82,7 +82,7 @@ separate processes cannot alter the
 scheduling environment due to limitations 
 with sharing memory. 
 
-To alter the session:
+To access the session:
 
 .. code-block:: python
 
@@ -92,17 +92,75 @@ To alter the session:
     def do_shutdown(session=Session()):
         session.shutdown()
 
-    @app.task(execution="thread")
-    def do_restart(session=Session()):
-        session.restart()
+You can also access other tasks in runtime.
+To do so, use ``Session`` or ``Task`` 
+arguments to access tasks. 
+
+We have the following task:
+
+.. code-block:: python
+
+    @app.task()
+    def do_things():
+        ... # Just some task
+
+To access this task using the ``Session`` argument:
+
+.. code-block:: python
+
+    from rocketry.args import Session
 
     @app.task(execution="thread")
-    def do_modify_tasks(session=Session()):
+    def read_task(session=Session()):
+        # Get by name
+        task = session['do_things']
 
-        task = session['do_restart']
-        task.force_run = True
+        # Or by function
+        task = session[do_things]
+        ...
 
+        # Or just loop the tasks
         for task in session.tasks:
-            task.disable = True
+            if task.name == "do_things":
+                break
+        ...
 
-    
+To access this task using the ``Task`` argument:
+
+.. code-block:: python
+
+    from rocketry.args import Task
+
+    @app.task(execution="thread")
+    def read_task(task=Task(do_things)):
+        ...
+
+Access Task Logs
+----------------
+
+Now that we know how to access tasks in runtime,
+we can read the logs of our task.
+
+Let's take this again as an example:
+
+.. code-block:: python
+
+    @app.task()
+    def do_things():
+        ...
+
+Then we make a task that fetch the task and queries
+its log:
+
+.. code-block:: python
+
+    from rocketry.args import Session
+
+    @app.task(execution="thread")
+    def read_logs(session=Session()):
+        task = session['do_things']
+
+        run_logs = task.logger.filter_by(action="run").all()
+        success_logs = task.logger.filter_by(action="success").all()
+        fail_logs = task.logger.filter_by(action="fail").all()
+        ...
