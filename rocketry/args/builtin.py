@@ -103,8 +103,6 @@ class Return(BaseArgument):
                 raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
             return self.default
 
-    def stage(self, task=None):
-        return SimpleArg(self.get_value(task))
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
