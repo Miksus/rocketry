@@ -1,5 +1,6 @@
 
 import calendar
+import datetime
 import re
 
 import dateutil
@@ -298,16 +299,19 @@ class RelativeDay(TimeInterval):
     """
 
     offsets = {
-        "today": pd.Timedelta("0 day"),
-        "yesterday": pd.Timedelta("1 day"),
-        "the_day_before": pd.Timedelta("2 day"),
+        "today": datetime.timedelta(),
+        "yesterday": datetime.timedelta(days=1),
+        "the_day_before":datetime.timedelta(days=2),
         #"first_day_of_year": get_first_day_of_year,
     }
 
+    min_time = datetime.time.min
+    max_time = datetime.time.max
+
     def __init__(self, day, *, start_time=None, end_time=None):
         self.day = day
-        self.start_time = self.min.date() if start_time is None else start_time
-        self.end_time = self.max.date() if end_time is None else end_time
+        self.start_time = self.min_time if start_time is None else start_time
+        self.end_time = self.max_time if end_time is None else end_time
 
     def rollback(self, dt):
         offset = self.offsets[self.day]
