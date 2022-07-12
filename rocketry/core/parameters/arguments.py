@@ -37,7 +37,7 @@ class BaseArgument(RedBase):
     session: 'rocketry.Session'
     
     @abstractmethod
-    def get_value(self, task:'rocketry.core.Task'=None) -> Any:
+    def get_value(self, **kwargs) -> Any:
         """Get the actual value of the argument.
         Override for custom behaviour.
 
@@ -47,7 +47,7 @@ class BaseArgument(RedBase):
             Task that requested the value of the argument.
         """
 
-    def stage(self, task:'rocketry.core.Task'=None) -> 'BaseArgument':
+    def stage(self, **kwargs) -> 'BaseArgument':
         """Get (a copy of) the argument with a 
         value that can be passed to child threads
         or processes. Override for custom behaviour.
@@ -77,7 +77,7 @@ class BaseArgument(RedBase):
             Argument that is ready to be passed to a child
             thread or process.
         """
-        return self
+        return self.get_value(**kwargs)
 
     def __eq__(self, other):
         if isinstance(other, BaseArgument):
