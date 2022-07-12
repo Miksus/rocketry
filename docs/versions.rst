@@ -10,6 +10,7 @@ Version history
     - Add: Now conditions accept verbose arguments similarly as tasks do
     - Update: Now conditions are less stateful and they require passing the context when the status is inspected
     - Refactor: The condition mechanism under the hood
+    - Requirements: Removed Pandas from dependencies
     - Deprecated: ``session.task_exists``
 
 - ``2.0.1``
