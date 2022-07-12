@@ -2,7 +2,7 @@
 import logging
 
 from rocketry import Rocketry
-from rocketry.args.builtin import Return
+from rocketry.args.builtin import Return, Task
 from rocketry.conditions import TaskStarted
 from rocketry.conditions.api import after_success
 
@@ -75,7 +75,8 @@ def test_custom_cond():
 
     # Creating some tasks
     @app.cond('is foo')
-    def is_foo():
+    def is_foo(task=Task()):
+        assert task.name == "do_things"
         return True
 
     @app.task(true & is_foo)

@@ -2,6 +2,10 @@
 Version history
 ===============
 
+- ``2.1.1``
+
+    - Fix: bug in func condition parametrizing
+
 - ``2.1.0``
 
     - Add: Condition API (``rocketry.conds``) for easy alternative for the string syntax
