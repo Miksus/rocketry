@@ -5,73 +5,6 @@ Advanced Tutorial
 
 This is an advanced level tutorial.
 
-App Configuration
------------------
-
-There are several configurations options
-for the application. 
-
-The configurations can be set by:
-
-.. code-block:: python
-
-    app = Rocketry(config={
-        'task_execution': 'process',
-        'task_pre_exist': 'raise',
-        'force_status_from_logs': True,
-
-        'silence_task_prerun': False,
-        'silence_cond_check': False,
-
-        'max_process_count': 5,
-        'restarting': 'replace',
-        'cycle_sleep': 0.1
-    })
-
-- **task_execution**: How tasks are run by default. Options: 
-
-    - process: on separate process
-    - thread: on separate thread
-    - main: no parallelization
-
-- **task_pre_exist**: What happens if a task with given name already exists. Options:
-
-    - ``raise``: An error is thrown
-    - ``rename``: the task is renamed (numbers added after the name)
-    - ``ignore``: The task is simply not inserted to the session
-
-- **force_status_from_logs**: Use logs always to determine the task statuses. If:
-
-    - ``True``: Logs are always read when checking the statuses. Robust but less performant.
-    - ``False``: If cached status found, it is used instead.
-
-- **silence_task_prerun**: Whether to silence errors occurred before running a task. If:
-
-    - ``True``: The scheduler does not crash on errors occurred on the startup of a task
-    - ``False``: The scheduler crashes. Useful for debug but not for production
-    
-- **silence_cond_check**: Whether to silence errors occurred when checking conditions' values. If:
-
-    - ``True``: The scheduler does not crash on errors occurred on checking conditions
-    - ``False``: The scheduler crashes. Useful for debug but not for production
-
-- **max_process_count**: Maximum number of processes allowed to be started
-
-    - By default the number of CPUs
-
-- **restarting**: How the scheduler is restarted (if restart is called)
-
-    - ``replace``: Restart by replacing the current process
-    - ``relaunch``: Restart by starting a new process
-    - ``fresh``: Restart by starting a new process (on new window on Windows)
-    - ``recall``: Restart by calling the start method again. Useful for testing the restart
-
-- **cycle_sleep**: How long is waited (in seconds) after the scheduler goes through one round of tasks. 
-  If ``None``, no sleep.
-
-    - By default, 0.1
-
-
 Task References
 ---------------
 
@@ -149,7 +82,7 @@ separate processes cannot alter the
 scheduling environment due to limitations 
 with sharing memory. 
 
-To alter the session:
+To access the session:
 
 .. code-block:: python
 
@@ -159,17 +92,75 @@ To alter the session:
     def do_shutdown(session=Session()):
         session.shutdown()
 
-    @app.task(execution="thread")
-    def do_restart(session=Session()):
-        session.restart()
+You can also access other tasks in runtime.
+To do so, use ``Session`` or ``Task`` 
+arguments to access tasks. 
+
+We have the following task:
+
+.. code-block:: python
+
+    @app.task()
+    def do_things():
+        ... # Just some task
+
+To access this task using the ``Session`` argument:
+
+.. code-block:: python
+
+    from rocketry.args import Session
 
     @app.task(execution="thread")
-    def do_modify_tasks(session=Session()):
+    def read_task(session=Session()):
+        # Get by name
+        task = session['do_things']
 
-        task = session['do_restart']
-        task.force_run = True
+        # Or by function
+        task = session[do_things]
+        ...
 
+        # Or just loop the tasks
         for task in session.tasks:
-            task.disable = True
+            if task.name == "do_things":
+                break
+        ...
 
-    
+To access this task using the ``Task`` argument:
+
+.. code-block:: python
+
+    from rocketry.args import Task
+
+    @app.task(execution="thread")
+    def read_task(task=Task(do_things)):
+        ...
+
+Access Task Logs
+----------------
+
+Now that we know how to access tasks in runtime,
+we can read the logs of our task.
+
+Let's take this again as an example:
+
+.. code-block:: python
+
+    @app.task()
+    def do_things():
+        ...
+
+Then we make a task that fetch the task and queries
+its log:
+
+.. code-block:: python
+
+    from rocketry.args import Session
+
+    @app.task(execution="thread")
+    def read_logs(session=Session()):
+        task = session['do_things']
+
+        run_logs = task.logger.filter_by(action="run").all()
+        success_logs = task.logger.filter_by(action="success").all()
+        fail_logs = task.logger.filter_by(action="fail").all()
+        ...

@@ -29,6 +29,10 @@
 
    <hr>
 
+- `Documentation <https://rocketry.readthedocs.io/>`_
+- `Source code (Gitbub) <https://github.com/Miksus/rocketry>`_
+- `Releases (PyPI) <https://pypi.org/project/rocketry/>`_
+
 No time to read? :ref:`Get started then. <getting-started>`
 
 Rocketry is a modern scheduling framework for Python 
