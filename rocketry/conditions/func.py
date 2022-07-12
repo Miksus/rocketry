@@ -97,7 +97,8 @@ class FuncCond(BaseCondition):
 
     def observe(self, **kwargs) -> bool:
         func_params = Parameters._from_signature(self.func, **kwargs)
-        return self.get_state(*self.args, **self.kwargs, **func_params)
+        param_dict = func_params.materialize(**kwargs)
+        return self.get_state(*self.args, **self.kwargs, **param_dict)
 
     def get_state(self, *args, **kwargs):
         return self.func(*args, **kwargs)
