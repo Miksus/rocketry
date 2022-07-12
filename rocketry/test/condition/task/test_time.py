@@ -3,8 +3,6 @@ import logging
 from typing import List, Tuple
 
 import pytest
-import pandas as pd
-from dateutil.tz import tzlocal
 
 from rocketry.conditions import (
     TaskStarted, 
@@ -15,17 +13,13 @@ from rocketry.conditions import (
 
     TaskRunning
 )
+from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
     TimeDelta, 
     TimeOfDay
 )
 from rocketry.tasks import FuncTask
 
-def to_epoch(dt):
-    # Hack as time.tzlocal() does not work for 1970-01-01
-    if dt.tz:
-        dt = dt.tz_convert("utc").tz_localize(None)
-    return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
 def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None):
     """A mock up that sets up a task to test the 
@@ -48,12 +42,9 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             execution="main"
         )
 
-    # pd.Timestamp -> Epoch, https://stackoverflow.com/a/54313505/13696660
-    # We also need tz_localize to convert timestamp to localized form (logging thinks the time is local time and convert that to GTM)
-
     for log in logs:
         log_time, log_action = log[0], log[1]
-        log_created = to_epoch(pd.Timestamp(log_time, tz=tzlocal()))
+        log_created = int(to_datetime(log_time).timestamp())
         record = logging.LogRecord(
             # The content here should not matter for task status
             name='rocketry.core.task', level=logging.INFO, lineno=1, 

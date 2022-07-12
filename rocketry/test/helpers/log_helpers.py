@@ -1,15 +1,8 @@
 
-import pandas as pd
 import logging
 import sys
 
-def to_epoch(dt):
-    dt = pd.Timestamp(dt)
-    # Hack as time.tzlocal() does not work for 1970-01-01
-    if dt.tz:
-        dt = dt.tz_convert("utc").tz_localize(None)
-    return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-
+from rocketry.pybox.time.convert import to_datetime
 
 def log_task_record(task, now, action, start_time=None):
     "Copy of the mechanism of creating an action log"
@@ -27,7 +20,7 @@ def log_task_record(task, now, action, start_time=None):
         "success": "",
     }[action]
 
-    now = pd.Timestamp(now).to_pydatetime()
+    now = to_datetime(now)
 
     if action == "run":
         start_time = now
@@ -35,7 +28,7 @@ def log_task_record(task, now, action, start_time=None):
         if start_time is None:
             start_time = task.last_run
         else:
-            start_time = pd.Timestamp(start_time).to_pydatetime()
+            start_time = to_datetime(start_time)
 
 
     record = logging.LogRecord(
@@ -44,7 +37,7 @@ def log_task_record(task, now, action, start_time=None):
         pathname='rocketry\\rocketry\\core\\task\\base.py',
         msg=msg, args=(), exc_info=exc_info,
     )
-    record.created = int(now.timestamp())# to_epoch(now)
+    record.created = int(now.timestamp())
     record.action = action
     record.task_name = task.name
     record.start = start_time

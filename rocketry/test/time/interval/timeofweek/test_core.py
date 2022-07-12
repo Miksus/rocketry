@@ -1,6 +1,6 @@
 
 import pytest
-import pandas as pd
+from rocketry.pybox.time.convert import to_datetime
 
 from rocketry.time.interval import (
     TimeOfWeek
@@ -19,12 +19,12 @@ NS_IN_WEEK   = 1e+9 * 60 * 60 * 24 * 7
     [
         # Regular
         pytest.param(
-            pd.Timestamp("2024-01-01 00:00:00"),
+            to_datetime("2024-01-01 00:00:00"),
             "Mon 00:00:00",
             0,
             id="Beginning"),
         pytest.param(
-            pd.Timestamp("2024-01-07 23:59:59.999999000"),
+            to_datetime("2024-01-07 23:59:59.999999000"),
             "Sun 23:59:59.999999000",
             604799999999000.0,
             id="Ending"),

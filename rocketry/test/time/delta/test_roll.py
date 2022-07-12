@@ -1,23 +1,23 @@
 
 import pytest
-import pandas as pd
 from rocketry.core.time import (
     TimeDelta
 )
+from rocketry.pybox.time.convert import to_datetime
 
 @pytest.mark.parametrize(
     "dt,past,future,roll_start,roll_end",
     [
         # Regular
         pytest.param(
-            pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"),
             None, None,
-            pd.Timestamp("2020-01-01 10:00:00"), pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"), to_datetime("2020-01-01 10:00:00"),
             id="No roll"),
         pytest.param(
-            pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"),
             None, "1:20:30",
-            pd.Timestamp("2020-01-01 10:00:00"), pd.Timestamp("2020-01-01 11:20:30"),
+            to_datetime("2020-01-01 10:00:00"), to_datetime("2020-01-01 11:20:30"),
             id="Regular"),
     ],
 )
@@ -34,14 +34,14 @@ def test_rollforward(dt, past, future, roll_start, roll_end):
     [
         # Regular
         pytest.param(
-            pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"),
             None, None,
-            pd.Timestamp("2020-01-01 10:00:00"), pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"), to_datetime("2020-01-01 10:00:00"),
             id="No roll"),
         pytest.param(
-            pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 10:00:00"),
             "1:20:30", None,
-            pd.Timestamp("2020-01-01 08:39:30"), pd.Timestamp("2020-01-01 10:00:00"),
+            to_datetime("2020-01-01 08:39:30"), to_datetime("2020-01-01 10:00:00"),
             id="Regular"),
     ],
 )

@@ -1,13 +1,14 @@
 
+import datetime
 import logging
 
 import pytest
-import pandas as pd
 from dateutil.tz import tzlocal
 
 from rocketry.conditions import (
     TaskExecutable,
 )
+from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
     TimeDelta, 
     TimeOfDay
@@ -179,7 +180,7 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         # Hack as time.tzlocal() does not work for 1970-01-01
         if dt.tz:
             dt = dt.tz_convert("utc").tz_localize(None)
-        return (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+        return (dt - datetime.datetime(1970,  1, 1)) // datetime.timedelta(seconds=1)
 
     with tmpdir.as_cwd() as old_dir:
 
@@ -192,12 +193,9 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
 
         condition = get_condition()
 
-        # pd.Timestamp -> Epoch, https://stackoverflow.com/a/54313505/13696660
-        # We also need tz_localize to convert timestamp to localized form (logging thinks the time is local time and convert that to GTM)
-
         for log in logs:
             log_time, log_action = log[0], log[1]
-            log_created = to_epoch(pd.Timestamp(log_time, tz=tzlocal()))
+            log_created = to_datetime(log_time).timestamp()
             record = logging.LogRecord(
                 # The content here should not matter for task status
                 name='rocketry.core.task', level=logging.INFO, lineno=1, 
@@ -210,7 +208,7 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
             record.task_name = "the task"
 
             task.logger.handle(record)
-            setattr(task, f'last_{log_action}', pd.Timestamp(log_time))
+            setattr(task, f'last_{log_action}', to_datetime(log_time))
         mock_datetime_now(time_after)
 
         if outcome:

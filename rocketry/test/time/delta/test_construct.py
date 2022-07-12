@@ -24,7 +24,7 @@ def test_equal():
     assert not (TimeDelta("2 days") == TimeOfDay("10:00", "12:00"))
 
 def test_repr():
-    assert str(TimeDelta("2 days")) == 'past 2 days 00:00:00'
-    assert str(TimeDelta(future="2 days")) == 'next 2 days 00:00:00'
-    assert str(TimeDelta(past="1 days", future="2 days")) == 'past 1 days 00:00:00 to next 2 days 00:00:00'
-    assert repr(TimeDelta("2 days")) == "TimeDelta(past=Timedelta('2 days 00:00:00'), future=Timedelta('0 days 00:00:00'))"
+    assert str(TimeDelta("2 days")) == 'past 2 days, 0:00:00'
+    assert str(TimeDelta(future="2 days")) == 'next 2 days, 0:00:00'
+    assert str(TimeDelta(past="1 days", future="2 days")) == 'past 1 day, 0:00:00 to next 2 days, 0:00:00'
+    assert repr(TimeDelta("2 days")) == "TimeDelta(past=datetime.timedelta(days=2), future=datetime.timedelta(0))"

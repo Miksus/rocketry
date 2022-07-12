@@ -6,13 +6,13 @@ from typing import Optional
 from pydantic import Field, root_validator
 
 import pytest
-import pandas as pd
 
 from redbird.oper import in_, between
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
 from rocketry.log.log_record import LogRecord, TaskLogRecord, MinimalRecord
+from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
 
 def create_line_to_startup_file():
@@ -55,28 +55,28 @@ class CustomRecord(MinimalRecord):
             ],
             id="get succees & failure"),
         pytest.param(
-            {"timestamp": between(pd.Timestamp("2021-01-01 02:00:00"), pd.Timestamp("2021-01-01 03:00:00"))}, 
+            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), to_datetime("2021-01-01 03:00:00"))}, 
             [
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
             ],
-            id="get time span (pd.Timestamp)"),
+            id="get time span (datetime)"),
         pytest.param(
-            {"timestamp": between(None, pd.Timestamp("2021-01-01 03:00:00"), none_as_open=True), "action": "run"}, 
+            {"timestamp": between(None, to_datetime("2021-01-01 03:00:00"), none_as_open=True), "action": "run"}, 
             [
                 {'task_name': 'task1', 'created': datetime.datetime(2021, 1, 1, 0, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': "Task 'task1' status: 'run'"},
                 {'task_name': 'task2', 'created': datetime.datetime(2021, 1, 1, 1, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': "Task 'task2' status: 'run'"},
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
             ],
-            id="get time span (pd.Timestamp, open left)"),
+            id="get time span (datetime, open left)"),
         pytest.param(
-            {"timestamp": between(pd.Timestamp("2021-01-01 02:00:00"), None, none_as_open=True), "action": "run"}, 
+            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), None, none_as_open=True), "action": "run"}, 
             [
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
             ],
-            id="get time span (pd.Timestamp, open right)"),
+            id="get time span (datetime, open right)"),
         pytest.param(
             {"timestamp": between(None, None, none_as_open=True), "action": "run"}, 
             [

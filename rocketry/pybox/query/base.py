@@ -1,6 +1,7 @@
 from typing import Iterable, Iterator
 import datetime
-import pandas as pd
+
+from rocketry.pybox.time.convert import to_datetime, to_timedelta
 
 class QueryBase:
     
@@ -105,10 +106,10 @@ class Expression(QueryBase):
         return Not(self)
 
     def _to_comparable(self, left, right):
-        dt_cls = (datetime.datetime, pd.Timestamp) # Note we test pd.Timestamp due to test mocking
+        dt_cls = (datetime.datetime,)
         is_datetime = isinstance(left, dt_cls) or isinstance(right, dt_cls)
         if is_datetime:
-            return pd.Timestamp(left), pd.Timestamp(right)
+            return to_datetime(left), to_datetime(right)
         else:
             return left, right
     

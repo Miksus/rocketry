@@ -4,11 +4,11 @@ import datetime
 import re
 
 import dateutil
-import pandas as pd
 
 from rocketry.core.time.anchor import AnchoredInterval
 from rocketry.core.time.base import TimeInterval
 from rocketry.core.time.utils import timedelta_to_str, to_dict, to_nanoseconds
+from rocketry.pybox.time.interval import Interval
 
 
 class TimeOfMinute(AnchoredInterval):
@@ -23,7 +23,7 @@ class TimeOfMinute(AnchoredInterval):
     """
 
     _scope = "minute"
-    _scope_max = to_nanoseconds(minute=1) - 1 # See: pd.Timedelta(59999999999, unit="ns")
+    _scope_max = to_nanoseconds(minute=1) - 1
     _unit_resolution = to_nanoseconds(second=1)
 
     def anchor_str(self, s, **kwargs):
@@ -316,9 +316,9 @@ class RelativeDay(TimeInterval):
     def rollback(self, dt):
         offset = self.offsets[self.day]
         dt = dt - offset
-        return pd.Interval(
-            pd.Timestamp.combine(dt, self.start_time),
-            pd.Timestamp.combine(dt, self.end_time)
+        return Interval(
+            datetime.datetime.combine(dt, self.start_time),
+            datetime.datetime.combine(dt, self.end_time)
         )
 
     def rollforward(self, dt):

@@ -10,9 +10,9 @@ import logging
 from multiprocessing import cpu_count
 from pathlib import Path
 import warnings
-import pandas as pd
 
 from pydantic import BaseModel, PrivateAttr, validator
+from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
 from itertools import chain
@@ -70,7 +70,7 @@ class Config(BaseModel):
     @validator('timeout')
     def parse_timeout(cls, value):
         if isinstance(value, str):
-            return pd.Timedelta(value).to_pytimedelta()
+            return to_timedelta(value).to_pytimedelta()
         elif isinstance(value, (float, int)):
             return datetime.timedelta(milliseconds=value * 1000)
         else:

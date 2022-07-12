@@ -7,6 +7,11 @@ def to_datetime(s):
         return s
     elif isinstance(s, str):
         return string_to_datetime(s)
+    elif hasattr(s, "timestamp"):
+        # Is datetime-like. Tests' monkeypatching
+        # overrides datetime.datetime thus we cannot
+        # always rely on type
+        return datetime.datetime.fromtimestamp(s.timestamp())
     else:
         raise TypeError(f"Cannot convert to datetime: {type(s)}")
 
@@ -69,9 +74,17 @@ def string_to_timedelta(s:str):
             pos += 1
         return abbrs[abbr], pos
 
+    def get_hhmmss(s):
+        hh, mm, ss = s.split(":")
+        return to_nanoseconds(hour=int(hh), minute=int(mm), second=float(ss))
+
     # https://github.com/pandas-dev/pandas/blob/e8093ba372f9adfe79439d90fe74b0b5b6dea9d6/pandas/_libs/tslibs/timedeltas.pyx#L296
     abbrs = {
+        'millisecond': 'millisecond',
+        'ms': 'millisecond',
+
         'seconds': 'second',
+        'second': 'second',
         'sec': 'second',
         's': 'second',
 
@@ -106,18 +119,35 @@ def string_to_timedelta(s:str):
         pos = skip_wordbreak(s)
         s = s[pos:]
 
+        # Example: "-  2.5  days ..."
+        # Pos:         ^ 
+
         numb, pos = get_number(s)
         s = s[pos:]
 
+        if s[0] == ":":
+            # Expecting HH:MM:SS
+            ns += get_hhmmss(numb + s)
+            break
+
+        # Example: "-  2.5  days ..."
+        # Pos:            ^ 
+
         pos = skip_wordbreak(s)
         s = s[pos:]
+
+        # Example: "-  2.5  days ..."
+        # Pos:              ^ 
 
         abbr, pos = get_unit(s)
         s = s[pos:]
 
         ns += to_nanoseconds(**{abbr: float(numb)})
+    
+    if is_negative:
+        ns = -ns
     return datetime.timedelta(microseconds=ns / 1000)
 
-def to_nanoseconds(day=0, hour=0, minute=0, second=0, microsecond=0, nanosecond=0) -> int:
+def to_nanoseconds(day=0, hour=0, minute=0, second=0, millisecond=0, microsecond=0, nanosecond=0) -> int:
     "Turn time components to nanoseconds"
-    return nanosecond + microsecond * 1_000 + second * int(1e+9) + minute * int(6e+10) + hour * int(3.6e+12) + day * int(8.64e+13)
+    return nanosecond + microsecond * 1_000 + millisecond * 1_000_000 + second * int(1e+9) + minute * int(6e+10) + hour * int(3.6e+12) + day * int(8.64e+13)

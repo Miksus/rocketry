@@ -4,9 +4,7 @@ from datetime import datetime
 from typing import Union
 from abc import abstractmethod
 
-import pandas as pd
-
-from .utils import to_nanoseconds, timedelta_to_str, to_dict
+from .utils import to_nanoseconds, timedelta_to_str, to_dict, to_timedelta
 from .base import TimeInterval
 
 
@@ -76,7 +74,7 @@ class AnchoredInterval(TimeInterval):
         kwargs = {key: val for key, val in d.items() if key in comps}
         return to_nanoseconds(**kwargs)
 
-    def anchor_dt(self, dt: Union[datetime, pd.Timestamp], **kwargs) -> int:
+    def anchor_dt(self, dt: datetime, **kwargs) -> int:
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
         components = self.components
         components = components[components.index(self._scope) + 1:]
@@ -113,7 +111,7 @@ class AnchoredInterval(TimeInterval):
 
     @property
     def start(self):
-        delta = pd.Timedelta(self._start, unit="ns")
+        delta = to_timedelta(self._start, unit="ns")
         repr_scope = self.components[self.components.index(self._scope) + 1]
         return timedelta_to_str(delta, default_scope=repr_scope)
 
@@ -123,7 +121,7 @@ class AnchoredInterval(TimeInterval):
 
     @property
     def end(self):
-        delta = pd.Timedelta(self._end, unit="ns")
+        delta = to_timedelta(self._end, unit="ns")
         repr_scope = self.components[self.components.index(self._scope) + 1]
         return timedelta_to_str(delta, default_scope=repr_scope)
 
@@ -198,7 +196,7 @@ class AnchoredInterval(TimeInterval):
             #            dt
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
-            offset = pd.Timedelta(int(ns_start) - int(ns), unit="ns")
+            offset = to_timedelta(int(ns_start) - int(ns), unit="ns")
         else:
             # not in period, later than start
             #      dt             
@@ -215,7 +213,7 @@ class AnchoredInterval(TimeInterval):
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             ns_scope = self.get_scope_forward(dt)
-            offset = pd.Timedelta(int(ns_start) - int(ns) + ns_scope, unit="ns")
+            offset = to_timedelta(int(ns_start) - int(ns) + ns_scope, unit="ns")
         return dt + offset
 
     def next_end(self, dt):
@@ -239,7 +237,7 @@ class AnchoredInterval(TimeInterval):
             #          dt                              
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            offset = pd.Timedelta(int(ns_end) - int(ns), unit="ns")
+            offset = to_timedelta(int(ns_end) - int(ns), unit="ns")
         else:
             # not in period, over night
             #                     dt
@@ -256,7 +254,7 @@ class AnchoredInterval(TimeInterval):
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
             ns_scope = self.get_scope_forward(dt)
-            offset = pd.Timedelta(int(ns_end) - int(ns) + ns_scope, unit="ns")
+            offset = to_timedelta(int(ns_end) - int(ns) + ns_scope, unit="ns")
         return dt + offset
 
     def prev_start(self, dt):
@@ -281,7 +279,7 @@ class AnchoredInterval(TimeInterval):
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
             ns_scope = self.get_scope_back(dt)
-            offset = pd.Timedelta(int(ns_start) - int(ns) - ns_scope, unit="ns")
+            offset = to_timedelta(int(ns_start) - int(ns) - ns_scope, unit="ns")
         else:
             # not in period, later than start
             #      dt             
@@ -297,7 +295,7 @@ class AnchoredInterval(TimeInterval):
             #                    dt             
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            offset = pd.Timedelta(int(ns_start) - int(ns), unit="ns")
+            offset = to_timedelta(int(ns_start) - int(ns), unit="ns")
         return dt + offset
 
     def prev_end(self, dt):
@@ -322,7 +320,7 @@ class AnchoredInterval(TimeInterval):
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             ns_scope = self.get_scope_back(dt)
-            offset = pd.Timedelta(int(ns_end) - int(ns) - ns_scope, unit="ns")
+            offset = to_timedelta(int(ns_end) - int(ns) - ns_scope, unit="ns")
         else:
             # not in period, over night
             #                     dt
@@ -338,7 +336,7 @@ class AnchoredInterval(TimeInterval):
             #       dt
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
-            offset = pd.Timedelta(int(ns_end) - int(ns), unit="ns")
+            offset = to_timedelta(int(ns_end) - int(ns), unit="ns")
 
         return dt + offset
 
@@ -354,8 +352,8 @@ class AnchoredInterval(TimeInterval):
         scope = self._scope
         repr_scope = self.components[self.components.index(self._scope) + 1]
 
-        to_start = pd.Timedelta(start_ns, unit="ns")
-        to_end = pd.Timedelta(end_ns, unit="ns")
+        to_start = to_timedelta(start_ns, unit="ns")
+        to_end = to_timedelta(end_ns, unit="ns")
 
         start_str = timedelta_to_str(to_start, default_scope=repr_scope)
         end_str = timedelta_to_str(to_end, default_scope=repr_scope)

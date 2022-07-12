@@ -14,7 +14,6 @@ import multiprocessing
 import threading
 from queue import Empty
 
-import pandas as pd
 from pydantic import BaseModel, Field, PrivateAttr, validator
 
 from rocketry._base import RedBase
@@ -22,6 +21,7 @@ from rocketry.core.condition import BaseCondition, AlwaysFalse, All
 from rocketry.core.time import TimePeriod
 from rocketry.core.parameters import Parameters
 from rocketry.core.log import TaskAdapter
+from rocketry.core.time.utils import to_timedelta
 from rocketry.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
 from rocketry.exc import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
 from rocketry.core.meta import _register
@@ -91,7 +91,7 @@ class Task(RedBase, BaseModel):
         >= 40 if they require loaded tasks,
         >= 50 if they require loaded extensions.
         By default 0
-    timeout : str, int, pd.Timedelta, optional
+    timeout : str, int, timedelta, optional
         If the task has not run in given timeout
         the task will be terminated. Only applicable
         for tasks with execution='process' or 
@@ -165,7 +165,7 @@ class Task(RedBase, BaseModel):
     force_run: bool = False
     force_termination: bool = False
     status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction']] = Field(description="Latest status of the task")
-    timeout: Optional[pd.Timedelta]
+    timeout: Optional[datetime.timedelta]
 
     parameters: Parameters = Parameters()
 
@@ -222,9 +222,9 @@ class Task(RedBase, BaseModel):
     @validator('timeout', pre=True, always=True)
     def parse_timeout(cls, value, values):
         if value == "never":
-            return pd.Timedelta.max.to_pytimedelta()
+            return datetime.timedelta.max
         elif value is not None:
-            return pd.Timedelta(value).to_pytimedelta()
+            return to_timedelta(value)
         else:
             return value
 
