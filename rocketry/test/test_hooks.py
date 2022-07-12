@@ -3,7 +3,7 @@ from functools import partial
 from textwrap import dedent
 
 import pytest
-from rocketry.conditions.task.task import DependSuccess
+from rocketry.conditions.task.task import DependSuccess, TaskStarted
 from rocketry.core import Task, Scheduler
 
 from rocketry.tasks import FuncTask
@@ -157,10 +157,12 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
         f.write("\nStarting\n")
 
     task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
-    session.config.shut_cond = SchedulerCycles() >= 1
+    session.config.shut_cond = TaskStarted(task="mytask") >= 1
     session.start()
     with open(file) as f:
         cont = f.read()
+
+    assert 1 == task.logger.filter_by(action="run").count()
     assert dedent(f"""
     Starting
     Function hook called
