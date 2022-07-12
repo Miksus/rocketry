@@ -168,8 +168,8 @@ class Task(RedBase, BaseModel):
 
     parameters: Parameters = Parameters()
 
-    start_cond: BaseCondition = AlwaysFalse() #! TODO: Create get_start_cond so that this could also be as string (lazily parsed)
-    end_cond: BaseCondition = AlwaysFalse()
+    start_cond: Optional[BaseCondition] = AlwaysFalse() #! TODO: Create get_start_cond so that this could also be as string (lazily parsed)
+    end_cond: Optional[BaseCondition] = AlwaysFalse()
 
     on_startup: bool = False
     on_shutdown: bool = False
@@ -193,6 +193,8 @@ class Task(RedBase, BaseModel):
         session = values['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
+        elif value is None:
+            value = AlwaysFalse()
         return copy(value)
 
     @validator('end_cond', pre=True)
@@ -201,6 +203,8 @@ class Task(RedBase, BaseModel):
         session = values['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
+        elif value is None:
+            value = AlwaysFalse()
         return copy(value)
 
     @validator('logger_name', pre=True, always=True)
