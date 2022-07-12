@@ -9,10 +9,15 @@ from types import FunctionType, TracebackType
 import warnings
 from copy import copy
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Literal, Type, Union, Tuple, Optional, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional, get_type_hints
 import multiprocessing
 import threading
 from queue import Empty
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 from pydantic import BaseModel, Field, PrivateAttr, validator
 
