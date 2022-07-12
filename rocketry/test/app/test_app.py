@@ -10,6 +10,7 @@ from redbird.repos import MemoryRepo, CSVFileRepo
 from rocketry import Session
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
+from rocketry.conds import false
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")
@@ -64,6 +65,8 @@ def test_app_tasks():
     assert isinstance(app.session['do_func'], FuncTask)
     assert isinstance(app.session['do_command'], CommandTask)
     assert isinstance(app.session['do_script'], FuncTask)
+
+    assert app.session['do_never'].start_cond == false
 
 def test_app_run():
     set_logging_defaults()
