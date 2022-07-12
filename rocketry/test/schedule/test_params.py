@@ -153,7 +153,7 @@ def test_termination_flag_as_arg(execution, session):
     def task_terminate(session=Session()):
         session["my_task"].terminate()
 
-    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="my_task") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
 
     if execution in ("main", "process"):
         with pytest.warns(UserWarning):
