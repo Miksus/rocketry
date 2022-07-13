@@ -226,8 +226,8 @@ An example of the task argument:
 
 This is more advanced and we will get to the usage of these later.
 
-Customizing Logging Handlers
-----------------------------
+Task Logging
+------------
 
 Rocketry uses `Red Bird's <https://red-bird.readthedocs.io/>`_
 `logging handler <https://red-bird.readthedocs.io/en/latest/logging_handler.html>`_
@@ -238,8 +238,37 @@ to create a unified interface to read the logs regardless
 if they are stored to a CSV file, SQL database or to 
 a plain Python list in memory.
 
+Log to Repository
+^^^^^^^^^^^^^^^^^
+
+By default, the logs are put to a Python list and they are gone
+if the scheduler is restarted. In many cases this is undesired
+as the scheduler does not know which task had already run,
+succeeded or failed in case of restart. Therefore you might want
+to store the log records to a disk by changing the default log 
+repository. 
+
+The simplest way to configure the location of the logs is to
+pass the new repo as ``logger_repo``:
+
+.. code-block:: python
+
+    from rocketry import Rocketry
+    from rocketry.log import MinimalRecord
+    from redbird.repos import CSVFileRepo
+
+    repo = CSVFileRepo(filename="tasks.csv", model=MinimalRecord)
+    app = Rocketry(logger_repo=repo)
+
+In the example above, we changed the log records to go to a CSV file
+called *tasks.csv*. We also specified a log record format that contains
+the bare minimum. Read more about logging :ref:`in the logging handbook <handbook-logging>`.
+
+Add Another Log Handlers
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 As the logger is simply extension of `the logging library <https://docs.python.org/3/library/logging.html>`_,
-you may add other logging handlers as well: 
+you can also add other logging handlers as well: 
 
 .. code-block:: python
 
@@ -261,28 +290,3 @@ you may add other logging handlers as well:
     Make sure the logger ``rocketry.task`` has at least 
     one ``redbird.logging.RepoHandler`` in handlers or 
     the system cannot read the log information.
-
-Reading from the Logs
----------------------
-
-Reading programmatically from the logs is easy due to unified 
-querying syntax of Red Bird.
-
-We first need to find the handler that has the repository
-and then we can query it:
-
-.. code-block:: python
-
-    import logging
-    
-    task_logger = logging.getLogger('rocketry.task')
-
-    # Getting a RepoHandler
-    for handler in task_logger.handlers:
-        if hasattr(handler, "repo"):
-            break
-    
-    # Query all logs from the handler
-    handler.filter_by().all()
-
-Read more about the querying from `Red Bird's documentation <https://red-bird.readthedocs.io/en/latest/>`_

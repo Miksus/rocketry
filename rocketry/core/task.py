@@ -257,6 +257,9 @@ class Task(RedBase, BaseModel):
 
         self.register()
         
+        # Update "last_run", "last_success", etc.
+        self.set_cached()
+
         # Hooks
         hooker.postrun()
 
@@ -720,6 +723,29 @@ class Task(RedBase, BaseModel):
         name = self.name
         self.session.add_task(self)
 
+    def set_cached(self):
+        "Update cached statuses"
+        # We get the logger here to not flood with warnings if missing repo
+        logger = self.logger
+
+        self.last_run = self._get_last_action("run", from_logs=True, logger=logger)
+        self.last_success = self._get_last_action("success", from_logs=True, logger=logger)
+        self.last_fail = self._get_last_action("fail", from_logs=True, logger=logger)
+        self.last_terminate = self._get_last_action("terminate", from_logs=True, logger=logger)
+        self.last_inaction = self._get_last_action("inaction", from_logs=True, logger=logger)
+
+        times = {
+            name: getattr(self, f"last_{name}")
+            for name in ('run', 'success', 'fail', 'terminate', 'inaction')
+            if getattr(self, f"last_{name}") is not None
+        }
+
+        if times:
+            self.status = max(
+                times, 
+                key=times.get
+            )
+
     def get_default_name(self, **kwargs):
         """Create a name for the task when name was not passed to initiation of
         the task. Override this method."""
@@ -874,26 +900,31 @@ class Task(RedBase, BaseModel):
             return self.session.config.task_execution
         return self.execution
 
-    def _get_last_action(self, action:str) -> datetime.datetime:
+    def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
         cache_attr = f"last_{action}"
-
-        if self.session is None:
-            allow_cache = True
+        if from_logs is not None:
+            allow_cache = not from_logs
         else:
-            allow_cache = not self.session.config.force_status_from_logs
+            if self.session is None:
+                allow_cache = True
+            else:
+                allow_cache = not self.session.config.force_status_from_logs
+
+
         if allow_cache: #  and getattr(self, cache_attr) is not None
             value = getattr(self, cache_attr)
         else:
-            value = self._get_last_action_from_log(action)
+            value = self._get_last_action_from_log(action, logger)
             if isinstance(value, float):
                 value = datetime.datetime.fromtimestamp(value)
             setattr(self, cache_attr, value)
         return value
 
-    def _get_last_action_from_log(self, action):
+    def _get_last_action_from_log(self, action, logger=None):
         """Get last action timestamp from log"""
+        logger = logger if logger is not None else self.logger
         try:
-            record = self.logger.get_latest(action=action)
+            record = logger.get_latest(action=action)
         except AttributeError:
             if is_main_subprocess():
                 warnings.warn(f"Task '{self.name}' logger is not readable. Latest {action} unknown.")

@@ -7,12 +7,59 @@ from queue import Empty
 from redbird.logging import RepoHandler
 
 from rocketry import Session
-from rocketry.log.log_record import MinimalRecord
+from rocketry.log.log_record import  MinimalRecord
 
 from rocketry.tasks import FuncTask
 
 def run_success():
     pass
+
+@pytest.mark.parametrize("optimized", [True, False])
+@pytest.mark.parametrize("last_status", ["run", "success", "fail", "inaction", "terminate"])
+def test_set_cached_in_init(session, optimized, last_status):
+    session.config.force_status_from_logs = not optimized
+
+    logger = logging.getLogger("rocketry.task")
+    for handler in logger.handlers:
+        if hasattr(handler, "repo"):
+            repo = handler.repo
+
+    times = {
+        "run": 946677600.0,
+        "success": 1656709200.0,
+        "fail": 1656795600.0,
+        "terminate": 1656882000.0,
+        "inaction":1656968400.0,
+    }
+    
+
+    # A log record that should not be used
+    for action, created in times.items():
+        repo.add(MinimalRecord(
+            task_name="mytask",
+            action=action,
+            created=created
+        ))
+    # Add one extra (which should be used instead of what we did above) 
+    times[last_status] = 1752958800.0
+    repo.add(MinimalRecord(
+        task_name="mytask",
+        action=last_status,
+        created=1752958800.0
+    ))
+
+    # Creating the task
+    task = FuncTask(
+        lambda : None,
+        execution="main",
+        name="mytask",
+        session=session
+    )
+    for action, created in times.items():
+        dt = datetime.datetime.fromtimestamp(created)
+        last_action_value = getattr(task, f"last_{action}")
+        assert last_action_value == dt
+    assert task.status == last_status
 
 def test_running(tmpdir, session):
     
@@ -166,13 +213,13 @@ def test_without_handlers_status_warnings(tmpdir, session):
     
     # Test warnings
     expected_warnings = [
-        'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)'
-        #"Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
-        #"Task 'task 1' logger is not readable. Latest run unknown.",
-        #"Task 'task 1' logger is not readable. Latest success unknown.",
-        #"Task 'task 1' logger is not readable. Latest fail unknown.",
-        #"Task 'task 1' logger is not readable. Latest terminate unknown.",
-        #"Task 'task 1' logger is not readable. Latest inaction unknown."
+        'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
+        "Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
+        "Task 'task 1' logger is not readable. Latest run unknown.",
+        "Task 'task 1' logger is not readable. Latest success unknown.",
+        "Task 'task 1' logger is not readable. Latest fail unknown.",
+        "Task 'task 1' logger is not readable. Latest terminate unknown.",
+        "Task 'task 1' logger is not readable. Latest inaction unknown."
     ]
     actual_warnings = [str(warn.message) for warn in warns]
     assert expected_warnings == actual_warnings
