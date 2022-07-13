@@ -213,13 +213,13 @@ def test_without_handlers_status_warnings(tmpdir, session):
     
     # Test warnings
     expected_warnings = [
-        'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)'
-        #"Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
-        #"Task 'task 1' logger is not readable. Latest run unknown.",
-        #"Task 'task 1' logger is not readable. Latest success unknown.",
-        #"Task 'task 1' logger is not readable. Latest fail unknown.",
-        #"Task 'task 1' logger is not readable. Latest terminate unknown.",
-        #"Task 'task 1' logger is not readable. Latest inaction unknown."
+        'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
+        "Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
+        "Task 'task 1' logger is not readable. Latest run unknown.",
+        "Task 'task 1' logger is not readable. Latest success unknown.",
+        "Task 'task 1' logger is not readable. Latest fail unknown.",
+        "Task 'task 1' logger is not readable. Latest terminate unknown.",
+        "Task 'task 1' logger is not readable. Latest inaction unknown."
     ]
     actual_warnings = [str(warn.message) for warn in warns]
     assert expected_warnings == actual_warnings
