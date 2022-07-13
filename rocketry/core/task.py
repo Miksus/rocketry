@@ -732,17 +732,16 @@ class Task(RedBase, BaseModel):
         self.last_inaction = self._get_last_action("inaction", from_logs=True)
 
         times = {
-            "run": self.last_run,
-            "success": self.last_success,
-            "fail": self.last_fail,
-            "terminate": self.last_terminate,
-            "inaction": self.last_inaction,
+            name: getattr(self, f"last_{name}")
+            for name in ('run', 'success', 'fail', 'terminate', 'inaction')
+            if getattr(self, f"last_{name}") is not None
         }
 
-        self.status = max(
-            times, 
-            key=times.get
-        )
+        if times:
+            self.status = max(
+                times, 
+                key=times.get
+            )
 
     def get_default_name(self, **kwargs):
         """Create a name for the task when name was not passed to initiation of
