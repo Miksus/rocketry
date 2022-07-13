@@ -257,6 +257,9 @@ class Task(RedBase, BaseModel):
 
         self.register()
         
+        # Update "last_run", "last_success", etc.
+        self.set_cached()
+
         # Hooks
         hooker.postrun()
 
@@ -720,6 +723,27 @@ class Task(RedBase, BaseModel):
         name = self.name
         self.session.add_task(self)
 
+    def set_cached(self):
+        "Update cached statuses"
+        self.last_run = self._get_last_action("run", from_logs=True)
+        self.last_success = self._get_last_action("success", from_logs=True)
+        self.last_fail = self._get_last_action("fail", from_logs=True)
+        self.last_terminate = self._get_last_action("terminate", from_logs=True)
+        self.last_inaction = self._get_last_action("inaction", from_logs=True)
+
+        times = {
+            "run": self.last_run,
+            "success": self.last_success,
+            "fail": self.last_fail,
+            "terminate": self.last_terminate,
+            "inaction": self.last_inaction,
+        }
+
+        self.status = max(
+            times, 
+            key=times.get
+        )
+
     def get_default_name(self, **kwargs):
         """Create a name for the task when name was not passed to initiation of
         the task. Override this method."""
@@ -874,13 +898,17 @@ class Task(RedBase, BaseModel):
             return self.session.config.task_execution
         return self.execution
 
-    def _get_last_action(self, action:str) -> datetime.datetime:
+    def _get_last_action(self, action:str, from_logs=None) -> datetime.datetime:
         cache_attr = f"last_{action}"
-
-        if self.session is None:
-            allow_cache = True
+        if from_logs is not None:
+            allow_cache = not from_logs
         else:
-            allow_cache = not self.session.config.force_status_from_logs
+            if self.session is None:
+                allow_cache = True
+            else:
+                allow_cache = not self.session.config.force_status_from_logs
+
+
         if allow_cache: #  and getattr(self, cache_attr) is not None
             value = getattr(self, cache_attr)
         else:
