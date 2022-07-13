@@ -65,7 +65,7 @@ applications. It is simple, clean and extensive.
    <details>
    <summary><a>Dislike the syntax?</a></summary>
 
-You can also use the condition API for the 
+You can also use the condition API:
 
 .. literalinclude:: /code/demos/minimal.py
     :language: py
