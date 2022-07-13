@@ -2,6 +2,11 @@
 Version history
 ===============
 
+- ``2.1.2``
+
+    - Fix: Bug in task persistence. Task last action times were not queried.
+    - Docs: Added logging handbook.
+
 - ``2.1.1``
 
     - Fix: bug in func condition parametrizing
