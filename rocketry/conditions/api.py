@@ -18,34 +18,42 @@ from rocketry.time import (
 
 class TimeCondWrapper(BaseCondition):
 
-    def __init__(self, cls_cond, cls_period):
+    def __init__(self, cls_cond, cls_period, **kwargs):
         self._cls_cond = cls_cond
         self._cls_period = cls_period
+        self._cond_kwargs = kwargs
 
     def between(self, start, end):
         period = self._cls_period(start, end)
-        return self._cls_cond(period=period)
+        return self._get_cond(period)
 
     def before(self, end):
         period = self._cls_period(None, end)
-        return self._cls_cond(period=period)
+        return self._get_cond(period)
 
     def after(self, start):
         period = self._cls_period(start, None)
-        return self._cls_cond(period=period)
+        return self._get_cond(period)
 
     def on(self, span):
         period = self._cls_period(span, time_point=True)
-        return self._cls_cond(period=period)
+        return self._get_cond(period)
 
     def starting(self, start):
         period = self._cls_period(start, start)
-        return self._cls_cond(period=period)
+        return self._get_cond(period)
 
     def observe(self, **kwargs):
-        period = self._cls_period(None, None)
-        cond = self._cls_cond(period=period)
+        cond = self.get_cond()
         return cond.observe(**kwargs)
+
+    def get_cond(self):
+        "Get condition the wrapper itself represents"
+        period = self._cls_period(None, None)
+        return self._get_cond(period)
+
+    def _get_cond(self, period):
+        return self._cls_cond(period=period, **self._cond_kwargs)
 
 # Basics
 # ------

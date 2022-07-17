@@ -30,6 +30,13 @@ params_time = [
 ]
 
 params_task_exec = [
+    pytest.param(every("10 mins"), TaskExecutable(period=TimeDelta("10 mins")), id="every"),
+
+    pytest.param(minutely.get_cond(), TaskExecutable(period=TimeOfMinute(None, None)), id="minutely"),
+    pytest.param(hourly.get_cond(), TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),
+    pytest.param(daily.get_cond(), TaskExecutable(period=TimeOfDay(None, None)), id="daily"),
+    pytest.param(weekly.get_cond(), TaskExecutable(period=TimeOfWeek(None, None)), id="weekly"),
+
     pytest.param(minutely.after("45:00"), TaskExecutable(period=TimeOfMinute("45:00", None)), id="minutely after"),
     pytest.param(minutely.before("45:00"), TaskExecutable(period=TimeOfMinute(None, "45:00")), id="minutely before"),
 
