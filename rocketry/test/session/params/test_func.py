@@ -1,4 +1,4 @@
-
+import platform
 import pytest
 
 from rocketry.args import Private, Return
@@ -79,7 +79,8 @@ def test_nested(session, execution, materialize, config_mater):
 
     assert task.status is None
     session.start()
-    if execution == "process" and (materialize == "post" or (materialize is None and config_mater in ("post", None))):
+    if platform.system() == "Windows" and execution == "process" and (materialize == "post" or (materialize is None and config_mater in ("post", None))):
+        # Windows cannot pickle the session but apparently Linux can
         assert "fail" == task.status
     else:
         assert "success" == task.status
