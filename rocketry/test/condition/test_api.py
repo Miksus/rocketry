@@ -1,16 +1,27 @@
 import pytest
+from rocketry.conditions.scheduler import SchedulerStarted
+from rocketry.conditions.task.task import TaskFailed, TaskFinished, TaskRunning, TaskStarted, TaskSucceeded
 
 from rocketry.conds import (
     true, false,
+    every,
     minutely, hourly, daily, weekly, monthly,
     time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
     after_finish, after_success, after_fail,
 
     after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
+
+    scheduler_running,
+
+    succeeded, failed, finished, started,
+    running
 )
 
 from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
+from rocketry.core.condition.base import Not
+from rocketry.time import TimeDelta
+from rocketry.time.delta import TimeSpanDelta
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek
 
 params_basic = [
@@ -66,10 +77,37 @@ params_pipeline = [
     pytest.param(after_any_fail("do_a", "do_b"), Any(DependFailure(depend_task="do_a"), DependFailure(depend_task="do_b")), id="after any fail"),
 ]
 
+params_action = [
+    pytest.param(failed.get_cond(), TaskFailed(task=None), id="has failed (self)"),
+    pytest.param(succeeded.get_cond(), TaskSucceeded(task=None), id="has succeeded (self)"),
+    pytest.param(started.get_cond(), TaskStarted(task=None), id="has started (self)"),
+    pytest.param(finished.get_cond(), TaskFinished(task=None), id="has finished (self)"),
+
+    pytest.param(failed("a_task").get_cond(), TaskFailed(task="a_task"), id="has failed"),
+    pytest.param(succeeded("a_task").get_cond(), TaskSucceeded(task="a_task"), id="has succeeded"),
+    pytest.param(started("a_task").get_cond(), TaskStarted(task="a_task"), id="has started"),
+    pytest.param(finished("a_task").get_cond(), TaskFinished(task="a_task"), id="has finished"),
+
+    pytest.param(failed("a_task").this_day.get_cond(), TaskFailed(task="a_task", period=TimeOfDay()), id="has failed (this day)"),
+    pytest.param(succeeded("a_task").today.between("12:00", "15:00"), TaskSucceeded(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has succeeded (today between)"),
+    pytest.param(finished("a_task").this_day.between("12:00", "15:00"), TaskFinished(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has finished (this day between)"),
+    pytest.param(started("a_task").this_week.get_cond(), TaskStarted(task="a_task", period=TimeOfWeek()), id="has started (this week)"),
+    pytest.param(succeeded("a_task").this_week.before("Mon"), TaskSucceeded(task="a_task", period=TimeOfWeek(None, "Mon")), id="has succeeded (this week before)"),
+]
+
+params_running = [
+    pytest.param(running(task="mytask"), TaskRunning(task="mytask"), id="is running"),
+    pytest.param(running("10 mins"), TaskRunning(task=None, period=TimeSpanDelta(near="10 mins")), id="is running 10 mins"),
+    pytest.param(running("10 mins", task="a_task"), TaskRunning(task="a_task", period=TimeSpanDelta(near="10 mins")), id="is running 10 mins (passed task)"),
+]
+
+params_schedule = [
+    pytest.param(scheduler_running("10 mins"), Not(SchedulerStarted(period=TimeDelta("10 mins"))), id="scheduler running (at least)"),
+]
 
 @pytest.mark.parametrize(
     "cond,result",
-    params_basic + params_time + params_task_exec + params_pipeline
+    params_basic + params_time + params_task_exec + params_pipeline + params_action + params_running+ params_schedule
 )
 def test_api(cond, result):
     assert cond == result

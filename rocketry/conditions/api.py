@@ -1,19 +1,20 @@
 from typing import Callable, Union
-from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess
+from rocketry.conditions.scheduler import SchedulerStarted
+from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskStarted, TaskSucceeded
 from rocketry.core import (
     BaseCondition
 )
 from rocketry.core.condition import (
     AlwaysTrue, AlwaysFalse,
 )
-from rocketry.core.condition.base import All, Any
+from rocketry.core.condition.base import All, Any, Not
 from rocketry.core.task import Task
 from .time import IsPeriod
-from .task import TaskExecutable
+from .task import TaskExecutable, TaskRunning
 from rocketry.time import (
     TimeOfMinute, TimeOfHour,
     TimeOfDay, TimeOfWeek, TimeOfMonth,
-    TimeDelta
+    TimeDelta, TimeSpanDelta
 )
 
 class TimeCondWrapper(BaseCondition):
@@ -54,6 +55,46 @@ class TimeCondWrapper(BaseCondition):
 
     def _get_cond(self, period):
         return self._cls_cond(period=period, **self._cond_kwargs)
+
+class TimeActionWrapper(BaseCondition):
+
+    def __init__(self, cls_cond, task=None):
+        self.cls_cond = cls_cond
+        self.task = task
+
+    def observe(self, **kwargs):
+        cond = self.get_cond()
+        return cond.observe(**kwargs)
+
+    def __call__(self, task):
+        return TimeActionWrapper(self.cls_cond, task=task)
+
+    @property
+    def this_hour(self):
+        return self._get_wrapper(TimeOfHour)
+
+    @property
+    def this_day(self):
+        return self._get_wrapper(TimeOfDay)
+
+    @property
+    def this_week(self):
+        return self._get_wrapper(TimeOfWeek)
+
+    @property
+    def this_month(self):
+        return self._get_wrapper(TimeOfMonth)
+
+    @property
+    def today(self):
+        return self.this_day
+
+    def _get_wrapper(self, cls_period):
+        return TimeCondWrapper(cls_cond=self.cls_cond, cls_period=cls_period, task=self.task)
+
+    def get_cond(self):
+        "Get condition the wrapper represents"
+        return self.cls_cond(task=self.task)
 
 # Basics
 # ------
@@ -113,3 +154,24 @@ def after_any_fail(*tasks):
 
 def after_any_finish(*tasks):
     return Any(*(after_finish(task) for task in tasks))
+
+# Task Status
+# -----------
+
+def running(more_than:str=None, less_than=None, task=None):
+    if more_than is not None or less_than is not None:
+        period = TimeSpanDelta(near=more_than, far=less_than)
+    else:
+        period = None
+    return TaskRunning(task=task, period=period)
+
+started = TimeActionWrapper(TaskStarted)
+failed = TimeActionWrapper(TaskFailed)
+succeeded = TimeActionWrapper(TaskSucceeded)
+finished = TimeActionWrapper(TaskFinished)
+
+# Scheduler
+# ---------
+
+def scheduler_running(more_than:str=None, less_than=None):
+    return SchedulerStarted(period=TimeSpanDelta(near=more_than, far=less_than))
