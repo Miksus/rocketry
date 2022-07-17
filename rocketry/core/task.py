@@ -16,7 +16,7 @@ from queue import Empty
 
 try:
     from typing import Literal
-except ImportError:
+except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from pydantic import BaseModel, Field, PrivateAttr, validator

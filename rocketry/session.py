@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Opti
 from itertools import chain
 try:
     from typing import Literal
-except ImportError:
+except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from redbird.logging import RepoHandler

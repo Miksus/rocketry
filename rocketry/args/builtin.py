@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional
 import warnings
 try:
     from typing import Literal
-except ImportError:
+except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from rocketry.core.parameters import BaseArgument, Parameters
