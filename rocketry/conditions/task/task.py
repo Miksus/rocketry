@@ -186,20 +186,25 @@ class TaskRunning(BaseCondition):
     TaskRunning(task='mytask')
     """
 
-    def __init__(self, task=None):
+    def __init__(self, task=None, period:TimeDelta=None):
         self.task = task
+        self.period = period
         super().__init__()
 
     def get_state(self, task=Task(), session=Session()):
         task = session[self.task] if self.task is not None else task
-        
-        if not self.session.config.force_status_from_logs:
-            return bool(task.last_run)
-
-        record = task.logger.get_latest()
-        if not record:
+        is_running = task.is_running()
+        if not is_running:
+            # Not running so always false
             return False
-        return record.action == "run"
+        elif is_running and self.period is None:
+            # Is running (and no limit on when it stated)
+            return True
+        else: 
+            # Is running but not yet sure if the period is fulfilled
+            last_run = task.get_last_run()
+            start, end = get_period_span(self.period)
+            return start <= last_run <= end
 
     def __str__(self):
         if hasattr(self, "_str"):
