@@ -63,7 +63,7 @@ class Config(BaseModel):
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
 
-    func_param_materialize:Literal['pre', 'post'] = 'post'
+    param_materialize:Literal['pre', 'post'] = 'post'
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):

@@ -171,7 +171,7 @@ class FuncArg(BaseArgument):
 
     def stage(self, **kwargs):
         session = kwargs['session']
-        materialize = self.materialize if self.materialize is not None else session.config.func_param_materialize
+        materialize = self.materialize if self.materialize is not None else session.config.param_materialize
 
         if materialize == "pre":
             return self.get_value(**kwargs)

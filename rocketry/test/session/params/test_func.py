@@ -64,7 +64,7 @@ def test_session(session, execution):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_nested(session, execution, materialize, config_mater):
     if config_mater is not None:
-        session.config.func_param_materialize = config_mater
+        session.config.param_materialize = config_mater
 
     session.parameters["session_arg"] = "z"
     session.parameters["myparam"] = FuncArg(get_with_nested_args, materialize=materialize)
