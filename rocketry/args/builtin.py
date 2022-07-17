@@ -1,8 +1,12 @@
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 import warnings
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
-from rocketry.core.parameters import BaseArgument
+from rocketry.core.parameters import BaseArgument, Parameters
 from rocketry.core.utils import filter_keyword_args
 
 class SimpleArg(BaseArgument):
@@ -32,8 +36,10 @@ class Arg(BaseArgument):
     def __init__(self, key:Any):
         self.key = key
 
-    def get_value(self, task=None, **kwargs) -> Any:
-        return task.session.parameters[self.key]
+    def get_value(self, task=None, session=None, **kwargs) -> Any:
+        if session is None:
+            session = task.session
+        return session.parameters._get(self.key, task=task, session=session, **kwargs)
 
 class Session(BaseArgument):
     "An argument that represents the session"
@@ -149,25 +155,28 @@ class FuncArg(BaseArgument):
         >>> session.parameters
         Parameters(myarg1=FuncArg(myarg1), myarg2=FuncArg(myfunc))
     """
-    def __init__(self, __func:Callable, *args, **kwargs):
+    def __init__(self, __func:Callable, *args, materialize:Optional[Literal['pre', 'post']]=None, **kwargs):
         self.func = __func
+        self.materialize = materialize
         self.args = args
-        self.kwargs = self._get_kwargs(kwargs)
+        self.kwargs = kwargs
 
-    def _get_kwargs(self, kwargs):
-        defaults = {
-            "session": self.session,
-        }
-        defaults.update(kwargs)
-        return filter_keyword_args(self.func, defaults)
-
-    def get_value(self, task=None, **kwargs):
-        return self(task=task)
+    def get_value(self, **kwargs):
+        return self(**kwargs)
 
     def __call__(self, **kwargs):
-        kwargs.update(self.kwargs)
-        kwargs = filter_keyword_args(self.func, kwargs)
-        return self.func(*self.args, **kwargs)
+        param_kwargs = Parameters._from_signature(self.func)
+        params = param_kwargs.materialize(**kwargs)
+        return self.func(*self.args, **params, **self.kwargs)
+
+    def stage(self, **kwargs):
+        session = kwargs['session']
+        materialize = self.materialize if self.materialize is not None else session.config.func_param_materialize
+
+        if materialize == "pre":
+            return self.get_value(**kwargs)
+        else:
+            return self
 
     def __repr__(self):
         cls_name = type(self).__name__

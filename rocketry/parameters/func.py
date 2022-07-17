@@ -41,6 +41,7 @@ class FuncParam:
         session = FuncArg.session if self.session is None else self.session
         name = self._get_name(func)
         session.parameters[name] = FuncArg(func)
+        func.__rocketry__ = {'param_name': name}
         return func
 
     def _get_name(self, func):

@@ -10,7 +10,7 @@ from redbird.repos import MemoryRepo, CSVFileRepo
 from rocketry import Session
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
-from rocketry.conds import false
+from rocketry.conds import false, true
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")
@@ -67,6 +67,64 @@ def test_app_tasks():
     assert isinstance(app.session['do_script'], FuncTask)
 
     assert app.session['do_never'].start_cond == false
+
+def test_nested_args():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    @app.param('arg_1')
+    def my_arg_1():
+        return 'arg 1'
+
+    @app.param('arg_2')
+    def my_func_2(arg=Arg('arg_1')):
+        assert arg == "arg 1"
+        return 'arg 2'
+
+    @app.param('arg_3')
+    def my_func_3(arg_1=Arg('arg_1'), arg_2=Arg("arg_2")):
+        assert arg_1 == "arg 1"
+        assert arg_2 == "arg 2"
+        return 'arg 3'
+
+    # Creating a task to test this
+    @app.task(true)
+    def do_daily(arg=Arg('arg_3')):
+        ...
+        assert arg == "arg 3"
+
+    app.session.config.shut_cond = TaskStarted(task='do_daily')
+    app.run()
+    logger = app.session['do_daily'].logger
+    assert logger.filter_by(action="success").count() == 1
+
+def test_arg_ref():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    @app.param('arg_1')
+    def my_arg_1():
+        return 'arg 1'
+    
+    @app.param('arg_2')
+    def my_arg_2():
+        return 'arg 2'
+
+    # Creating a task to test this
+    @app.task(true)
+    def do_daily(arg_1=Arg(my_arg_1), arg_2=Arg(my_arg_2)):
+        ...
+        assert arg_1 == "arg 1"
+        assert arg_2 == "arg 2"
+
+    app.session.config.shut_cond = TaskStarted(task='do_daily')
+    app.run()
+    logger = app.session['do_daily'].logger
+    assert logger.filter_by(action="success").count() == 1
 
 def test_app_run():
     set_logging_defaults()

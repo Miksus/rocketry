@@ -68,6 +68,13 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         except KeyError:
             return default
 
+    def _get(self, __item, **kwargs):
+        item = __item
+        if callable(item) and hasattr(item, "__rocketry__") and "param_name" in item.__rocketry__:
+            item = item.__rocketry__['param_name']
+        value = self._params[item]
+        return value if not isinstance(value, BaseArgument) else value.get_value(**kwargs)
+
     def __iter__(self):
         return iter(self._params)
 
@@ -76,8 +83,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def __getitem__(self, item):
         "Materializes the parameters and hide private"
-        value = self._params[item]
-        return value if not isinstance(value, BaseArgument) else value.get_value()
+        return self._get(item)
 
     def pre_materialize(self, *args, **kwargs):
         """Turn arguments to their values before passed

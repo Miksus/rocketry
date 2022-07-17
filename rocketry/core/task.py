@@ -429,7 +429,7 @@ class Task(RedBase, BaseModel):
         exc_info = (None, None, None)
         params = self.postfilter_params(params)
         params = Parameters(params) | Parameters(direct_params)
-        params = params.materialize(task=self)
+        params = params.materialize(task=self, session=self.session)
 
         if execution == 'main':
             self.log_running()
@@ -499,8 +499,8 @@ class Task(RedBase, BaseModel):
     def run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
 
-        params = params.pre_materialize(task=self)
-        direct_params = self.parameters.pre_materialize(task=self)
+        params = params.pre_materialize(task=self, session=self.session)
+        direct_params = self.parameters.pre_materialize(task=self, session=self.session)
 
         self._thread_terminate.clear()
 

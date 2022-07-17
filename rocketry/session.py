@@ -16,6 +16,10 @@ from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
 from itertools import chain
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 from redbird.logging import RepoHandler
 from rocketry._base import RedBase
@@ -58,6 +62,8 @@ class Config(BaseModel):
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
+
+    func_param_materialize:Literal['pre', 'post'] = 'post'
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):
