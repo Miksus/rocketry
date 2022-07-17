@@ -44,5 +44,8 @@ class TimeSpanDelta(TimeDelta):
         else:
             return False
 
+    def __str__(self):
+        return repr(self)
+
     def __repr__(self):
-        return f"TimeSpanDelta(start={repr(self.start)}, end={repr(self.end)})"
+        return f"TimeSpanDelta(near={repr(self.near)}, far={repr(self.far)})"

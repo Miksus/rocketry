@@ -5,19 +5,23 @@ from rocketry.time import (
     TimeSpanDelta
 )
 
-@pytest.mark.parametrize(
-    "offset,expected",
-    [
-        pytest.param(
-            "10:20:30",
-            datetime.timedelta(hours=10, minutes=20, seconds=30),
-            id="String"),
-    ],
-)
-def test_construct(offset, expected):
-    time = TimeSpanDelta(offset)
-    assert expected == time.start
-    assert 0 == time.end
+
+def test_construct():
+    time = TimeSpanDelta("2:00:00", "3:00:00")
+    assert time.near == datetime.timedelta(hours=2)
+    assert time.far == datetime.timedelta(hours=3)
+
+    time = TimeSpanDelta(near="2:00:00", far="3:00:00")
+    assert time.near == datetime.timedelta(hours=2)
+    assert time.far == datetime.timedelta(hours=3)
+
+    time = TimeSpanDelta(near=datetime.timedelta(hours=2), far=datetime.timedelta(hours=3))
+    assert time.near == datetime.timedelta(hours=2)
+    assert time.far == datetime.timedelta(hours=3)
+
+    time = TimeSpanDelta()
+    assert time.near == datetime.timedelta(0)
+    assert time.far is None
 
 def test_equal():
     assert TimeSpanDelta("2 days") == TimeSpanDelta("2 days")
