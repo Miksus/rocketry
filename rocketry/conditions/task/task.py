@@ -193,7 +193,7 @@ class TaskRunning(BaseCondition):
 
     def get_state(self, task=Task(), session=Session()):
         task = session[self.task] if self.task is not None else task
-        is_running = task.is_running()
+        is_running = task.is_running
         if not is_running:
             # Not running so always false
             return False
