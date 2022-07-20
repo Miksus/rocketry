@@ -1,4 +1,6 @@
 
+import asyncio
+import inspect
 from pickle import PicklingError
 import sys
 import time
@@ -163,7 +165,7 @@ class Task(RedBase, BaseModel):
     name: Optional[str] = Field(description="Name of the task. Must be unique")
     description: Optional[str] = Field(description="Description of the task for documentation")
     logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records")
-    execution: Optional[Literal['main', 'thread', 'process']]
+    execution: Optional[Literal['main', 'async', 'thread', 'process']]
     priority: int = 0
     disabled: bool = False
     force_run: bool = False
@@ -189,6 +191,7 @@ class Task(RedBase, BaseModel):
     _thread: threading.Thread = None
     _thread_terminate: threading.Event = PrivateAttr(default_factory=threading.Event)
     _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _async_task: Optional[asyncio.Task] = PrivateAttr(default=None)
 
     _mark_running = False
 
@@ -315,7 +318,14 @@ class Task(RedBase, BaseModel):
     def __hash__(self):
         return id(self)
 
-    def __call__(self, params:Union[dict, Parameters]=None, **kwargs):
+    def __call__(self, *args, **kwargs):
+        "Run sync"
+        self.start(*args, **kwargs)
+
+    def start(self, *args, **kwargs):
+        return asyncio.run(self.start_async(*args, **kwargs))
+
+    async def start_async(self, params:Union[dict, Parameters]=None, **kwargs):
         """Execute the task. Creates a new process
         (if execution='process'), a new thread
         (if execution='thread') or blocks and 
@@ -350,9 +360,13 @@ class Task(RedBase, BaseModel):
         try:
             params = self.get_extra_params(params)
             # Run the actual task
-            if execution == "main":
+            if execution in ("main", "async"):
                 direct_params = self.parameters
-                self._run_as_main(params=params, direct_params=direct_params, execution="main", **kwargs)
+                async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
+                if execution == "main":
+                    await async_task
+                else:
+                    self._async_task = async_task
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -408,7 +422,10 @@ class Task(RedBase, BaseModel):
     def run_as_main(self, params:Parameters):
         return self._run_as_main(params, self.parameters)
 
-    def _run_as_main(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
+    def _run_as_main(self, **kwargs):
+        return asyncio.run(self._run_as_async(**kwargs))
+
+    async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
         """Run the task on the current thread and process"""
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
@@ -431,10 +448,13 @@ class Task(RedBase, BaseModel):
         params = Parameters(params) | Parameters(direct_params)
         params = params.materialize(task=self)
 
-        if execution == 'main':
+        if execution in ('main', 'async'):
             self.log_running()
         try:
-            output = self.execute(**params)
+            if inspect.iscoroutinefunction(self.execute):
+                output = await self.execute(**params)
+            else:
+                output = self.execute(**params)
 
             # NOTE: we process success here in case the process_success
             # fails (therefore task fails)
@@ -753,7 +773,10 @@ class Task(RedBase, BaseModel):
 
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
-        return self.is_alive_as_thread() or self.is_alive_as_process()
+        return self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+
+    def is_alive_as_async(self) -> bool:
+        return self._async_task is not None and not self._async_task.done()
 
     def is_alive_as_thread(self) -> bool:
         """Whether the task has a live thread."""

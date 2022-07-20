@@ -220,10 +220,15 @@ class FuncTask(Task):
         if self.description is None and hasattr(self.func, "__doc__"):
             self.description = self.func.__doc__
 
-    def execute(self, **params):
+    async def execute(self, **params):
         "Run the actual, given, task"
         func = self.get_func(cache=self.cache)
-        output = func(**params)
+
+        is_async = inspect.iscoroutinefunction(func)
+        if is_async:
+            output = await func(**params)
+        else:
+            output = func(**params)
         return output
 
     def get_func(self, cache=True):
