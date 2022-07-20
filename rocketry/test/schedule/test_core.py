@@ -15,7 +15,6 @@ from rocketry import Session
 from rocketry.core import Scheduler, Parameters
 from rocketry.log.log_record import MinimalRecord
 from rocketry.tasks import FuncTask
-from rocketry.test.task.func.test_run import run_inaction
 from rocketry.time import TimeDelta
 from rocketry.exc import TaskInactionException
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
@@ -32,7 +31,21 @@ def run_succeeding():
 def run_inacting():
     raise TaskInactionException()
 
+def run_failing_async():
+    raise RuntimeError("Task failed")
+
+def run_succeeding_async():
+    pass
+
+def run_inacting_async():
+    raise TaskInactionException()
+
+
 def create_line_to_file():
+    with open("work.txt", "a") as file:
+        file.write("line created\n")
+
+async def create_line_to_file_async():
     with open("work.txt", "a") as file:
         file.write("line created\n")
 
@@ -52,13 +65,14 @@ def test_scheduler_shut_cond(session):
     assert session.scheduler.check_shut_cond(true & true)
     assert not session.scheduler.check_shut_cond(false)
 
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_execution(tmpdir, execution, session):
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize("func", [pytest.param(create_line_to_file, id="sync"), pytest.param(create_line_to_file_async, id="async")])
+def test_task_execution(tmpdir, execution, func, session):
     with tmpdir.as_cwd() as old_dir:
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside rocketry
-        FuncTask(create_line_to_file, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
+        FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution),
 
         session.config.shut_cond = (TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second"))
 
@@ -154,36 +168,39 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         assert inact_count == len(list(task.logger.get_records(action="inaction")))
 
 @pytest.mark.parametrize("mode", ["use logs", "use cache"])
+@pytest.mark.parametrize("func_type", ["sync", "async"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_status(session, execution, mode):
+def test_task_status(session, execution, func_type, mode):
     session.config.force_status_from_logs = True if mode == "use logs" else False
 
     task_success = FuncTask(
-        run_succeeding, 
-        start_cond="every 20 seconds", 
+        run_succeeding if func_type == "sync" else run_succeeding_async, 
+        start_cond=true, 
         name="task success",
         execution=execution
     )
     task_fail = FuncTask(
-        run_failing, 
-        start_cond="every 20 seconds", 
+        run_failing if func_type == "sync" else run_failing_async, 
+        start_cond=true, 
         name="task fail",
         execution=execution
     )
     task_inact = FuncTask(
-        run_inaction, 
-        start_cond="every 20 seconds", 
+        run_inacting if func_type == "sync" else run_inacting_async, 
+        start_cond=true, 
         name="task inact",
         execution=execution
     )
     task_not_run = FuncTask(
-        run_inaction, 
-        start_cond=AlwaysFalse(), 
+        run_inacting if func_type == "sync" else run_inacting_async, 
+        start_cond=false, 
         name="task not run",
         execution=execution
     )
-    session.config.shut_cond = SchedulerCycles() >= 5
+    session.config.shut_cond = (TaskStarted(task="task inact") >= 5) | ~SchedulerStarted(period=TimeDelta("20 second"))
     session.start()
+
+    # Test status
     assert task_success.last_run is not None
     assert task_success.last_success is not None
     assert task_success.last_fail is None
@@ -203,6 +220,23 @@ def test_task_status(session, execution, mode):
     assert task_inact.status == "inaction"
     assert task_not_run.status == None
 
+    # Test logs
+    assert 5 == task_success.logger.filter_by(action="run").count()
+    assert 5 == task_fail.logger.filter_by(action="run").count()
+    assert 5 == task_inact.logger.filter_by(action="run").count()
+    assert 0 == task_not_run.logger.filter_by(action="run").count()
+
+    assert 5 == task_success.logger.filter_by(action="success").count()
+    assert 0 == task_fail.logger.filter_by(action="success").count()
+    assert 0 == task_inact.logger.filter_by(action="suceess").count()
+
+    assert 0 == task_success.logger.filter_by(action="fail").count()
+    assert 5 == task_fail.logger.filter_by(action="fail").count()
+    assert 0 == task_inact.logger.filter_by(action="fail").count()
+
+    assert 0 == task_success.logger.filter_by(action="inaction").count()
+    assert 0 == task_fail.logger.filter_by(action="inaction").count()
+    assert 5 == task_inact.logger.filter_by(action="inaction").count()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_run(tmpdir, execution, session):
