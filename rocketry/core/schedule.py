@@ -475,14 +475,13 @@ class Scheduler(RedBase):
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
-            self._restart()
+            await self._restart()
 
-    def _restart(self):
+    async def _restart(self):
         """Restart the scheduler by creating a new process
         on the temporary run script where the scheduler's is
         process is started.
         """
-        # TODO
         # https://stackoverflow.com/a/35874988
         self.logger.debug(f"Restarting...", extra={"action": "restart"})
         python = sys.executable
@@ -504,7 +503,7 @@ class Scheduler(RedBase):
         elif restarting == "recall":
             # Mostly useful for testing.
             # Restart by calling the self.__call__ again 
-            return self()
+            await asyncio.create_task(self.serve()) 
         else:
             raise ValueError(f"Invalid restaring: {restarting}")
 
