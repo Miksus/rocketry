@@ -476,7 +476,7 @@ class Task(RedBase, BaseModel):
             status = "inaction"
             exc_info = sys.exc_info()
             
-        except TaskTerminationException:
+        except (TaskTerminationException, asyncio.CancelledError):
             # Task was terminated and the task's function
             # did listen to that.
             self.log_termination()
