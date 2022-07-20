@@ -121,12 +121,12 @@ class Scheduler(RedBase):
             await self.startup()
 
             while not self.check_shut_cond(self.session.config.shut_cond):
+                await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
                 elif self._flag_restart.is_set():
                     raise SchedulerRestart()
 
-                await self._hibernate()
                 await self.run_cycle()
 
                 # self.maintain()
