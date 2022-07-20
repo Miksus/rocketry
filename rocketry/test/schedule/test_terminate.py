@@ -41,7 +41,7 @@ def get_slow_func(execution):
         "thread": run_slow_threaded,
     }[execution]
 
-@pytest.mark.parametrize("execution", ["aynsc", "thread", "process"])
+@pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_without_timeout(tmpdir, execution, session):
     """Test the task.timeout is respected overt scheduler.timeout"""
     # TODO: There is probably better ways to test this
