@@ -234,6 +234,8 @@ class Task(RedBase, BaseModel):
     def parse_timeout(cls, value, values):
         if value == "never":
             return datetime.timedelta.max
+        elif isinstance(value, (float, int)):
+            return to_timedelta(value, unit="s")
         elif value is not None:
             return to_timedelta(value)
         else:
