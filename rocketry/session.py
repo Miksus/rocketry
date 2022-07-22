@@ -67,12 +67,12 @@ class Config(BaseModel):
             return AlwaysFalse()
         return parse_condition(value)
 
-    @validator('timeout')
+    @validator('timeout', pre=True, always=True)
     def parse_timeout(cls, value):
         if isinstance(value, str):
-            return to_timedelta(value).to_pytimedelta()
+            return to_timedelta(value)
         elif isinstance(value, (float, int)):
-            return datetime.timedelta(milliseconds=value * 1000)
+            return datetime.timedelta(seconds=value)
         else:
             return value
 
