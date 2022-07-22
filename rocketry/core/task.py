@@ -145,7 +145,7 @@ class Task(RedBase, BaseModel):
         underscore_attrs_are_private = True
         validate_assignment = True
         json_encoders = {
-            Parameters: lambda v: dict(**v),
+            Parameters: lambda v: v.to_json(),
             'BaseCondition': lambda v: str(v),
             FunctionType: lambda v: v.__name__,
             'Session': lambda v: id(v),
