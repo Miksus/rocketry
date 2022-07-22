@@ -425,10 +425,10 @@ class Scheduler(RedBase):
         else:
             await self.terminate_all(reason="shutdown")
 
-    def wait_task_alive(self):
+    async def wait_task_alive(self):
         """Wait till all, especially threading tasks, are finished."""
         while self.n_alive > 0:
-            time.sleep(0.005)
+            await self._hibernate()
 
     async def shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler.
@@ -464,8 +464,7 @@ class Scheduler(RedBase):
         self.logger.info(f"Shutting down tasks...")
         await self._shut_down_tasks(traceback, exception)
 
-        if not self.session.config.instant_shutdown:
-            self.wait_task_alive() # Wait till all tasks' threads and processes are dead
+        await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
         # Running hooks
         hooker.postrun()
