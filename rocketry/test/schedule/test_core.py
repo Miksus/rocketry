@@ -31,13 +31,13 @@ def run_succeeding():
 def run_inacting():
     raise TaskInactionException()
 
-def run_failing_async():
+async def run_failing_async():
     raise RuntimeError("Task failed")
 
-def run_succeeding_async():
+async def run_succeeding_async():
     pass
 
-def run_inacting_async():
+async def run_inacting_async():
     raise TaskInactionException()
 
 
