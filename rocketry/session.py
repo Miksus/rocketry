@@ -209,6 +209,14 @@ class Session(RedBase):
         self._check_readable_logger()
         self.scheduler()
 
+    async def serve(self):
+        """Start the scheduling session using async.
+
+        Will block and wait till the scheduler finishes 
+        if there is a shut condition."""
+        self._check_readable_logger()
+        await self.scheduler.serve()
+
     def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
         """Run specific task(s) manually.
 
