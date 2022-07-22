@@ -1,4 +1,5 @@
 
+import asyncio
 import datetime
 import logging
 import time
@@ -16,9 +17,9 @@ from rocketry.core import Scheduler, Parameters
 from rocketry.log.log_record import MinimalRecord
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.exc import TaskInactionException
+from rocketry.exc import TaskInactionException, TaskTerminationException
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
-from rocketry.args import Private
+from rocketry.args import Private, TerminationFlag
 
 from rocketry.conds import true, false
 
@@ -39,6 +40,21 @@ async def run_succeeding_async():
 
 async def run_inacting_async():
     raise TaskInactionException()
+
+
+def run_slow():
+    time.sleep(5)
+
+def run_slow_thread(flag=TerminationFlag()):
+    t = 0
+    while not flag.is_set() and t < 5:
+        time.sleep(0.001)
+        t += 0.001
+    if flag.is_set():
+        raise TaskTerminationException()
+
+async def run_slow_async():
+    await asyncio.sleep(5)
 
 
 def create_line_to_file():
@@ -469,3 +485,23 @@ def test_logging_repo(tmpdir, execution):
         task_4_start = list(task_4.logger.get_records())[0].created
         
         assert task_1_start < task_2_start < task_3_start < task_4_start
+
+@pytest.mark.parametrize("execution", ["async", "thread", "process"])
+def test_instant_shutdown(execution, session):
+    assert not session.config.instant_shutdown
+    session.config.instant_shutdown = True
+
+    func = {"async": run_slow_async, "thread": run_slow_thread, "process": run_slow}[execution]
+
+    task = FuncTask(func, execution=execution, start_cond=true, end_cond=SchedulerCycles() == 2)
+
+    session.config.shut_cond = SchedulerCycles() == 2
+
+    session.start()
+
+    assert 1 == task.logger.filter_by(action="run").count()
+    assert 2 == task.logger.filter_by().count()
+
+    assert 0 == task.logger.filter_by(action="fail").count()
+    assert 0 == task.logger.filter_by(action="success").count()
+    assert 1 == task.logger.filter_by(action="terminate").count()
