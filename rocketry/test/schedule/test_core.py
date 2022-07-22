@@ -193,27 +193,31 @@ def test_task_status(session, execution, func_type, mode):
         run_succeeding if func_type == "sync" else run_succeeding_async, 
         start_cond=true, 
         name="task success",
-        execution=execution
+        execution=execution,
+        priority=0
     )
     task_fail = FuncTask(
         run_failing if func_type == "sync" else run_failing_async, 
         start_cond=true, 
         name="task fail",
-        execution=execution
+        execution=execution,
+        priority=0
     )
     task_inact = FuncTask(
         run_inacting if func_type == "sync" else run_inacting_async, 
         start_cond=true, 
         name="task inact",
-        execution=execution
+        execution=execution,
+        priority=100
     )
     task_not_run = FuncTask(
         run_inacting if func_type == "sync" else run_inacting_async, 
         start_cond=false, 
         name="task not run",
-        execution=execution
+        execution=execution,
+        priority=0
     )
-    session.config.shut_cond = (TaskStarted(task="task inact") >= 5) | ~SchedulerStarted(period=TimeDelta("20 second"))
+    session.config.shut_cond = (TaskStarted(task="task inact") >= 3) | ~SchedulerStarted(period=TimeDelta("20 second"))
     session.start()
 
     # Test status
@@ -237,22 +241,22 @@ def test_task_status(session, execution, func_type, mode):
     assert task_not_run.status == None
 
     # Test logs
-    assert 5 == task_success.logger.filter_by(action="run").count()
-    assert 5 == task_fail.logger.filter_by(action="run").count()
-    assert 5 == task_inact.logger.filter_by(action="run").count()
+    assert 3 == task_success.logger.filter_by(action="run").count()
+    assert 3 == task_fail.logger.filter_by(action="run").count()
+    assert 3 == task_inact.logger.filter_by(action="run").count()
     assert 0 == task_not_run.logger.filter_by(action="run").count()
 
-    assert 5 == task_success.logger.filter_by(action="success").count()
+    assert 3 == task_success.logger.filter_by(action="success").count()
     assert 0 == task_fail.logger.filter_by(action="success").count()
     assert 0 == task_inact.logger.filter_by(action="suceess").count()
 
     assert 0 == task_success.logger.filter_by(action="fail").count()
-    assert 5 == task_fail.logger.filter_by(action="fail").count()
+    assert 3 == task_fail.logger.filter_by(action="fail").count()
     assert 0 == task_inact.logger.filter_by(action="fail").count()
 
     assert 0 == task_success.logger.filter_by(action="inaction").count()
     assert 0 == task_fail.logger.filter_by(action="inaction").count()
-    assert 5 == task_inact.logger.filter_by(action="inaction").count()
+    assert 3 == task_inact.logger.filter_by(action="inaction").count()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_run(tmpdir, execution, session):
