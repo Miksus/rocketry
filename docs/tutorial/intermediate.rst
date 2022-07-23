@@ -9,6 +9,17 @@ that you might not come across in very
 simple applications but you eventually
 need to know.
 
+Running as Async
+----------------
+
+By default, ``app.run`` starts a new event loop. 
+If you wish to integrate other async apps, such 
+as FastAPI, you can also call ``app.serve`` method
+which is an async method to start the scheduler:
+
+.. literalinclude:: /code/demos/minimal_async.py
+    :language: py
+
 Session Configurations
 ----------------------
 
