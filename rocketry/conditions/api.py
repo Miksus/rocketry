@@ -70,6 +70,10 @@ class TimeActionWrapper(BaseCondition):
         return TimeActionWrapper(self.cls_cond, task=task)
 
     @property
+    def this_minute(self):
+        return self._get_wrapper(TimeOfMinute)
+
+    @property
     def this_hour(self):
         return self._get_wrapper(TimeOfHour)
 

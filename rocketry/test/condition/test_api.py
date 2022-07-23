@@ -91,6 +91,7 @@ params_action = [
     pytest.param(started("a_task").get_cond(), TaskStarted(task="a_task"), id="has started"),
     pytest.param(finished("a_task").get_cond(), TaskFinished(task="a_task"), id="has finished"),
 
+    pytest.param(started("a_task").this_minute.get_cond(), TaskStarted(task="a_task", period=TimeOfMinute()), id="has started (this minute)"),
     pytest.param(failed("a_task").this_day.get_cond(), TaskFailed(task="a_task", period=TimeOfDay()), id="has failed (this day)"),
     pytest.param(succeeded("a_task").today.between("12:00", "15:00"), TaskSucceeded(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has succeeded (today between)"),
     pytest.param(finished("a_task").this_day.between("12:00", "15:00"), TaskFinished(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has finished (this day between)"),
