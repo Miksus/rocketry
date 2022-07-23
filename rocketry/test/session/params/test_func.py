@@ -75,11 +75,7 @@ def test_session_with_arg(session, execution):
 
     assert task.status is None
     session.start()
-    if platform.system() == "Windows" and execution == "process" and (materialize == "post" or (materialize is None and config_mater in ("post", None))):
-        # Windows cannot pickle the session but apparently Linux can
-        assert "fail" == task.status
-    else:
-        assert "success" == task.status
+    assert "success" == task.status
 
 @pytest.mark.parametrize("config_mater", ['pre', 'post', None])
 @pytest.mark.parametrize("materialize", ['pre', 'post', None])
