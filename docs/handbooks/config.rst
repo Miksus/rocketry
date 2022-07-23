@@ -94,3 +94,15 @@ Options
     system might take a lot of CPU and if too high, the scheduler might not be accurate. 
     
     By default it is set to ``0.1``.
+
+**param_materialize**: When to turn arguments to actual values.
+
+    Whether to turn the arguments to actual values before or after 
+    creating threads (for ``execution="thread``) and processes 
+    (for ``execution="process``). Options:
+
+    - ``pre``: Before thread/process creation.
+    - ``post``: After thread/process creation. (default)
+
+    Only applicable for some argument types and materialization type 
+    specified in the argument itself overrides configuration setting.
