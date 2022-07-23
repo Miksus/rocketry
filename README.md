@@ -78,6 +78,7 @@ Core functionalities:
 - Task parametrization
 - Task pipelining
 - Modifiable session also in runtime
+- Async support
 
 Links:
 
