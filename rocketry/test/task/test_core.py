@@ -67,8 +67,6 @@ def test_crash(session):
 
 def test_json(session):
     session.parameters['x'] = 5
-    from rocketry.core.parameters import Parameters
-    import json
     repo = session.get_repo()
     repo.add(MinimalRecord(task_name="mytest", action="run", created=1640988000))
     repo.add(MinimalRecord(task_name="mytest", action="success", created=1640988060))
@@ -110,6 +108,7 @@ def test_json(session):
         "last_success": "2022-01-01T00:01:00",
         "last_fail": null,
         "last_terminate": null,
-        "last_inaction": null
+        "last_inaction": null,
+        "last_crash": null
     }
     """)[1:-1]
