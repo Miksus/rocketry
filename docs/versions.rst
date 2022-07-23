@@ -2,6 +2,17 @@
 Version history
 ===============
 
+- ``2.2.0``
+
+    - Add: Async support
+    - Add: More conditions in condition API
+    - Add: Support for nested parameters
+    - Update: ``session.shutdown`` renamed to ``session.shut_down``
+    - Fix: Task crash (scheduler suddenly exists) are now properly logged
+    - Fix: ``TaskStarted`` condition's bug in optimization.
+    - Fix: Task to JSON
+    - Docs: Improved handbook.
+
 - ``2.1.2``
 
     - Fix: Bug in task persistence. Task last action times were not queried.
