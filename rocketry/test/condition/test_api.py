@@ -102,7 +102,7 @@ params_running = [
 ]
 
 params_schedule = [
-    pytest.param(scheduler_running("10 mins"), Not(SchedulerStarted(period=TimeDelta("10 mins"))), id="scheduler running (at least)"),
+    pytest.param(scheduler_running("10 mins"), SchedulerStarted(period=TimeSpanDelta("10 mins")), id="scheduler running (at least)"),
 ]
 
 @pytest.mark.parametrize(
