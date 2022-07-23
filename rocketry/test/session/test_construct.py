@@ -34,3 +34,13 @@ def test_empty():
 
     assert session.env is None
     assert_default(session)
+
+def test_timeout_parse():
+    session = Session(config={"timeout": 0.1})
+    assert session.config.timeout == datetime.timedelta(seconds=0.1)
+
+    session = Session(config={"timeout": "0.1 seconds"})
+    assert session.config.timeout == datetime.timedelta(seconds=0.1)
+
+    session = Session(config={"timeout": datetime.timedelta(seconds=0.1)})
+    assert session.config.timeout == datetime.timedelta(seconds=0.1)

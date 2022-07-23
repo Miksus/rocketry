@@ -5,6 +5,7 @@ only some parts of the scheduler (like
 executing one task)
 """
 
+import asyncio
 import time
 
 import pytest
@@ -49,10 +50,11 @@ def test_run_task(execution, task_func, run_count, fail_count, success_count, se
     logger = task.logger
 
     scheduler = Scheduler(session=session)
-    scheduler.run_task(task)
+    asyncio.run(scheduler.run_task(task))
     assert run_count == logger.filter_by(action="run").count()
 
-    scheduler.wait_task_alive()
+    while scheduler.n_alive > 0:
+        time.sleep(0.001)
     scheduler.handle_logs()
 
     assert success_count == logger.filter_by(action="success").count()

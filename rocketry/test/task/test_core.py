@@ -1,4 +1,5 @@
 
+import datetime
 import pickle
 import pytest
 from rocketry.core import Task
@@ -14,6 +15,16 @@ def test_defaults(session):
     assert task.name == "mytest"
     assert isinstance(task.start_cond, AlwaysFalse)
     assert isinstance(task.end_cond, AlwaysFalse)
+
+def test_set_timeout(session):
+    task = DummyTask(timeout="1 hour 20 min", session=session, name="1")
+    assert task.timeout == datetime.timedelta(hours=1, minutes=20)
+
+    task = DummyTask(timeout=datetime.timedelta(hours=1, minutes=20), session=session, name="2")
+    assert task.timeout == datetime.timedelta(hours=1, minutes=20)
+
+    task = DummyTask(timeout=20, session=session, name="3")
+    assert task.timeout == datetime.timedelta(seconds=20)
 
 def test_delete(session):
     task = DummyTask(name="mytest")

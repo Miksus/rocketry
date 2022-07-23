@@ -1,4 +1,5 @@
 
+import asyncio
 import logging
 
 from rocketry import Rocketry
@@ -67,6 +68,25 @@ def test_app_tasks():
     assert isinstance(app.session['do_script'], FuncTask)
 
     assert app.session['do_never'].start_cond == false
+
+def test_app_async():
+    set_logging_defaults()
+
+    app = Rocketry(config={'task_execution': 'main'})
+
+    # Creating some tasks
+    @app.task()
+    def do_never():
+        ...
+
+    @app.task('daily')
+    def do_func():
+        ...
+        return 'return value'
+
+    app.session.config.shut_cond = TaskStarted(task='do_func')
+    asyncio.run(app.serve())
+    assert 1 == app.session[do_func].logger.filter_by(action="success").count()
 
 def test_app_run():
     set_logging_defaults()

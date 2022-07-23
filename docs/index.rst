@@ -65,9 +65,9 @@ applications. It is simple, clean and extensive.
    <details>
    <summary><a>Dislike the syntax?</a></summary>
 
-You can also use the condition API:
+You can also use the condition API instead of the string syntax:
 
-.. literalinclude:: /code/demos/minimal.py
+.. literalinclude:: /code/demos/minimal_with_api.py
     :language: py
 
 .. raw:: html
