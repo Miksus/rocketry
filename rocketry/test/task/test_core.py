@@ -79,6 +79,10 @@ def test_json(session):
         "another_task": Task('another')
     }, session=session)
     j = task.json(indent=4)
+
+    dt_run = datetime.datetime.fromtimestamp(1640988000)
+    dt_success = datetime.datetime.fromtimestamp(1640988060)
+
     assert j == dedent("""
     {
         "permanent_task": false,
@@ -104,11 +108,14 @@ def test_json(session):
         "end_cond": "false",
         "on_startup": false,
         "on_shutdown": false,
-        "last_run": "2022-01-01T00:00:00",
-        "last_success": "2022-01-01T00:01:00",
+        "last_run": "<RUN>",
+        "last_success": "<SUCCESS>",
         "last_fail": null,
         "last_terminate": null,
         "last_inaction": null,
         "last_crash": null
     }
-    """)[1:-1]
+    """
+    .replace("<RUN>", dt_run.strftime("%Y-%m-%dT%H:%M:%S"))
+    .replace("<SUCCESS>", dt_success.strftime("%Y-%m-%dT%H:%M:%S"))
+    )[1:-1]
