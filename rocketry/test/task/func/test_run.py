@@ -34,7 +34,7 @@ def run_parametrized_kwargs(**kwargs):
     assert isinstance(kwargs["string"], str)
     assert isinstance(kwargs["optional_float"], float)
 
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
 @pytest.mark.parametrize(
     "task_func,expected_outcome,exc_cls",
     [
@@ -55,33 +55,75 @@ def run_parametrized_kwargs(**kwargs):
             id="Inaction"),
     ],
 )
-def test_run(tmpdir, task_func, expected_outcome, exc_cls, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+def test_run(task_func, expected_outcome, exc_cls, execution, session):
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution
+    )
 
-        task = FuncTask(
-            task_func, 
-            name="a task",
-            execution=execution
-        )
+    try:
+        task()
+    except:
+        # failing execution="main"
+        if expected_outcome != "fail":
+            raise
 
-        try:
-            task()
-        except:
-            # failing execution="main"
-            if expected_outcome != "fail":
-                raise
+    # Wait for finish
+    wait_till_task_finish(task)
 
-        # Wait for finish
-        wait_till_task_finish(task)
-  
-        assert task.status == expected_outcome
+    assert task.status == expected_outcome
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": expected_outcome},
-        ] == records
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": expected_outcome},
+    ] == records
 
+
+async def run_async_successful():
+    ...
+
+async def run_async_fail():
+    raise RuntimeError("Failed")
+
+async def run_async_inaction():
+    raise TaskInactionException("Did nothing")
+
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize(
+    "task_func,expected_outcome",
+    [
+        pytest.param(run_async_successful, "success", id="Success"),
+        pytest.param(run_async_fail, "fail", id="Failure"),
+        pytest.param(run_async_inaction, "inaction", id="Inaction"),
+    ],
+)
+def test_run_async(task_func, expected_outcome, execution, session):
+
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution
+    )
+
+    try:
+        task()
+    except:
+        # failing execution="main"
+        if expected_outcome != "fail":
+            raise
+
+    # Wait for finish
+    wait_till_task_finish(task)
+
+    assert task.status == expected_outcome
+
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": expected_outcome},
+    ] == records
 
 def test_force_run(tmpdir, session):
     
