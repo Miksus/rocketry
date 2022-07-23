@@ -51,6 +51,25 @@ def test_session(session, execution):
 
     assert "success" == task.status
 
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+def test_session_with_arg(session, execution):
+
+    session.parameters["a_param"] = FuncArg(get_x)
+
+    task = FuncTask(
+        func_x_with_arg, 
+        execution=execution,
+        name="a task", 
+        parameters={"myparam": Arg('a_param')},
+        start_cond=AlwaysTrue()
+    )
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1)
+
+    assert task.status is None
+    session.start()
+
+    assert "success" == task.status
+
 class UnPicklable:
     def __getstate__(self):
         raise RuntimeError("Cannot be pickled")
