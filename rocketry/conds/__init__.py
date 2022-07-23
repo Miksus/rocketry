@@ -9,4 +9,9 @@ from rocketry.conditions.api import (
 
     after_all_finish, after_all_success, after_all_fail,
     after_any_finish, after_any_success, after_any_fail,
+
+    started, succeeded, failed, finished,
+
+    scheduler_running,
+    running
 )

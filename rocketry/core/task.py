@@ -1,4 +1,6 @@
 
+import asyncio
+import inspect
 from pickle import PicklingError
 import sys
 import time
@@ -143,7 +145,7 @@ class Task(RedBase, BaseModel):
         underscore_attrs_are_private = True
         validate_assignment = True
         json_encoders = {
-            Parameters: lambda v: dict(**v),
+            Parameters: lambda v: v.to_json(),
             'BaseCondition': lambda v: str(v),
             FunctionType: lambda v: v.__name__,
             'Session': lambda v: id(v),
@@ -154,7 +156,7 @@ class Task(RedBase, BaseModel):
 
     # Class
     permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
-    _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
+    _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
@@ -163,12 +165,12 @@ class Task(RedBase, BaseModel):
     name: Optional[str] = Field(description="Name of the task. Must be unique")
     description: Optional[str] = Field(description="Description of the task for documentation")
     logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records")
-    execution: Optional[Literal['main', 'thread', 'process']]
+    execution: Optional[Literal['main', 'async', 'thread', 'process']]
     priority: int = 0
     disabled: bool = False
     force_run: bool = False
     force_termination: bool = False
-    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction']] = Field(description="Latest status of the task")
+    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task")
     timeout: Optional[datetime.timedelta]
 
     parameters: Parameters = Parameters()
@@ -184,11 +186,13 @@ class Task(RedBase, BaseModel):
     last_fail: Optional[datetime.datetime]
     last_terminate: Optional[datetime.datetime]
     last_inaction: Optional[datetime.datetime]
+    last_crash: Optional[datetime.datetime]
 
     _process: multiprocessing.Process = None
     _thread: threading.Thread = None
     _thread_terminate: threading.Event = PrivateAttr(default_factory=threading.Event)
     _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _async_task: Optional[asyncio.Task] = PrivateAttr(default=None)
 
     _mark_running = False
 
@@ -231,6 +235,8 @@ class Task(RedBase, BaseModel):
     def parse_timeout(cls, value, values):
         if value == "never":
             return datetime.timedelta.max
+        elif isinstance(value, (float, int)):
+            return to_timedelta(value, unit="s")
         elif value is not None:
             return to_timedelta(value)
         else:
@@ -315,7 +321,14 @@ class Task(RedBase, BaseModel):
     def __hash__(self):
         return id(self)
 
-    def __call__(self, params:Union[dict, Parameters]=None, **kwargs):
+    def __call__(self, *args, **kwargs):
+        "Run sync"
+        self.start(*args, **kwargs)
+
+    def start(self, *args, **kwargs):
+        return asyncio.run(self.start_async(*args, **kwargs))
+
+    async def start_async(self, params:Union[dict, Parameters]=None, **kwargs):
         """Execute the task. Creates a new process
         (if execution='process'), a new thread
         (if execution='thread') or blocks and 
@@ -350,9 +363,13 @@ class Task(RedBase, BaseModel):
         try:
             params = self.get_extra_params(params)
             # Run the actual task
-            if execution == "main":
+            if execution in ("main", "async"):
                 direct_params = self.parameters
-                self._run_as_main(params=params, direct_params=direct_params, execution="main", **kwargs)
+                async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
+                if execution == "main":
+                    await async_task
+                else:
+                    self._async_task = async_task
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -408,7 +425,10 @@ class Task(RedBase, BaseModel):
     def run_as_main(self, params:Parameters):
         return self._run_as_main(params, self.parameters)
 
-    def _run_as_main(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
+    def _run_as_main(self, **kwargs):
+        return asyncio.run(self._run_as_async(**kwargs))
+
+    async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
         """Run the task on the current thread and process"""
         #self.logger.info(f'Running {self.name}', extra={"action": "run"})
 
@@ -431,10 +451,13 @@ class Task(RedBase, BaseModel):
         params = Parameters(params) | Parameters(direct_params)
         params = params.materialize(task=self, session=self.session)
 
-        if execution == 'main':
+        if execution in ('main', 'async'):
             self.log_running()
         try:
-            output = self.execute(**params)
+            if inspect.iscoroutinefunction(self.execute):
+                output = await self.execute(**params)
+            else:
+                output = self.execute(**params)
 
             # NOTE: we process success here in case the process_success
             # fails (therefore task fails)
@@ -456,7 +479,7 @@ class Task(RedBase, BaseModel):
             status = "inaction"
             exc_info = sys.exc_info()
             
-        except TaskTerminationException:
+        except (TaskTerminationException, asyncio.CancelledError):
             # Task was terminated and the task's function
             # did listen to that.
             self.log_termination()
@@ -733,18 +756,23 @@ class Task(RedBase, BaseModel):
         self.last_fail = self._get_last_action("fail", from_logs=True, logger=logger)
         self.last_terminate = self._get_last_action("terminate", from_logs=True, logger=logger)
         self.last_inaction = self._get_last_action("inaction", from_logs=True, logger=logger)
+        self.last_crash = self._get_last_action("crash", from_logs=True, logger=logger)
 
         times = {
             name: getattr(self, f"last_{name}")
-            for name in ('run', 'success', 'fail', 'terminate', 'inaction')
+            for name in ('run', 'success', 'fail', 'terminate', 'inaction', 'crash')
             if getattr(self, f"last_{name}") is not None
         }
-
         if times:
-            self.status = max(
+            status = max(
                 times, 
                 key=times.get
             )
+            if status == "run":
+                # There has been a sudden crash
+                self.log_crash()
+            else:
+                self.status = status
 
     def get_default_name(self, **kwargs):
         """Create a name for the task when name was not passed to initiation of
@@ -753,7 +781,10 @@ class Task(RedBase, BaseModel):
 
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
-        return self.is_alive_as_thread() or self.is_alive_as_process()
+        return self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+
+    def is_alive_as_async(self) -> bool:
+        return self._async_task is not None and not self._async_task.done()
 
     def is_alive_as_thread(self) -> bool:
         """Whether the task has a live thread."""
@@ -810,6 +841,10 @@ class Task(RedBase, BaseModel):
     def log_inaction(self):
         """Make a log that the task did nothing."""
         self._set_status("inaction")
+
+    def log_crash(self):
+        """Make a log that the task had previously crashed"""
+        self._set_status("crash")
 
     def log_record(self, record:logging.LogRecord):
         """Log the record with the logger of the task.
@@ -894,6 +929,10 @@ class Task(RedBase, BaseModel):
     def get_last_inaction(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
         return self._get_last_action("inaction")
+
+    def get_last_crash(self) -> datetime.datetime:
+        """Get the lastest timestamp when the task inacted."""
+        return self._get_last_action("crash")
 
     def get_execution(self) -> str:
         if self.execution is None:

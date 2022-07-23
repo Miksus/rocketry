@@ -60,6 +60,12 @@ class Rocketry(_AppMixin):
         self.session.set_as_default()
         self.session.start()
 
+    async def serve(self, debug=False):
+        "Run the scheduler"
+        self.session.config.debug = debug
+        self.session.set_as_default()
+        await self.session.serve()
+
     def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
         "Create a condition (decorator)"
         return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)

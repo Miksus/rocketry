@@ -1,4 +1,5 @@
 
+import asyncio
 from multiprocessing import cpu_count
 import multiprocessing
 from typing import TYPE_CHECKING, Callable, Optional, Union
@@ -19,6 +20,7 @@ from rocketry.core.hook import _Hooker
 
 if TYPE_CHECKING:
     from rocketry import Session
+
 class Scheduler(RedBase):
     """Multiprocessing scheduler
 
@@ -79,6 +81,7 @@ class Scheduler(RedBase):
         # Controlling runtime (used by scheduler.disabled)
         self._flag_enabled = threading.Event()
         self._flag_shutdown = threading.Event()
+        self._flag_force_exit = threading.Event()
         self._flag_restart = threading.Event()
         self._flag_enabled.set() # Not on hold by default
 
@@ -101,6 +104,12 @@ class Scheduler(RedBase):
         return sorted(tasks, key=lambda task: getattr(task, "priority", 0), reverse=True)
 
     def __call__(self):
+        return self.run()
+
+    def run(self):
+        return asyncio.run(self.serve())
+
+    async def serve(self):
         """Start and run the scheduler. Will block till the end of the scheduling
         session."""
         # Unsetting some flags
@@ -111,16 +120,16 @@ class Scheduler(RedBase):
         self.is_alive = True
         exception = None
         try:
-            self.startup()
+            await self.startup()
 
             while not self.check_shut_cond(self.session.config.shut_cond):
+                await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
                 elif self._flag_restart.is_set():
                     raise SchedulerRestart()
 
-                self._hibernate()
-                self.run_cycle()
+                await self.run_cycle()
 
                 # self.maintain()
         except SystemExit as exc:
@@ -146,9 +155,9 @@ class Scheduler(RedBase):
         else:
             self.logger.info('Purpose completed. Shutting down...', extra={"action": "shutdown"})
         finally:
-            self.shut_down(exception=exception)
+            await self.shut_down(exception=exception)
 
-    def run_cycle(self):
+    async def run_cycle(self):
         """Run one round of tasks.
         
         Each task is inspected and in case their starting condition
@@ -173,15 +182,15 @@ class Scheduler(RedBase):
                     pass
                 elif self._flag_enabled.is_set() and self.is_task_runnable(task):
                     # Run the actual task
-                    self.run_task(task)
+                    await self.run_task(task)
                     # Reset force_run as a run has forced
                     task.force_run = False
                 elif self.is_timeouted(task):
                     # Terminate the task
-                    self.terminate_task(task, reason="timeout")
+                    await self.terminate_task(task, reason="timeout")
                 elif self.is_out_of_condition(task):
                     # Terminate the task
-                    self.terminate_task(task)
+                    await self.terminate_task(task)
 
         # Running hooks
         hooker.postrun()
@@ -202,12 +211,12 @@ class Scheduler(RedBase):
                 raise
             return False
 
-    def run_task(self, task:Task, *args, **kwargs):
+    async def run_task(self, task:Task, *args, **kwargs):
         """Run a given task"""
         start_time = datetime.datetime.fromtimestamp(time.time())
 
         try:
-            task(log_queue=self._log_queue)
+            await task.start_async(log_queue=self._log_queue)
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:
@@ -217,13 +226,13 @@ class Scheduler(RedBase):
             exception = None
             status = "success"
 
-    def terminate_all(self, reason:str=None):
+    async def terminate_all(self, reason:str=None):
         """Terminate all running tasks."""
         for task in self.tasks:
             if task.is_alive():
-                self.terminate_task(task, reason=reason)
+                await self.terminate_task(task, reason=reason)
 
-    def terminate_task(self, task, reason=None):
+    async def terminate_task(self, task, reason=None):
         """Terminate a given task."""
         self.logger.debug(f"Terminating task '{task.name}'")
         is_threaded = hasattr(task, "_thread")
@@ -242,6 +251,12 @@ class Scheduler(RedBase):
 
             # Resetting attr force_termination
             task.force_termination = False
+        elif task.is_alive_as_async():
+            task._async_task.cancel()
+            try:
+                await task._async_task
+            except asyncio.CancelledError:
+                task.log_termination()
         else:
             # The process/thread probably just died after the check
             pass
@@ -281,6 +296,9 @@ class Scheduler(RedBase):
         elif execution == "main":
             return is_condition
         elif execution == "thread":
+            is_not_running = not task.is_alive()
+            return is_not_running and is_condition
+        elif execution == "async":
             is_not_running = not task.is_alive()
             return is_not_running and is_condition
         else:
@@ -336,13 +354,13 @@ class Scheduler(RedBase):
                 
                 task.log_record(record)
 
-    def _hibernate(self):
+    async def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
         delay = self.session.config.cycle_sleep
         if delay is not None:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
-    def startup(self):
+    async def startup(self):
         """Start up the scheduler.
         
         Starting up includes setting up attributes and
@@ -363,7 +381,7 @@ class Scheduler(RedBase):
                     task.force_run = True
 
                 if self.is_task_runnable(task):
-                    self.run_task(task)
+                    await self.run_task(task)
 
         hooker.postrun()
         self.logger.info(f"Setup complete.")
@@ -378,40 +396,46 @@ class Scheduler(RedBase):
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
         
-    def _shut_down_tasks(self, traceback=None, exception=None):
+    async def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
-        wait_for_finish = not self.session.config.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
+        wait_for_finish = (
+            not self.session.config.instant_shutdown 
+            and (exception is None or isinstance(exception, non_fatal_excs))
+        ) and not self._flag_force_exit.is_set()
         if wait_for_finish:
             try:
                 # Gracefully shut down (allow remaining tasks to finish)
                 while self.n_alive:
                     #time.sleep(self.min_sleep)
+
+                    await self._hibernate() # This is the time async tasks can continue
+
                     self.handle_logs()
                     for task in self.tasks:
                         if task.permanent_task:
                             # Would never "finish" anyways
-                            self.terminate_task(task)
+                            await self.terminate_task(task)
                         elif self.is_timeouted(task):
                             # Terminate the task
-                            self.terminate_task(task, reason="timeout")
+                            await self.terminate_task(task, reason="timeout")
                         elif self.is_out_of_condition(task):
                             # Terminate the task
-                            self.terminate_task(task)
+                            await self.terminate_task(task)
             except Exception as exc:
                 # Fuck it, terminate all
-                self._shut_down_tasks(exception=exc)
+                await self._shut_down_tasks(exception=exc)
                 return
             else:
                 self.handle_logs()
         else:
-            self.terminate_all(reason="shutdown")
+            await self.terminate_all(reason="shutdown")
 
-    def wait_task_alive(self):
+    async def wait_task_alive(self):
         """Wait till all, especially threading tasks, are finished."""
         while self.n_alive > 0:
-            time.sleep(0.005)
+            await self._hibernate()
 
-    def shut_down(self, traceback=None, exception=None):
+    async def shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler.
         
         Shutting down includes running tasks that have 
@@ -440,13 +464,12 @@ class Scheduler(RedBase):
                     task.force_run = True
 
                 if self.is_task_runnable(task):
-                    self.run_task(task)
+                    await self.run_task(task)
 
         self.logger.info(f"Shutting down tasks...")
-        self._shut_down_tasks(traceback, exception)
+        await self._shut_down_tasks(traceback, exception)
 
-        if not self.session.config.instant_shutdown:
-            self.wait_task_alive() # Wait till all tasks' threads and processes are dead
+        await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
         # Running hooks
         hooker.postrun()
@@ -456,14 +479,13 @@ class Scheduler(RedBase):
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
-            self._restart()
+            await self._restart()
 
-    def _restart(self):
+    async def _restart(self):
         """Restart the scheduler by creating a new process
         on the temporary run script where the scheduler's is
         process is started.
         """
-        # TODO
         # https://stackoverflow.com/a/35874988
         self.logger.debug(f"Restarting...", extra={"action": "restart"})
         python = sys.executable
@@ -485,7 +507,7 @@ class Scheduler(RedBase):
         elif restarting == "recall":
             # Mostly useful for testing.
             # Restart by calling the self.__call__ again 
-            return self()
+            await asyncio.create_task(self.serve()) 
         else:
             raise ValueError(f"Invalid restaring: {restarting}")
 

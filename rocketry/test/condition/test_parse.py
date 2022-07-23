@@ -67,8 +67,8 @@ cases_time = [
     pytest.param("weekly on Tuesday", TaskExecutable(period=TimeOfWeek("Tue", time_point=True)), id="weekly on"),
 
     # Time delta
-    pytest.param("every 1 hours", TaskExecutable(period=TimeDelta("1 hours")), id="every hour"),
-    pytest.param("every 1 days 1 hours 30 minutes 30 seconds", TaskExecutable(period=TimeDelta("1 days 1 hours 30 minutes 30 seconds")), id="every hour 30 mins 30 seconds"),
+    pytest.param("every 1 hours", TaskStarted(period=TimeDelta(past="1 hours")) == 0, id="every hour"),
+    pytest.param("every 1 days 1 hours 30 minutes 30 seconds", TaskStarted(period=TimeDelta(past="1 days 1 hours 30 minutes 30 seconds")) == 0, id="every hour 30 mins 30 seconds"),
 
     # IsTimeOf...
     pytest.param("time of hour between 45:00 and 50:00",       IsPeriod(period=TimeOfHour("45:00", "50:00")), id="time of hour between"),

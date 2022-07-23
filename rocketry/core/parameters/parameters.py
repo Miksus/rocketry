@@ -202,3 +202,10 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def to_dict(self):
         return self._params
+
+    def to_json(self):
+        "Put parameters to dict that is JSON serializable"
+        return {
+            key: val if hasattr(val, "to_json") else repr(val)
+            for key, val in self._params.items()
+        }

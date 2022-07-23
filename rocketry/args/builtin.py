@@ -41,6 +41,9 @@ class Arg(BaseArgument):
             session = task.session
         return session.parameters._get(self.key, task=task, session=session, **kwargs)
 
+    def __repr__(self):
+        return f'session.parameters[{repr(self.key)}]'
+
 class Session(BaseArgument):
     "An argument that represents the session"
 
@@ -49,6 +52,9 @@ class Session(BaseArgument):
             return session
         else:
             return task.session
+
+    def __repr__(self):
+        return f'session'
 
 class Task(BaseArgument):
     "An argument that represents a task"
@@ -62,6 +68,8 @@ class Task(BaseArgument):
         else:
             return task.session[self.name]
 
+    def __repr__(self):
+        return f'Task({repr(self.name) if self.name is not None else ""})'
 
 class Return(BaseArgument):
     """A return argument
@@ -109,6 +117,8 @@ class Return(BaseArgument):
                 raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
             return self.default
 
+    def __repr__(self):
+        return f'Return({repr(self.task_name)}{"" if self.default is None else ", default=" + repr(self.default)})'
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 

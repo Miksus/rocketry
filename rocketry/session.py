@@ -73,12 +73,12 @@ class Config(BaseModel):
             return AlwaysFalse()
         return parse_condition(value)
 
-    @validator('timeout')
+    @validator('timeout', pre=True, always=True)
     def parse_timeout(cls, value):
         if isinstance(value, str):
-            return to_timedelta(value).to_pytimedelta()
+            return to_timedelta(value)
         elif isinstance(value, (float, int)):
-            return datetime.timedelta(milliseconds=value * 1000)
+            return datetime.timedelta(seconds=value)
         else:
             return value
 
@@ -215,6 +215,14 @@ class Session(RedBase):
         self._check_readable_logger()
         self.scheduler()
 
+    async def serve(self):
+        """Start the scheduling session using async.
+
+        Will block and wait till the scheduler finishes 
+        if there is a shut condition."""
+        self._check_readable_logger()
+        await self.scheduler.serve()
+
     def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
         """Run specific task(s) manually.
 
@@ -283,7 +291,18 @@ class Session(RedBase):
         The shut down is not instantenous and 
         will occur after the scheduler finishes
         checking one cycle of tasks."""
+        warnings.warn((
+            "Session.shutdown is deprecated. " 
+            "Please use Session.shut_down instead"
+        ), DeprecationWarning)
         self.scheduler._flag_shutdown.set()
+
+    def shut_down(self, force=None):
+        """Shut down the scheduler"""
+        force = force if force is not None else self.scheduler._flag_shutdown.is_set()
+        self.scheduler._flag_shutdown.set()
+        if force:
+            self.scheduler._flag_force_exit.set()
 
     def _check_readable_logger(self):
         from rocketry.core.log import TaskAdapter
