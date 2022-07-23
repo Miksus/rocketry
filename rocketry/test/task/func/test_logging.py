@@ -59,7 +59,12 @@ def test_set_cached_in_init(session, optimized, last_status):
         dt = datetime.datetime.fromtimestamp(created)
         last_action_value = getattr(task, f"last_{action}")
         assert last_action_value == dt
-    assert task.status == last_status
+    if last_status == "run":
+        # The task was running according to logs when the task was created
+        # Therefore it is considered crashed
+        assert task.status == "crash"
+    else:
+        assert task.status == last_status
 
 def test_running(tmpdir, session):
     
@@ -219,7 +224,8 @@ def test_without_handlers_status_warnings(tmpdir, session):
         "Task 'task 1' logger is not readable. Latest success unknown.",
         "Task 'task 1' logger is not readable. Latest fail unknown.",
         "Task 'task 1' logger is not readable. Latest terminate unknown.",
-        "Task 'task 1' logger is not readable. Latest inaction unknown."
+        "Task 'task 1' logger is not readable. Latest inaction unknown.",
+        "Task 'task 1' logger is not readable. Latest crash unknown.",
     ]
     actual_warnings = [str(warn.message) for warn in warns]
     assert expected_warnings == actual_warnings

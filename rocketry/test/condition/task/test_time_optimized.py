@@ -60,6 +60,8 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
+    if cls == TaskRunning:
+        task.status = "run"
     cond = cls(task=task)
     assert cond.observe(session=session)
 
@@ -78,16 +80,17 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
+
+    cond = cls(task=task)
+    cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     if cls == TaskRunning:
-        cond = cls(task=task)
-    else:
-        cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
+        task.status = "run"
     mock_datetime_now("2000-01-01 14:00")
     assert cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",
     [
-        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted, TaskTerminated
+        TaskFailed, TaskSucceeded, TaskFinished, TaskStarted, TaskInacted, TaskTerminated, TaskRunning
     ]
 )
 def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
@@ -102,6 +105,8 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
         setattr(task, attr, to_datetime("2000-01-01 05:00:00"))
     cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     mock_datetime_now("2000-01-01 14:00")
+    if cls == TaskRunning:
+        task.status = "run"
     assert not cond.observe(session=session)
 
 @pytest.mark.parametrize("cls",

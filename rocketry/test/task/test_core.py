@@ -42,3 +42,21 @@ def test_pickle(session):
     pkl_obj = pickle.dumps(task_1)
     task_2 = pickle.loads(pkl_obj)
     assert task_1.name == task_2.name
+
+def test_crash(session):
+    task = DummyTask(name="mytest", session=session)
+    task.log_running()
+    assert task.status == "run"
+    assert task.last_crash is None
+    task.delete()
+
+    # Recreating and now should log crash
+    task = DummyTask(name="mytest", session=session)
+    assert task.status == "crash"
+    assert task.last_crash
+
+    logs = task.logger.filter_by().all()
+    assert [
+        {'action': 'run', 'task_name': 'mytest'},
+        {'action': 'crash', 'task_name': 'mytest'}
+    ] == [log.dict(exclude={'created'}) for log in logs]

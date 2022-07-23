@@ -29,7 +29,7 @@ Types of task actions:
 - ``fail``: Logged when a task finishes with an error.
 - ``terminate``: Logged when a task is terminated before it finished.
 - ``inaction``: Special action to indicate the task did nothing. Requires raising a special exception.
-
+- ``crash``: The task had previously silently crashed. This is to indicate that the task is no longer running.
 
 Log Record
 ----------

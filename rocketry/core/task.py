@@ -156,7 +156,7 @@ class Task(RedBase, BaseModel):
 
     # Class
     permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
-    _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash_release")
+    _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
@@ -170,7 +170,7 @@ class Task(RedBase, BaseModel):
     disabled: bool = False
     force_run: bool = False
     force_termination: bool = False
-    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction']] = Field(description="Latest status of the task")
+    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task")
     timeout: Optional[datetime.timedelta]
 
     parameters: Parameters = Parameters()
@@ -186,6 +186,7 @@ class Task(RedBase, BaseModel):
     last_fail: Optional[datetime.datetime]
     last_terminate: Optional[datetime.datetime]
     last_inaction: Optional[datetime.datetime]
+    last_crash: Optional[datetime.datetime]
 
     _process: multiprocessing.Process = None
     _thread: threading.Thread = None
@@ -755,18 +756,23 @@ class Task(RedBase, BaseModel):
         self.last_fail = self._get_last_action("fail", from_logs=True, logger=logger)
         self.last_terminate = self._get_last_action("terminate", from_logs=True, logger=logger)
         self.last_inaction = self._get_last_action("inaction", from_logs=True, logger=logger)
+        self.last_crash = self._get_last_action("crash", from_logs=True, logger=logger)
 
         times = {
             name: getattr(self, f"last_{name}")
-            for name in ('run', 'success', 'fail', 'terminate', 'inaction')
+            for name in ('run', 'success', 'fail', 'terminate', 'inaction', 'crash')
             if getattr(self, f"last_{name}") is not None
         }
-
         if times:
-            self.status = max(
+            status = max(
                 times, 
                 key=times.get
             )
+            if status == "run":
+                # There has been a sudden crash
+                self.log_crash()
+            else:
+                self.status = status
 
     def get_default_name(self, **kwargs):
         """Create a name for the task when name was not passed to initiation of
@@ -835,6 +841,10 @@ class Task(RedBase, BaseModel):
     def log_inaction(self):
         """Make a log that the task did nothing."""
         self._set_status("inaction")
+
+    def log_crash(self):
+        """Make a log that the task had previously crashed"""
+        self._set_status("crash")
 
     def log_record(self, record:logging.LogRecord):
         """Log the record with the logger of the task.
@@ -919,6 +929,10 @@ class Task(RedBase, BaseModel):
     def get_last_inaction(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
         return self._get_last_action("inaction")
+
+    def get_last_crash(self) -> datetime.datetime:
+        """Get the lastest timestamp when the task inacted."""
+        return self._get_last_action("crash")
 
     def get_execution(self) -> str:
         if self.execution is None:

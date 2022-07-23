@@ -124,7 +124,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             lambda:TaskRunning(task="the task"), 
             [
                 ("2020-01-01 07:10", "run"),
-                ("2020-01-01 07:15", "crash_release"),
+                ("2020-01-01 07:15", "crash"),
             ],
             "2020-01-01 07:30",
             False,
