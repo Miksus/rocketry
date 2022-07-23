@@ -2,6 +2,12 @@
 Examples
 ========
 
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   demos/fastapi
+
 **Minimal example:**
 
 .. literalinclude:: /code/demos/minimal.py
