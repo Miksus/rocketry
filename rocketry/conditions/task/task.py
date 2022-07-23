@@ -18,7 +18,7 @@ from rocketry.time.construct import get_before, get_between, get_full_cycle, get
 from rocketry.args import Task, Session
 from rocketry.log.utils import get_field_value
 
-class TaskStarted(BaseComparable):
+class TaskStarted(TaskStatusMixin):
 
     """Condition for whether a task has started
     (for given period).
@@ -32,32 +32,8 @@ class TaskStarted(BaseComparable):
     >>> parse_condition("task 'mytask' has started today")
     TaskStarted(task='mytask', period=TimeOfDay(None, None))
     """
+    _action = 'run'
 
-    def __init__(self, task=None, period=None):
-        self.task = task
-        self.period = period
-        super().__init__()
-
-    def get_measurement(self, task=Task(), session=Session()):
-        task = task if self.task is None else session[self.task]
-        _start_, _end_ = get_period_span(self.period if self.period is not None else task.period)
-
-        allow_optimization = not self.session.config.force_status_from_logs
-        if allow_optimization and self._is_any_over_zero():
-            # Condition only checks whether has run at least once
-            if task.last_run is None:
-                return False
-            elif _start_ <= task.last_run <= _end_:
-                # Can probably be optimized only if inside the period (--> True)
-                # else the old records must be fetched in case the task ran multiple times
-                return True
-        elif allow_optimization and self._is_equal_zero():
-            return not bool(task.last_run)
-        
-        records = task.logger.get_records(created=between(to_timestamp(_start_), to_timestamp(_end_)), action="run")
-        run_times = [get_field_value(record, "created") for record in records]
-        return len(run_times)
-        
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
