@@ -1,11 +1,15 @@
-@app.task("daily", execution="main")
+@app.task(execution="main")
 def do_main():
     ...
 
-@app.task("daily", execution="thread")
+@app.task(execution="async")
+async def do_async():
+    ...
+
+@app.task(execution="thread")
 def do_thread():
     ...
 
-@app.task("daily", execution="process")
+@app.task(execution="process")
 def do_process():
     ...

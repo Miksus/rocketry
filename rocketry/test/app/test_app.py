@@ -159,7 +159,8 @@ def test_app_run():
         return 'func arg value'
 
     @app.cond('is foo')
-    def is_foo():
+    def is_foo(arg=Arg("my_func_arg")):
+        assert arg == "func arg value"
         return True
 
     # Creating some tasks

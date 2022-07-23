@@ -91,6 +91,7 @@ There are three options for how tasks are executed:
 
 - ``process``: Run the task in a separate process
 - ``thread``: Run the task in a separate thread
+- ``async``: Run the task in async
 - ``main``: Run the task in the main process and thread (default)
 
 Here is a quick example of each:
@@ -109,15 +110,7 @@ if there is one that you prefer in your project:
     def do_main():
         ...
 
-There are pros and cons in each option. In short:
-
-=========== =============  =====================  ========================
-Execution   Parallerized?  Can be terminated?      Can modify the session?
-=========== =============  =====================  ========================
-``process`` Yes            Yes                    No
-``thread``  Yes            Yes if task supports   Yes
-``main``    No             No                     Yes
-=========== =============  =====================  ========================
+Read more about the execution types in :ref:`execution handbook <handbook-execution>`.
 
 
 Changing Logging Destination

@@ -54,6 +54,7 @@ applications. It is simple, clean and extensive.
 - Task parametrization
 - Task pipelining
 - Modifiable session also in runtime
+- Async support
 
 **It looks like this:**
 

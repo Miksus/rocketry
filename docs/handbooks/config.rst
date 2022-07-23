@@ -95,6 +95,18 @@ Options
     
     By default it is set to ``0.1``.
 
+.. _config_instant_shutdown:
+
+**instant_shutdown**: Whether to terminate all tasks on shutdown.
+
+    If set ``False``, the scheduler will wait till all tasks finish on shutdown.
+    Running tasks that are past their timeout or their ``end_cond`` are true, 
+    are terminated normally. If set ``True``, the scheduler will always 
+    terminate all running tasks on shutdown. Shutdown will still wait till all
+    threads are finished.
+    
+    By default, ``False``.
+
 **param_materialize**: When to turn arguments to actual values.
 
     Whether to turn the arguments to actual values before or after 

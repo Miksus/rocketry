@@ -78,6 +78,7 @@ Core functionalities:
 - Task parametrization
 - Task pipelining
 - Modifiable session also in runtime
+- Async support
 
 Links:
 
@@ -186,6 +187,10 @@ def do_second(arg=Return(do_first)):
 ```python
 @app.task("daily", execution="main")
 def do_unparallel():
+    ...
+
+@app.task("daily", execution="async")
+async def do_async():
     ...
 
 @app.task("daily", execution="thread")
