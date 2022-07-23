@@ -41,7 +41,10 @@ params_time = [
 ]
 
 params_task_exec = [
-    pytest.param(every("10 mins"), TaskExecutable(period=TimeDelta("10 mins")), id="every"),
+    pytest.param(every("10 mins"), TaskStarted(period=TimeDelta("10 mins")) == 0, id="every"),
+    pytest.param(every("10 mins", based="finish"), TaskExecutable(period=TimeDelta("10 mins")), id="every (finish)"),
+    pytest.param(every("10 mins", based="success"), TaskSucceeded(period=TimeDelta("10 mins")) == 0, id="every (success)"),
+    pytest.param(every("10 mins", based="fail"), TaskFailed(period=TimeDelta("10 mins")) == 0, id="every (fail)"),
 
     pytest.param(minutely.get_cond(), TaskExecutable(period=TimeOfMinute(None, None)), id="minutely"),
     pytest.param(hourly.get_cond(), TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),
@@ -111,3 +114,7 @@ params_schedule = [
 )
 def test_api(cond, result):
     assert cond == result
+
+def test_fail():
+    with pytest.raises(ValueError):
+        every("5 seconds", based="oops")

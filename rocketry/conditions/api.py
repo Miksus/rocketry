@@ -120,8 +120,18 @@ time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
 time_of_week = TimeCondWrapper(IsPeriod, TimeOfWeek)
 time_of_month = TimeCondWrapper(IsPeriod, TimeOfMonth)
 
-def every(past:str):
-    return TaskExecutable(period=TimeDelta(past))
+def every(past:str, based="run"):
+    kws_past = {} # 'unit': 's'
+    if based == "run":
+        return TaskStarted(period=TimeDelta(past, kws_past=kws_past)) == 0
+    elif based == "success":
+        return TaskSucceeded(period=TimeDelta(past, kws_past=kws_past)) == 0
+    elif based == "fail":
+        return TaskFailed(period=TimeDelta(past, kws_past=kws_past)) == 0
+    elif based == "finish":
+        return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
+    else:
+        raise ValueError(f"Invalid status: {based}")
 
 # Task pipelining
 # ---------------
