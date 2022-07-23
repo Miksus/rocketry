@@ -20,6 +20,7 @@ from rocketry.core.hook import _Hooker
 
 if TYPE_CHECKING:
     from rocketry import Session
+
 class Scheduler(RedBase):
     """Multiprocessing scheduler
 
@@ -80,6 +81,7 @@ class Scheduler(RedBase):
         # Controlling runtime (used by scheduler.disabled)
         self._flag_enabled = threading.Event()
         self._flag_shutdown = threading.Event()
+        self._flag_force_exit = threading.Event()
         self._flag_restart = threading.Event()
         self._flag_enabled.set() # Not on hold by default
 
@@ -396,7 +398,10 @@ class Scheduler(RedBase):
         
     async def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
-        wait_for_finish = not self.session.config.instant_shutdown and (exception is None or isinstance(exception, non_fatal_excs))
+        wait_for_finish = (
+            not self.session.config.instant_shutdown 
+            and (exception is None or isinstance(exception, non_fatal_excs))
+        ) and not self._flag_force_exit.is_set()
         if wait_for_finish:
             try:
                 # Gracefully shut down (allow remaining tasks to finish)

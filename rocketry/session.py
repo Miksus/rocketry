@@ -285,7 +285,18 @@ class Session(RedBase):
         The shut down is not instantenous and 
         will occur after the scheduler finishes
         checking one cycle of tasks."""
+        warnings.warn((
+            "Session.shutdown is deprecated. " 
+            "Please use Session.shut_down instead"
+        ), DeprecationWarning)
         self.scheduler._flag_shutdown.set()
+
+    def shut_down(self, force=None):
+        """Shut down the scheduler"""
+        force = force if force is not None else self.scheduler._flag_shutdown.is_set()
+        self.scheduler._flag_shutdown.set()
+        if force:
+            self.scheduler._flag_force_exit.set()
 
     def _check_readable_logger(self):
         from rocketry.core.log import TaskAdapter
