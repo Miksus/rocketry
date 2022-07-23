@@ -13,3 +13,14 @@ Here are some examples:
 
 .. literalinclude:: /code/conds/api/simple.py
     :language: py
+    
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   logical
+   periodical
+   pipeline
+   task_status
+   scheduler
