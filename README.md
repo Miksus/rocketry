@@ -189,6 +189,10 @@ def do_second(arg=Return(do_first)):
 def do_unparallel():
     ...
 
+@app.task("daily", execution="async")
+async def do_async():
+    ...
+
 @app.task("daily", execution="thread")
 def do_on_separate_thread():
     ...
