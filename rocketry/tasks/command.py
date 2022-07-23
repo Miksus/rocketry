@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 try:
     from typing import Literal
-except ImportError:
+except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from pydantic import Field, validator

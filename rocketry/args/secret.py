@@ -13,7 +13,7 @@ class Private(BaseArgument):
     def __init__(self, value):
         self.__value = value
 
-    def get_value(self, task=None):
+    def get_value(self, task=None, **kwargs):
         if task is None:
             return self.string_hidden
         else:
