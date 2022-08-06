@@ -83,14 +83,19 @@ class FuncCond(BaseCondition):
         new_self.kwargs = kwargs
         return new_self
 
-    def __call__(self, func: Callable[..., bool]):
-        if self.func is not None:
-            raise ValueError("Function for the condition is already set")
-        self.func = func
-        if self.decor_return_func:
-            return func # To prevent problems with pickling
+    def __call__(self, *args, **kwargs):
+        if self.func is None and (len(args) != 1 or kwargs):
+            raise ValueError("Expected decorated function.")
+        elif self.func is None:
+            func = args[0]
+            self.func = func
+            if self.decor_return_func:
+                return func # To prevent problems with pickling
+            else:
+                return self
         else:
-            return self
+            return self._recreate(*args, **kwargs)
+        
 
     def __bool__(self):
         return self.func(*self.args, **self.kwargs)
