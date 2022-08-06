@@ -40,10 +40,13 @@ class AnchoredInterval(TimeInterval):
     """
     components = ("year", "month", "week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
+    # Components that have always fixed length (exactly the same amount of time)
     _fixed_components = ("week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
-    _scope = None # ie. day, hour, second, microsecond
-    _scope_max = None
+    _scope:str = None # Scope of the full period. Ie. day, hour, second, microsecond
+    _scope_max:int = None # Max in nanoseconds of the 
+
+    _unit_resolution: int = None # Nanoseconds of one unit (if start/end is int)
 
     def __init__(self, start=None, end=None, time_point=None):
         #self.start = start
@@ -66,8 +69,10 @@ class AnchoredInterval(TimeInterval):
             return self.anchor_str(value, **kwargs)
         raise TypeError(value)
 
-    def anchor_int(self, i, **kwargs):
-        return to_nanoseconds(**{self._scope: i})
+    def anchor_int(self, i, side=None, time_point=None, **kwargs):
+        if side == "end":
+            return (i + 1) * self._unit_resolution - 1
+        return i * self._unit_resolution
 
     def anchor_dict(self, d, **kwargs):
         comps = self._fixed_components[(self._fixed_components.index(self._scope) + 1):]
@@ -98,16 +103,21 @@ class AnchoredInterval(TimeInterval):
     def set_end(self, val, time_point=False):
         if time_point and val is None:
             # Interval is "at" type, ie. on monday, at 10:00 (10:00 - 10:59:59)
-            ns = self._start + self._unit_resolution - 1
+            ns = self.to_timepoint(self._start)
         elif val is None:
             ns = self._scope_max            
         else:
-            ns = self.anchor(val, side="end")
-
-        has_time = (ns % to_nanoseconds(day=1)) != 0
+            ns = self.anchor(val, side="end", time_point=time_point)
 
         self._end = ns
         self._end_orig = val
+
+    def to_timepoint(self, ns:int):
+        "Turn nanoseconds to the period's timepoint"
+        # Ie. Monday --> Monday 00:00 to Monday 24:00
+        # By default assumes linear scale (like week)
+        # but can be overridden for non linear such as year
+        return ns + self._unit_resolution - 1
 
     @property
     def start(self):
@@ -360,3 +370,11 @@ class AnchoredInterval(TimeInterval):
 
         start_str = f"0 {repr_scope}s" if not start_str else start_str
         return f"{start_str} - {end_str}"
+
+    @classmethod
+    def at(cls, value):
+        return cls(value, time_point=True)
+
+    @classmethod
+    def starting(cls, value):
+        return cls(value, value)

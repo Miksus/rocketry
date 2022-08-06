@@ -23,6 +23,7 @@ class TimeOfMinute(AnchoredInterval):
     """
 
     _scope = "minute"
+
     _scope_max = to_nanoseconds(minute=1) - 1
     _unit_resolution = to_nanoseconds(second=1)
 
@@ -197,9 +198,6 @@ class TimeOfMonth(AnchoredInterval):
 
         return to_nanoseconds(day=1) * (nth_day - 1) + nanoseconds
 
-    def anchor_int(self, i, **kwargs):
-        return i * self._unit_resolution
-
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
         d = to_dict(dt)
@@ -235,6 +233,9 @@ class TimeOfYear(AnchoredInterval):
         TimeOfYear("Jan", "Feb")
     """
 
+    # We take the longest year there is and translate all years to that
+    # using first the month and then the day of month
+
     _scope = "year"
     _scope_max = to_nanoseconds(day=1) * 366 - 1
 
@@ -243,35 +244,66 @@ class TimeOfYear(AnchoredInterval):
         **dict(zip(calendar.month_abbr[1:], range(12))), 
         **dict(zip(range(12), range(12)))
     }
+
+    _month_start_mapping = {
+        0: 0, # January
+        1: to_nanoseconds(day=31), # February (31 days from year start)
+        2: to_nanoseconds(day=60), # March (31 + 29, leap year has 29 days in February)
+        3: to_nanoseconds(day=91), # April (31 + 29 + 31)
+        4: to_nanoseconds(day=121), # May (31 + 29 + 31 + 30)
+        5: to_nanoseconds(day=152), # June
+        6: to_nanoseconds(day=182), # July
+        7: to_nanoseconds(day=213), # August
+
+        8: to_nanoseconds(day=244), # September
+        9: to_nanoseconds(day=274), # October
+        10: to_nanoseconds(day=305), # November
+        11: to_nanoseconds(day=335), # December
+        12: to_nanoseconds(day=366), # End of the year (on leap years)
+    }
+    # Reverse the _month_start_mapping to nanoseconds to month num
+    _year_start_mapping = dict((v, k) for k, v in _month_start_mapping.items())
+
     # NOTE: Floating
 
     def anchor_str(self, s, side=None, **kwargs):
         # Allowed:
         #   "January", "Dec", "12", "Dec last 5th 10:00:00"
-        res = re.search(r"(?P<monthofyear>[a-z]+) ?(?P<month>.*)", s, flags=re.IGNORECASE)
+        res = re.search(r"(?P<monthofyear>[a-z]+) ?(?P<day_of_month>.*)", s, flags=re.IGNORECASE)
         comps = res.groupdict()
-        monthofyear = comps.pop("monthofyear")
-        month_str = comps.pop("month")
+        monthofyear = comps.pop("monthofyear") # This is jan, january 
+        day_of_month_str = comps.pop("day_of_month")
         nth_month = self.monthnum_mapping[monthofyear]
 
-        # TODO: TimeOfDay.anchor_str as function
-        # nanoseconds = TimeOfMonth().anchor_str(month_str) if month_str else 0
-
-        ceil_time = not month_str and side == "end"
+        ceil_time = not day_of_month_str and side == "end"
         if ceil_time:
             # If time is not defined and the end
             # is being anchored, the time is ceiled.
 
             # If one says 'thing X was organized between 
-            # 15th and 17th of July', the sentence
-            # includes 17th till midnight.
-            nanoseconds = to_nanoseconds(day=31) - 1 
-        elif month_str:
-            nanoseconds = TimeOfMonth().anchor_str(month_str) 
+            # May and June', the sentence includes 
+            # time between 1st of May to 30th of June.
+            return self._month_start_mapping[nth_month+1] - 1 
+        elif day_of_month_str:
+            nanoseconds = TimeOfMonth().anchor_str(day_of_month_str) 
         else:
             nanoseconds = 0
 
-        return nth_month * to_nanoseconds(day=31) + nanoseconds
+        return self._month_start_mapping[nth_month] + nanoseconds
+
+    def to_timepoint(self, ns:int):
+        "Turn nanoseconds to the period's timepoint"
+        # Ie. Monday --> Monday 00:00 to Monday 24:00
+        # By default assumes linear scale (like week)
+        # but can be overridden for non linear such as year
+        month_num = self._year_start_mapping[ns]
+        return self._month_start_mapping[month_num + 1] - 1
+
+    def anchor_int(self, i, side=None, **kwargs):
+        # i is the month
+        if side == "end":
+            return self._month_start_mapping[i+1] - 1
+        return self._month_start_mapping[i]
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
@@ -285,7 +317,7 @@ class TimeOfYear(AnchoredInterval):
         if "day" in d:
             # Day (of month) does not start from 0 (but from 1)
             d["day"] = d["day"] - 1
-        return nth_month * to_nanoseconds(day=31) + to_nanoseconds(**d)
+        return self._month_start_mapping[nth_month] + to_nanoseconds(**d)
 
 
 class RelativeDay(TimeInterval):
