@@ -47,14 +47,31 @@ class TimePeriod(RedBase, metaclass=_TimeMeta):
         # self & other
         # bitwise and
         # using & operator
+        is_time_period = isinstance(other, TimePeriod)
+        if not is_time_period:
+            raise TypeError(f"AND operator only supports TimePeriod. Given: {type(other)}")
 
-        return All(self, other)
+        if self is always:
+            # Reducing the operation
+            return other
+        elif other is always:
+            # Reducing the operation
+            return self
+        else:
+            return All(self, other)
 
     def __or__(self, other):
         # self | other
         # bitwise or
+        is_time_period = isinstance(other, TimePeriod)
+        if not is_time_period:
+            raise TypeError(f"AND operator only supports TimePeriod. Given: {type(other)}")
 
-        return Any(self, other)
+        if self is always or other is always:
+            # Reducing the operation
+            return always
+        else:
+            return Any(self, other)
 
     @abstractmethod
     def rollforward(self, dt):
@@ -421,3 +438,5 @@ class StaticInterval(TimePeriod):
     @property
     def is_max_interval(self):
         return (self.start == self.min) and (self.end == self.max)
+
+always = StaticInterval()
