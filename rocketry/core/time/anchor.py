@@ -49,11 +49,15 @@ class AnchoredInterval(TimeInterval):
     _unit_resolution: int = None # Nanoseconds of one unit (if start/end is int)
 
     def __init__(self, start=None, end=None, time_point=None):
-        #self.start = start
-        #self.end = end
-        # time_point = True if start is None and end is None else time_point
-        self.set_start(start)
-        self.set_end(end, time_point=time_point)
+
+        if start is None and end is None:
+            if time_point:
+                raise ValueError("Full cycle cannot be point of time")
+            self._start = 0
+            self._end = 0
+        else:
+            self.set_start(start)
+            self.set_end(end, time_point=time_point)
 
     def anchor(self, value, **kwargs):
         "Turn value to nanoseconds relative to scope of the class"
