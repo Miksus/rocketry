@@ -29,6 +29,8 @@ def pytest_generate_tests(metafunc):
             params = cls.scen_open_right
         elif method_name == "test_time_point":
             params = cls.scen_time_point
+        elif method_name == "test_value_error":
+            params = cls.scen_value_error
         else:
             return
         
@@ -73,6 +75,10 @@ class ConstructTester:
         assert expected_start == time._start
         assert expected_end == time._end
 
+    def test_value_error(self, start, end):
+        with pytest.raises(ValueError):
+            time = self.cls(start, end)
+
 class TestTimeOfHour(ConstructTester):
 
     cls = TimeOfHour
@@ -111,6 +117,13 @@ class TestTimeOfHour(ConstructTester):
             "start": "12:00",
             "expected_start": 12 * NS_IN_MINUTE,
             "expected_end": 13 * NS_IN_MINUTE - 1,
+        }
+    ]
+
+    scen_value_error = [
+        {
+            "start": 60,
+            "end": None
         }
     ]
 
@@ -154,6 +167,12 @@ class TestTimeOfDay(ConstructTester):
             "expected_end": 13 * NS_IN_HOUR - 1,
         }
     ]
+    scen_value_error = [
+        {
+            "start": 24,
+            "end": None,
+        }
+    ]
 
 
 class TestTimeOfWeek(ConstructTester):
@@ -179,8 +198,8 @@ class TestTimeOfWeek(ConstructTester):
         },
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
-            "start": 1,
-            "end": 2,
+            "start": 2,
+            "end": 3,
             "expected_start": 1 * NS_IN_DAY,
             "expected_end": 3 * NS_IN_DAY - 1,
         },
@@ -205,6 +224,12 @@ class TestTimeOfWeek(ConstructTester):
             "expected_end": 2 * NS_IN_DAY - 1,
         }
     ]
+    scen_value_error = [
+        {
+            "start": 0,
+            "end": None
+        }
+    ]
 
 
 class TestTimeOfMonth(ConstructTester):
@@ -227,8 +252,8 @@ class TestTimeOfMonth(ConstructTester):
             "expected_end": 4 * NS_IN_DAY - 1,
         },
         {
-            "start": 1,
-            "end": 3,
+            "start": 2,
+            "end": 4,
             "expected_start": 1 * NS_IN_DAY,
             "expected_end": 4 * NS_IN_DAY - 1,
         },
@@ -253,6 +278,16 @@ class TestTimeOfMonth(ConstructTester):
             "expected_end": 2 * NS_IN_DAY - 1,
         }
     ]
+    scen_value_error = [
+        {
+            "start": 0,
+            "end": None,
+        },
+        {
+            "start": None,
+            "end": 32,
+        }
+    ]
 
 class TestTimeOfYear(ConstructTester):
 
@@ -274,8 +309,8 @@ class TestTimeOfYear(ConstructTester):
             "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1,
         },
         {
-            "start": 1,
-            "end": 3,
+            "start": 2,
+            "end": 4,
             "expected_start": 31 * NS_IN_DAY,
             "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1,
         },
@@ -316,5 +351,15 @@ class TestTimeOfYear(ConstructTester):
             "start": "Dec",
             "expected_start": (366 - 31) * NS_IN_DAY,
             "expected_end": 366 * NS_IN_DAY - 1,
+        },
+    ]
+    scen_value_error = [
+        {
+            "start": 0,
+            "end": None,
+        },
+        {
+            "start": None,
+            "end": 13,
         },
     ]
