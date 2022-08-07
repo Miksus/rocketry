@@ -56,6 +56,11 @@ class TimeOfHour(AnchoredInterval):
     _scope_max = to_nanoseconds(hour=1) - 1
     _unit_resolution = to_nanoseconds(minute=1)
 
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 59:
+            raise ValueError(f"Invalid minute: {i}. Minute is from 0 to 59")
+        return super().anchor_int(i, **kwargs)
+
     def anchor_str(self, s, **kwargs):
         # ie. 12:30.123
         res = re.search(r"(?P<minute>[0-9][0-9]):(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?(?P<nanosecond>[0-9]+)?", s, flags=re.IGNORECASE)
@@ -84,6 +89,11 @@ class TimeOfDay(AnchoredInterval):
     _scope = "day"
     _scope_max = to_nanoseconds(day=1) - 1
     _unit_resolution = to_nanoseconds(hour=1)
+
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 23:
+            raise ValueError(f"Invalid hour: {i}. Day is from 00 to 23")
+        return super().anchor_int(i, **kwargs)
 
     def anchor_str(self, s, **kwargs):
         # ie. "10:00:15"
@@ -129,7 +139,15 @@ class TimeOfWeek(AnchoredInterval):
             for i, day in enumerate(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
         },
     }
-    # TODO: ceil end
+
+    def anchor_int(self, i, **kwargs):
+        # The axis is from 0 to 6 times nanoseconds per day
+        # but if start/end is passed as int, it's considered from 1-7
+        # (Monday is 1)
+        if not 1 <= i <= 7:
+            raise ValueError("Invalid day of week. Week day is from 1 (Monday) to 7 (Sunday).")
+        return super().anchor_int(i-1, **kwargs)
+
     def anchor_str(self, s, side=None, **kwargs):
         # Allowed:
         #   "Mon", "Monday", "Mon 10:00:00"
@@ -178,6 +196,13 @@ class TimeOfMonth(AnchoredInterval):
     _unit_resolution = to_nanoseconds(day=1)
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
+
+    def anchor_int(self, i, **kwargs):
+        if not 1 <= i <= 31:
+            raise ValueError("Invalid day of month. Day of month can be from 1 to 31")
+        # We allow passing days from 1-31 but the axis is built on starting from zero
+        i -= 1
+        return super().anchor_int(i, **kwargs)
 
     def anchor_str(self, s, side=None, **kwargs):
         # Allowed:
@@ -310,7 +335,11 @@ class TimeOfYear(AnchoredInterval):
         return self._month_start_mapping[month_num + 1] - 1
 
     def anchor_int(self, i, side=None, **kwargs):
-        # i is the month
+        # i is the month (Jan = 1)
+        # The axis is from 0 to 365 * nanoseconds per day
+        if not 1 <= i <= 12:
+            raise ValueError(f"Invalid month: {i} (Jan is 1 and Dec is 12)")
+        i -= 1
         if side == "end":
             return self._month_start_mapping[i+1] - 1
         return self._month_start_mapping[i]
