@@ -1,4 +1,5 @@
 import datetime
+from functools import reduce
 import time
 from abc import abstractmethod
 from typing import Callable, Dict, List, Pattern, Union
@@ -296,46 +297,71 @@ class All(TimePeriod):
         self.periods = args
 
     def rollback(self, dt):
+
+        # We solve this iteratively
+        # 1. rollback
+        # 2. check if everything overlaps
+        # 3. If not overlaps, take max and check again
+        # 4. If overlaps, get the period that overlaps
+
         intervals = [
             period.rollback(dt)
             for period in self.periods
         ]
-
-        if all_overlap(intervals):
-            # Example:
-            # A:    <-------------->
-            # B:     <------>
-            # C:         <------>
-            # Out:       <-->
-            return get_overlapping(intervals)
+        all_overlaps = reduce(lambda a, b: a.overlaps(b), intervals)
+        if all_overlaps:
+            return reduce(lambda a, b: a & b, intervals)
         else:
-            # A:         <---------------->
-            # B:            <--->     <--->
-            # C:         <------->
-            # Try from:             <-|
+            # Not found, trying again with next period
+            # Example:
+            # Current:                     |
+            # A:         <-------------->
+            # B:         <---> <--->
+            # C:         <------>
+            # Next try:         |
+            next_dt = min(intervals, key=lambda x: x.right).right
 
-            starts = [interval.left for interval in intervals]
-            return self.rollback(max(starts) - datetime.datetime.resolution)
+            opened = any(
+                interv.closed not in ('right', 'both')
+                for interv in intervals
+                if interv.right == next_dt
+            )
+            # TODO: If 
+            if dt == next_dt:
+                next_dt -= self.resolution
+            return self.rollback(next_dt)
 
     def rollforward(self, dt):
+        # We solve this iteratively
+        # 1. rollforward
+        # 2. check if everything overlaps
+        # 3. If not overlaps, take max and check again
+        # 4. If overlaps, get the period that overlaps
+
         intervals = [
             period.rollforward(dt)
             for period in self.periods
         ]
-        if all_overlap(intervals):
-            # Example:
-            # A:    <-------------->
-            # B:     <------>
-            # C:         <------>
-            # Out:       <-->
-            return get_overlapping(intervals)
+        all_overlaps = reduce(lambda a, b: a.overlaps(b), intervals)
+        if all_overlaps:
+            return reduce(lambda a, b: a & b, intervals)
         else:
-            # A:          <---------------->
-            # B:            <--->     <--->
-            # C:                  <------->
-            # Try from:         |->
-            ends = [interval.right for interval in intervals]
-            return self.rollforward(min(ends) + datetime.datetime.resolution)
+            # Not found, trying again with next period
+            # Example:
+            # Current: |
+            # A:         <-------------->
+            # B:         <---> <--->
+            # C:                 <------>
+            # Next try:          |
+            next_dt = max(intervals, key=lambda x: x.left).left
+            opened = any(
+                interv.closed not in ('left', 'both')
+                for interv in intervals
+                if interv.left == next_dt
+            )
+            if opened:
+                next_dt -= self.resolution
+            return self.rollforward(next_dt)
 
     def __eq__(self, other):
         # self | other
@@ -361,42 +387,48 @@ class Any(TimePeriod):
         ]
 
         # Example:
+        # Current time           |
         # A:    <-------------->
         # B:     <------>
         # C:         <------------->
         # Out:  <------------------>
 
         # Example:
+        # Current time           |
         # A:    <-->   
         # B:     <--->     <--->
         # C:     <------>
-        # Out:  <------->
+        # Out:             <--->
 
         # Example:
+        # Current time           |
         # A:    <-->   
         # B:    <--->     <--->
         # C:        <----->
         # Out:  <------------->
-        starts = [interval.left for interval in intervals]
-        ends = [interval.right for interval in intervals]
 
-        start = min(starts)
-        end = max(ends)
+        # We solve the problem iteratively
+        # 1. Find the interval that ends closest to the dt
+        # 2. Check if there is an interval overlapping with longer end
+        # 3. Repeat 2 until there is none
 
-        next_intervals = [
-            period.rollback(start - datetime.datetime.resolution)
-            for period in self.periods
-        ]
-        if any(Interval(start, end).overlaps(interval) for interval in next_intervals):
-            # Example:
-            # A:    <-->   
-            # B:    <--->     <--->
-            # C:        <----->
-            # Out:  <---------|--->
-            extended = self.rollback(start - datetime.datetime.resolution)
-            start = extended.left
+        # Sorting the closest first (right is oldest)
+        intervals = sorted(intervals, key=lambda x: x.right, reverse=True)
 
-        return Interval(start, end)
+        curr_interval = intervals.pop(0)
+        end_interval = curr_interval
+
+        for interv in intervals:
+            extends = interv.left < curr_interval.left
+            if extends and interv.overlaps(curr_interval):
+                curr_interval = interv
+            else:
+                break
+
+        return Interval(
+            curr_interval.left,
+            end_interval.right
+        )
 
     def rollforward(self, dt):
         intervals = [
@@ -404,27 +436,28 @@ class Any(TimePeriod):
             for period in self.periods
         ]
 
-        starts = [interval.left for interval in intervals]
-        ends = [interval.right for interval in intervals]
+        # We solve the problem iteratively
+        # 1. Find the interval that starts closest to the dt
+        # 2. Check if there is an interval overlapping with longer end
+        # 3. Repeat 2 until there is none
 
-        start = min(starts)
-        end = max(ends)
+        # Sorting the closest first (left is newest)
+        intervals = sorted(intervals, key=lambda x: x.left, reverse=False)
 
-        next_intervals = [
-            period.rollforward(end + datetime.datetime.resolution)
-            for period in self.periods
-        ]
+        curr_interval = intervals.pop(0)
+        start_interval = curr_interval
 
-        if any(Interval(start, end).overlaps(interval) for interval in next_intervals):
-            # Example:
-            # A:    <-->   
-            # B:    <--->     <--->
-            # C:        <----->
-            # Out:  <---------|--->
-            extended = self.rollforward(end + datetime.datetime.resolution)
-            end = extended.right
+        for interv in intervals:
+            extends = interv.right > curr_interval.right
+            if extends and interv.overlaps(curr_interval):
+                curr_interval = interv
+            else:
+                break
 
-        return Interval(start, end)
+        return Interval(
+            start_interval.left,
+            curr_interval.right
+        )
 
     def __eq__(self, other):
         # self | other
