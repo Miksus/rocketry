@@ -3,6 +3,8 @@ from rocketry.core.time import TimeDelta, StaticInterval, All, Any
 
 from .construct import get_between, get_before, get_after, get_full_cycle, get_on
 from .delta import TimeSpanDelta
+from .crontab import Crontab
+
 from rocketry.core.time import always
 
 from rocketry.session import Session
