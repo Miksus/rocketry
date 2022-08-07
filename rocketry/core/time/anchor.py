@@ -358,9 +358,15 @@ class AnchoredInterval(TimeInterval):
 
         return dt + offset
 
+    def repr_ns(self, n:int):
+        "Nanoseconds to representative format"
+        return repr(n)
+
     def __repr__(self):
         cls_name = type(self).__name__
-        return f'{cls_name}({repr(self._start_orig)}, {repr(self._end_orig)})'
+        start = self.repr_ns(self._start) if not hasattr(self, "_start_orgi") else self._start_orig
+        end = self.repr_ns(self._end) if not hasattr(self, "_end_orgi") else self._end_orig
+        return f'{cls_name}({start}, {end})'
 
     def __str__(self):
         # Hour: '15:'

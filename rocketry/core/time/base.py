@@ -371,6 +371,13 @@ class All(TimePeriod):
         else:
             return False
 
+    def __repr__(self):
+        sub = ', '.join(repr(p) for p in self.periods)
+        return f"All({sub})"
+
+    def __str__(self):
+        return ' & '.join(str(p) for p in self.periods)
+
 class Any(TimePeriod):
 
     def __init__(self, *args):
@@ -466,6 +473,13 @@ class Any(TimePeriod):
             return self.periods == other.periods
         else:
             return False
+
+    def __repr__(self):
+        sub = ', '.join(repr(p) for p in self.periods)
+        return f"Any({sub})"
+
+    def __str__(self):
+        return ' | '.join(str(p) for p in self.periods)
 
 class StaticInterval(TimePeriod):
     """Inverval that is fixed in specific datetimes."""
