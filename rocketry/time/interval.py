@@ -117,9 +117,17 @@ class TimeOfWeek(AnchoredInterval):
     _unit_resolution = to_nanoseconds(day=1)
 
     weeknum_mapping = {
-        **dict(zip(calendar.day_name, range(7))), 
-        **dict(zip(calendar.day_abbr, range(7))), 
-        **dict(zip(range(7), range(7)))
+        **dict(zip(range(1, 8), range(7))),
+
+        # English
+        **{
+            day: i
+            for i, day in enumerate(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+        },
+        **{
+            day: i
+            for i, day in enumerate(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+        },
     }
     # TODO: ceil end
     def anchor_str(self, s, side=None, **kwargs):
@@ -129,7 +137,7 @@ class TimeOfWeek(AnchoredInterval):
         comps = res.groupdict()
         dayofweek = comps.pop("dayofweek")
         time = comps.pop("time")
-        nth_day = self.weeknum_mapping[dayofweek]
+        nth_day = self.weeknum_mapping[dayofweek.lower()]
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
@@ -240,9 +248,11 @@ class TimeOfYear(AnchoredInterval):
     _scope_max = to_nanoseconds(day=1) * 366 - 1
 
     monthnum_mapping = {
-        **dict(zip(calendar.month_name[1:], range(12))), 
-        **dict(zip(calendar.month_abbr[1:], range(12))), 
-        **dict(zip(range(12), range(12)))
+        **dict(zip(range(12), range(12))),
+        
+        # English
+        **{day.lower(): i for i, day in enumerate(['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'])},
+        **{day.lower(): i for i, day in enumerate(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])},
     }
 
     _month_start_mapping = {
@@ -273,7 +283,7 @@ class TimeOfYear(AnchoredInterval):
         comps = res.groupdict()
         monthofyear = comps.pop("monthofyear") # This is jan, january 
         day_of_month_str = comps.pop("day_of_month")
-        nth_month = self.monthnum_mapping[monthofyear]
+        nth_month = self.monthnum_mapping[monthofyear.lower()]
 
         ceil_time = not day_of_month_str and side == "end"
         if ceil_time:
