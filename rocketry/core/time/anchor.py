@@ -149,7 +149,7 @@ class AnchoredInterval(TimeInterval):
         ns_start = self._start
         ns_end = self._end
 
-        if ns_start == ns_end:
+        if self.is_full():
             # As there is no time in between, 
             # the interval is considered full
             # cycle (ie. from 10:00 to 10:00)
@@ -162,6 +162,10 @@ class AnchoredInterval(TimeInterval):
             return ns_start <= ns <= ns_end
         else:
             return ns >= ns_start or ns <= ns_end
+
+    def is_full(self):
+        "Whether every time belongs to the period (but there is still distinct intervals)"
+        return self._start == self._end
 
     def get_scope_back(self, dt):
         "Override if offsetting back is different than forward"

@@ -152,27 +152,49 @@ class TimeInterval(TimePeriod):
     def from_between(start, end) -> Interval:
         raise NotImplementedError("__between__ not implemented.")
 
+    def is_full(self):
+        "Whether every time belongs to the period (but there is still distinct intervals)"
+        return False
+
     def rollforward(self, dt):
         "Get next time interval of the period"
 
-        start = self.rollstart(dt)
-        end = self.next_end(dt)
+        if self.is_full():
+            # Full period so dt always belongs on it
+            start = dt
+            end = self.next_end(dt)
+            if end == start:
+                # Expanding the interval
+                end = self.next_end(dt + self.resolution)
+        else:
+            start = self.rollstart(dt)
+            end = self.next_end(dt)
 
         start = to_datetime(start)
         end = to_datetime(end)
         
-        return Interval(start, end, closed="both")
+        closed = "both" if start == end else 'left'
+        return Interval(start, end, closed=closed)
     
     def rollback(self, dt) -> Interval:
         "Get previous time interval of the period"
 
-        end = self.rollend(dt)
-        start = self.prev_start(dt)
+        if self.is_full():
+            # Full period so dt always belongs on it
+            end = dt
+            start = self.prev_start(dt)
+            if end == start:
+                # Expanding the interval
+                start = self.prev_start(dt - self.resolution)
+        else:
+            end = self.rollend(dt)
+            start = self.prev_start(dt)
 
         start = to_datetime(start)
         end = to_datetime(end)
-        
-        return Interval(start, end, closed="both")
+
+        closed = "both" if start == end or self.is_full() else 'left'
+        return Interval(start, end, closed=closed)
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
