@@ -3,7 +3,7 @@
 class Interval:
     "Mimics pandas.Interval"
 
-    def __init__(self, left, right, closed="right"):
+    def __init__(self, left, right, closed="left"):
         self.left = left
         self.right = right
         self.closed = closed

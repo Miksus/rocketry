@@ -454,8 +454,8 @@ class StaticInterval(TimePeriod):
         end = to_datetime(self.end)
         if end < dt:
             # The actual interval is already gone
-            return Interval(self.max, self.max, closed="both")
-        return Interval(dt, end, closed="both")
+            return Interval(self.max, self.max)
+        return Interval(dt, end)
 
     @property
     def is_max_interval(self):
