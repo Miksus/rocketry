@@ -1,17 +1,19 @@
 from functools import reduce
 from typing import Callable
+from dataclasses import dataclass
 
 from .interval import TimeOfHour, TimeOfDay, TimeOfMinute, TimeOfWeek, TimeOfMonth, TimeOfYear
 from rocketry.core.time.base import TimePeriod, always
 
+@dataclass(frozen=True)
 class Crontab(TimePeriod):
 
     def __init__(self, minute="*", hour="*", day_of_month="*", month="*", day_of_week="*"):
-        self.minute = minute
-        self.hour = hour
-        self.day_of_month = day_of_month
-        self.month = month
-        self.day_of_week = day_of_week
+        object.__setattr__(self, "minute", minute)
+        object.__setattr__(self, "hour", hour)
+        object.__setattr__(self, "day_of_month", day_of_month)
+        object.__setattr__(self, "month", month)
+        object.__setattr__(self, "day_of_week", day_of_week)
 
         # *: any value
         # ,: list of values

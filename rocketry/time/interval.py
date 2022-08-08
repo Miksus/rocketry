@@ -2,6 +2,8 @@
 import calendar
 import datetime
 import re
+from dataclasses import dataclass
+from typing import ClassVar
 
 import dateutil
 
@@ -10,7 +12,7 @@ from rocketry.core.time.base import TimeInterval
 from rocketry.core.time.utils import timedelta_to_str, to_dict, to_nanoseconds
 from rocketry.pybox.time.interval import Interval
 
-
+@dataclass(frozen=True, init=False)
 class TimeOfMinute(AnchoredInterval):
     """Time interval anchored to minute cycle of a clock
 
@@ -22,10 +24,10 @@ class TimeOfMinute(AnchoredInterval):
         TimeOfHour("5:00", "30:00")
     """
 
-    _scope = "minute"
+    _scope: ClassVar[str] = "minute"
 
-    _scope_max = to_nanoseconds(minute=1) - 1
-    _unit_resolution = to_nanoseconds(second=1)
+    _scope_max: ClassVar[int] = to_nanoseconds(minute=1) - 1
+    _unit_resolution: ClassVar[int] = to_nanoseconds(second=1)
 
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
@@ -42,6 +44,7 @@ class TimeOfMinute(AnchoredInterval):
             return (self._scope_max + 1) / 4 * n_quarters - 1
 
 
+@dataclass(frozen=True, init=False)
 class TimeOfHour(AnchoredInterval):
     """Time interval anchored to hour cycle of a clock
 
@@ -52,9 +55,9 @@ class TimeOfHour(AnchoredInterval):
         # From 15 past to half past
         TimeOfHour("15:00", "30:00")
     """
-    _scope = "hour"
-    _scope_max = to_nanoseconds(hour=1) - 1
-    _unit_resolution = to_nanoseconds(minute=1)
+    _scope: ClassVar[str] = "hour"
+    _scope_max: ClassVar[int] = to_nanoseconds(hour=1) - 1
+    _unit_resolution: ClassVar[int] = to_nanoseconds(minute=1)
 
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 59:
@@ -76,6 +79,7 @@ class TimeOfHour(AnchoredInterval):
             return (self._scope_max + 1) / 4 * n_quarters - 1
 
 
+@dataclass(frozen=True, init=False)
 class TimeOfDay(AnchoredInterval):
     """Time interval anchored to day cycle of a clock
     
@@ -86,9 +90,9 @@ class TimeOfDay(AnchoredInterval):
         # From 10 o'clock to 15 o'clock
         TimeOfDay("10:00", "15:00")
     """
-    _scope = "day"
-    _scope_max = to_nanoseconds(day=1) - 1
-    _unit_resolution = to_nanoseconds(hour=1)
+    _scope: ClassVar[str] = "day"
+    _scope_max: ClassVar[int] = to_nanoseconds(day=1) - 1
+    _unit_resolution: ClassVar[int] = to_nanoseconds(hour=1)
 
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 23:
@@ -112,6 +116,7 @@ class TimeOfDay(AnchoredInterval):
         }
         return to_nanoseconds(**d) 
 
+@dataclass(frozen=True, init=False)
 class TimeOfWeek(AnchoredInterval):
     """Time interval anchored to week cycle
     
@@ -122,9 +127,9 @@ class TimeOfWeek(AnchoredInterval):
         # From Monday 3 PM to Wednesday 4 PM
         TimeOfWeek("Mon 15:00", "Wed 16:00")
     """
-    _scope = "week"
-    _scope_max = to_nanoseconds(day=7) - 1 # Sun day end of day 
-    _unit_resolution = to_nanoseconds(day=1)
+    _scope: ClassVar[str] = "week"
+    _scope_max: ClassVar[int] = to_nanoseconds(day=7) - 1 # Sun day end of day 
+    _unit_resolution: ClassVar[int] = to_nanoseconds(day=1)
 
     weeknum_mapping = {
         **dict(zip(range(1, 8), range(7))),
@@ -177,6 +182,7 @@ class TimeOfWeek(AnchoredInterval):
         return to_nanoseconds(**d) + dayofweek * to_nanoseconds(day=1)
 
 
+@dataclass(frozen=True, init=False)
 class TimeOfMonth(AnchoredInterval):
     """Time interval anchored to day cycle of a clock
     
@@ -191,9 +197,9 @@ class TimeOfMonth(AnchoredInterval):
     # Could be implemented by allowing minus _start and minus _end
     #   rollforward/rollback/contains would need slight changes 
 
-    _scope = "year"
-    _scope_max = to_nanoseconds(day=31) - 1 # 31st end of day
-    _unit_resolution = to_nanoseconds(day=1)
+    _scope: ClassVar[str] = "year"
+    _scope_max: ClassVar[int] = to_nanoseconds(day=31) - 1 # 31st end of day
+    _unit_resolution: ClassVar[int] = to_nanoseconds(day=1)
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 
@@ -255,6 +261,7 @@ class TimeOfMonth(AnchoredInterval):
         n_days = calendar.monthrange(year, month)[1]
         return to_nanoseconds(day=1) * n_days
 
+@dataclass(frozen=True, init=False)
 class TimeOfYear(AnchoredInterval):
     """Time interval anchored to day cycle of a clock
 
@@ -269,10 +276,10 @@ class TimeOfYear(AnchoredInterval):
     # We take the longest year there is and translate all years to that
     # using first the month and then the day of month
 
-    _scope = "year"
-    _scope_max = to_nanoseconds(day=1) * 366 - 1
+    _scope: ClassVar[str] = "year"
+    _scope_max: ClassVar[int] = to_nanoseconds(day=1) * 366 - 1
 
-    monthnum_mapping = {
+    monthnum_mapping: ClassVar = {
         **dict(zip(range(12), range(12))),
         
         # English
@@ -280,7 +287,7 @@ class TimeOfYear(AnchoredInterval):
         **{day.lower(): i for i, day in enumerate(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])},
     }
 
-    _month_start_mapping = {
+    _month_start_mapping: ClassVar = {
         0: 0, # January
         1: to_nanoseconds(day=31), # February (31 days from year start)
         2: to_nanoseconds(day=60), # March (31 + 29, leap year has 29 days in February)
@@ -297,7 +304,7 @@ class TimeOfYear(AnchoredInterval):
         12: to_nanoseconds(day=366), # End of the year (on leap years)
     }
     # Reverse the _month_start_mapping to nanoseconds to month num
-    _year_start_mapping = dict((v, k) for k, v in _month_start_mapping.items())
+    _year_start_mapping: ClassVar = dict((v, k) for k, v in _month_start_mapping.items())
 
     # NOTE: Floating
 
@@ -359,6 +366,7 @@ class TimeOfYear(AnchoredInterval):
         return self._month_start_mapping[nth_month] + to_nanoseconds(**d)
 
 
+@dataclass(frozen=True, init=False)
 class RelativeDay(TimeInterval):
     """Specific day
 
@@ -369,20 +377,20 @@ class RelativeDay(TimeInterval):
         Day("yesterday")
     """
 
-    offsets = {
+    offsets: ClassVar = {
         "today": datetime.timedelta(),
         "yesterday": datetime.timedelta(days=1),
         "the_day_before":datetime.timedelta(days=2),
         #"first_day_of_year": get_first_day_of_year,
     }
 
-    min_time = datetime.time.min
-    max_time = datetime.time.max
+    min_time: ClassVar[datetime.time] = datetime.time.min
+    max_time: ClassVar[datetime.time] = datetime.time.max
 
     def __init__(self, day, *, start_time=None, end_time=None):
-        self.day = day
-        self.start_time = self.min_time if start_time is None else start_time
-        self.end_time = self.max_time if end_time is None else end_time
+        object.__setattr__(self, "day", day)
+        object.__setattr__(self, "start_time", self.min_time if start_time is None else start_time)
+        object.__setattr__(self, "end_time", self.max_time if end_time is None else end_time)
 
     def rollback(self, dt):
         offset = self.offsets[self.day]

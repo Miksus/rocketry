@@ -1,13 +1,14 @@
 
 
 from datetime import datetime
-from typing import Union
+from typing import ClassVar, Tuple, Union
 from abc import abstractmethod
+from dataclasses import dataclass, field
 
 from .utils import to_nanoseconds, timedelta_to_str, to_dict, to_timedelta
 from .base import TimeInterval
 
-
+@dataclass(frozen=True, repr=False)
 class AnchoredInterval(TimeInterval):
     """Base class for interval for those that have 
     fixed time unit (that can be converted to nanoseconds).
@@ -38,23 +39,26 @@ class AnchoredInterval(TimeInterval):
     -----------------
         _scope [str] : 
     """
-    components = ("year", "month", "week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
+    _start: int
+    _end: int
+
+    components: ClassVar[Tuple[str]] = ("year", "month", "week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
     # Components that have always fixed length (exactly the same amount of time)
-    _fixed_components = ("week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
+    _fixed_components: ClassVar[Tuple[str]] = ("week", "day", "hour", "minute", "second", "microsecond", "nanosecond")
 
-    _scope:str = None # Scope of the full period. Ie. day, hour, second, microsecond
-    _scope_max:int = None # Max in nanoseconds of the 
+    _scope: ClassVar[str] = None # Scope of the full period. Ie. day, hour, second, microsecond
+    _scope_max: ClassVar[int] = None # Max in nanoseconds of the 
 
-    _unit_resolution: int = None # Nanoseconds of one unit (if start/end is int)
+    _unit_resolution: ClassVar[int] = None # Nanoseconds of one unit (if start/end is int)
 
     def __init__(self, start=None, end=None, time_point=None):
 
         if start is None and end is None:
             if time_point:
                 raise ValueError("Full cycle cannot be point of time")
-            self._start = 0
-            self._end = 0
+            object.__setattr__(self, "_start", 0)
+            object.__setattr__(self, "_end", self._scope_max)
         else:
             self.set_start(start)
             self.set_end(end, time_point=time_point)
@@ -101,8 +105,9 @@ class AnchoredInterval(TimeInterval):
             ns = 0
         else:
             ns = self.anchor(val, side="start")
-        self._start = ns
-        self._start_orig = val
+
+        object.__setattr__(self, "_start", ns)
+        object.__setattr__(self, "_start_orig", val)
 
     def set_end(self, val, time_point=False):
         if time_point and val is None:
@@ -113,8 +118,8 @@ class AnchoredInterval(TimeInterval):
         else:
             ns = self.anchor(val, side="end", time_point=time_point)
 
-        self._end = ns
-        self._end_orig = val
+        object.__setattr__(self, "_end", ns)
+        object.__setattr__(self, "_end_orig", val)
 
     def to_timepoint(self, ns:int):
         "Turn nanoseconds to the period's timepoint"
