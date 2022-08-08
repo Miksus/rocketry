@@ -169,7 +169,7 @@ class AnchoredInterval(TimeInterval):
 
     def is_full(self):
         "Whether every time belongs to the period (but there is still distinct intervals)"
-        return self._start == self._end
+        return (self._start == self._end) or (self._start == 0 and self._end == self._scope_max)
 
     def get_scope_back(self, dt):
         "Override if offsetting back is different than forward"
@@ -279,7 +279,6 @@ class AnchoredInterval(TimeInterval):
         "Get previous start point of the period"
         ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
         ns_start = self._start
-        ns_end = self._end
 
         if ns < ns_start:
             # not in period, over night
@@ -319,7 +318,6 @@ class AnchoredInterval(TimeInterval):
     def prev_end(self, dt):
         "Get pervious end point of the period"
         ns = self.anchor_dt(dt) # In relative nanoseconds (removed more accurate than scope)
-        ns_start = self._start
         ns_end = self._end
 
         if ns < ns_end:
