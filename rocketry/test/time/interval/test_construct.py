@@ -8,10 +8,10 @@ from rocketry.time.interval import (
     TimeOfYear
 )
 
-NS_IN_SECOND = int(1e+9)
-NS_IN_MINUTE = int(1e+9 * 60)
-NS_IN_HOUR   = int(1e+9 * 60 * 60)
-NS_IN_DAY    = int(1e+9 * 60 * 60 * 24)
+MS_IN_SECOND = int(1e+6)
+MS_IN_MINUTE = int(1e+6 * 60)
+MS_IN_HOUR   = int(1e+6 * 60 * 60)
+MS_IN_DAY    = int(1e+6 * 60 * 60 * 24)
 
 def pytest_generate_tests(metafunc):
     if metafunc.cls is not None:
@@ -54,7 +54,7 @@ class ConstructTester:
     def test_open(self):
         time = self.cls(None, None)
         assert 0 == time._start
-        assert self.max_ns == time._end
+        assert self.max_ms == time._end
 
     def test_open_left(self, end, expected_end, **kwargs):
         time = self.cls(None, end)
@@ -64,7 +64,7 @@ class ConstructTester:
     def test_open_right(self, start, expected_start, **kwargs):
         time = self.cls(start, None)
         assert expected_start == time._start
-        assert self.max_ns == time._end
+        assert self.max_ms == time._end
 
     def test_time_point(self, start, expected_start, expected_end, **kwargs):
         time = self.cls(start, time_point=True)
@@ -83,40 +83,40 @@ class TestTimeOfHour(ConstructTester):
 
     cls = TimeOfHour
 
-    max_ns = NS_IN_HOUR - 1
+    max_ms = MS_IN_HOUR - 1
 
     scen_closed = [
         {
             "start": "15:00",
             "end": "45:00",
-            "expected_start": 15 * NS_IN_MINUTE,
-            "expected_end": 45 * NS_IN_MINUTE,
+            "expected_start": 15 * MS_IN_MINUTE,
+            "expected_end": 45 * MS_IN_MINUTE,
         },
         {
             "start": 15,
             "end": 45,
-            "expected_start": 15 * NS_IN_MINUTE,
-            "expected_end": 46 * NS_IN_MINUTE - 1,
+            "expected_start": 15 * MS_IN_MINUTE,
+            "expected_end": 46 * MS_IN_MINUTE - 1,
         },
     ]
 
     scen_open_left = [
         {
             "end": "45:00",
-            "expected_end": 45 * NS_IN_MINUTE
+            "expected_end": 45 * MS_IN_MINUTE
         }
     ]
     scen_open_right = [
         {
             "start": "45:00",
-            "expected_start": 45 * NS_IN_MINUTE
+            "expected_start": 45 * MS_IN_MINUTE
         }
     ]
     scen_time_point = [
         {
             "start": "12:00",
-            "expected_start": 12 * NS_IN_MINUTE,
-            "expected_end": 13 * NS_IN_MINUTE - 1,
+            "expected_start": 12 * MS_IN_MINUTE,
+            "expected_end": 13 * MS_IN_MINUTE - 1,
         }
     ]
 
@@ -131,40 +131,40 @@ class TestTimeOfDay(ConstructTester):
 
     cls = TimeOfDay
 
-    max_ns = 24 * NS_IN_HOUR - 1
+    max_ms = 24 * MS_IN_HOUR - 1
 
     scen_closed = [
         {
             "start": "10:00",
             "end": "12:00",
-            "expected_start": 10 * NS_IN_HOUR,
-            "expected_end": 12 * NS_IN_HOUR,
+            "expected_start": 10 * MS_IN_HOUR,
+            "expected_end": 12 * MS_IN_HOUR,
         },
         {
             "start": 10,
             "end": 12,
-            "expected_start": 10 * NS_IN_HOUR,
-            "expected_end": 13 * NS_IN_HOUR - 1,
+            "expected_start": 10 * MS_IN_HOUR,
+            "expected_end": 13 * MS_IN_HOUR - 1,
         },
     ]
 
     scen_open_left = [
         {
             "end": "12:00",
-            "expected_end": 12 * NS_IN_HOUR
+            "expected_end": 12 * MS_IN_HOUR
         }
     ]
     scen_open_right = [
         {
             "start": "12:00",
-            "expected_start": 12 * NS_IN_HOUR
+            "expected_start": 12 * MS_IN_HOUR
         }
     ]
     scen_time_point = [
         {
             "start": "12:00",
-            "expected_start": 12 * NS_IN_HOUR,
-            "expected_end": 13 * NS_IN_HOUR - 1,
+            "expected_start": 12 * MS_IN_HOUR,
+            "expected_end": 13 * MS_IN_HOUR - 1,
         }
     ]
     scen_value_error = [
@@ -179,49 +179,49 @@ class TestTimeOfWeek(ConstructTester):
 
     cls = TimeOfWeek
 
-    max_ns = 7 * NS_IN_DAY - 1
+    max_ms = 7 * MS_IN_DAY - 1
 
     scen_closed = [
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
             "start": "Tue",
             "end": "Wed",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 3 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 3 * MS_IN_DAY - 1,
         },
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
             "start": "Tuesday",
             "end": "Wednesday",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 3 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 3 * MS_IN_DAY - 1,
         },
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
             "start": 2,
             "end": 3,
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 3 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 3 * MS_IN_DAY - 1,
         },
     ]
 
     scen_open_left = [
         {
             "end": "Tue",
-            "expected_end": 2 * NS_IN_DAY - 1 # Tuesday 23:59:59 ...
+            "expected_end": 2 * MS_IN_DAY - 1 # Tuesday 23:59:59 ...
         }
     ]
     scen_open_right = [
         {
             "start": "Tue",
-            "expected_start": 1 * NS_IN_DAY # Tuesday 00:00:00
+            "expected_start": 1 * MS_IN_DAY # Tuesday 00:00:00
         }
     ]
     scen_time_point = [
         {
             "start": "Tue",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 2 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 2 * MS_IN_DAY - 1,
         }
     ]
     scen_value_error = [
@@ -236,46 +236,46 @@ class TestTimeOfMonth(ConstructTester):
 
     cls = TimeOfMonth
 
-    max_ns = 31 * NS_IN_DAY - 1
+    max_ms = 31 * MS_IN_DAY - 1
 
     scen_closed = [
         {
             "start": "2.",
             "end": "3.",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 3 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 3 * MS_IN_DAY - 1,
         },
         {
             "start": "2nd",
             "end": "4th",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 4 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 4 * MS_IN_DAY - 1,
         },
         {
             "start": 2,
             "end": 4,
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 4 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 4 * MS_IN_DAY - 1,
         },
     ]
 
     scen_open_left = [
         {
             "end": "3.",
-            "expected_end": 3 * NS_IN_DAY - 1 
+            "expected_end": 3 * MS_IN_DAY - 1 
         }
     ]
     scen_open_right = [
         {
             "start": "2.",
-            "expected_start": 1 * NS_IN_DAY 
+            "expected_start": 1 * MS_IN_DAY 
         }
     ]
     scen_time_point = [
         {
             "start": "2.",
-            "expected_start": 1 * NS_IN_DAY,
-            "expected_end": 2 * NS_IN_DAY - 1,
+            "expected_start": 1 * MS_IN_DAY,
+            "expected_end": 2 * MS_IN_DAY - 1,
         }
     ]
     scen_value_error = [
@@ -293,64 +293,64 @@ class TestTimeOfYear(ConstructTester):
 
     cls = TimeOfYear
 
-    max_ns = 366 * NS_IN_DAY - 1 # Leap year has 366 days
+    max_ms = 366 * MS_IN_DAY - 1 # Leap year has 366 days
 
     scen_closed = [
         {
             "start": "February",
             "end": "April",
-            "expected_start": 31 * NS_IN_DAY,
-            "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1,
+            "expected_start": 31 * MS_IN_DAY,
+            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1,
         },
         {
             "start": "Feb",
             "end": "Apr",
-            "expected_start": 31 * NS_IN_DAY,
-            "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1,
+            "expected_start": 31 * MS_IN_DAY,
+            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1,
         },
         {
             "start": 2,
             "end": 4,
-            "expected_start": 31 * NS_IN_DAY,
-            "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1,
+            "expected_start": 31 * MS_IN_DAY,
+            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1,
         },
     ]
 
     scen_open_left = [
         {
             "end": "Apr",
-            "expected_end": (31 + 29 + 31 + 30) * NS_IN_DAY - 1 
+            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1 
         },
         {
             "end": "Jan",
-            "expected_end": 31 * NS_IN_DAY - 1
+            "expected_end": 31 * MS_IN_DAY - 1
         },
     ]
     scen_open_right = [
         {
             "start": "Apr",
-            "expected_start": (31 + 29 + 31) * NS_IN_DAY 
+            "expected_start": (31 + 29 + 31) * MS_IN_DAY 
         },
         {
             "start": "Dec",
-            "expected_start": (366 - 31) * NS_IN_DAY 
+            "expected_start": (366 - 31) * MS_IN_DAY 
         },
     ]
     scen_time_point = [
         {
             "start": "Jan",
             "expected_start": 0,
-            "expected_end": 31 * NS_IN_DAY - 1,
+            "expected_end": 31 * MS_IN_DAY - 1,
         },
         {
             "start": "Feb",
-            "expected_start": 31 * NS_IN_DAY,
-            "expected_end": (31 + 29) * NS_IN_DAY - 1,
+            "expected_start": 31 * MS_IN_DAY,
+            "expected_end": (31 + 29) * MS_IN_DAY - 1,
         },
         {
             "start": "Dec",
-            "expected_start": (366 - 31) * NS_IN_DAY,
-            "expected_end": 366 * NS_IN_DAY - 1,
+            "expected_start": (366 - 31) * MS_IN_DAY,
+            "expected_end": 366 * MS_IN_DAY - 1,
         },
     ]
     scen_value_error = [

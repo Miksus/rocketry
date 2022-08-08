@@ -223,10 +223,13 @@ class TimeDelta(TimePeriod):
     @abstractmethod
     def __contains__(self, dt):
         "Check whether the datetime is in "
-        reference = self.reference if self.reference is not None else datetime.datetime.fromtimestamp(time.time())
+        reference = self.get_reference()
         start = reference - abs(self.past)
         end = reference + abs(self.future)
         return start <= dt <= end
+
+    def get_reference(self) -> datetime.datetime:
+        return self.reference if self.reference is not None else datetime.datetime.fromtimestamp(time.time())
 
     def rollback(self, dt):
         "Get previous interval (including currently ongoing)"
