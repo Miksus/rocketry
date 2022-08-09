@@ -52,7 +52,7 @@ class AnchoredInterval(TimeInterval):
 
     _unit_resolution: ClassVar[int] = None # Microseconds of one unit (if start/end is int)
 
-    def __init__(self, start=None, end=None, time_point=None):
+    def __init__(self, start=None, end=None, time_point=None, right_closed=False):
 
         if start is None and end is None:
             if time_point:
@@ -61,7 +61,7 @@ class AnchoredInterval(TimeInterval):
             object.__setattr__(self, "_end", self._scope_max)
         else:
             self.set_start(start)
-            self.set_end(end, time_point=time_point)
+            self.set_end(end, time_point=time_point, right_closed=right_closed)
 
     def anchor(self, value, **kwargs):
         "Turn value to nanoseconds relative to scope of the class"
@@ -100,6 +100,10 @@ class AnchoredInterval(TimeInterval):
 
         return to_microseconds(**d)
 
+    def count_steps(self, ):
+        "Count number of periods "
+        
+
     def set_start(self, val):
         if val is None:
             ms = 0
@@ -109,7 +113,7 @@ class AnchoredInterval(TimeInterval):
         object.__setattr__(self, "_start", ms)
         object.__setattr__(self, "_start_orig", val)
 
-    def set_end(self, val, time_point=False):
+    def set_end(self, val, right_closed=False, time_point=False):
         if time_point and val is None:
             # Interval is "at" type, ie. on monday, at 10:00 (10:00 - 10:59:59)
             ms = self.to_timepoint(self._start)
@@ -118,7 +122,13 @@ class AnchoredInterval(TimeInterval):
         else:
             ms = self.anchor(val, side="end", time_point=time_point)
 
-        object.__setattr__(self, "_end", ns)
+        if right_closed:
+            # We use left closed in intervals so we add one unit to make it closed
+            # given the end argument, ie. if "09:00 to 10:00" excludes 10:00 
+            # we can include it by adding one nanosecond to 10:00
+            ms += 1
+
+        object.__setattr__(self, "_end", ms)
         object.__setattr__(self, "_end_orig", val)
 
     def to_timepoint(self, ms:int):
