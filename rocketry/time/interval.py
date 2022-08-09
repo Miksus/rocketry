@@ -26,7 +26,7 @@ class TimeOfMinute(AnchoredInterval):
 
     _scope: ClassVar[str] = "minute"
 
-    _scope_max: ClassVar[int] = to_microseconds(minute=1) - 1
+    _scope_max: ClassVar[int] = to_microseconds(minute=1)
     _unit_resolution: ClassVar[int] = to_microseconds(second=1)
 
     def anchor_str(self, s, **kwargs):
@@ -56,7 +56,7 @@ class TimeOfHour(AnchoredInterval):
         TimeOfHour("15:00", "30:00")
     """
     _scope: ClassVar[str] = "hour"
-    _scope_max: ClassVar[int] = to_microseconds(hour=1) - 1
+    _scope_max: ClassVar[int] = to_microseconds(hour=1)
     _unit_resolution: ClassVar[int] = to_microseconds(minute=1)
 
     def anchor_int(self, i, **kwargs):
@@ -91,7 +91,7 @@ class TimeOfDay(AnchoredInterval):
         TimeOfDay("10:00", "15:00")
     """
     _scope: ClassVar[str] = "day"
-    _scope_max: ClassVar[int] = to_microseconds(day=1) - 1
+    _scope_max: ClassVar[int] = to_microseconds(day=1)
     _unit_resolution: ClassVar[int] = to_microseconds(hour=1)
 
     def anchor_int(self, i, **kwargs):
@@ -128,7 +128,7 @@ class TimeOfWeek(AnchoredInterval):
         TimeOfWeek("Mon 15:00", "Wed 16:00")
     """
     _scope: ClassVar[str] = "week"
-    _scope_max: ClassVar[int] = to_microseconds(day=7) - 1 # Sun day end of day 
+    _scope_max: ClassVar[int] = to_microseconds(day=7) # Sun day end of day 
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
 
     weeknum_mapping = {
@@ -198,7 +198,7 @@ class TimeOfMonth(AnchoredInterval):
     #   rollforward/rollback/contains would need slight changes 
 
     _scope: ClassVar[str] = "year"
-    _scope_max: ClassVar[int] = to_microseconds(day=31) - 1 # 31st end of day
+    _scope_max: ClassVar[int] = to_microseconds(day=31) # 31st end of day
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
@@ -277,7 +277,7 @@ class TimeOfYear(AnchoredInterval):
     # using first the month and then the day of month
 
     _scope: ClassVar[str] = "year"
-    _scope_max: ClassVar[int] = to_microseconds(day=1) * 366 - 1
+    _scope_max: ClassVar[int] = to_microseconds(day=1) * 366
 
     monthnum_mapping: ClassVar = {
         **dict(zip(range(12), range(12))),
