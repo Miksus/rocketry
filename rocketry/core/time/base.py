@@ -149,6 +149,7 @@ class TimeInterval(TimePeriod):
     def rollforward(self, dt) -> datetime.datetime:
         "Get next time interval of the period"
 
+        closed = "left"
         if self.is_full():
             # Full period so dt always belongs on it
             start = dt
@@ -159,16 +160,21 @@ class TimeInterval(TimePeriod):
         else:
             start = self.rollstart(dt)
             end = self.next_end(dt)
+            if start == end:
+                # The interval is left closed so this should
+                # not contain any points. We look for another
+                # one
+                return self.rollforward(end + self.resolution)
 
         start = to_datetime(start)
         end = to_datetime(end)
         
-        closed = "both" if start == end else 'left'
         return Interval(start, end, closed=closed)
     
     def rollback(self, dt) -> Interval:
         "Get previous time interval of the period"
 
+        closed = "left"
         if self.is_full():
             # Full period so dt always belongs on it
             end = dt
@@ -179,11 +185,15 @@ class TimeInterval(TimePeriod):
         else:
             end = self.rollend(dt)
             start = self.prev_start(dt)
+            if start == end:
+                # The interval is left closed but the start
+                # is included in the interval. Therefore
+                # we include a single point (both sides closed)
+                closed = "both"
 
         start = to_datetime(start)
         end = to_datetime(end)
 
-        closed = "both" if start == end or self.is_full() else 'left'
         return Interval(start, end, closed=closed)
 
     def __eq__(self, other):
