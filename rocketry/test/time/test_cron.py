@@ -64,6 +64,7 @@ def test_roll_forward_simple():
 
     # Roll tiny amount
     interv = period.rollforward(datetime.datetime(2022, 8, 7, 12, 29, 59))
+    assert interv.closed == 'left'
     assert interv.left == datetime.datetime(2022, 8, 7, 12, 30, 00)
     assert interv.right == datetime.datetime(2022, 8, 7, 12, 31, 00)
 
@@ -76,16 +77,19 @@ def test_roll_forward_simple():
     interv = period.rollforward(datetime.datetime(2022, 8, 7, 12, 30, 30))
     assert interv.left == datetime.datetime(2022, 8, 7, 12, 30, 30)
     assert interv.right == datetime.datetime(2022, 8, 7, 12, 31, 00)
+    assert interv.closed == 'left'
 
     # No roll (at right)
     interv = period.rollforward(datetime.datetime(2022, 8, 7, 12, 30, 59, 999999))
     assert interv.left == datetime.datetime(2022, 8, 7, 12, 30, 59, 999999)
     assert interv.right == datetime.datetime(2022, 8, 7, 12, 31, 00)
+    assert interv.closed == 'left'
 
     # Roll (at right)
     interv = period.rollforward(datetime.datetime(2022, 8, 7, 12, 31))
     assert interv.left == datetime.datetime(2022, 8, 7, 13, 30)
     assert interv.right == datetime.datetime(2022, 8, 7, 13, 31)
+    assert interv.closed == 'left'
 
 def test_roll_back_simple():
     period = Crontab("30", "*", "*", "*", "*")
@@ -100,6 +104,7 @@ def test_roll_back_simple():
     interv = period.rollback(datetime.datetime(2022, 8, 7, 12, 30, 0))
     assert interv.left == datetime.datetime(2022, 8, 7, 11, 30, 00)
     assert interv.right == datetime.datetime(2022, 8, 7, 11, 31, 00)
+    assert interv.closed == "left"
 
     # No roll (at center)
     interv = period.rollback(datetime.datetime(2022, 8, 7, 12, 30, 30))

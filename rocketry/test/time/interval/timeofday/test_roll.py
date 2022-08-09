@@ -140,6 +140,7 @@ def test_rollback(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollback(dt)
+    assert interval.closed == 'left'
     assert roll_start == interval.left
     assert roll_end == interval.right
 
