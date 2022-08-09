@@ -119,8 +119,8 @@ def test_rollback_all(dt, periods, roll_start, roll_end):
         pytest.param(
             from_iso("2020-01-01 07:00:00"),
             [
-                TimeOfDay("08:00", "09:00"),
-                TimeOfDay("09:00", "12:00"),
+                TimeOfDay("08:00", "09:00", right_closed=True),
+                TimeOfDay("09:00", "12:00", right_closed=True),
                 TimeOfDay("12:00", "18:00"),
             ],
             from_iso("2020-01-01 08:00:00"), from_iso("2020-01-01 18:00:00"),
@@ -129,7 +129,7 @@ def test_rollback_all(dt, periods, roll_start, roll_end):
         pytest.param(
             from_iso("2020-01-01 08:30:00"),
             [
-                TimeOfDay("08:00", "09:00"),
+                TimeOfDay("08:00", "09:00", right_closed=True),
                 TimeOfDay("09:00", "10:00"),
             ],
             from_iso("2020-01-01 08:30:00"), from_iso("2020-01-01 10:00:00"),
@@ -150,6 +150,7 @@ def test_rollforward_any(dt, periods, roll_start, roll_end):
     interval = time.rollforward(dt)
     assert roll_start == interval.left
     assert roll_end == interval.right
+    assert interval.closed == "left"
 
 @pytest.mark.parametrize(
     "dt,periods,roll_start,roll_end",
@@ -178,8 +179,8 @@ def test_rollforward_any(dt, periods, roll_start, roll_end):
         pytest.param(
             from_iso("2020-01-01 19:00:00"),
             [
-                TimeOfDay("08:00", "09:00"),
-                TimeOfDay("09:00", "12:00"),
+                TimeOfDay("08:00", "09:00", right_closed=True),
+                TimeOfDay("09:00", "12:00", right_closed=True),
                 TimeOfDay("12:00", "18:00"),
             ],
             from_iso("2020-01-01 08:00:00"), from_iso("2020-01-01 18:00:00"),
@@ -188,7 +189,7 @@ def test_rollforward_any(dt, periods, roll_start, roll_end):
         pytest.param(
             from_iso("2020-01-01 09:30:00"),
             [
-                TimeOfDay("08:00", "09:00"),
+                TimeOfDay("08:00", "09:00", right_closed=True),
                 TimeOfDay("09:00", "10:00"),
             ],
             from_iso("2020-01-01 08:00:00"), from_iso("2020-01-01 09:30:00"),

@@ -84,7 +84,7 @@ cases_time = [
     pytest.param("time of hour before 45:00",   IsPeriod(period=TimeOfHour(None, "45:00")), id="time of hour before"),
     pytest.param("time of day before 10:00",    IsPeriod(period=TimeOfDay(None, "10:00")), id="time of day before"),
     pytest.param("time of week before Tuesday", IsPeriod(period=TimeOfWeek(None, "Tue")), id="time of week before"),
-    pytest.param("time of week on Tuesday", IsPeriod(period=TimeOfWeek("Tue", "Tue")), id="time of week on"),
+    pytest.param("time of week on Tuesday", IsPeriod(period=TimeOfWeek.at("Tue")), id="time of week on"),
     pytest.param("time of month before 1.",  IsPeriod(period=TimeOfMonth(None, "1.")), id="time of month before"),
 ]
 
