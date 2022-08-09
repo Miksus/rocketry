@@ -20,7 +20,7 @@ from_iso = datetime.fromisoformat
         pytest.param(
             from_iso("2020-01-01 12:00:00"),
             "10:00", "12:00",
-            from_iso("2020-01-01 12:00:00"), from_iso("2020-01-01 12:00:00"),
+            from_iso("2020-01-02 10:00:00"), from_iso("2020-01-02 12:00:00"),
             id="Right of interval"),
         pytest.param(
             from_iso("2020-01-01 11:00:00"),
@@ -37,7 +37,7 @@ from_iso = datetime.fromisoformat
         pytest.param(
             from_iso("2020-01-01 02:00:00"),
             "22:00", "02:00",
-            from_iso("2020-01-01 02:00:00"), from_iso("2020-01-01 02:00:00"),
+            from_iso("2020-01-01 22:00:00"), from_iso("2020-01-02 02:00:00"),
             id="Right of overnight interval"),
         pytest.param(
             from_iso("2020-01-01 23:59:59.999999"),

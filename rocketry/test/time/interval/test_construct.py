@@ -83,7 +83,7 @@ class TestTimeOfHour(ConstructTester):
 
     cls = TimeOfHour
 
-    max_ms = MS_IN_HOUR - 1
+    max_ms = MS_IN_HOUR
 
     scen_closed = [
         {
@@ -116,7 +116,7 @@ class TestTimeOfHour(ConstructTester):
         {
             "start": "12:00",
             "expected_start": 12 * MS_IN_MINUTE,
-            "expected_end": 13 * MS_IN_MINUTE - 1,
+            "expected_end": 13 * MS_IN_MINUTE,
         }
     ]
 
@@ -131,7 +131,7 @@ class TestTimeOfDay(ConstructTester):
 
     cls = TimeOfDay
 
-    max_ms = 24 * MS_IN_HOUR - 1
+    max_ms = 24 * MS_IN_HOUR
 
     scen_closed = [
         {
@@ -164,7 +164,7 @@ class TestTimeOfDay(ConstructTester):
         {
             "start": "12:00",
             "expected_start": 12 * MS_IN_HOUR,
-            "expected_end": 13 * MS_IN_HOUR - 1,
+            "expected_end": 13 * MS_IN_HOUR,
         }
     ]
     scen_value_error = [
@@ -179,7 +179,7 @@ class TestTimeOfWeek(ConstructTester):
 
     cls = TimeOfWeek
 
-    max_ms = 7 * MS_IN_DAY - 1
+    max_ms = 7 * MS_IN_DAY
 
     scen_closed = [
         {
@@ -221,7 +221,7 @@ class TestTimeOfWeek(ConstructTester):
         {
             "start": "Tue",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 2 * MS_IN_DAY - 1,
+            "expected_end": 2 * MS_IN_DAY,
         }
     ]
     scen_value_error = [
@@ -236,7 +236,7 @@ class TestTimeOfMonth(ConstructTester):
 
     cls = TimeOfMonth
 
-    max_ms = 31 * MS_IN_DAY - 1
+    max_ms = 31 * MS_IN_DAY
 
     scen_closed = [
         {
@@ -275,7 +275,7 @@ class TestTimeOfMonth(ConstructTester):
         {
             "start": "2.",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 2 * MS_IN_DAY - 1,
+            "expected_end": 2 * MS_IN_DAY,
         }
     ]
     scen_value_error = [
@@ -293,7 +293,7 @@ class TestTimeOfYear(ConstructTester):
 
     cls = TimeOfYear
 
-    max_ms = 366 * MS_IN_DAY - 1 # Leap year has 366 days
+    max_ms = 366 * MS_IN_DAY # Leap year has 366 days
 
     scen_closed = [
         {

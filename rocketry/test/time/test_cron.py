@@ -98,9 +98,8 @@ def test_roll_back_simple():
 
     # No roll (at left, single point)
     interv = period.rollback(datetime.datetime(2022, 8, 7, 12, 30, 0))
-    assert interv.left == datetime.datetime(2022, 8, 7, 12, 30, 00)
-    assert interv.right == datetime.datetime(2022, 8, 7, 12, 30, 00)
-    assert interv.closed == "both"
+    assert interv.left == datetime.datetime(2022, 8, 7, 11, 30, 00)
+    assert interv.right == datetime.datetime(2022, 8, 7, 11, 31, 00)
 
     # No roll (at center)
     interv = period.rollback(datetime.datetime(2022, 8, 7, 12, 30, 30))
