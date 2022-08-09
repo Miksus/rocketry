@@ -1,15 +1,23 @@
 
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
+
+@dataclass(frozen=True)
 class Interval:
     "Mimics pandas.Interval"
 
-    def __init__(self, left, right, closed="left"):
-        self.left = left
-        self.right = right
-        self.closed = closed
+    left: Any
+    right: Any
+    closed: Literal['left', 'right', 'both', 'neither'] = "left"
 
-        if left > right:
+    def __post_init__(self):
+        if self.left > self.right:
             raise ValueError("Left cannot be greater than right")
+        
+        if self.closed not in ('left', 'right', 'both', 'neither'):
+            raise ValueError(f"Invalid close: {self.closed}")
+
 
     def __contains__(self, dt):
         if self.closed == "right":
