@@ -48,30 +48,36 @@ class ConstructTester:
 
     def test_closed(self, start, end, expected_start, expected_end):
         time = self.cls(start, end)
+        assert not time.is_full()
         assert expected_start == time._start
         assert expected_end == time._end
 
     def test_open(self):
         time = self.cls(None, None)
+        assert time.is_full()
         assert 0 == time._start
         assert self.max_ms == time._end
 
     def test_open_left(self, end, expected_end, **kwargs):
         time = self.cls(None, end)
+        assert not time.is_full()
         assert 0 == time._start
         assert expected_end == time._end
 
     def test_open_right(self, start, expected_start, **kwargs):
         time = self.cls(start, None)
+        assert not time.is_full()
         assert expected_start == time._start
         assert self.max_ms == time._end
 
     def test_time_point(self, start, expected_start, expected_end, **kwargs):
         time = self.cls(start, time_point=True)
+        assert not time.is_full()
         assert expected_start == time._start
         assert expected_end == time._end
 
         time = self.cls.at(start)
+        assert not time.is_full()
         assert expected_start == time._start
         assert expected_end == time._end
 
