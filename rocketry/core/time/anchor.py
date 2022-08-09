@@ -126,7 +126,7 @@ class AnchoredInterval(TimeInterval):
         # Ie. Monday --> Monday 00:00 to Monday 24:00
         # By default assumes linear scale (like week)
         # but can be overridden for non linear such as year
-        return ms + self._unit_resolution - 1
+        return ms + self._unit_resolution
 
     @property
     def start(self):
@@ -178,11 +178,11 @@ class AnchoredInterval(TimeInterval):
 
     def get_scope_back(self, dt):
         "Override if offsetting back is different than forward"
-        return self._scope_max + 1
+        return self._scope_max
 
     def get_scope_forward(self, dt):
         "Override if offsetting back is different than forward"
-        return self._scope_max + 1
+        return self._scope_max
 
     def rollstart(self, dt):
         "Roll forward to next point in time that on the period"
