@@ -488,8 +488,8 @@ class StaticInterval(TimePeriod):
     end: datetime.datetime
 
     def __init__(self, start=None, end=None):
-        object.__setattr__(self, "start", start)
-        object.__setattr__(self, "end", end)
+        object.__setattr__(self, "start", to_datetime(start) if start is not None else self.min)
+        object.__setattr__(self, "end", to_datetime(end) if end is not None else self.max)
 
     def rollback(self, dt):
         dt = to_datetime(dt)
@@ -497,7 +497,8 @@ class StaticInterval(TimePeriod):
         if start > dt:
             # The actual interval is in the future
             return Interval(self.min, self.min)
-        return Interval(start, dt)
+        end = min(self.end, dt)
+        return Interval(start, end)
 
     def rollforward(self, dt):
         dt = to_datetime(dt)
@@ -505,7 +506,8 @@ class StaticInterval(TimePeriod):
         if end < dt:
             # The actual interval is already gone
             return Interval(self.max, self.max)
-        return Interval(dt, end)
+        start = max(self.start, dt)
+        return Interval(start, end)
 
     @property
     def is_max_interval(self):
