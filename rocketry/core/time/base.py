@@ -300,7 +300,20 @@ class All(TimePeriod):
             raise TypeError("Only TimePeriods supported")
         elif not args:
             raise ValueError("No TimePeriods to wrap")
-        object.__setattr__(self, "periods", frozenset(args))
+
+        # Compress the time periods
+        periods = []
+        for arg in args:
+            if isinstance(arg, All):
+                # Don't nest unnecessarily
+                periods += list(arg.periods)
+            elif arg is always:
+                # Does not really have an effect
+                continue
+            else:
+                periods.append(arg)
+        
+        object.__setattr__(self, "periods", frozenset(periods))
 
     def rollback(self, dt):
 
@@ -394,7 +407,21 @@ class Any(TimePeriod):
             raise TypeError("Only TimePeriods supported")
         elif not args:
             raise ValueError("No TimePeriods to wrap")
-        object.__setattr__(self, "periods", frozenset(args))
+
+        # Compress the time periods
+        periods = []
+        for arg in args:
+            if isinstance(arg, Any):
+                # Don't nest unnecessarily
+                periods += list(arg.periods)
+            elif arg is always:
+                # Does not really have an effect
+                periods = [always]
+                break
+            else:
+                periods.append(arg)
+
+        object.__setattr__(self, "periods", frozenset(periods))
 
     def rollback(self, dt):
         intervals = [
