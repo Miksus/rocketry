@@ -314,7 +314,7 @@ class All(TimePeriod):
             period.rollback(dt)
             for period in self.periods
         ]
-        all_overlaps = all(inter.overlaps(intervals[0]) for inter in intervals[1:])
+        all_overlaps = all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2))
         if all_overlaps:
             return reduce(lambda a, b: a & b, intervals)
         else:
@@ -348,7 +348,7 @@ class All(TimePeriod):
             period.rollforward(dt)
             for period in self.periods
         ]
-        all_overlaps = all(inter.overlaps(intervals[0]) for inter in intervals[1:])
+        all_overlaps = all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2))
         if all_overlaps:
             return reduce(lambda a, b: a & b, intervals)
         else:
