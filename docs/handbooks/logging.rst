@@ -98,7 +98,7 @@ Here is an example to log to a CSV file:
     # Adding the repo to the logger
     logger = logging.getLogger('rocketry.task')
     handler = RepoHandler(repo=repo)
-    logging.addHander(handler)
+    logger.addHandler(handler)
 
 Another common pattern is to log the records to a 
 SQL database. This can be done with SQLAlchemy:
@@ -112,7 +112,7 @@ SQL database. This can be done with SQLAlchemy:
     repo = SQLRepo(engine=engine, table="tasks", if_missing="create", model=MinimalRecord, id_field="created")
     
     handler = RepoHandler(repo=repo)
-    logging.addHander(handler)
+    logging.addHandler(handler)
 
 Read more about repositories from `Red Bird's documentation <https://red-bird.readthedocs.io/>`_.
 
