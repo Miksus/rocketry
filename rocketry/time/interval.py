@@ -3,7 +3,7 @@ import calendar
 import datetime
 import re
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, List
 
 import dateutil
 
@@ -28,6 +28,7 @@ class TimeOfMinute(AnchoredInterval):
 
     _scope_max: ClassVar[int] = to_microseconds(minute=1)
     _unit_resolution: ClassVar[int] = to_microseconds(second=1)
+    _unit_names: ClassVar[List[str]] = [f"{i:02d}" for i in range(60)] # 00, 01 etc. till 59
 
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
@@ -58,6 +59,7 @@ class TimeOfHour(AnchoredInterval):
     _scope: ClassVar[str] = "hour"
     _scope_max: ClassVar[int] = to_microseconds(hour=1)
     _unit_resolution: ClassVar[int] = to_microseconds(minute=1)
+    _unit_names: ClassVar[List[str]] = [f"{i:02d}:00" for i in range(60)] # 00:00, 01:00 etc. till 59:00
 
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 59:
@@ -93,6 +95,7 @@ class TimeOfDay(AnchoredInterval):
     _scope: ClassVar[str] = "day"
     _scope_max: ClassVar[int] = to_microseconds(day=1)
     _unit_resolution: ClassVar[int] = to_microseconds(hour=1)
+    _unit_names: ClassVar[List[str]] = [f"{i:02d}:00" for i in range(24)] # 00:00, 01:00, 02:00 etc. till 23:00
 
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 23:
@@ -130,6 +133,7 @@ class TimeOfWeek(AnchoredInterval):
     _scope: ClassVar[str] = "week"
     _scope_max: ClassVar[int] = to_microseconds(day=7) # Sun day end of day 
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
+    _unit_names: ClassVar[List[str]] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     weeknum_mapping = {
         **dict(zip(range(1, 8), range(7))),
@@ -200,6 +204,7 @@ class TimeOfMonth(AnchoredInterval):
     _scope: ClassVar[str] = "year"
     _scope_max: ClassVar[int] = to_microseconds(day=31) # 31st end of day
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
+    _unit_names: ClassVar[List[str]] = ["1st", "2nd", "3rd"] + [f"{i}th" for i in range(4, 32)]
      # NOTE: Floating
     # TODO: ceil end and implement reversion (last 5th day)
 
@@ -278,13 +283,14 @@ class TimeOfYear(AnchoredInterval):
 
     _scope: ClassVar[str] = "year"
     _scope_max: ClassVar[int] = to_microseconds(day=1) * 366
+    _unit_names: ClassVar[List[str]] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
     monthnum_mapping: ClassVar = {
         **dict(zip(range(12), range(12))),
         
         # English
-        **{day.lower(): i for i, day in enumerate(['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'])},
-        **{day.lower(): i for i, day in enumerate(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])},
+        **{day.lower(): i for i, day in enumerate(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])},
+        **{day.lower(): i for i, day in enumerate(_unit_names)},
     }
 
     _month_start_mapping: ClassVar = {

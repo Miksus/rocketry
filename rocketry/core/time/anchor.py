@@ -1,12 +1,12 @@
 
 
 from datetime import datetime
-from typing import ClassVar, Tuple, Union
+from typing import ClassVar, List, Tuple
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
 from .utils import to_microseconds, timedelta_to_str, to_dict, to_timedelta
-from .base import TimeInterval
+from .base import Any, TimeInterval
 
 @dataclass(frozen=True, repr=False)
 class AnchoredInterval(TimeInterval):
@@ -51,6 +51,7 @@ class AnchoredInterval(TimeInterval):
     _scope_max: ClassVar[int] = None # Max in microseconds of the 
 
     _unit_resolution: ClassVar[int] = None # Microseconds of one unit (if start/end is int)
+    _unit_names: ClassVar[List] = None
 
     def __init__(self, start=None, end=None, time_point=None, right_closed=False):
 
@@ -100,9 +101,13 @@ class AnchoredInterval(TimeInterval):
 
         return to_microseconds(**d)
 
-    def count_steps(self, ):
-        "Count number of periods "
-        
+    @classmethod
+    def create_range(cls, step:int):
+        periods = tuple(
+            cls.at(step)
+            for step in cls._unit_names[::step]
+        )
+        return Any(*periods)
 
     def set_start(self, val):
         if val is None:
