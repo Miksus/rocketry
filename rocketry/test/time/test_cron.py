@@ -28,22 +28,22 @@ every_minute = TimeOfMinute()
         pytest.param(Crontab("*", "*", "*", "*", "FRI-SUN"), every_minute & TimeOfWeek("fri", "sun"), id="* * * * FRI-SUN"),
         
         # Test list
-        pytest.param(Crontab("0,15,30,45", "*", "*", "*", "*"), TimeOfHour.at(0) | TimeOfHour.at(15) | TimeOfHour.at(30) | TimeOfHour.at(45), id="0,15,30,45 * * * *"),
+        pytest.param(Crontab("0,15,30,45", "*", "*", "*", "*"), every_minute & (TimeOfHour.at(0) | TimeOfHour.at(15) | TimeOfHour.at(30) | TimeOfHour.at(45)), id="0,15,30,45 * * * *"),
 
         # Test combinations
         pytest.param(
             Crontab("45-59", "10-13", "28-30", "FEB-MAR", "FRI-SUN"), 
-            TimeOfHour(45, 59) & TimeOfDay(10, 13) & TimeOfYear("feb", "mar") & (TimeOfMonth(28, 30) | TimeOfWeek("fri", "sun")), 
+            every_minute & TimeOfHour(45, 59) & TimeOfDay(10, 13) & TimeOfYear("feb", "mar") & (TimeOfMonth(28, 30) | TimeOfWeek("fri", "sun")), 
             id="45-59 10-13 28-30 FEB-MAR FRI-SUN"
         ),
         pytest.param(
             Crontab("45-59", "10-13", "28-30", "FEB-MAR", "*"), 
-            TimeOfHour(45, 59) & TimeOfDay(10, 13) & TimeOfYear("feb", "mar") & TimeOfMonth(28, 30), 
+            every_minute & TimeOfHour(45, 59) & TimeOfDay(10, 13) & TimeOfYear("feb", "mar") & TimeOfMonth(28, 30), 
             id="45-59 10-13 28-30 FEB-MAR *"
         ),
         pytest.param(
             Crontab("0-29,45-59", "0-10,20-23", "*", "*", "*"), 
-            (TimeOfHour(0, 29) | TimeOfHour(45, 59)) & (TimeOfDay(0, 10) | TimeOfDay(20, 23)), 
+            (TimeOfHour(0, 29) | TimeOfHour(45, 59)) & (TimeOfDay(0, 10) | TimeOfDay(20, 23)) & every_minute, 
             id="0-29,45-59 0-10,20-23 * * *"
         ),
     ]
