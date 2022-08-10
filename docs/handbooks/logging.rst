@@ -98,7 +98,7 @@ Here is an example to log to a CSV file:
     # Adding the repo to the logger
     logger = logging.getLogger('rocketry.task')
     handler = RepoHandler(repo=repo)
-    logging.addHandler(handler)
+    logger.addHandler(handler)
 
 Another common pattern is to log the records to a 
 SQL database. This can be done with SQLAlchemy:
