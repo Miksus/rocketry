@@ -1,7 +1,11 @@
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any
 
+try:
+    from typing import Literal
+except ImportError: # pragma: no cover
+    from typing_extensions import Literal
 
 @dataclass(frozen=True)
 class Interval:
