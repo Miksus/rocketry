@@ -124,6 +124,7 @@ and get started with :ref:`tutorials <tutorials>`. There are also
    cookbook/index
    examples/index
    how_it_works
+   rocketry_vs_alternatives
    contributing
    versions
 
