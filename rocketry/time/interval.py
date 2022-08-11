@@ -135,7 +135,7 @@ class TimeOfWeek(AnchoredInterval):
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
     _unit_names: ClassVar[List[str]] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-    weeknum_mapping = {
+    _unit_mapping = {
         **dict(zip(range(1, 8), range(7))),
 
         # English
@@ -164,7 +164,7 @@ class TimeOfWeek(AnchoredInterval):
         comps = res.groupdict()
         dayofweek = comps.pop("dayofweek")
         time = comps.pop("time")
-        nth_day = self.weeknum_mapping[dayofweek.lower()]
+        nth_day = self._unit_mapping[dayofweek.lower()]
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
@@ -285,7 +285,7 @@ class TimeOfYear(AnchoredInterval):
     _scope_max: ClassVar[int] = to_microseconds(day=1) * 366
     _unit_names: ClassVar[List[str]] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-    monthnum_mapping: ClassVar = {
+    _unit_mapping: ClassVar = {
         **dict(zip(range(12), range(12))),
         
         # English
@@ -321,7 +321,7 @@ class TimeOfYear(AnchoredInterval):
         comps = res.groupdict()
         monthofyear = comps.pop("monthofyear") # This is jan, january 
         day_of_month_str = comps.pop("day_of_month")
-        nth_month = self.monthnum_mapping[monthofyear.lower()]
+        nth_month = self._unit_mapping[monthofyear.lower()]
 
         ceil_time = not day_of_month_str and side == "end"
         if ceil_time:

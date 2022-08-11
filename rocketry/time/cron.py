@@ -56,7 +56,18 @@ class Cron(TimePeriod):
                     start = conv(int(start))
                 if end.isdigit():
                     end = conv(int(end))
-                period = cls(start, end) if step is None else cls.create_range(start, end, step=int(step))
+
+                if step is not None:
+                    # Unlike in traditional Python ranges,
+                    # cron includes also the endpoint thus
+                    # we convert to int (if needed) and add 
+                    # one
+                    if isinstance(end, str):
+                        end = cls._unit_mapping[end.lower()]
+                    end += 1
+                    period = cls.create_range(start, end, step=int(step))
+                else:
+                    period = cls(start, end)
             else:
                 # At
                 step_period = cls.create_range(step=int(step)) if step is not None else always

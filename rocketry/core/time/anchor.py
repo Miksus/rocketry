@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from typing import ClassVar, List, Tuple
+from typing import ClassVar, Dict, List, Tuple, Union
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
@@ -52,6 +52,7 @@ class AnchoredInterval(TimeInterval):
 
     _unit_resolution: ClassVar[int] = None # Microseconds of one unit (if start/end is int)
     _unit_names: ClassVar[List] = None
+    _unit_mapping: ClassVar[Dict[str, int]] = {}
 
     def __init__(self, start=None, end=None, time_point=None, right_closed=False):
 
@@ -102,7 +103,12 @@ class AnchoredInterval(TimeInterval):
         return to_microseconds(**d)
 
     @classmethod
-    def create_range(cls,  start=None, end=None, step:int=None):
+    def create_range(cls, start:Union[str, int]=None, end:Union[str, int]=None, step:int=None):
+        if isinstance(start, str):
+            start = cls._unit_mapping[start.lower()]
+        if isinstance(end, str):
+            end = cls._unit_mapping[end.lower()]
+
         periods = tuple(
             cls.at(step)
             for step in cls._unit_names[start:end:step]

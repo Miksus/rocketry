@@ -69,12 +69,19 @@ every_minute = TimeOfMinute()
             ), 
             id="* 2-17/6 * * *"
         ),
-            pytest.param(
+        pytest.param(
             Cron("*", "*", "*", "*", "Tue-Fri/2"), 
             every_minute & (
                 TimeOfWeek.at("Tue") | TimeOfWeek.at("Thu")
             ), 
             id="* * * * Tue-Fri/2"
+        ),
+        pytest.param(
+            Cron("*", "*", "*", "Feb-Aug/3", "*"), 
+            every_minute & (
+                TimeOfYear.at("Feb") | TimeOfYear.at("May") | TimeOfYear.at("Aug")
+            ), 
+            id="* * * Feb-Aug/3 *"
         ),
     ]
 )
