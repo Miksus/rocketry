@@ -78,21 +78,20 @@ You can also use the condition API instead of the string syntax:
 Why Rocketry?
 ---------------
 
-There are a lot of options for scheduler:
+There are some alternatives for a scheduler:
 
 - Crontab
 - APScheduler
 - Airflow
 
-Rocketry provides more features than Crontab and APScheduler
-and it is much easier to use than Airflow. Rocketry
-has by far the cleanest syntax compared to the alternatives and it is 
-the most productive.
+Compared to alternatives, Rocketry is highly productive and 
+easy to use. It also has perhaps the most advanced 
+mechanism for scheduling and creating custom rules to run tasks.
 
 Rocketry is the automation backend that sets your applications alive. 
 It has customization built into it and it is possible to build really
 complex systems that are can self update, self restart and interact with 
-users. And all of these are easy to implement.
+users.
 
 Here is a demonstration of more advanced case:
 
