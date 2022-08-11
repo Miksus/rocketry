@@ -183,9 +183,11 @@ class AnchoredInterval(TimeInterval):
 
         is_over_period = ms_start > ms_end # period is overnight, over weekend etc.
         if not is_over_period:
-            return ms_start <= ms <= ms_end
+            # Note that the period is right opened (end point excluded)
+            return ms_start <= ms < ms_end
         else:
-            return ms >= ms_start or ms <= ms_end
+            # Note that the period is right opened (end point excluded)
+            return ms >= ms_start or ms < ms_end
 
     def is_full(self):
         "Whether every time belongs to the period (but there is still distinct intervals)"
@@ -260,7 +262,7 @@ class AnchoredInterval(TimeInterval):
         ms_start = self._start
         ms_end = self._end
 
-        if ms <= ms_end:
+        if ms < ms_end:
             # in period
             #                    dt             
             # --<---------->-----------<-------------->--

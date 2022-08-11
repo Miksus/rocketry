@@ -17,10 +17,6 @@ from rocketry.time.interval import (
             "Tue 10:00", "Sat 12:00",
             id="Left of interval"),
         pytest.param(
-            datetime(2024, 1, 6, 12, 00),
-            "Tue 10:00", "Sat 12:00",
-            id="Right of interval"),
-        pytest.param(
             datetime(2024, 1, 4, 11, 00),
             "Tue 10:00", "Sat 12:00",
             id="Middle of interval"),
@@ -30,10 +26,6 @@ from rocketry.time.interval import (
             datetime(2024, 1, 6, 10, 00),
             "Sat 10:00", "Tue 12:00",
             id="Left of over weekend interval"),
-        pytest.param(
-            datetime(2024, 1, 9, 12, 00),
-            "Sat 10:00", "Tue 12:00",
-            id="Right of over weekend interval"),
         pytest.param(
             datetime(2024, 1, 7, 23, 59, 59, 999999),
             "Sat 10:00", "Tue 12:00",
@@ -79,6 +71,16 @@ def test_in(start, end, dt):
             datetime(2024, 1, 7, 14, 00, 00, 1),
             "Tue 10:00", "Sat 12:00",
             id="Right from interval"),
+
+        # Right is opened
+        pytest.param(
+            datetime(2024, 1, 6, 12, 00),
+            "Tue 10:00", "Sat 12:00",
+            id="Right of interval"),
+        pytest.param(
+            datetime(2024, 1, 9, 12, 00),
+            "Sat 10:00", "Tue 12:00",
+            id="Right of over weekend interval"),
 
         # Over weekend
         pytest.param(

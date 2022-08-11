@@ -10,27 +10,21 @@ from rocketry.time.interval import (
     [
         # Regular
         pytest.param(
-            datetime(2020, 1, 1, 10, 00),
-            "10:00", "12:00",
-            id="Left of interval"),
-        pytest.param(
-            datetime(2020, 1, 1, 12, 00),
-            "10:00", "12:00",
-            id="Right of interval"),
-        pytest.param(
             datetime(2020, 1, 1, 11, 00),
             "10:00", "12:00",
             id="Middle of interval"),
 
-        # Overnight
+        # Left is closed
+        pytest.param(
+            datetime(2020, 1, 1, 10, 00),
+            "10:00", "12:00",
+            id="Left of interval"),
         pytest.param(
             datetime(2020, 1, 1, 22, 00),
             "22:00", "02:00",
             id="Left of overnight interval"),
-        pytest.param(
-            datetime(2020, 1, 1, 2, 00),
-            "22:00", "02:00",
-            id="Right of overnight interval"),
+
+        # Overnight
         pytest.param(
             datetime(2020, 1, 1, 23, 59, 59, 999999),
             "22:00", "02:00",
@@ -76,6 +70,16 @@ def test_in(start, end, dt):
             datetime(2020, 1, 1, 12, 00, 00, 1),
             "10:00", "12:00",
             id="Right from interval"),
+
+        # Right is opened
+        pytest.param(
+            datetime(2020, 1, 1, 12, 00),
+            "10:00", "12:00",
+            id="Right of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 2, 00),
+            "22:00", "02:00",
+            id="Right of overnight interval"),
 
         # Overnight
         pytest.param(
