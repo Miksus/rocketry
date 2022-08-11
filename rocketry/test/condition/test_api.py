@@ -114,6 +114,7 @@ params_schedule = [
 
 cron_like = [
     pytest.param(cron("1 2 3 4 5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5"),
+    pytest.param(cron(minute="1", hour="2", day_of_month="3", month="4", day_of_week="5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5 (kwargs)"),
 ]
 
 @pytest.mark.parametrize(
