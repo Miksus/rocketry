@@ -1,12 +1,18 @@
-from functools import reduce
 from typing import Callable
 from dataclasses import dataclass
+from datetime import timedelta
 
 from .interval import TimeOfHour, TimeOfDay, TimeOfMinute, TimeOfWeek, TimeOfMonth, TimeOfYear
 from rocketry.core.time.base import TimePeriod, always
 
 @dataclass(frozen=True)
-class Crontab(TimePeriod):
+class Cron(TimePeriod):
+
+    minute: str = "*"
+    hour: str = "*"
+    day_of_month: str = "*"
+    month: str = "*"
+    day_of_week: str = "*"
 
     def __init__(self, minute="*", hour="*", day_of_month="*", month="*", day_of_week="*"):
         object.__setattr__(self, "minute", minute)
@@ -38,7 +44,10 @@ class Crontab(TimePeriod):
                 # Any
                 continue
             if "/" in expr:
-                raise NotImplementedError("Crontab skip is not yet implemented.")
+                expr, step = expr.split("/")
+                step_period = cls.create_range(step=int(step))
+            else:
+                step = None
             
             if "-" in expr:
                 # From to
@@ -47,11 +56,15 @@ class Crontab(TimePeriod):
                     start = conv(int(start))
                 if end.isdigit():
                     end = conv(int(end))
-                period = cls(start, end)
+                period = cls(start, end) if step is None else cls.create_range(start, end, step=int(step))
             else:
                 # At
+                step_period = cls.create_range(step=int(step)) if step is not None else always
                 value = conv(int(expr)) if expr.isdigit() else expr
-                period = cls.at(value)
+                if value == "*":
+                    period = always & step_period
+                else:
+                    period = cls.at(value) & step_period
             
             if full_period is None:
                 full_period = period
