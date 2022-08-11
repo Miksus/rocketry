@@ -6,11 +6,8 @@ from rocketry.time import Any
 from rocketry.time import TimeOfDay, TimeOfHour, TimeOfWeek
 from rocketry.time.interval import TimeOfMinute, TimeOfMonth, TimeOfYear
 
-def test_time_of_day_construct():
-    assert TimeOfDay.create_range(2) == TimeOfDay.create_range(step=2)
-
 def test_time_of_day_every_second():
-    every_second_hour = TimeOfDay.create_range(2)
+    every_second_hour = TimeOfDay.create_range(step=2)
     assert isinstance(every_second_hour, Any)
     assert len(every_second_hour.periods) == 12
     assert every_second_hour == Any(
@@ -41,7 +38,7 @@ def test_time_of_day_every_second():
     )
 
 def test_time_of_day_every_third():
-    every_second_hour = TimeOfDay.create_range(3)
+    every_second_hour = TimeOfDay.create_range(step=3)
     assert isinstance(every_second_hour, Any)
     assert every_second_hour == Any(
         TimeOfDay("00:00", "01:00"),
@@ -102,6 +99,6 @@ def test_time_of_day_every_third():
     ]
 )
 def test_every_second(cls, step, n_periods):
-    every = cls.create_range(step)
+    every = cls.create_range(step=step)
     assert isinstance(every, Any)
     assert len(every.periods) == n_periods

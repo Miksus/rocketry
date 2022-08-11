@@ -102,10 +102,10 @@ class AnchoredInterval(TimeInterval):
         return to_microseconds(**d)
 
     @classmethod
-    def create_range(cls, step:int):
+    def create_range(cls,  start=None, end=None, step:int=None):
         periods = tuple(
             cls.at(step)
-            for step in cls._unit_names[::step]
+            for step in cls._unit_names[start:end:step]
         )
         return Any(*periods)
 
