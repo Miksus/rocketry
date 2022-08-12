@@ -14,6 +14,7 @@ from rocketry.time import (
     TimeOfDay
 )
 from rocketry.tasks import FuncTask
+from rocketry.time.interval import TimeOfMinute
 
 @pytest.mark.parametrize("from_logs", [pytest.param(True, id="from logs"), pytest.param(False, id="optimized")])
 @pytest.mark.parametrize(
@@ -217,3 +218,74 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         else:
             assert not condition.observe(session=session)
             assert not condition.observe(task=task)
+
+
+@pytest.mark.parametrize("from_logs", [pytest.param(True, id="from logs"), pytest.param(False, id="optimized")])
+@pytest.mark.parametrize(
+    "get_condition,logs,time_after,outcome",
+    [
+        pytest.param(
+            lambda:TaskExecutable(task="the task", period=TimeOfDay()), 
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "success"),
+            ],
+            "2020-01-02 00:01",
+            True,
+            id="Do run (continuous cycle, daily)"),
+        pytest.param(
+            lambda:TaskExecutable(task="the task", period=TimeOfDay() & TimeOfMinute()), 
+            [
+                ("2020-01-01 23:59", "run"),
+                ("2020-01-01 23:59", "success"),
+            ],
+            "2020-01-02 00:01",
+            True,
+            id="Do run (continuous cycle, daily & minutely)"),
+        pytest.param(
+            lambda:TaskExecutable(task="the task", period=TimeOfDay() | TimeOfMinute()), 
+            [
+                ("2020-01-01 23:59", "run"),
+                ("2020-01-01 23:59", "success"),
+            ],
+            "2020-01-02 00:01",
+            True,
+            id="Do run (continuous cycle, daily | minutely)"),
+    ]
+)
+def test_periods(mock_datetime_now, logs, time_after, get_condition, outcome, session, from_logs):
+    "Sanity check that periods work correctly"
+    session.config.force_status_from_logs = from_logs
+
+    task = FuncTask(
+        lambda:None, 
+        name="the task",
+        execution="main"
+    )
+
+    condition = get_condition()
+
+    for log in logs:
+        log_time, log_action = log[0], log[1]
+        log_created = to_datetime(log_time).timestamp()
+        record = logging.LogRecord(
+            # The content here should not matter for task status
+            name='rocketry.core.task', level=logging.INFO, lineno=1, 
+            pathname='d:\\Projects\\rocketry\\rocketry\\core\\task\\base.py',
+            msg="Logging of 'task'", args=(), exc_info=None,
+        )
+
+        record.created = log_created
+        record.action = log_action
+        record.task_name = "the task"
+
+        task.logger.handle(record)
+        setattr(task, f'last_{log_action}', to_datetime(log_time))
+    mock_datetime_now(time_after)
+
+    if outcome:
+        assert condition.observe(session=session)
+        assert condition.observe(task=task)
+    else:
+        assert not condition.observe(session=session)
+        assert not condition.observe(task=task)

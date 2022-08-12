@@ -2,6 +2,15 @@
 Version history
 ===============
 
+- ``2.3.0``
+
+    - Add: Cron style scheduling
+    - Add: New condition, ``TaskRunnable``
+    - Add: ``always`` time period
+    - Fix: Various bugs related to ``Any``, ``All`` and ``StaticInterval`` time periods
+    - Fix: Integers as start and end in time periods
+    - Upd: Now time periods are immutable 
+
 - ``2.2.0``
 
     - Add: Async support

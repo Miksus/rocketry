@@ -49,7 +49,7 @@ applications. It is simple, clean and extensive.
 **Core functionalities:**
 
 - Powerful scheduling syntax
-- A lot of built-in scheduling options
+- A lot of built-in scheduling options (including :ref:`cron <cron>`)
 - Task parallelization
 - Task parametrization
 - Task pipelining

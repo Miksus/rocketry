@@ -9,6 +9,13 @@ ABBREVIATIONS = {
     's': 'second',
     'm': 'minute',
     'h': 'hour',
+
+    'nanosecond': 'nanosecond',
+    'microsecond': 'microsecond',
+    'millisecond': 'millisecond',
+    'second': 'second',
+    'minute': 'minute',
+    'hour': 'hour',
 }
 
 def to_datetime(s):
@@ -40,7 +47,7 @@ def string_to_datetime(s):
     return parse(s)
 
 
-def numb_to_timedelta(n: Union[float, int], unit="ms"):
+def numb_to_timedelta(n: Union[float, int], unit="μs"):
     
     if unit == "ns":
         unit = 'μs'
@@ -86,7 +93,7 @@ def string_to_timedelta(s:str):
 
     def get_hhmmss(s):
         hh, mm, ss = s.split(":")
-        return to_nanoseconds(hour=int(hh), minute=int(mm), second=float(ss))
+        return to_microseconds(hour=int(hh), minute=int(mm), second=float(ss))
 
     # https://github.com/pandas-dev/pandas/blob/e8093ba372f9adfe79439d90fe74b0b5b6dea9d6/pandas/_libs/tslibs/timedeltas.pyx#L296
     abbrs = {
@@ -113,7 +120,7 @@ def string_to_timedelta(s:str):
         'd': 'day',
     }
 
-    ns = 0
+    ms = 0
     # Finding out the leading "-"
     is_negative = False
     for i, char in enumerate(s):
@@ -137,7 +144,7 @@ def string_to_timedelta(s:str):
 
         if s[0] == ":":
             # Expecting HH:MM:SS
-            ns += get_hhmmss(numb + s)
+            ms += get_hhmmss(numb + s)
             break
 
         # Example: "-  2.5  days ..."
@@ -152,11 +159,15 @@ def string_to_timedelta(s:str):
         abbr, pos = get_unit(s)
         s = s[pos:]
 
-        ns += to_nanoseconds(**{abbr: float(numb)})
+        ms += to_microseconds(**{abbr: float(numb)})
     
     if is_negative:
-        ns = -ns
-    return datetime.timedelta(microseconds=ns / 1000)
+        ms = -ms
+    return datetime.timedelta(microseconds=ms)
+
+def to_microseconds(day=0, hour=0, minute=0, second=0, millisecond=0, microsecond=0) -> int:
+    "Turn time components to microseconds"
+    return microsecond + millisecond * 1_000 + second * int(1e+6) + minute * int(6e+7) + hour * int(3.6e+9) + day * int(8.64e+10)
 
 def to_nanoseconds(day=0, hour=0, minute=0, second=0, millisecond=0, microsecond=0, nanosecond=0) -> int:
     "Turn time components to nanoseconds"

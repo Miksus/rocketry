@@ -163,6 +163,31 @@ true_cases = [
         "start": "Jan",
         "end": "Feb",
     },
+    {
+        "cls": TimeOfYear,
+        "dt": "2024-12-01 00:00",
+        "start": "Dec",
+        "end": None,
+    },
+    {
+        "cls": TimeOfYear,
+        "dt": "2024-12-31 23:00",
+        "start": "Nov",
+        "end": "Dec",
+    },
+    # Not leap year
+    {
+        "cls": TimeOfYear,
+        "dt": "2023-12-01 00:00",
+        "start": "Dec",
+        "end": None,
+    },
+    {
+        "cls": TimeOfYear,
+        "dt": "2023-12-31 23:00",
+        "start": "Nov",
+        "end": "Dec",
+    },
 ]
 
 false_cases = [
@@ -320,6 +345,19 @@ false_cases = [
         "dt": "2024-08-01 00:00:00",
         "start": "Feb",
         "end": "Jul",
+    },
+    {
+        "cls": TimeOfYear,
+        "dt": "2024-11-30 23:59:59",
+        "start": "Dec",
+        "end": None,
+    },
+    # Not leap year
+    {
+        "cls": TimeOfYear,
+        "dt": "2023-11-30 23:59:59",
+        "start": "Dec",
+        "end": None,
     },
 ]
 
