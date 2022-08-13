@@ -27,6 +27,24 @@ class _AppMixin:
         "Set one session parameter (decorator)"
         return FuncParam(name, session=self.session)
 
+    def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
+        "Create a condition (decorator)"
+        return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)
+
+    def params(self, **kwargs):
+        "Set session parameters"
+        self.session.parameters.update(kwargs)
+
+    def include_grouper(self, group:'Grouper'):
+        for task in group.session.tasks:
+            if group.prefix:
+                task.name = group.prefix + task.name
+            if group.start_cond is not None:
+                task.start_cond = task.start_cond & group.start_cond
+            task.execution = group.execution if task.execution is None else task.execution
+
+            self.session.add_task(task)
+        self.session.parameters.update(group.session.parameters)
 
 class Rocketry(_AppMixin):
     """Rocketry scheduling application"""
@@ -54,14 +72,6 @@ class Rocketry(_AppMixin):
         self.session.config.debug = debug
         self.session.set_as_default()
         await self.session.serve()
-
-    def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
-        "Create a condition (decorator)"
-        return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)
-
-    def params(self, **kwargs):
-        "Set session parameters"
-        self.session.parameters.update(kwargs)
 
     def set_logger(self):
         warnings.warn((
@@ -92,3 +102,25 @@ class Rocketry(_AppMixin):
             return CSVFileRepo(filename=filepath, model=LogRecord)
         else:
             raise NotImplementedError(f"Repo creation for {repo} not implemented")
+
+class Grouper(_AppMixin):
+
+    def __init__(self, prefix:str=None, start_cond=None, execution=None):
+        self.prefix = prefix
+        self.start_cond = start_cond
+        self.execution = execution
+
+        self.session = Session()
+
+    def disable(self):
+        "Disable all tasks in the group"
+        self.set_task_attr("disabled", True)
+
+    def enabled(self):
+        "Disable all tasks in the group"
+        self.set_task_attr("disabled", False)
+
+    def set_task_attr(self, attr, value):
+        "Set attribute in all tasks"
+        for task in self.session.tasks:
+            setattr(task, attr, value)
