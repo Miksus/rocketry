@@ -19,20 +19,9 @@ from rocketry import Session
 
 class _AppMixin:
 
-    def task(self, start_cond=None, name=None, *, command=None, path=None, **kwargs):
+    def task(self, start_cond=None, name=None, **kwargs):
         "Create a task"
-
-        kwargs['session'] = self.session
-        kwargs['start_cond'] = start_cond
-        kwargs['name'] = name
-
-        if command is not None:
-            return CommandTask(command=command, **kwargs)
-        elif path is not None:
-            # Non-wrapped FuncTask
-            return FuncTask(path=path, **kwargs)
-        else:
-            return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
+        return self.session.create_task(start_cond=start_cond, name=name, **kwargs)
 
     def param(self, name:Optional[str]=None):
         "Set one session parameter (decorator)"
