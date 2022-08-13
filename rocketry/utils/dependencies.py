@@ -64,11 +64,11 @@ class Dependencies(BaseModel):
             for subcond in cond:
                 if isinstance(subcond, (DependFinish, DependSuccess, DependFailure)):
                     req_task = subcond.depend_task
-                    req_task = self.session.get_task(req_task)
+                    req_task = self.session[req_task]
                     yield Link(parent=req_task, child=task, relation=type(subcond), type=type(cond))
         elif isinstance(cond, (DependFinish, DependSuccess, DependFailure)):
             req_task = cond.depend_task
-            req_task = self.session.get_task(req_task)
+            req_task = self.session[req_task]
             yield Link(req_task, task, relation=type(cond))
 
 

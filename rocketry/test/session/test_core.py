@@ -89,13 +89,15 @@ def test_get_task(session):
         session=session
     )
     
-    # By string
-    t = session.get_task(task.name)
-    assert t is task
+    with pytest.warns(DeprecationWarning):
+        # By string
+        t = session.get_task(task.name)
+        assert t is task
 
-    # By task (returns itself)
-    t = session.get_task(task)
-    assert t is task
+    with pytest.warns(DeprecationWarning):
+        # By task (returns itself)
+        t = session.get_task(task)
+        assert t is task
 
 def test_clear(session):
 

@@ -816,7 +816,7 @@ class Task(RedBase, BaseModel):
             else:
                 
                 #self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = self.session.get_task(record.task_name)
+                task = self.session[record.task_name]
                 task.log_record(record)
 
                 action = record.action
@@ -1070,13 +1070,13 @@ class Task(RedBase, BaseModel):
         session = self.session
 
         if isinstance(cond, (TaskSucceeded, TaskFinished)):
-            if session.get_task(cond.kwargs["task"]) is self:
+            if session[cond.kwargs["task"]] is self:
                 return cond.period
 
         elif isinstance(cond, All):
             task_periods = []
             for sub_stmt in cond:
-                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session.get_task(sub_stmt.kwargs["task"]) is self:
+                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session[sub_stmt.kwargs["task"]] is self:
                     task_periods.append(sub_stmt.period)
             if task_periods:
                 return AllTime(*task_periods)

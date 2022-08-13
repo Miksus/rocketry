@@ -338,7 +338,10 @@ class Session(RedBase):
         return self.tasks
 
     def get_task(self, task):
-        #! TODO: Do we need this?
+        warnings.warn((
+            "Method get_task will be removed in the future version." 
+            "Please use instead: session['task name']"
+        ), DeprecationWarning)
         return self[task]
 
     def get_cond_parsers(self):
