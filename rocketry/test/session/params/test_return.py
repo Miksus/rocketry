@@ -28,14 +28,16 @@ def test_normal(session, execution):
         name="return task",
         start_cond="~has started",
         execution=execution,
-        force_run=True
+        force_run=True,
+        session=session
     )
     task = FuncTask(
         func_x_with_arg, 
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return('return task')},
-        execution=execution
+        execution=execution,
+        session=session
     )
 
     assert task.status is None
@@ -55,14 +57,16 @@ def test_normal_pass_task(session, execution):
         name="return task",
         start_cond="~has started",
         execution=execution,
-        force_run=True
+        force_run=True,
+        session=session
     )
     task = FuncTask(
         func_x_with_arg, 
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return(task_return)},
-        execution=execution
+        execution=execution,
+        session=session
     )
 
     assert task.status is None
@@ -81,7 +85,8 @@ def test_normal_pass_func(session, execution):
         name="return task",
         start_cond="~has started",
         execution="main",
-        force_run=True
+        force_run=True,
+        session=session
     )
     def func_with_arg_local():
         return 'x'
@@ -91,7 +96,8 @@ def test_normal_pass_func(session, execution):
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return(func_with_arg_local)},
-        execution=execution
+        execution=execution,
+        session=session,
     )
 
     assert task.status is None
@@ -113,7 +119,8 @@ def test_missing(session, execution):
         parameters={"myparam": Return('return task')},
         name="a task",  
         force_run=True,
-        execution=execution
+        execution=execution,
+        session=session
     )
  
     assert task.status is None
@@ -127,6 +134,7 @@ def test_default(session, execution):
     task = FuncTask(
         func_with_arg, 
         name="return task", 
+        session=session
     )
     task = FuncTask(
         func_x_with_arg, 
@@ -134,6 +142,7 @@ def test_default(session, execution):
         name="a task", 
         execution=execution, 
         force_run=True,
+        session=session
     )
 
     assert task.status is None

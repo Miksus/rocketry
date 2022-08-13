@@ -22,10 +22,10 @@ def test_scheduler_restart(tmpdir, session):
 
     with tmpdir.as_cwd() as old_dir:
         
-        FuncTask(write_file, parameters={"text": "Started"}, on_startup=True, name="startup", execution="main")
-        FuncTask(write_file, parameters={"text": "Shut"}, on_shutdown=True, name="shutdown", execution="main")
+        FuncTask(write_file, parameters={"text": "Started"}, on_startup=True, name="startup", execution="main", session=session)
+        FuncTask(write_file, parameters={"text": "Shut"}, on_shutdown=True, name="shutdown", execution="main", session=session)
 
-        task = Restart()
+        task = Restart(session=session)
 
         task.force_run = True
 

@@ -44,11 +44,10 @@ def get_slow_func(execution):
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_without_timeout(tmpdir, execution, session):
     """Test the task.timeout is respected overt scheduler.timeout"""
-    # TODO: There is probably better ways to test this
     with tmpdir.as_cwd() as old_dir:
 
         func_run_slow = get_slow_func(execution)
-        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution)
+        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution, session=session)
 
         session.config.shut_cond = (TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.config.timeout = 0.1
@@ -71,7 +70,7 @@ def test_task_timeout_set_in_session(tmpdir, execution, session):
 
         func_run_slow = get_slow_func(execution)
 
-        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.config.timeout = 0.1
@@ -93,7 +92,7 @@ def test_task_timeout_set_in_task(tmpdir, execution, session):
 
         func_run_slow = get_slow_func(execution)
 
-        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), timeout="0.1 sec", execution=execution)
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), timeout="0.1 sec", execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         assert task.timeout == datetime.timedelta(milliseconds=100)
@@ -117,9 +116,9 @@ def test_task_terminate(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
         func_run_slow = get_slow_func(execution)
-        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution)
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-        FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main")
+        FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main", session=session)
         session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.start()
 
@@ -143,7 +142,7 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 
         func_run_slow = get_slow_func(execution)
 
-        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution)
+        task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution, session=session)
 
         session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.start()

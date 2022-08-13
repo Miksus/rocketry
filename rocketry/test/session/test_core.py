@@ -85,7 +85,8 @@ def test_get_task(session):
     task = FuncTask(
         lambda : None, 
         name="example",
-        execution="main"
+        execution="main",
+        session=session
     )
     
     # By string
@@ -105,12 +106,14 @@ def test_clear(session):
     task1 = FuncTask(
         lambda : None, 
         name="example 1",
-        execution="main"
+        execution="main",
+        session=session
     )
     task2 = FuncTask(
         lambda : None, 
         name="example 2",
-        execution="main"
+        execution="main",
+        session=session
     )
     session.parameters["x"] = 1
     

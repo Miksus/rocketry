@@ -12,7 +12,7 @@ def write_file(text):
         f.write(text)
 
 def test_restart_raises(session):
-    task = ShutDown()
+    task = ShutDown(session=session)
     with pytest.raises(SchedulerExit):
         task()
 
@@ -20,10 +20,10 @@ def test_scheduler_shutdown(tmpdir, session):
 
     with tmpdir.as_cwd() as old_dir:
         
-        FuncTask(write_file, parameters={"text": "Started"}, on_startup=True, name="write_startup", execution="main")
-        FuncTask(write_file, parameters={"text": "Shut"}, on_shutdown=True, name="write_shutdown", execution="main")
+        FuncTask(write_file, parameters={"text": "Started"}, on_startup=True, name="write_startup", execution="main", session=session)
+        FuncTask(write_file, parameters={"text": "Shut"}, on_shutdown=True, name="write_shutdown", execution="main", session=session)
 
-        task = ShutDown()
+        task = ShutDown(session=session)
 
         task.force_run = True
         

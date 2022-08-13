@@ -189,7 +189,8 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         task = FuncTask(
             lambda:None, 
             name="the task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         condition = get_condition()
@@ -260,7 +261,8 @@ def test_periods(mock_datetime_now, logs, time_after, get_condition, outcome, se
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
 
     condition = get_condition()

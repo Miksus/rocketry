@@ -32,7 +32,8 @@ def test_simple(session, execution):
         parameters={"myparam": FuncArg(get_x)}, 
         execution=execution, 
         name="a task", 
-        start_cond=AlwaysTrue()
+        start_cond=AlwaysTrue(),
+        session=session
     )
     session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
@@ -50,7 +51,8 @@ def test_session(session, execution):
         func_x_with_arg, 
         execution=execution, 
         name="a task", 
-        start_cond=AlwaysTrue()
+        start_cond=AlwaysTrue(),
+        session=session
     )
     session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
@@ -69,7 +71,8 @@ def test_session_with_arg(session, execution):
         execution=execution,
         name="a task", 
         parameters={"myparam": Arg('a_param')},
-        start_cond=AlwaysTrue()
+        start_cond=AlwaysTrue(),
+        session=session
     )
     session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
@@ -91,7 +94,8 @@ def test_nested(session, execution, materialize, config_mater):
         func_x_with_arg, 
         execution=execution, 
         name="a task", 
-        start_cond=AlwaysTrue()
+        start_cond=AlwaysTrue(),
+        session=session
     )
     session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
@@ -121,7 +125,8 @@ def test_unpicklable(session, execution):
         parameters={"myparam": FuncArg(get_unpicklable)}, 
         execution=execution, 
         name="a task", 
-        start_cond=AlwaysTrue()
+        start_cond=AlwaysTrue(),
+        session=session
     )
 
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) 

@@ -89,7 +89,8 @@ def test_runnable(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
         task = FuncTask(
             lambda:None, 
             name="the task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         condition = get_condition()
