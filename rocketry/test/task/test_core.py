@@ -21,6 +21,13 @@ def test_defaults(session):
     assert isinstance(task.start_cond, AlwaysFalse)
     assert isinstance(task.end_cond, AlwaysFalse)
 
+def test_defaults_no_session(session):
+    with pytest.warns(UserWarning):
+        task = DummyTask(name="mytest")
+    assert task.session is not session
+    assert isinstance(task.session, SessionClass)
+    assert task.session.tasks == {task}
+
 def test_set_timeout(session):
     task = DummyTask(timeout="1 hour 20 min", session=session, name="1")
     assert task.timeout == datetime.timedelta(hours=1, minutes=20)
