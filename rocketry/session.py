@@ -378,6 +378,9 @@ class Session(RedBase):
                 raise KeyError(f"Task '{task.name}' already exists")
         else:
             self.tasks.add(task)
+        
+        # Adding the session to the task
+        task.session = self
 
     def remove_task(self, task: Union['Task', str]):
         if isinstance(task, str):

@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 from rocketry import Rocketry, Grouper
+from rocketry.conditions import TaskStarted
 from rocketry.conds import daily, time_of_day
 from rocketry.args import Return, Arg, FuncArg
 from redbird.logging import RepoHandler
@@ -138,3 +139,28 @@ def test_func_param(session):
 
     app.include_grouper(group)
     assert list(app.session.parameters.keys()) == ["x", "y"]
+
+
+def test_run(session):
+    set_logging_defaults()
+
+    app = Rocketry(config={"task_execution": "main"})
+
+    @app.task(daily)
+    def do_things():
+        ...
+
+    group = Grouper()
+
+    @group.task(daily)
+    def do_other_things():
+        ...
+
+    assert app.session.tasks == {app.session["do_things"]}
+
+    app.include_grouper(group)
+
+    app.session.config.shut_cond = TaskStarted(task=do_other_things)
+    app.run()
+    logger = app.session[do_other_things].logger
+    assert logger.filter_by(action="success").count() == 1
