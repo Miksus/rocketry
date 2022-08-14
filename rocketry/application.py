@@ -111,16 +111,3 @@ class Grouper(_AppMixin):
         self.execution = execution
 
         self.session = Session()
-
-    def disable(self):
-        "Disable all tasks in the group"
-        self.set_task_attr("disabled", True)
-
-    def enabled(self):
-        "Disable all tasks in the group"
-        self.set_task_attr("disabled", False)
-
-    def set_task_attr(self, attr, value):
-        "Set attribute in all tasks"
-        for task in self.session.tasks:
-            setattr(task, attr, value)
