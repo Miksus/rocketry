@@ -301,3 +301,49 @@ you can also add other logging handlers as well:
     Make sure the logger ``rocketry.task`` has at least 
     one ``redbird.logging.RepoHandler`` in handlers or 
     the system cannot read the log information.
+
+Task Naming
+-----------
+
+Each task should have a unique name within
+the session. If a name is not given to a task,
+the name is derived from the arguments of the
+task.
+
+For function tasks if the name is not specified,
+the name is set as the name of the function:
+
+.. code-block:: python
+
+    >>> @app.task()
+    >>> def do_things():
+    >>>     ...
+
+    >>> app.session[do_things].name
+    'do_things'
+
+.. warning::
+
+    As the name must be unique, an error is raised if you try
+    to create multiple tasks from the same function or from 
+    multiple functions with same names without specifying name.
+
+You can pass the name yourself as well:
+
+.. literalinclude:: /code/naming.py
+    :language: py
+
+.. note::
+
+    If you use the decotator (``@app.task()``) to define function
+    task, the decorator returns the function itself due to pickling
+    issues on some platforms. However, the task can be fetched from
+    session using just the function: ``session[do_things]``.
+    There is a special attribute (``__rocketry__``) in 
+    the task function for enabling this.
+
+.. note::
+
+    Task names are used in many conditions and in logging.
+    They are essential in order to find out when a task 
+    started, failed or succeeded. 
