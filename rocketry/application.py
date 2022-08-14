@@ -18,6 +18,8 @@ from rocketry.parameters import FuncParam
 from rocketry import Session
 
 class _AppMixin:
+    
+    session: Session
 
     def task(self, start_cond=None, name=None, **kwargs):
         "Create a task"
