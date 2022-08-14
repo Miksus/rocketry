@@ -13,7 +13,8 @@ from rocketry.session import Session
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
 
 from rocketry.conds import (
-    minutely, hourly, daily, weekly, monthly, every
+    minutely, hourly, daily, weekly, monthly, every,
+    cron
 )
 
 def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
@@ -134,6 +135,9 @@ def _set_task_exec_parsing():
             cond_parsers[re.compile(syntax)] = method
     # Add "every ..."
     cond_parsers[re.compile(r"every (?P<past>.+)")] = every
+
+    # Cron
+    cond_parsers[re.compile(r"cron (?P<__expr>.+)")] = cron
 
 def _set_task_running_parsing():
     cond_parsers = Session._cls_cond_parsers

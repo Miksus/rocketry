@@ -43,8 +43,8 @@ from rocketry.time import (
     ],
 )
 def test_in_offset(dt, dt_ref, near, far):
-    time = TimeSpanDelta(near, far)
-    time.reference = dt_ref
+    time = TimeSpanDelta(near, far, reference=dt_ref)
+    assert time.reference is dt_ref
     assert dt in time
 
 @pytest.mark.parametrize(
@@ -74,8 +74,9 @@ def test_in_offset(dt, dt_ref, near, far):
     ],
 )
 def test_not_in_offset(dt, dt_ref, near, far):
-    time = TimeSpanDelta(near, far)
-    time.reference = dt_ref
+    time = TimeSpanDelta(near, far, reference=dt_ref)
+    #time.reference = dt_ref
+    assert time.reference is dt_ref
     assert dt not in time
 
 

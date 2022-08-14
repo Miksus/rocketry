@@ -27,8 +27,7 @@ from rocketry.core.time import (
     ],
 )
 def test_in_offset(dt, dt_ref, offset):
-    time = TimeDelta(offset)
-    time.reference = dt_ref
+    time = TimeDelta(offset, reference=dt_ref)
     assert dt in time
 
 @pytest.mark.parametrize(
@@ -48,8 +47,7 @@ def test_in_offset(dt, dt_ref, offset):
     ],
 )
 def test_not_in_offset(dt, dt_ref, offset):
-    time = TimeDelta(offset)
-    time.reference = dt_ref
+    time = TimeDelta(offset, reference=dt_ref)
     assert dt not in time
 
 

@@ -20,7 +20,7 @@ import pytest
         pytest.param("time of day before 12:00", TimeOfDay(None, "12:00"), id="TimeOfDay before"),
         pytest.param("time of day after 12:00", TimeOfDay("12:00", None), id="TimeOfDay after"),
 
-        pytest.param("time of week on Monday", TimeOfWeek("Mon", "Mon"), id="TimeOfWeek on"),
+        pytest.param("time of week on Monday", TimeOfWeek.at("Mon"), id="TimeOfWeek on"),
 
         pytest.param("time of month between 1st and 2nd", TimeOfMonth("1st", "2nd"), id="TimeOfMonth between (1st, 2nd)"),
         pytest.param("time of month between 3rd and 4th", TimeOfMonth("3rd", "4th"), id="TimeOfMonth between (3rd, 4th)"),

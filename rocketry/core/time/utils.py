@@ -4,7 +4,7 @@ import datetime
 from typing import Tuple, Union
 
 from .base import TimePeriod
-from rocketry.pybox.time import to_nanoseconds, to_timedelta
+from rocketry.pybox.time import to_microseconds, to_timedelta
 
 # Conversions
 def to_dict(dt):

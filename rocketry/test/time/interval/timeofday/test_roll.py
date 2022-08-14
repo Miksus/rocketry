@@ -20,7 +20,7 @@ from_iso = datetime.fromisoformat
         pytest.param(
             from_iso("2020-01-01 12:00:00"),
             "10:00", "12:00",
-            from_iso("2020-01-01 12:00:00"), from_iso("2020-01-01 12:00:00"),
+            from_iso("2020-01-02 10:00:00"), from_iso("2020-01-02 12:00:00"),
             id="Right of interval"),
         pytest.param(
             from_iso("2020-01-01 11:00:00"),
@@ -37,7 +37,7 @@ from_iso = datetime.fromisoformat
         pytest.param(
             from_iso("2020-01-01 02:00:00"),
             "22:00", "02:00",
-            from_iso("2020-01-01 02:00:00"), from_iso("2020-01-01 02:00:00"),
+            from_iso("2020-01-01 22:00:00"), from_iso("2020-01-02 02:00:00"),
             id="Right of overnight interval"),
         pytest.param(
             from_iso("2020-01-01 23:59:59.999999"),
@@ -140,6 +140,7 @@ def test_rollback(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollback(dt)
+    assert interval.closed == 'left' if roll_start != roll_end else interval.closed == "both"
     assert roll_start == interval.left
     assert roll_end == interval.right
 

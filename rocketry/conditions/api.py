@@ -1,6 +1,6 @@
 from typing import Callable, Union
 from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskStarted, TaskSucceeded
+from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskRunnable, TaskStarted, TaskSucceeded
 from rocketry.core import (
     BaseCondition
 )
@@ -9,6 +9,7 @@ from rocketry.core.condition import (
 )
 from rocketry.core.condition.base import All, Any, Not
 from rocketry.core.task import Task
+from rocketry.time import Cron
 from .time import IsPeriod
 from .task import TaskExecutable, TaskRunning
 from rocketry.time import (
@@ -136,6 +137,15 @@ def every(past:str, based="run"):
         return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
     else:
         raise ValueError(f"Invalid status: {based}")
+
+def cron(__expr=None, **kwargs):
+    if __expr:
+        args = __expr.split(" ")
+    else:
+        args = ()
+
+    period = Cron(*args, **kwargs)
+    return TaskRunnable(period=period)
 
 # Task pipelining
 # ---------------

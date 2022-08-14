@@ -14,13 +14,16 @@ from rocketry.conds import (
     scheduler_running,
 
     succeeded, failed, finished, started,
-    running
+    running,
+
+    cron
 )
 
-from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish
+from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
 from rocketry.core.condition.base import Not
 from rocketry.time import TimeDelta
+from rocketry.time import Cron
 from rocketry.time.delta import TimeSpanDelta
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek
 
@@ -109,9 +112,14 @@ params_schedule = [
     pytest.param(scheduler_running("10 mins"), SchedulerStarted(period=TimeSpanDelta("10 mins")), id="scheduler running (at least)"),
 ]
 
+cron_like = [
+    pytest.param(cron("1 2 3 4 5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5"),
+    pytest.param(cron(minute="1", hour="2", day_of_month="3", month="4", day_of_week="5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5 (kwargs)"),
+]
+
 @pytest.mark.parametrize(
     "cond,result",
-    params_basic + params_time + params_task_exec + params_pipeline + params_action + params_running+ params_schedule
+    params_basic + params_time + params_task_exec + params_pipeline + params_action + params_running+ params_schedule + cron_like
 )
 def test_api(cond, result):
     assert cond == result

@@ -6,7 +6,6 @@ from .utils import ParserPicker
 
 def _parse_time_string(s:str, **kwargs):
     time = parse_time_string(s, **kwargs)
-    time._str = s
     return time
 
 parse_time = ParserPicker(

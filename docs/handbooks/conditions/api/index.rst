@@ -21,6 +21,7 @@ Here are some examples:
 
    logical
    periodical
+   cron
    pipeline
    task_status
    scheduler
