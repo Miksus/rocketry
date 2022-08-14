@@ -164,3 +164,24 @@ def test_run(session):
     app.run()
     logger = app.session[do_other_things].logger
     assert logger.filter_by(action="success").count() == 1
+
+def test_run_cond_elsewhere(session):
+    set_logging_defaults()
+
+    app = Rocketry(config={"task_execution": "main"})
+    group = Grouper()
+
+    @group.cond()
+    def is_foo():
+        return True
+
+    @app.task(is_foo)
+    def do_things():
+        ...
+
+    # We don't include the group
+
+    app.session.config.shut_cond = TaskStarted(task=do_things)
+    app.run()
+    logger = app.session[do_things].logger
+    assert logger.filter_by(action="success").count() == 1
