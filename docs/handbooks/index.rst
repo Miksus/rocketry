@@ -11,6 +11,7 @@ operates.
    :maxdepth: 3
    :caption: Contents:
 
+   structure
    task/index
    conditions/index
    config
