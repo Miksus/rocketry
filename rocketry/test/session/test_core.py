@@ -32,6 +32,9 @@ def test_get_repo(session):
     # Test the one used in the task logging is also the same
     assert session.get_repo() is TaskAdapter(logger, task=None)._get_repo()
 
+# Manipulate
+# ----------
+
 def test_getitem(session):
 
     task_1 = FuncTask(
@@ -65,6 +68,57 @@ def test_getitem(session):
     with pytest.raises(KeyError):
         session["non existing"]
 
+def test_add(session):
+    task = FuncTask(
+        lambda : None, 
+        name="task 1",
+        execution="main",
+        session=None
+    )
+
+    assert session.tasks == set()
+    session.add_task(task)
+
+    assert session.tasks == {task}
+
+def test_create(session):
+
+    assert session.tasks == set()
+    session.create_task(name="do_command", start_cond="daily", command="echo 'hello world'")
+
+    @session.create_task(name="do_func", start_cond="daily")
+    def do_things():
+        ...
+    assert session.tasks == {session['do_func'], session['do_command']}
+
+def test_remove(session):
+    task_1 = FuncTask(
+        lambda : None, 
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    task_2 = FuncTask(
+        lambda : None, 
+        name="task 2",
+        execution="main",
+        session=session
+    )
+    task_3 = FuncTask(
+        lambda : None, 
+        name="task 3",
+        execution="main",
+        session=session
+    )
+    assert session.tasks == {task_1, task_2, task_3}
+    session.remove_task(task_3)
+    assert session.tasks == {task_1, task_2}
+    session.remove_task("task 2")
+    assert session.tasks == {task_1}
+
+# Old interface
+# -------------
+
 def test_task_exists(session):
     task_1 = FuncTask(
         lambda : None, 
@@ -77,24 +131,24 @@ def test_task_exists(session):
         assert not session.task_exists("task not exists")
         assert session.task_exists(task_1)
 
-# Old interface
-# -------------
-
 def test_get_task(session):
 
     task = FuncTask(
         lambda : None, 
         name="example",
-        execution="main"
+        execution="main",
+        session=session
     )
     
-    # By string
-    t = session.get_task(task.name)
-    assert t is task
+    with pytest.warns(DeprecationWarning):
+        # By string
+        t = session.get_task(task.name)
+        assert t is task
 
-    # By task (returns itself)
-    t = session.get_task(task)
-    assert t is task
+    with pytest.warns(DeprecationWarning):
+        # By task (returns itself)
+        t = session.get_task(task)
+        assert t is task
 
 def test_clear(session):
 
@@ -105,12 +159,14 @@ def test_clear(session):
     task1 = FuncTask(
         lambda : None, 
         name="example 1",
-        execution="main"
+        execution="main",
+        session=session
     )
     task2 = FuncTask(
         lambda : None, 
         name="example 2",
-        execution="main"
+        execution="main",
+        session=session
     )
     session.parameters["x"] = 1
     

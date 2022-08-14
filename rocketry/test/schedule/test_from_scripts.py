@@ -42,7 +42,8 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             path=script_path, 
             name="a task",
             start_cond=AlwaysTrue(),
-            execution=execution
+            execution=execution,
+            session=session
         )
         
         session.config.shut_cond = (TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("15 seconds"))

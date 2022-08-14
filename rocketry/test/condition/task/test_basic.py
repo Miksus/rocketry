@@ -134,13 +134,15 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         depend_task = FuncTask(
             run_task, 
             name="prerequisite task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         task = FuncTask(
             run_task, 
             name="runned task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         # ------------------------ t0
@@ -200,13 +202,15 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         depend_task = FuncTask(
             run_task, 
             name="prerequisite task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         task = FuncTask(
             run_task, 
             name="runned task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         # ------------------------ t0

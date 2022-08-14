@@ -24,7 +24,7 @@ def test_taskcond_true(session, execution):
     cond = TaskCond(syntax=re.compile(r"is foo (?P<status>.+)"), start_cond="every 1 min", active_time="past 10 seconds", execution=execution, session=session)
     cond(is_foo)
     
-    task = FuncTask(lambda: None, start_cond="is foo true", name="a task", execution="main")
+    task = FuncTask(lambda: None, start_cond="is foo true", name="a task", execution="main", session=session)
 
     # Test that there is only one more cond parser
     assert len(session._cond_parsers) == N_PARSERS + 1

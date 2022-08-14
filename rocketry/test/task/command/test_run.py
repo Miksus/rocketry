@@ -38,7 +38,8 @@ def test_success_command(tmpdir, session, cmd, params, systems,shell, execution)
             shell=shell,
             execution="main",
             parameters=params,
-            argform="short"
+            argform="short",
+            session=session
         )
         assert task.status is None
 
@@ -61,7 +62,8 @@ def test_fail_command(tmpdir, execution, session):
             command=["python", "--not_an_arg"], 
             name="a task",
             shell=False,
-            execution=execution
+            execution=execution,
+            session=session
         )
         assert task.status is None
 
@@ -95,7 +97,8 @@ def test_success_bat_file(tmpdir, execution, session):
             command=["my_command.bat"], 
             name="a task",
             shell=False,
-            execution="main"
+            execution="main", 
+            session=session
         )
         assert task.status is None
 
@@ -120,7 +123,8 @@ def test_success_bash_file(tmpdir, session):
             command=["/bin/bash", "my_command.sh"], 
             name="a task",
             shell=False,
-            execution="main"
+            execution="main",
+            session=session
         )
         assert task.status is None
 

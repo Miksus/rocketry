@@ -27,7 +27,7 @@ def test_task_fail_traceback(tmpdir, execution, session):
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=LogRecord))
         ]
-        task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution=execution)
+        task = FuncTask(run_failing, name="task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="task") >= 3) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.start()

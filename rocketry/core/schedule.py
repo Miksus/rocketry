@@ -330,7 +330,7 @@ class Scheduler(RedBase):
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = self.session.get_task(record.task_name)
+                task = self.session[record.task_name]
                 if record.action == "fail":
                     # There is a caveat in logging 
                     # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383 

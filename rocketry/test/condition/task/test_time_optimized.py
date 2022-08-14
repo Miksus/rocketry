@@ -35,7 +35,8 @@ def test_logs_not_used_false(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     logs = [
         ("2021-01-01 12:00:00", state)
@@ -56,7 +57,8 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
@@ -76,7 +78,8 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
@@ -99,7 +102,8 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
         setattr(task, attr, to_datetime("2000-01-01 05:00:00"))
@@ -120,7 +124,8 @@ def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     logs = [
         ("2021-01-01 12:00:00", state)
@@ -141,7 +146,8 @@ def test_logs_used(session, cls, mock_datetime_now):
     task = FuncTask(
         lambda:None, 
         name="the task",
-        execution="main"
+        execution="main",
+        session=session
     )
     logs = [
         ("2021-01-01 12:00:00", state)

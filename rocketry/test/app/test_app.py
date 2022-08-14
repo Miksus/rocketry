@@ -101,6 +101,36 @@ def test_nested_args():
     logger = app.session['do_daily'].logger
     assert logger.filter_by(action="success").count() == 1
 
+def test_nested_args_from_func_arg():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    @app.param('arg_1')
+    def my_arg_1():
+        return 'arg 1'
+
+    def my_func_2(arg=Arg('arg_1')):
+        assert arg == "arg 1"
+        return 'arg 2'
+
+    def my_func_3(arg_1=Arg('arg_1'), arg_2=FuncArg(my_func_2)):
+        assert arg_1 == "arg 1"
+        assert arg_2 == "arg 2"
+        return 'arg 3'
+
+    # Creating a task to test this
+    @app.task(true)
+    def do_daily(arg=FuncArg(my_func_3)):
+        ...
+        assert arg == "arg 3"
+
+    app.session.config.shut_cond = TaskStarted(task='do_daily')
+    app.run()
+    logger = app.session['do_daily'].logger
+    assert logger.filter_by(action="success").count() == 1
+
 def test_arg_ref():
     set_logging_defaults()
 
@@ -204,3 +234,16 @@ def test_app_run():
     assert task_example.execution == 'process'
     assert task_example.name == 'never done'
     assert dict(task_example.parameters) == {'arg_1': 'something'}
+
+
+def test_task_name():
+    set_logging_defaults()
+
+    app = Rocketry(config={'task_execution': 'main'})
+
+    @app.task()
+    def do_func():
+        ...
+        return 'return value'
+
+    assert app.session[do_func].name == "do_func"

@@ -56,7 +56,7 @@ def do_stuff_with_arg(arg):
 )
 def test_param_failure(tmpdir, execution, session, fail_in):
     session.config.silence_task_prerun = True # Prod setting
-    task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution)
+    task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
 
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     session.start()
@@ -80,7 +80,7 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
     session.config.silence_task_prerun = True # Prod setting
     session.parameters["arg"] = FailingArgument(fail_in)
 
-    task = FuncTask(do_stuff_with_arg, name="a task", start_cond=AlwaysTrue(), execution=execution)
+    task = FuncTask(do_stuff_with_arg, name="a task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     session.start()
@@ -104,7 +104,7 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
 )
 def test_raise_param_failure(execution, session, fail_in):
     session.config.silence_task_prerun = False
-    task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution)
+    task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     
     with pytest.raises(RuntimeError):
@@ -113,7 +113,7 @@ def test_raise_param_failure(execution, session, fail_in):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_raise_task_cond_failure(execution, session):
     session.config.silence_cond_check = False
-    task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution)
+    task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution, session=session)
 
 
     session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("5 second"))
@@ -124,7 +124,7 @@ def test_raise_task_cond_failure(execution, session):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_raise_sched_cond_failure(execution, session):
     session.config.silence_cond_check = False
-    task = FuncTask(do_stuff, name="a task", execution=execution)
+    task = FuncTask(do_stuff, name="a task", execution=execution, session=session)
 
 
     session.config.shut_cond = FailingCondition()
@@ -146,7 +146,7 @@ def test_silence_task_cond_failure(execution, session):
 def test_silence_sched_cond_failure(execution, session):
     # Failing shut_cond crashes also with silence_cond_check = True
     session.config.silence_cond_check = True
-    task = FuncTask(do_stuff, name="a task", execution=execution)
+    task = FuncTask(do_stuff, name="a task", execution=execution, session=session)
 
     session.config.shut_cond = FailingCondition()
     with pytest.raises(RuntimeError):

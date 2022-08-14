@@ -5,11 +5,14 @@ Version history
 - ``2.3.0``
 
     - Add: Cron style scheduling
+    - Add: Task groups (``Grouper``) to support bigger applications
     - Add: New condition, ``TaskRunnable``
+    - Add: New methods to session (``remove_task`` & ``create_task``)
     - Add: ``always`` time period
     - Fix: Various bugs related to ``Any``, ``All`` and ``StaticInterval`` time periods
     - Fix: Integers as start and end in time periods
     - Upd: Now time periods are immutable 
+    - Upd: Now if session is not specified, tasks create new one.
 
 - ``2.2.0``
 

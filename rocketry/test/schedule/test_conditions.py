@@ -25,7 +25,8 @@ def test_func_cond_decorator(session, execution):
         run_succeeding, 
         start_cond=true & is_true, 
         name="task success",
-        execution=execution
+        execution=execution,
+        session=session
     )
 
     session.config.shut_cond = TaskStarted(task=task_success) >= 1

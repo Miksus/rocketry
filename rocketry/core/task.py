@@ -41,6 +41,11 @@ if TYPE_CHECKING:
 
 _IS_WINDOWS = platform.system()
 
+def _create_session():
+    # To avoid circular imports
+    from rocketry import Session
+    return Session()
+
 class Task(RedBase, BaseModel):
     """Base class for Tasks.
 
@@ -116,8 +121,7 @@ class Task(RedBase, BaseModel):
         Logger of the task. Typically not needed
         to be set.
     session : rocketry.session.Session, optional
-        Session the task is binded to, 
-        by default default session 
+        Session the task is binded to.
 
 
     Attributes
@@ -253,7 +257,8 @@ class Task(RedBase, BaseModel):
         hooker.prerun(self)
 
         if kwargs.get("session") is None:
-            kwargs['session'] = self.session
+            warnings.warn("Task's session not defined. Creating new.", UserWarning)
+            kwargs['session'] = _create_session()
         kwargs['name'] = self._get_name(**kwargs)
 
         super().__init__(**kwargs)
@@ -811,7 +816,7 @@ class Task(RedBase, BaseModel):
             else:
                 
                 #self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = self.session.get_task(record.task_name)
+                task = self.session[record.task_name]
                 task.log_record(record)
 
                 action = record.action
@@ -1065,13 +1070,13 @@ class Task(RedBase, BaseModel):
         session = self.session
 
         if isinstance(cond, (TaskSucceeded, TaskFinished)):
-            if session.get_task(cond.kwargs["task"]) is self:
+            if session[cond.kwargs["task"]] is self:
                 return cond.period
 
         elif isinstance(cond, All):
             task_periods = []
             for sub_stmt in cond:
-                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session.get_task(sub_stmt.kwargs["task"]) is self:
+                if isinstance(sub_stmt, (TaskFinished, TaskFinished)) and session[sub_stmt.kwargs["task"]] is self:
                     task_periods.append(sub_stmt.period)
             if task_periods:
                 return AllTime(*task_periods)

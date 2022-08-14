@@ -8,6 +8,7 @@ from rocketry.core import Task as BaseTask
 from rocketry.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
 from rocketry.args import Arg, Session, Task
 from rocketry.log import MinimalRecord
+from rocketry import Session as SessionClass
 
 class DummyTask(BaseTask):
 
@@ -15,10 +16,17 @@ class DummyTask(BaseTask):
         return 
 
 def test_defaults(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     assert task.name == "mytest"
     assert isinstance(task.start_cond, AlwaysFalse)
     assert isinstance(task.end_cond, AlwaysFalse)
+
+def test_defaults_no_session(session):
+    with pytest.warns(UserWarning):
+        task = DummyTask(name="mytest")
+    assert task.session is not session
+    assert isinstance(task.session, SessionClass)
+    assert task.session.tasks == {task}
 
 def test_set_timeout(session):
     task = DummyTask(timeout="1 hour 20 min", session=session, name="1")
@@ -31,18 +39,18 @@ def test_set_timeout(session):
     assert task.timeout == datetime.timedelta(seconds=20)
 
 def test_delete(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     assert session.tasks == {task}
     task.delete()
     assert session.tasks == set()
 
 def test_set_invalid_status(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     with pytest.raises(ValueError):
         task.status = "not valid"
 
 def test_pickle(session):
-    task_1 = DummyTask(name="mytest")
+    task_1 = DummyTask(name="mytest", session=session)
     pkl_obj = pickle.dumps(task_1)
     task_2 = pickle.loads(pkl_obj)
     assert task_1.name == task_2.name
