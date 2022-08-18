@@ -65,6 +65,7 @@ params_task_exec = [
     pytest.param(daily.between("10:00", "12:00"), TaskExecutable(period=TimeOfDay("10:00", "12:00")), id="daily between"),
 
     pytest.param(weekly.on("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly on"),
+    pytest.param(daily.at("10:00"), TaskExecutable(period=TimeOfDay("10:00", "11:00")), id="daily at"),
 
     pytest.param(monthly.on("1st"), TaskExecutable(period=TimeOfMonth("1st", time_point=True)), id="monthly on"),
 ]

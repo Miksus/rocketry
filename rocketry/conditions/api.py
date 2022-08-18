@@ -38,6 +38,11 @@ class TimeCondWrapper(BaseCondition):
         return self._get_cond(period)
 
     def on(self, span):
+        # Alias for "at"
+        return self.at(span)
+
+    def at(self, span):
+        # Alias for "on"
         period = self._cls_period(span, time_point=True)
         return self._get_cond(period)
 
