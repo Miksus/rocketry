@@ -12,6 +12,10 @@ def do_hourly():
 def do_daily():
     ...
 
+@app.task(daily.at("11:00"))
+def do_weekly():
+    ...
+
 @app.task(weekly.on("Monday"))
 def do_weekly():
     ...
