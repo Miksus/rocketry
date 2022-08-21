@@ -58,23 +58,30 @@ class TempSysPath:
 class FuncTask(Task):
     """Task that executes a function or callable.
 
+    There are three ways to initiate ``FuncTask``:
+
+    - Using decorator (``@FuncTask(...)``)
+    - Passsing a function (``FuncTask(func=do_things, ...)``)
+    - Passsing a name of a function (``FuncTask(func_name="main", path="path/to/file.py", ...)``)
+
     Parameters
     ----------
-    func : Callable, str
-        Function or name of a function to be executed. If string is
-        passed, the path to the file where the function is should 
-        be passed with ``path`` or in the argument, like
-        "path/to/file.py:my_func".
-    path : path-like
-        Path to the function. Not needed if ``func`` is callable.
-    delay : bool, optional
-        If True, the function is imported and set to the task
-        immediately. If False, the function is imported only 
-        when running the task. By default False if ``func`` is 
-        callable and True if ``func`` is a name of a function.
+    func : Callable, optional
+        Function or callable that is to be executed as part of the 
+        task.
+    func_name : str, optional
+        Name of the function in the file defined in ``path`` that is 
+        to be executed.
+    path : path-like, optional
+        Path to the Python file where the function is. 
+        Not needed if ``func`` was passed.
     sys_path : list of paths
         Paths that are appended to ``sys.path`` when the function
         is imported.
+    cache : bool
+        Whether to store the function or callable or reload it 
+        every time the task is executed. Only used if ``func``
+        was not specified.
     **kwargs : dict
         See :py:class:`rocketry.core.Task`
 
@@ -85,28 +92,25 @@ class FuncTask(Task):
     >>> from rocketry.tasks import FuncTask
     >>> def myfunc():
     ...     ...
-    >>> task = FuncTask(myfunc, name="my_func_task_1")
+    >>> task = FuncTask(myfunc)
 
     **Via decorator:**
 
     >>> from rocketry.tasks import FuncTask
-    >>> @FuncTask(name='my_func_task_2', start_cond="daily")
+    >>> @FuncTask()
     ... def myfunc():
     ...     ...
 
-    If the ``name`` is not defined, the name will be in form
-    ``path.to.module:myfunc``.
-
-    Or from string using lazy importing:
+    **From another file:**
 
     >>> from rocketry.tasks import FuncTask
-    >>> task = FuncTask("myfunc", path="path/to/script.py", name='my_func_task_3', start_cond="daily")
+    >>> task = FuncTask(func_name="myfunc", path="path/to/script.py")
 
     Warnings
     --------
 
     If ``execution='process'``, only picklable functions can be used.
-    The following will NOT work:
+    The following might not work:
 
     .. code-block:: python
 

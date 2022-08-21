@@ -22,11 +22,14 @@ class CommandTask(Task):
     command : str, list
         Command to execute.
     cwd : str, optional
-        Sets the current directory before the child is executed.
+        Sets the current directory before the command is executed.
     shell : bool, optional
         If true, the command will be executed through the shell.
     kwds_popen : dict, optional
         Keyword arguments to be passed to subprocess.Popen
+    argform : {'short', '-', 'long', '--'}
+        Whether parameters are passed to the command as long form
+        (``--myparam 'a value'``) or as short form (``-myparam 'a value'``).
     **kwargs : dict
         See :py:class:`rocketry.core.Task`
 
@@ -34,11 +37,11 @@ class CommandTask(Task):
     --------
 
     >>> from rocketry.tasks import CommandTask
-    >>> task = CommandTask("python -m pip install rocketry", name="my_cmd_task_1")
+    >>> task = CommandTask("python -m pip install rocketry")
 
     Or list of commands:
 
-    >>> task = CommandTask(["python", "-m", "pip", "install", "rocketry"], name="my_cmd_task_2")
+    >>> task = CommandTask(["python", "-m", "pip", "install", "rocketry"])
     """
 
     command: Union[str, List[str]]
