@@ -68,12 +68,15 @@ and some illustations what this means for a week/weekly:
 - *after Friday*: From Friday 00:00 (0 am) to Sunday 24:00 (12 pm)
 - *between Tuesday and Friday*: From Tuesday 00:00 (0 am) to Friday 24:00 (12 pm)
 
-There are also *on* and *starting* arguments:
+There are also *on/at* and *starting* methods:
 
-- ``on``: On given time component 
+- ``on/at``: On a given subunit of the period. The method ``on`` is an alias for ``at``.
 - ``starting``: The fixed period starts on given time 
 
-For example, *on Friday* means Friday 00:00 (0 am) to Friday 24:00 (12 pm)
+The subunit of a day is hour, the subunit of a week is day of week, subunit of a 
+month is a day of month etc. To illustrate these options, 
+*on Friday* means Friday 00:00 (0 am) to Tuesday 00:00,
+*at 11:00 (daily)* means from 11:00 to 12:00
 and *starting Friday* means the week is set to start on Friday.
 
 .. literalinclude:: /code/conds/api/periodical_restricted.py
