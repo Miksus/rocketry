@@ -12,6 +12,8 @@ from pathlib import Path
 import warnings
 
 from pydantic import BaseModel, PrivateAttr, validator
+from redbird.base import BaseRepo
+
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
@@ -426,7 +428,7 @@ class Session(RedBase):
         else:
             return False
 
-    def get_repo(self):
+    def get_repo(self) -> BaseRepo:
         "Get log repo where the task logs are stored"
         from rocketry.core.log import TaskAdapter
         basename = self.config.task_logger_basename
