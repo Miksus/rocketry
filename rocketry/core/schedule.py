@@ -22,50 +22,8 @@ if TYPE_CHECKING:
     from rocketry import Session
 
 class Scheduler(RedBase):
-    """Multiprocessing scheduler
-
-    Parameters
-    ----------
-    session : rocketry.session.Session, optional
-        Session object containing tasks,
-        parameters and settings, 
-        by default None
-    max_processes : int, optional
-        Maximum number of processes
-        allowed to be started, 
-        by default number of CPUs
-    tasks_as_daemon : bool, optional
-        Whether process tasks are run
-        as daemon (if not specified in
-        the task) or not, by default True
-    timeout : str, optional
-        Timeout of each task if not specified
-        in the task itself. Must be timedelta
-        string, by default "30 minutes"
-    parameters : [type], optional
-        Parameters of the session.
-        Can also be passed directly to the 
-        session, by default None
-    logger : [type], optional
-        [description], by default None
-    name : str, optional
-        Name of the scheduler, deprecated, by default None
-    restarting : str, optional
-        How the scheduler is restarted if 
-        Restart exception is raised, by default 
-        "replace"
-    instant_shutdown : bool, optional
-        Whether the scheduler tries to shut down
-        as quickly as possible or wait till all
-        the tasks have finished, by default False
-
-    Attributes
-    ----------
-    session : rocketry.session.Session
-        Session for which the scheduler is
-        for. One session has only one 
-        scheduler.
-    """
+    """Rocketry's Scheduler"""
+    
     session: 'Session'
 
     def __init__(self, session=None,
