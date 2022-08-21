@@ -50,9 +50,7 @@ class Task(RedBase, BaseModel):
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that 
-    does a specific thing. A task can be parametrized by supplying
-    session level parameters or parameters on task basis.
-    
+    does a specific thing. 
 
     Parameters
     ----------
@@ -73,11 +71,24 @@ class Task(RedBase, BaseModel):
         tasks with execution='process' or 'thread'
         if thread termination is implemented in 
         the task, by default AlwaysFalse()
-    execution : str, {'main', 'thread', 'process'}, default='process'
-        How the task is executed. Allowed values
-        'main' (run on main thread & process), 
-        'thread' (run on another thread) and 
-        'process' (run on another process).
+    execution : str, {'main', 'async', 'thread', 'process'}, default='process'
+        How the task is executed. Allowed values:
+
+        - ``main``: run on main thread & process and block till execution
+        - ``async``: run task asynchronously using asyncio
+        - ``thread``: run task on separate thread
+        - ``process``: run task on separate process
+
+    priority : int, optional
+        Priority of the task. Higher priority
+        tasks are first inspected whether they
+        can be executed. Can be any numeric value.
+        By default 0
+    timeout : str, int, timedelta, optional
+        If the task has not run in given timeout
+        the task will be terminated. Only applicable
+        for tasks with execution as async, thread or
+        process.
     parameters : Parameters, optional
         Parameters set specifically to the task, 
         by default None
@@ -88,38 +99,17 @@ class Task(RedBase, BaseModel):
     force_run : bool
         If True, the task will be run once 
         regardless of the start_cond,
-        by default True
+        by default False
     on_startup : bool
         Run the task on the startup sequence of 
         the Scheduler, by default False
     on_shutdown : bool
         Run the task on the shutdown sequence of 
         the Scheduler, by default False
-    priority : int, optional
-        Priority of the task. Higher priority
-        tasks are first inspected whether they
-        can be executed. Can be any numeric value.
-        Setup tasks are recommended to have priority
-        >= 40 if they require loaded tasks,
-        >= 50 if they require loaded extensions.
-        By default 0
-    timeout : str, int, timedelta, optional
-        If the task has not run in given timeout
-        the task will be terminated. Only applicable
-        for tasks with execution='process' or 
-        with execution='thread'.
     daemon : Bool, optional
         Whether run the task as daemon process
         or not. Only applicable for execution='process',
         by default use Scheduler default
-    on_exists : str
-        What to do if the name of the task already 
-        exists in the session, options: 'raise',
-        'ignore', 'replace', by default use session
-        configuration
-    logger : str, logger.Logger, optional
-        Logger of the task. Typically not needed
-        to be set.
     session : rocketry.session.Session, optional
         Session the task is binded to.
 
@@ -334,19 +324,6 @@ class Task(RedBase, BaseModel):
         return asyncio.run(self.start_async(*args, **kwargs))
 
     async def start_async(self, params:Union[dict, Parameters]=None, **kwargs):
-        """Execute the task. Creates a new process
-        (if execution='process'), a new thread
-        (if execution='thread') or blocks and 
-        runs till the task is completed (if 
-        execution='main').
-
-        Parameters
-        ----------
-        params : dict, Parameters, optional
-            Extra parameters for the task. Also
-            the session parameters, task parameters
-            and extra parameters are acquired, by default None
-        """
 
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
@@ -936,7 +913,7 @@ class Task(RedBase, BaseModel):
         return self._get_last_action("inaction")
 
     def get_last_crash(self) -> datetime.datetime:
-        """Get the lastest timestamp when the task inacted."""
+        """Get the lastest timestamp when the task crashed."""
         return self._get_last_action("crash")
 
     def get_execution(self) -> str:
