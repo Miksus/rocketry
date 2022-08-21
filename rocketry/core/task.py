@@ -50,9 +50,7 @@ class Task(RedBase, BaseModel):
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that 
-    does a specific thing. A task can be parametrized by supplying
-    session level parameters or parameters on task basis.
-    
+    does a specific thing. 
 
     Parameters
     ----------
@@ -73,11 +71,24 @@ class Task(RedBase, BaseModel):
         tasks with execution='process' or 'thread'
         if thread termination is implemented in 
         the task, by default AlwaysFalse()
-    execution : str, {'main', 'thread', 'process'}, default='process'
-        How the task is executed. Allowed values
-        'main' (run on main thread & process), 
-        'thread' (run on another thread) and 
-        'process' (run on another process).
+    execution : str, {'main', 'async', 'thread', 'process'}, default='process'
+        How the task is executed. Allowed values:
+
+        - ``main``: run on main thread & process and block till execution
+        - ``async``: run task asynchronously using asyncio
+        - ``thread``: run task on separate thread
+        - ``process``: run task on separate process
+
+    priority : int, optional
+        Priority of the task. Higher priority
+        tasks are first inspected whether they
+        can be executed. Can be any numeric value.
+        By default 0
+    timeout : str, int, timedelta, optional
+        If the task has not run in given timeout
+        the task will be terminated. Only applicable
+        for tasks with execution as async, thread or
+        process.
     parameters : Parameters, optional
         Parameters set specifically to the task, 
         by default None
@@ -88,38 +99,17 @@ class Task(RedBase, BaseModel):
     force_run : bool
         If True, the task will be run once 
         regardless of the start_cond,
-        by default True
+        by default False
     on_startup : bool
         Run the task on the startup sequence of 
         the Scheduler, by default False
     on_shutdown : bool
         Run the task on the shutdown sequence of 
         the Scheduler, by default False
-    priority : int, optional
-        Priority of the task. Higher priority
-        tasks are first inspected whether they
-        can be executed. Can be any numeric value.
-        Setup tasks are recommended to have priority
-        >= 40 if they require loaded tasks,
-        >= 50 if they require loaded extensions.
-        By default 0
-    timeout : str, int, timedelta, optional
-        If the task has not run in given timeout
-        the task will be terminated. Only applicable
-        for tasks with execution='process' or 
-        with execution='thread'.
     daemon : Bool, optional
         Whether run the task as daemon process
         or not. Only applicable for execution='process',
         by default use Scheduler default
-    on_exists : str
-        What to do if the name of the task already 
-        exists in the session, options: 'raise',
-        'ignore', 'replace', by default use session
-        configuration
-    logger : str, logger.Logger, optional
-        Logger of the task. Typically not needed
-        to be set.
     session : rocketry.session.Session, optional
         Session the task is binded to.
 
@@ -266,10 +256,10 @@ class Task(RedBase, BaseModel):
         # Set default readable logger if missing 
         self.session._check_readable_logger()
 
-        self.register()
+        self._register()
         
         # Update "last_run", "last_success", etc.
-        self.set_cached()
+        self._set_cached()
 
         # Hooks
         hooker.postrun()
@@ -331,22 +321,9 @@ class Task(RedBase, BaseModel):
         self.start(*args, **kwargs)
 
     def start(self, *args, **kwargs):
-        return asyncio.run(self.start_async(*args, **kwargs))
+        return asyncio.run(self._start_async(*args, **kwargs))
 
-    async def start_async(self, params:Union[dict, Parameters]=None, **kwargs):
-        """Execute the task. Creates a new process
-        (if execution='process'), a new thread
-        (if execution='thread') or blocks and 
-        runs till the task is completed (if 
-        execution='main').
-
-        Parameters
-        ----------
-        params : dict, Parameters, optional
-            Extra parameters for the task. Also
-            the session parameters, task parameters
-            and extra parameters are acquired, by default None
-        """
+    async def _start_async(self, params:Union[dict, Parameters]=None, **kwargs):
 
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
@@ -386,9 +363,9 @@ class Task(RedBase, BaseModel):
                     # in tests will succeed. 
                     time.sleep(1e-6)
             elif execution == "process":
-                self.run_as_process(params=params, **kwargs)
+                self._run_as_process(params=params, **kwargs)
             elif execution == "thread":
-                self.run_as_thread(params=params, **kwargs)
+                self._run_as_thread(params=params, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
         except Exception as exc:
@@ -427,10 +404,10 @@ class Task(RedBase, BaseModel):
 
         return cond
 
-    def run_as_main(self, params:Parameters):
-        return self._run_as_main(params, self.parameters)
+    def _run_as_main(self, params:Parameters):
+        return self._run_in_main(params, self.parameters)
 
-    def _run_as_main(self, **kwargs):
+    def _run_in_main(self, **kwargs):
         return asyncio.run(self._run_as_async(**kwargs))
 
     async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
@@ -524,7 +501,7 @@ class Task(RedBase, BaseModel):
             #    os.chdir(old_cwd)
             hooker.postrun(*exc_info)
 
-    def run_as_thread(self, params:Parameters, **kwargs):
+    def _run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self, session=self.session)
@@ -533,26 +510,26 @@ class Task(RedBase, BaseModel):
         self._thread_terminate.clear()
 
         event_is_running = threading.Event()
-        self._thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, event_is_running))
+        self._thread = threading.Thread(target=self._run_in_thread, args=(params, direct_params, event_is_running))
         self.last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
-    def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
+    def _run_in_thread(self, params:Parameters, direct_params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
 
         self.log_running()
         event.set()
         try:
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="thread")
+            output = self._run_in_main(params=params, direct_params=direct_params, execution="thread")
         except:
             # Task crashed before actually running the execute.
             self.log_failure()
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
+    def _run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
         session = self.session
 
@@ -564,7 +541,7 @@ class Task(RedBase, BaseModel):
 
         daemon = self.daemon if self.daemon is not None else session.config.tasks_as_daemon
         self._process = multiprocessing.Process(
-            target=self._run_as_process, 
+            target=self._run_in_process, 
             args=(params, direct_params, log_queue, session.config, self._get_hooks("task_execute")), 
             daemon=daemon
         ) 
@@ -577,7 +554,7 @@ class Task(RedBase, BaseModel):
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
+    def _run_in_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -610,7 +587,7 @@ class Task(RedBase, BaseModel):
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
+            output = self._run_in_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
@@ -744,14 +721,14 @@ class Task(RedBase, BaseModel):
         """bool: Whether the task is currently running or not."""
         return self.get_status() == "run"
 
-    def register(self):
+    def _register(self):
         if hasattr(self, "_mark_register") and not self._mark_register:
             del self._mark_register
             return # on_exists = 'ignore'
         name = self.name
         self.session.add_task(self)
 
-    def set_cached(self):
+    def _set_cached(self):
         "Update cached statuses"
         # We get the logger here to not flood with warnings if missing repo
         logger = self.logger
@@ -785,10 +762,11 @@ class Task(RedBase, BaseModel):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
     def is_alive(self) -> bool:
-        """Whether the task is alive: check if the task has a live process or thread."""
+        """Whether the task is alive: check if the task has a live process, async task or thread."""
         return self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
 
     def is_alive_as_async(self) -> bool:
+        """Whether the task has a live async task"""
         return self._async_task is not None and not self._async_task.done()
 
     def is_alive_as_thread(self) -> bool:
@@ -863,7 +841,7 @@ class Task(RedBase, BaseModel):
         self.logger.handle(record)
         self.status = record.action
 
-    def get_status(self) -> Literal['run', 'fail', 'success', 'terminate', 'inaction', None]:
+    def get_status(self) -> Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash', None]:
         """Get latest status of the task."""
         if self.session.config.force_status_from_logs:
             try:
@@ -903,7 +881,7 @@ class Task(RedBase, BaseModel):
             if is_running_as_child and action == "success":
                 # If child process, the return value is passed via QueueHandler to the main process
                 # and it's handled then in Scheduler.
-                # Else the return value is handled in Task itself (__call__ & _run_as_thread)
+                # Else the return value is handled in Task itself (__call__ & _run_in_thread)
                 extra["__return__"] = return_value
 
             log_method = self.logger.exception if action == "fail" else self.logger.info
@@ -936,7 +914,7 @@ class Task(RedBase, BaseModel):
         return self._get_last_action("inaction")
 
     def get_last_crash(self) -> datetime.datetime:
-        """Get the lastest timestamp when the task inacted."""
+        """Get the lastest timestamp when the task crashed."""
         return self._get_last_action("crash")
 
     def get_execution(self) -> str:

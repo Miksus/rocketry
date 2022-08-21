@@ -12,6 +12,8 @@ from pathlib import Path
 import warnings
 
 from pydantic import BaseModel, PrivateAttr, validator
+from redbird.base import BaseRepo
+
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
@@ -91,7 +93,10 @@ class Hooks(BaseModel):
     scheduler_shutdown: List[Callable] = []
 
 class Session(RedBase):
-    """Collection of the scheduler objects.
+    """Scheduling session
+
+    This is a collection of scheduling session's
+    configurations and components.
 
     Parameters
     ----------
@@ -99,20 +104,8 @@ class Session(RedBase):
     config : dict, optional
         Central configuration for defining behaviour
         of different object and classes in the session.
-    tasks : Dict[str, rocketry.core.Task], optional
-        Tasks of the session. Can be formed later.
     parameters : parameter-like, optional
         Session level parameters.
-    scheme : str or list, optional
-        Premade scheme(s) to use to set up logging, 
-        parameters, setup tasks etc.
-    as_default : bool, default=True
-        Whether to set the session as default for next
-        tasks etc. that don't have session
-        specified.
-    kwds_scheduler : dict, optional
-        Keyword arguments passed to 
-        :py:class:`rocketry.core.Scheduler`.
     delete_existing_loggers : bool, default=False
         If True, deletes the loggers that already existed
         for the task logger basename.
@@ -122,13 +115,13 @@ class Session(RedBase):
     config : dict
         Central configuration for defining behaviour
         of different object and classes in the session.
+    tasks : Set[Task]
+        Collection of the tasks in the scheduling session.
+    parameters : Parameters
+        Session's parameters that can be used in tasks.
     scheduler : Scheduler
-        Scheduler of the session.
-    delete_existing_loggers : bool
-        If True, all loggers that match the 
-        session.config.basename are deleted (by 
-        default, deletes loggers starting with 
-        'rocketry.task').
+        Scheduler of the session. This is not meant to
+        be interacted by the user.
 
     """
     config: Config = Config()
@@ -237,10 +230,10 @@ class Session(RedBase):
             Names of the tasks to run.
         execution : str
             Execution method for all of the tasks.
-            By default, whatever set to each task
+            By default, whatever set to each task.
         obey_cond : bool
             Whether to obey the ``start_cond`` or 
-            force a run regardless. By default, False
+            force a run regardless. By default, False.
 
         .. warning::
 
@@ -281,16 +274,16 @@ class Session(RedBase):
         """Restart the scheduler
         
         The restart is not instantenous and 
-        will occur after the scheduler finishes
-        checking one cycle of tasks."""
+        will occur when the scheduler finishes
+        the current cycle."""
         self.scheduler._flag_restart.set()
 
     def shutdown(self):
         """Shut down the scheduler
         
         The shut down is not instantenous and 
-        will occur after the scheduler finishes
-        checking one cycle of tasks."""
+        will occur when the scheduler finishes
+        the current cycle."""
         warnings.warn((
             "Session.shutdown is deprecated. " 
             "Please use Session.shut_down instead"
@@ -298,7 +291,11 @@ class Session(RedBase):
         self.scheduler._flag_shutdown.set()
 
     def shut_down(self, force=None):
-        """Shut down the scheduler"""
+        """Shut down the scheduler
+        
+        The shut down is not instantenous and 
+        will occur when the scheduler finishes
+        the current cycle."""
         force = force if force is not None else self.scheduler._flag_shutdown.is_set()
         self.scheduler._flag_shutdown.set()
         if force:
@@ -349,7 +346,25 @@ class Session(RedBase):
         return self._cond_parsers
 
     def create_task(self, *, command=None, path=None, **kwargs):
-        "Create a task and put it to the session"
+        """Create a task and put it to the session
+        
+        The task type depends on the passed keyword arguments:
+
+        - If ``command`` is passed, ``CommandTask`` is created
+        - If ``path`` is passed, lazy ``FuncTask`` is created 
+          (the function is imported only when  the task is executed)¨
+        - Else the task is considered to be a decorated ``FuncTask``
+
+        Parameters
+        ----------
+        command : tuple of str
+            Names of the tasks to run.
+        path : str
+            Execution method for all of the tasks.
+            By default, whatever set to each task.
+        **kwargs
+            Passed to the task initiation.
+        """
         
         # To avoid circular imports
         from rocketry.tasks import CommandTask, FuncTask
@@ -365,7 +380,13 @@ class Session(RedBase):
             return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
 
     def add_task(self, task: 'Task'):
-        "Add the task to the session"
+        """Add one task to the session
+        
+        Parameters
+        ----------
+        task : Task
+            A task to add to the session.
+        """
         if_exists = self.config.task_pre_exist
         exists = task in self
         if exists:
@@ -383,6 +404,13 @@ class Session(RedBase):
         task.session = self
 
     def remove_task(self, task: Union['Task', str]):
+        """Remove one task from the session
+        
+        Parameters
+        ----------
+        task : Task, str
+            The task to be removed or the name of the task.
+        """
         if isinstance(task, str):
             task = self[task]
         self.session.tasks.remove(task)
@@ -400,7 +428,7 @@ class Session(RedBase):
         else:
             return False
 
-    def get_repo(self):
+    def get_repo(self) -> BaseRepo:
         "Get log repo where the task logs are stored"
         from rocketry.core.log import TaskAdapter
         basename = self.config.task_logger_basename
