@@ -256,10 +256,10 @@ class Task(RedBase, BaseModel):
         # Set default readable logger if missing 
         self.session._check_readable_logger()
 
-        self.register()
+        self._register()
         
         # Update "last_run", "last_success", etc.
-        self.set_cached()
+        self._set_cached()
 
         # Hooks
         hooker.postrun()
@@ -321,9 +321,9 @@ class Task(RedBase, BaseModel):
         self.start(*args, **kwargs)
 
     def start(self, *args, **kwargs):
-        return asyncio.run(self.start_async(*args, **kwargs))
+        return asyncio.run(self._start_async(*args, **kwargs))
 
-    async def start_async(self, params:Union[dict, Parameters]=None, **kwargs):
+    async def _start_async(self, params:Union[dict, Parameters]=None, **kwargs):
 
         # Remove old threads/processes
         # (using _process and _threads are most robust way to check if running as process or thread)
@@ -363,9 +363,9 @@ class Task(RedBase, BaseModel):
                     # in tests will succeed. 
                     time.sleep(1e-6)
             elif execution == "process":
-                self.run_as_process(params=params, **kwargs)
+                self._run_as_process(params=params, **kwargs)
             elif execution == "thread":
-                self.run_as_thread(params=params, **kwargs)
+                self._run_as_thread(params=params, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
         except Exception as exc:
@@ -404,10 +404,10 @@ class Task(RedBase, BaseModel):
 
         return cond
 
-    def run_as_main(self, params:Parameters):
-        return self._run_as_main(params, self.parameters)
+    def _run_as_main(self, params:Parameters):
+        return self._run_in_main(params, self.parameters)
 
-    def _run_as_main(self, **kwargs):
+    def _run_in_main(self, **kwargs):
         return asyncio.run(self._run_as_async(**kwargs))
 
     async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
@@ -501,7 +501,7 @@ class Task(RedBase, BaseModel):
             #    os.chdir(old_cwd)
             hooker.postrun(*exc_info)
 
-    def run_as_thread(self, params:Parameters, **kwargs):
+    def _run_as_thread(self, params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self, session=self.session)
@@ -510,26 +510,26 @@ class Task(RedBase, BaseModel):
         self._thread_terminate.clear()
 
         event_is_running = threading.Event()
-        self._thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, event_is_running))
+        self._thread = threading.Thread(target=self._run_in_thread, args=(params, direct_params, event_is_running))
         self.last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
  
-    def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
+    def _run_in_thread(self, params:Parameters, direct_params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
 
         self.log_running()
         event.set()
         try:
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="thread")
+            output = self._run_in_main(params=params, direct_params=direct_params, execution="thread")
         except:
             # Task crashed before actually running the execute.
             self.log_failure()
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
+    def _run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
         session = self.session
 
@@ -541,7 +541,7 @@ class Task(RedBase, BaseModel):
 
         daemon = self.daemon if self.daemon is not None else session.config.tasks_as_daemon
         self._process = multiprocessing.Process(
-            target=self._run_as_process, 
+            target=self._run_in_process, 
             args=(params, direct_params, log_queue, session.config, self._get_hooks("task_execute")), 
             daemon=daemon
         ) 
@@ -554,7 +554,7 @@ class Task(RedBase, BaseModel):
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
+    def _run_in_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -587,7 +587,7 @@ class Task(RedBase, BaseModel):
         try:
             # NOTE: The parameters are "materialized" 
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
+            output = self._run_in_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
@@ -721,14 +721,14 @@ class Task(RedBase, BaseModel):
         """bool: Whether the task is currently running or not."""
         return self.get_status() == "run"
 
-    def register(self):
+    def _register(self):
         if hasattr(self, "_mark_register") and not self._mark_register:
             del self._mark_register
             return # on_exists = 'ignore'
         name = self.name
         self.session.add_task(self)
 
-    def set_cached(self):
+    def _set_cached(self):
         "Update cached statuses"
         # We get the logger here to not flood with warnings if missing repo
         logger = self.logger
@@ -762,10 +762,11 @@ class Task(RedBase, BaseModel):
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
     def is_alive(self) -> bool:
-        """Whether the task is alive: check if the task has a live process or thread."""
+        """Whether the task is alive: check if the task has a live process, async task or thread."""
         return self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
 
     def is_alive_as_async(self) -> bool:
+        """Whether the task has a live async task"""
         return self._async_task is not None and not self._async_task.done()
 
     def is_alive_as_thread(self) -> bool:
@@ -840,7 +841,7 @@ class Task(RedBase, BaseModel):
         self.logger.handle(record)
         self.status = record.action
 
-    def get_status(self) -> Literal['run', 'fail', 'success', 'terminate', 'inaction', None]:
+    def get_status(self) -> Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash', None]:
         """Get latest status of the task."""
         if self.session.config.force_status_from_logs:
             try:
@@ -880,7 +881,7 @@ class Task(RedBase, BaseModel):
             if is_running_as_child and action == "success":
                 # If child process, the return value is passed via QueueHandler to the main process
                 # and it's handled then in Scheduler.
-                # Else the return value is handled in Task itself (__call__ & _run_as_thread)
+                # Else the return value is handled in Task itself (__call__ & _run_in_thread)
                 extra["__return__"] = return_value
 
             log_method = self.logger.exception if action == "fail" else self.logger.info
