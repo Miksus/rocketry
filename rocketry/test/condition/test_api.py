@@ -16,10 +16,11 @@ from rocketry.conds import (
     succeeded, failed, finished, started,
     running,
 
-    cron
+    cron,
+    retry,
 )
 
-from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable
+from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
 from rocketry.core.condition.base import Not
 from rocketry.time import TimeDelta
@@ -101,6 +102,9 @@ params_action = [
     pytest.param(finished("a_task").this_day.between("12:00", "15:00"), TaskFinished(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has finished (this day between)"),
     pytest.param(started("a_task").this_week.get_cond(), TaskStarted(task="a_task", period=TimeOfWeek()), id="has started (this week)"),
     pytest.param(succeeded("a_task").this_week.before("Mon"), TaskSucceeded(task="a_task", period=TimeOfWeek(None, "Mon")), id="has succeeded (this week before)"),
+
+    pytest.param(retry.get_cond(), Retry(n=-1), id="Retry infinite"),
+    pytest.param(retry(2), Retry(n=2), id="Retry twice"),
 ]
 
 params_running = [
