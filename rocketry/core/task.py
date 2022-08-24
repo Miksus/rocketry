@@ -889,6 +889,7 @@ class Task(RedBase, BaseModel):
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
         
+        self.status = action
         if action is not None:
             now = datetime.datetime.fromtimestamp(time.time())
             if action == "run":
@@ -906,14 +907,14 @@ class Task(RedBase, BaseModel):
                 # Else the return value is handled in Task itself (__call__ & _run_as_thread)
                 extra["__return__"] = return_value
 
+            cache_attr = f"last_{action}"
+            setattr(self, cache_attr, now)
+
             log_method = self.logger.exception if action == "fail" else self.logger.info
             log_method(
                 message, 
                 extra=extra
             )
-            cache_attr = f"last_{action}"
-            setattr(self, cache_attr, now)
-        self.status = action
 
     def get_last_success(self) -> datetime.datetime:
         """Get the lastest timestamp when the task succeeded."""
