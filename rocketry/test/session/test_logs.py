@@ -35,6 +35,19 @@ class CustomRecord(MinimalRecord):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values
 
+def test_failed_logging(session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+    task = FuncTask(lambda: None, name="a task", execution="main", force_run=True, session=session)
+    with pytest.raises(RuntimeError):
+        session.run(task)
+    session.config.silence_task = True
+
+    session.run(task)
+
 @pytest.mark.parametrize(
     "query,expected",
     [
