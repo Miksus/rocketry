@@ -15,7 +15,7 @@ The configurations can be set by:
         'task_pre_exist': 'raise',
         'force_status_from_logs': True,
 
-        'silence_task_prerun': False,
+        'silence_task': False,
         'silence_cond_check': False,
 
         'max_process_count': 5,
@@ -61,11 +61,11 @@ Options
     - ``True``: Logs are always read when checking the statuses. Robust but less performant.
     - ``False``: If cached status found, it is used instead. (default)
 
-**silence_task_prerun**: Whether to silence errors occurred before running a task.
+**silence_task**: Whether to silence errors occurred before running a task or logging its status.
 
     If set as:
 
-    - ``True``: The scheduler does not crash on errors occurred on the startup of a task
+    - ``True``: The scheduler does not crash on errors occurred on the startup/logging of a task
     - ``False``: The scheduler crashes. Useful for debug but not for production. (default)
     
 **silence_cond_check**: Whether to silence errors occurred when checking conditions' values.
