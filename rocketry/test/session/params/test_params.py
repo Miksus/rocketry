@@ -36,7 +36,7 @@ def test_parametrization_private(session):
     assert "success" == task.status
 
 def test_params_failure(session):
-    session.config.silence_task_prerun = True
+    session.config.silence_task = True
 
     def get_value():
         raise RuntimeError("Not working")

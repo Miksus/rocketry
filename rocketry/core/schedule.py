@@ -220,8 +220,10 @@ class Scheduler(RedBase):
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
         except Exception as exc:
-            if not self.session.config.silence_task_prerun:
+            if not self.session.config.silence_task:
                 raise
+            else:
+                self.logger.exception(f"Task {task.name} failed outside execution.")
         else:
             exception = None
             status = "success"
@@ -246,8 +248,8 @@ class Scheduler(RedBase):
             task._process.terminate()
             # Waiting till the termination is finished. 
             # Otherwise may try to terminate it many times as the process is alive for a brief moment
-            task._process.join() 
-            task.log_termination(reason=reason)
+            task._process.join()
+            self._log_task(task, "log_termination", reason=reason)
 
             # Resetting attr force_termination
             task.force_termination = False
@@ -256,7 +258,7 @@ class Scheduler(RedBase):
             try:
                 await task._async_task
             except asyncio.CancelledError:
-                task.log_termination()
+                self._log_task(task, "log_termination")
         else:
             # The process/thread probably just died after the check
             pass
@@ -351,8 +353,7 @@ class Scheduler(RedBase):
                     return_value = record.__return__
                     task._handle_return(return_value)
                     del record.__return__
-                
-                task.log_record(record)
+                self._log_task(task, "log_record", record)
 
     async def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -549,3 +550,13 @@ class Scheduler(RedBase):
 
         # TODO: Use TaskAdapter to relay the scheduler name?
         self._logger = logger
+
+    def _log_task(self, task, log_method:str, *args, **kwargs):
+        func = getattr(task, log_method)
+        try:
+            func(*args)
+        except:
+            if not self.session.config.silence_task:
+                raise
+            else:
+                self.logger.exception(f"Logging task {task.name} failed.")

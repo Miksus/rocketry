@@ -30,7 +30,7 @@ from task_helpers import wait_till_task_finish
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
-    session.config.silence_task_prerun = True
+    session.config.silence_task = True
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(

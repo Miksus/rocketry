@@ -112,7 +112,7 @@ def test_normal_pass_func(session, execution):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_missing(session, execution):
-    session.config.silence_task_prerun = True # Default in prod
+    session.config.silence_task = True # Default in prod
     
     task = FuncTask(
         func_with_arg, 

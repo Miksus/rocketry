@@ -130,7 +130,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
-    session = Session(config={"debug": True, "silence_task_prerun": False})
+    session = Session(config={"debug": True, "silence_task": False})
     rocketry.session = session
     session.set_as_default()
 
