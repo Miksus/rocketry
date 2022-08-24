@@ -27,6 +27,7 @@ from rocketry.time import TimeDelta
 from rocketry.time import Cron
 from rocketry.time.delta import TimeSpanDelta
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek
+from rocketry.tasks import FuncTask
 
 params_basic = [
     pytest.param(true, AlwaysTrue(), id="true"),
@@ -128,6 +129,20 @@ cron_like = [
 )
 def test_api(cond, result):
     assert cond == result
+
+@pytest.mark.parametrize(
+    "cond",
+    [
+        pytest.param(retry, id="Retry"),
+        pytest.param(finished, id="Finished"),
+        pytest.param(daily, id="Daily"),
+    ]
+)
+def test_observe(cond, session):
+    # NOTE: We test that observe does not crash (not the output)
+    task = FuncTask(func=lambda: None, name="mytask", session=session)
+
+    cond.observe(task=task, session=session)
 
 def test_fail():
     with pytest.raises(ValueError):
