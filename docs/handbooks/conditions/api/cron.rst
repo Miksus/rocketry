@@ -35,7 +35,7 @@ Crontime
 --------
 
 Condition ``crontime`` is similar to ``cron`` but it is not tied to a task
-and it only checks whether current time is inside the specified cron interval.
+and it only checks whether the current time is inside the specified cron interval.
 It is useful if you want to augment the cron scheduling by adding retries or 
 else.
 
