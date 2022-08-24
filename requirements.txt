@@ -1,4 +1,4 @@
 # Minimum requirements
-pydantic
+pydantic==1.10.0a2
 redbird>=0.5.0
 python-dateutil
