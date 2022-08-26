@@ -207,6 +207,7 @@ class Scheduler(RedBase):
         try:
             return task.is_runnable()
         except:
+            self.logger.exception(f"Condition crashed for task '{task.name}'")
             if not self.session.config.silence_cond_check:
                 raise
             return False
@@ -556,7 +557,6 @@ class Scheduler(RedBase):
         try:
             func(*args)
         except:
-            if not self.session.config.silence_task:
+            self.logger.exception(f"Logging failed for task '{task.name}'")
+            if not self.session.config.silence_task_logging:
                 raise
-            else:
-                self.logger.exception(f"Logging task {task.name} failed.")
