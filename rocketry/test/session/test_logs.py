@@ -44,7 +44,7 @@ def test_failed_logging(session):
     task = FuncTask(lambda: None, name="a task", execution="main", force_run=True, session=session)
     with pytest.raises(RuntimeError):
         session.run(task)
-    session.config.silence_task = True
+    session.config.silence_task_logging = True
 
     session.run(task)
 

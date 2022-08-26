@@ -75,7 +75,8 @@ def script_files(tmpdir):
 def session():
     session = Session(config={
         "debug": True,
-        "silence_task": False,
+        "silence_task_prerun": False,
+        "silence_task_logging": False,
         "silence_cond_check": False,
         "cycle_sleep": 0.001,
     }, delete_existing_loggers=True)

@@ -41,9 +41,6 @@ class Config(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
-    # Deprecated
-    silence_task_prerun: Optional[bool] = None # Whether to silence errors occurred in setting a task to run
-
     # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
@@ -54,7 +51,8 @@ class Config(BaseModel):
     task_logger_basename: str = "rocketry.task"
     scheduler_logger_basename: str = "rocketry.scheduler"
 
-    silence_task: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_task_prerun: Optional[bool] = None # Whether to silence errors occurred in setting a task to run
+    silence_task_logging: bool = False # Whether to silence errors occurred in setting a task to run
     silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
@@ -68,14 +66,6 @@ class Config(BaseModel):
     shut_cond: Optional['BaseCondition'] = None
 
     param_materialize:Literal['pre', 'post'] = 'post'
-
-    @validator('silence_task', pre=True, always=True)
-    def parse_silence_task(cls, value, values):
-        old_value = values.get('silence_task_prerun')
-        if old_value is not None:
-            warnings.warn("Config option 'silence_task_prerun' is deprecated. Please use 'silence_task'", DeprecationWarning)
-            value = old_value
-        return value
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):

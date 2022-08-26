@@ -16,3 +16,11 @@ class TaskTerminationException(Exception):
     tasks to signal that they did indeed
     listen the thread_please_terminate event
     and ended as a result of that"""
+
+
+# System errors
+class TaskSetupError(Exception):
+    """Task's setup failed"""
+
+class TaskLoggingError(Exception):
+    """Task's logging failed"""

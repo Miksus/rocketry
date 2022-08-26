@@ -15,7 +15,8 @@ The configurations can be set by:
         'task_pre_exist': 'raise',
         'force_status_from_logs': True,
 
-        'silence_task': False,
+        'silence_task_prerun': False,
+        'silence_task_logging': False,
         'silence_cond_check': False,
 
         'max_process_count': 5,
@@ -61,13 +62,27 @@ Options
     - ``True``: Logs are always read when checking the statuses. Robust but less performant.
     - ``False``: If cached status found, it is used instead. (default)
 
-**silence_task**: Whether to silence errors occurred before running a task or logging its status.
+**silence_task_prerun**: Whether to silence errors occurred during starting up a task.
 
     If set as:
 
-    - ``True``: The scheduler does not crash on errors occurred on the startup/logging of a task
+    - ``True``: The scheduler does not crash on errors occurred on the startup of a task.
     - ``False``: The scheduler crashes. Useful for debug but not for production. (default)
     
+    A failure in prerun commonly occurs when there are arguments that cannot be pickled
+    or materialized. If task fails in prerun, it cannot simply be run.
+
+**silence_task_logging**: Whether to silence errors occurred during logging a task.
+
+    If set as:
+
+    - ``True``: The scheduler does not crash on errors occurred when logging a task.
+    - ``False``: The scheduler crashes. Useful for debug but not for production. (default)
+
+    A failure in task logging commonly occurs if there are connection problems with the 
+    logging repository. Failure in logging might be severe as there can be tasks that 
+    actually ran but Rocketry is unable to register them as runned.
+
 **silence_cond_check**: Whether to silence errors occurred when checking conditions' values.
 
     If set as:

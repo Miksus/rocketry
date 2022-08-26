@@ -15,7 +15,7 @@ from queue import Empty
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse
 from rocketry.core.task import Task
-from rocketry.exc import SchedulerRestart, SchedulerExit
+from rocketry.exc import SchedulerRestart, SchedulerExit, TaskLoggingError, TaskSetupError
 from rocketry.core.hook import _Hooker
 
 if TYPE_CHECKING:
@@ -220,11 +220,14 @@ class Scheduler(RedBase):
             await task.start_async(log_queue=self._log_queue)
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
-        except Exception as exc:
-            if not self.session.config.silence_task:
+        except TaskLoggingError:
+            self.logger.exception(f"Logging failed for task '{task.name}'")
+            if not self.session.config.silence_task_logging:
                 raise
-            else:
-                self.logger.exception(f"Task {task.name} failed outside execution.")
+        except TaskSetupError:
+            self.logger.exception(f"Task '{task.name}' crashed outside execution.")
+            if not self.session.config.silence_task_prerun:
+                raise
         else:
             exception = None
             status = "success"

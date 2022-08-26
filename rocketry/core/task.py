@@ -30,7 +30,7 @@ from rocketry.core.parameters import Parameters
 from rocketry.core.log import TaskAdapter
 from rocketry.core.time.utils import to_timedelta
 from rocketry.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
-from rocketry.exc import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException
+from rocketry.exc import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException, TaskLoggingError, TaskSetupError
 from rocketry.core.meta import _register
 from rocketry.core.hook import _Hooker
 from rocketry.log import QueueHandler
@@ -396,7 +396,7 @@ class Task(RedBase, BaseModel):
             # and it did not reach to log_running
             self.log_running()
             self.log_failure()
-            raise
+            raise TaskSetupError("Task failed before logging") from exc
 
     def __bool__(self):
         return self.is_runnable()

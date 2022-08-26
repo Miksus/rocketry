@@ -55,7 +55,7 @@ def do_stuff_with_arg(arg):
     ]
 )
 def test_param_failure(tmpdir, execution, session, fail_in):
-    session.config.silence_task = True # Prod setting
+    session.config.silence_task_prerun = True # Prod setting
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
 
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
@@ -77,7 +77,7 @@ def test_param_failure(tmpdir, execution, session, fail_in):
     ]
 )
 def test_session_param_failure(tmpdir, execution, session, fail_in):
-    session.config.silence_task = True # Prod setting
+    session.config.silence_task_prerun = True # Prod setting
     session.parameters["arg"] = FailingArgument(fail_in)
 
     task = FuncTask(do_stuff_with_arg, name="a task", start_cond=AlwaysTrue(), execution=execution, session=session)
@@ -103,7 +103,7 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
     ]
 )
 def test_raise_param_failure(execution, session, fail_in):
-    session.config.silence_task = False
+    session.config.silence_task_prerun = False
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     
