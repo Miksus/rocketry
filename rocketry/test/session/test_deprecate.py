@@ -12,11 +12,3 @@ def test_shutdown(session):
     with pytest.warns(DeprecationWarning):
         session.shutdown()
     assert session.scheduler._flag_shutdown.is_set()
-
-def test_config_silence_task_prerun():
-    s = Session()
-    assert not s.config.silence_task
-    
-    with pytest.warns(DeprecationWarning):
-        s = Session(config={"silence_task_prerun": True})
-    assert s.config.silence_task
