@@ -378,7 +378,7 @@ class Scheduler(RedBase):
         self.n_cycles = 0
         self.startup_time = datetime.datetime.fromtimestamp(time.time())
 
-        self.logger.info(f"Beginning startup sequence...")
+        self.logger.debug(f"Beginning startup sequence...")
         for task in self.tasks:
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
@@ -389,7 +389,7 @@ class Scheduler(RedBase):
                     await self.run_task(task)
 
         hooker.postrun()
-        self.logger.info(f"Setup complete.")
+        self.logger.info(f"Startup complete.")
 
     def has_free_processors(self) -> bool:
         """Whether the Scheduler has free processors to
@@ -456,7 +456,7 @@ class Scheduler(RedBase):
         tasks to finish their termination.
         """
         
-        self.logger.info(f"Beginning shutdown sequence...")
+        self.logger.debug(f"Beginning shutdown sequence...")
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
 
@@ -471,7 +471,7 @@ class Scheduler(RedBase):
                 if self.is_task_runnable(task):
                     await self.run_task(task)
 
-        self.logger.info(f"Shutting down tasks...")
+        self.logger.debug(f"Shutting down tasks...")
         await self._shut_down_tasks(traceback, exception)
 
         await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
