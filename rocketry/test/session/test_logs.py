@@ -9,9 +9,9 @@ import pytest
 
 from redbird.oper import in_, between
 from redbird.logging import RepoHandler
-from redbird.repos import MemoryRepo
+from redbird.repos import MemoryRepo, SQLRepo, CSVFileRepo
 
-from rocketry.log.log_record import LogRecord, TaskLogRecord, MinimalRecord
+from rocketry.log import LogRecord, TaskLogRecord, MinimalRecord
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
 
@@ -22,6 +22,26 @@ def create_line_to_startup_file():
 def create_line_to_shutdown():
     with open("shut.txt", "w") as file:
         file.write("line created\n")
+
+def get_memory_repo():
+    return MemoryRepo(model=MinimalRecord)
+
+def get_csv_repo():
+    repo = CSVFileRepo(model=MinimalRecord, filename="tasks.csv")
+    repo.create()
+    return repo
+
+def get_sql_repo():
+    pytest.importorskip("sqlalchemy")
+    from sqlalchemy import create_engine
+    engine = create_engine('sqlite://')
+    engine.execute("""CREATE TABLE log (
+        id INTEGER PRIMARY KEY,
+        created FLOAT,
+        task_name TEXT,
+        action TEXT
+    )""")
+    return SQLRepo(model=MinimalRecord, table="log", engine=engine, id_field="id")
 
 class CustomRecord(MinimalRecord):
     timestamp: Optional[datetime.datetime]
@@ -34,6 +54,46 @@ class CustomRecord(MinimalRecord):
     def validate_timestamp(cls, values):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values
+
+@pytest.mark.parametrize("get_repo",
+    [
+        pytest.param(get_sql_repo, id="SQL"),
+        pytest.param(get_memory_repo, id="Memory"),
+        pytest.param(get_csv_repo, id="CSV"),
+    ]
+)
+def test_repos(tmpdir, get_repo, mock_pydatetime, session):
+    
+    with tmpdir.as_cwd() as old_dir:
+        repo = get_repo()
+        session.set_repo(repo, delete_existing=True)
+        task = FuncTask(lambda: None, name="a task", execution="main", force_run=True, session=session)
+
+        # Set log records
+        mock_pydatetime("2021-01-01 00:00:00.0001")
+        task.log_running()
+        mock_pydatetime("2021-01-01 00:00:00.0002")
+        task.log_success()
+
+        mock_pydatetime("2021-01-01 00:00:00.0003")
+        task.log_running()
+        try:
+            raise RuntimeError("Oops")
+        except:
+            mock_pydatetime("2021-01-01 00:00:00.0004")
+            task.log_failure()
+
+        records = repo.filter_by().all()
+        assert len(records) == 4
+        assert [
+            {"task_name": rec.task_name, "action": rec.action, "created": rec.created}
+            for rec in records
+        ] == [
+            {"task_name": "a task", "action": "run", "created": 1609452000.0001},
+            {"task_name": "a task", "action": "success", "created": 1609452000.0002},
+            {"task_name": "a task", "action": "run", "created": 1609452000.0003},
+            {"task_name": "a task", "action": "fail", "created": 1609452000.0004},
+        ]
 
 @pytest.mark.parametrize(
     "query,expected",
