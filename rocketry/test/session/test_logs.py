@@ -14,6 +14,7 @@ from redbird.repos import MemoryRepo
 from rocketry.log.log_record import LogRecord, TaskLogRecord, MinimalRecord
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
+from rocketry.exc import TaskLoggingError
 
 def create_line_to_startup_file():
     with open("start.txt", "w") as file:
@@ -42,7 +43,7 @@ def test_failed_logging(session):
     logger = logging.getLogger("rocketry.task")
     logger.handlers.insert(0, MyHandler())
     task = FuncTask(lambda: None, name="a task", execution="main", force_run=True, session=session)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TaskLoggingError):
         session.run(task)
     session.config.silence_task_logging = True
 

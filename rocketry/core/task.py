@@ -911,10 +911,13 @@ class Task(RedBase, BaseModel):
             setattr(self, cache_attr, now)
 
             log_method = self.logger.exception if action == "fail" else self.logger.info
-            log_method(
-                message, 
-                extra=extra
-            )
+            try:
+                log_method(
+                    message, 
+                    extra=extra
+                )
+            except Exception as exc:
+                raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
 
     def get_last_success(self) -> datetime.datetime:
         """Get the lastest timestamp when the task succeeded."""
