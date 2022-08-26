@@ -20,6 +20,7 @@ from rocketry.time import TimeDelta
 from rocketry.exc import TaskInactionException
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from rocketry.core import BaseArgument
+from rocketry.exc import TaskSetupError
 
 class FailingArgument(BaseArgument):
 
@@ -111,7 +112,7 @@ def test_raise_param_failure(execution, session, fail_in):
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TaskSetupError):
         session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
