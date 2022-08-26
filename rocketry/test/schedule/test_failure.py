@@ -1,10 +1,14 @@
 
 import datetime
+import logging
 import time
 import os, re
 import multiprocessing
 
 import pytest
+
+from redbird.repos import MemoryRepo
+from redbird.logging import RepoHandler
 
 import rocketry
 from rocketry import Session
@@ -134,13 +138,31 @@ def test_raise_sched_cond_failure(execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_silence_task_cond_failure(execution, session):
-    session.config.silence_cond_check = True
-    task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution)
+    logger = logging.getLogger("rocketry.scheduler")
+    sched_logs = MemoryRepo()
+    handler = RepoHandler(sched_logs)
+    try:
+        logger.addHandler(handler)
 
-    session.config.shut_cond =SchedulerCycles() >= 3
-    session.start()
+        session.config.silence_cond_check = True
+        task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution, session=session)
 
-    assert task.status is None
+        session.config.shut_cond =SchedulerCycles() >= 3
+
+        session.start()
+
+        assert task.status is None
+        errors = sched_logs.filter_by(levelname="ERROR").all()
+        assert len(errors) == 3
+
+        assert errors[0]['msg'] == "Condition crashed for task 'a task'"
+
+    finally:
+        logger.handlers = [
+            hdlr
+            for hdlr in logger.handlers
+            if hdlr is not handler
+        ]
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_silence_sched_cond_failure(execution, session):
