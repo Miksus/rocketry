@@ -22,6 +22,7 @@ except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from redbird.logging import RepoHandler
+from redbird import BaseRepo
 from rocketry._base import RedBase
 
 if TYPE_CHECKING:
@@ -437,6 +438,19 @@ class Session(RedBase):
         }
 
 # Log data
+    def set_repo(self, repo:BaseRepo, delete_existing=False):
+        handler = RepoHandler(repo=repo)
+        basename = self.config.task_logger_basename
+        logger = logging.getLogger(basename)
+
+        if delete_existing:
+            logger.handlers = [
+                hdlr
+                for hdlr in logger.handlers
+                if not hasattr(hdlr, "repo")
+            ]
+        logger.handlers.insert(0, handler)
+
     def get_task_log(self, *args, **kwargs) -> Iterable[Dict]:
         """Get task log records from all of the 
         readable handlers in the session.
