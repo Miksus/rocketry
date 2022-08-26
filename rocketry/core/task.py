@@ -889,39 +889,35 @@ class Task(RedBase, BaseModel):
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
         
-        if action is not None:
-            now = datetime.datetime.fromtimestamp(time.time())
-            if action == "run":
-                extra = {"action": "run", "start": now}
-                # self._last_run = now
-            else:
-                start_time = self.get_last_run()
-                runtime = now - start_time if start_time is not None else None
-                extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
-            
-            is_running_as_child = self.logger.name.endswith("._process")
-            if is_running_as_child and action == "success":
-                # If child process, the return value is passed via QueueHandler to the main process
-                # and it's handled then in Scheduler.
-                # Else the return value is handled in Task itself (__call__ & _run_as_thread)
-                extra["__return__"] = return_value
-
-            cache_attr = f"last_{action}"
-
-            log_method = self.logger.exception if action == "fail" else self.logger.info
-            try:
-                log_method(
-                    message, 
-                    extra=extra
-                )
-            except Exception as exc:
-                raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
-            finally:
-                setattr(self, cache_attr, now)
-                self.status = action
+        now = datetime.datetime.fromtimestamp(time.time())
+        if action == "run":
+            extra = {"action": "run", "start": now}
+            # self._last_run = now
         else:
-            # actiion is None (resetting)
-            self.status = None
+            start_time = self.get_last_run()
+            runtime = now - start_time if start_time is not None else None
+            extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
+        
+        is_running_as_child = self.logger.name.endswith("._process")
+        if is_running_as_child and action == "success":
+            # If child process, the return value is passed via QueueHandler to the main process
+            # and it's handled then in Scheduler.
+            # Else the return value is handled in Task itself (__call__ & _run_as_thread)
+            extra["__return__"] = return_value
+
+        cache_attr = f"last_{action}"
+
+        log_method = self.logger.exception if action == "fail" else self.logger.info
+        try:
+            log_method(
+                message, 
+                extra=extra
+            )
+        except Exception as exc:
+            raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
+        finally:
+            setattr(self, cache_attr, now)
+            self.status = action
 
     def get_last_success(self) -> datetime.datetime:
         """Get the lastest timestamp when the task succeeded."""
