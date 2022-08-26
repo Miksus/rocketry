@@ -551,3 +551,4 @@ class StaticInterval(TimePeriod):
         return (self.start == self.min) and (self.end == self.max)
 
 always = StaticInterval()
+never = StaticInterval(StaticInterval.max, StaticInterval.max)
