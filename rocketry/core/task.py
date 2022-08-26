@@ -195,6 +195,7 @@ class Task(RedBase, BaseModel):
     _process: multiprocessing.Process = None
     _thread: threading.Thread = None
     _thread_terminate: threading.Event = PrivateAttr(default_factory=threading.Event)
+    _thread_error: Exception = PrivateAttr(default=None)
     _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
     _async_task: Optional[asyncio.Task] = PrivateAttr(default=None)
 
@@ -531,24 +532,38 @@ class Task(RedBase, BaseModel):
         direct_params = self.parameters.pre_materialize(task=self, session=self.session)
 
         self._thread_terminate.clear()
+        self._thread_error = None
 
         event_is_running = threading.Event()
         self._thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, event_is_running))
         self.last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
+
+        if self._thread_error is not None:
+            raise self._thread_error
  
     def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
+        try:
+            self.log_running()
+        except TaskLoggingError as exc:
+            # Logging failed
+            self._thread_error = exc
+            raise
+        finally:
+            event.set()
 
-        self.log_running()
-        event.set()
         try:
             output = self._run_as_main(params=params, direct_params=direct_params, execution="thread")
         except:
             # Task crashed before actually running the execute.
-            self.log_failure()
+            try:
+                self.log_failure()
+            except TaskLoggingError as exc:
+                self._thread_error = exc
+                
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 

@@ -192,6 +192,7 @@ class Scheduler(RedBase):
                     # Terminate the task
                     await self.terminate_task(task)
 
+        self.handle_logs(thread_errors=True)
         # Running hooks
         hooker.postrun()
         
@@ -325,7 +326,7 @@ class Scheduler(RedBase):
         else:
             return task.is_terminable()
             
-    def handle_logs(self):
+    def handle_logs(self, thread_errors=False):
         """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
         queue = self._log_queue
@@ -358,6 +359,12 @@ class Scheduler(RedBase):
                     task._handle_return(return_value)
                     del record.__return__
                 self._log_task(task, "log_record", record)
+
+        silence_logging = self.session.config.silence_task_logging
+        if thread_errors and not silence_logging:
+            for task in self.tasks:
+                if task._thread_error:
+                    raise task._thread_error
 
     async def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -431,7 +438,7 @@ class Scheduler(RedBase):
                 await self._shut_down_tasks(exception=exc)
                 return
             else:
-                self.handle_logs()
+                self.handle_logs(thread_errors=True)
         else:
             await self.terminate_all(reason="shutdown")
 

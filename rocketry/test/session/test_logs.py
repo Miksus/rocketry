@@ -24,6 +24,12 @@ def create_line_to_shutdown():
     with open("shut.txt", "w") as file:
         file.write("line created\n")
 
+def do_success():
+    ...
+
+def do_fail():
+    raise RuntimeError("Oops")
+
 class CustomRecord(MinimalRecord):
     timestamp: Optional[datetime.datetime]
     start: Optional[datetime.datetime]
@@ -36,13 +42,32 @@ class CustomRecord(MinimalRecord):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values
 
-def test_failed_logging(session):
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("status", ["success", "fail"])
+def test_failed_logging_run(execution, status, session):
     class MyHandler(logging.Handler):
         def emit(self, record):
             raise RuntimeError("Oops")
     logger = logging.getLogger("rocketry.task")
     logger.handlers.insert(0, MyHandler())
-    task = FuncTask(lambda: None, name="a task", execution="main", force_run=True, session=session)
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
+    with pytest.raises(TaskLoggingError):
+        session.run(task)
+    session.config.silence_task_logging = True
+
+    session.run(task)
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("status", ["success", "fail"])
+def test_failed_logging_finish(execution, status, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action != "run":
+                raise RuntimeError("Oops")
+
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
     with pytest.raises(TaskLoggingError):
         session.run(task)
     session.config.silence_task_logging = True
