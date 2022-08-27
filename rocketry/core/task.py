@@ -873,10 +873,14 @@ class Task(RedBase, BaseModel):
         # Set last_run/last_success/last_fail etc.
         cache_attr = f"last_{record.action}"
         record_time = datetime.datetime.fromtimestamp(record.created)
-        setattr(self, cache_attr, record_time)
 
-        self.logger.handle(record)
-        self.status = record.action
+        try:
+            self.logger.handle(record)
+        except Exception as exc:
+            raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
+        finally:
+            setattr(self, cache_attr, record_time)
+            self.status = record.action
 
     def get_status(self) -> Literal['run', 'fail', 'success', 'terminate', 'inaction', None]:
         """Get latest status of the task."""
