@@ -50,8 +50,7 @@ def do_stuff_with_arg(arg):
     ...
 
 def run_slow_thread(flag=TerminationFlag()):
-    t = 0
-    time.sleep(0.1)
+    time.sleep(0.1) # TODO: Check session.scheduler.n_cycles instead of waiting
     if flag.is_set():
         raise TaskTerminationException()
 
@@ -135,10 +134,11 @@ def test_raise_task_start_cond_failure(execution, session):
     with pytest.raises(RuntimeError):
         session.start()
 
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("execution", ["thread", "process"])
 def test_raise_task_cond_failure(execution, session):
     session.config.silence_cond_check = False
-    task = FuncTask(do_stuff, name="a task", end_cond=FailingCondition(), execution=execution, session=session)
+    func = run_slow if execution == "process" else run_slow_thread if execution == "thread" else do_stuff
+    task = FuncTask(func, name="a task", start_cond=AlwaysTrue(), end_cond=FailingCondition(), execution=execution, session=session)
 
     session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("5 second"))
     
