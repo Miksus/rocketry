@@ -332,7 +332,7 @@ class Scheduler(RedBase):
                 if not self.session.config.silence_cond_check:
                     raise
 
-                return False
+                return True
 
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
