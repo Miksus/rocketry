@@ -192,7 +192,8 @@ class Scheduler(RedBase):
                     # Terminate the task
                     await self.terminate_task(task)
 
-        self.handle_logs(thread_errors=True)
+        self.handle_logs()
+        self.check_thread_errors()
         # Running hooks
         hooker.postrun()
         
@@ -326,7 +327,7 @@ class Scheduler(RedBase):
         else:
             return task.is_terminable()
             
-    def handle_logs(self, thread_errors=False):
+    def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
         queue = self._log_queue
@@ -359,12 +360,6 @@ class Scheduler(RedBase):
                     task._handle_return(return_value)
                     del record.__return__
                 self._log_task(task, "log_record", record)
-
-        silence_logging = self.session.config.silence_task_logging
-        if thread_errors and not silence_logging:
-            for task in self.tasks:
-                if task._thread_error:
-                    raise task._thread_error
 
     async def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -408,6 +403,18 @@ class Scheduler(RedBase):
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
         
+    async def run_shutdown_tasks(self):
+        # Make sure the tasks run if start_cond not set
+        for task in self.tasks:
+            if task.on_shutdown:
+
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                    # Make sure the tasks run if start_cond not set
+                    task.force_run = True
+
+                if self.is_task_runnable(task):
+                    await self.run_task(task)
+
     async def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         wait_for_finish = (
@@ -433,12 +440,10 @@ class Scheduler(RedBase):
                         elif self.is_out_of_condition(task):
                             # Terminate the task
                             await self.terminate_task(task)
-            except Exception as exc:
+            except Exception as exception:
                 # Fuck it, terminate all
-                await self._shut_down_tasks(exception=exc)
-                return
-            else:
-                self.handle_logs(thread_errors=True)
+                await self._shut_down_tasks(exception=exception)
+                raise
         else:
             await self.terminate_all(reason="shutdown")
 
@@ -467,27 +472,33 @@ class Scheduler(RedBase):
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
 
-        # Make sure the tasks run if start_cond not set
-        for task in self.tasks:
-            if task.on_shutdown:
+        # First the shut down tasks are run
+        # Then all tasks are waited to finish or terminated
+        # Then all threads/processes are wait to die
+        try:
+            try:
+                try:
+                    await self.run_shutdown_tasks()
+                finally:
+                    # Tasks are shut down/waited for shut down regardless if running shutdown
+                    # tasks failed
+                    self.logger.debug(f"Shutting down tasks...")
+                    await self._shut_down_tasks(traceback, exception)
+            finally:
+                # Processes/threads are wait to shut down regardless if there has been any 
+                # additional errors previously
+                await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
-                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
-                    # Make sure the tasks run if start_cond not set
-                    task.force_run = True
+                # Finally check logs once more
+                # and raise TaskLoggingError if has occurred in a thread and they are not silenced
+                self.handle_logs()
+                self.check_thread_errors()
+        finally:
+            # Running hooks and finalize the shutdown
+            hooker.postrun()
+            self.is_alive = False
+            self.logger.info(f"Shutdown completed. Good bye.")
 
-                if self.is_task_runnable(task):
-                    await self.run_task(task)
-
-        self.logger.debug(f"Shutting down tasks...")
-        await self._shut_down_tasks(traceback, exception)
-
-        await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
-
-        # Running hooks
-        hooker.postrun()
-
-        self.is_alive = False
-        self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
@@ -570,3 +581,10 @@ class Scheduler(RedBase):
             self.logger.exception(f"Logging failed for task '{task.name}'")
             if not self.session.config.silence_task_logging:
                 raise
+
+    def check_thread_errors(self):
+        silence_logging = self.session.config.silence_task_logging
+        if not silence_logging:
+            for task in self.tasks:
+                if task._thread_error:
+                    raise task._thread_error
