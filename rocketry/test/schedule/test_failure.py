@@ -50,7 +50,7 @@ def do_stuff_with_arg(arg):
     ...
 
 def run_slow_thread(flag=TerminationFlag(), session=SessionArg()):
-    while session.scheduler.n_cycles < 3 and not flag.is_set():
+    while session.scheduler.n_cycles < 2 and not flag.is_set():
         time.sleep(0.0001)
     if flag.is_set():
         raise TaskTerminationException()
