@@ -50,7 +50,7 @@ def do_stuff_with_arg(arg):
     ...
 
 def run_slow_thread(flag=TerminationFlag(), session=SessionArg()):
-    while session.scheduler.n_cycles < 3:
+    while session.scheduler.n_cycles < 3 and not flag.is_set():
         time.sleep(0.0001)
     if flag.is_set():
         raise TaskTerminationException()
@@ -136,7 +136,7 @@ def test_raise_task_start_cond_failure(execution, session):
         session.start()
 
 @pytest.mark.parametrize("execution", ["thread", "process"])
-def test_raise_task_cond_failure(execution, session):
+def test_raise_task_end_cond_failure(execution, session):
     session.config.silence_cond_check = False
     func = run_slow if execution == "process" else run_slow_thread if execution == "thread" else do_stuff
     task = FuncTask(func, name="a task", start_cond=AlwaysTrue(), end_cond=FailingCondition(), execution=execution, session=session)
