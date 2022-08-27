@@ -325,8 +325,15 @@ class Scheduler(RedBase):
             return True
 
         else:
-            return task.is_terminable()
-            
+            try:
+                return task.is_terminable()
+            except:
+                self.logger.exception(f"Condition crashed for task '{task.name}'")
+                if not self.session.config.silence_cond_check:
+                    raise
+
+                return False
+
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
