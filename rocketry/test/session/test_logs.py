@@ -48,8 +48,6 @@ class CustomRecord(MinimalRecord):
 @pytest.mark.parametrize("status", ["success", "fail"])
 @pytest.mark.parametrize("on", ["startup", "normal", "shutdown"])
 def test_failed_logging_run(execution, status, on, session):
-    # GETS PROBABLY STUCK HERE
-    pytest.skip(reason="Gets stuck?")
     class MyHandler(logging.Handler):
         def emit(self, record):
             raise RuntimeError("Oops")
@@ -62,11 +60,13 @@ def test_failed_logging_run(execution, status, on, session):
     elif on == "shutdown":
         task.on_shutdown = True
 
+    session.config.shut_cond = SchedulerCycles() >= 1
     with pytest.raises(TaskLoggingError):
-        session.run(task)
+        session.start()
+
     session.config.silence_task_logging = True
 
-    session.run(task)
+    session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize("status", ["success", "fail"])
