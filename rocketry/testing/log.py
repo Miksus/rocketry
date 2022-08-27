@@ -20,6 +20,8 @@ def create_record(
     if created is not None:
         if isinstance(created, str):
             created = to_datetime(created)
+        if isinstance(created, float):
+            created = int(created)
         if not isinstance(created, int):
             created = int(created.timestamp())
 
