@@ -172,7 +172,7 @@ def test_silence_task_cond_failure(execution, which, session):
             task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution, session=session)
         elif which == "end_cond":
             func = run_slow if execution == "process" else run_slow_thread if execution == "thread" else do_stuff
-            task = FuncTask(func, name="a task", start_cond=AlwaysTrue(), end_cond=FailingCondition(), execution=execution, session=session)
+            task = FuncTask(func, name="a task", start_cond=~TaskStarted(), end_cond=FailingCondition(), execution=execution, session=session)
         
         session.start()
 
