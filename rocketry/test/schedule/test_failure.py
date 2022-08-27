@@ -12,7 +12,7 @@ from redbird.logging import RepoHandler
 
 import rocketry
 from rocketry import Session
-from rocketry.args.builtin import TerminationFlag
+from rocketry.args import TerminationFlag, Session as SessionArg
 from rocketry.conditions.task import TaskFailed
 from rocketry.core import Scheduler, Parameters
 from rocketry.core import BaseCondition
@@ -49,13 +49,14 @@ def do_stuff():
 def do_stuff_with_arg(arg):
     ...
 
-def run_slow_thread(flag=TerminationFlag()):
-    time.sleep(0.1) # TODO: Check session.scheduler.n_cycles instead of waiting
+def run_slow_thread(flag=TerminationFlag(), session=SessionArg()):
+    while session.scheduler.n_cycles < 3:
+        time.sleep(0.0001)
     if flag.is_set():
         raise TaskTerminationException()
 
 def run_slow():
-    time.sleep(5)
+    time.sleep(2)
 
 @pytest.mark.parametrize(
     "execution,fail_in", [
@@ -177,14 +178,16 @@ def test_silence_task_cond_failure(execution, which, session):
 
         if which == "start_cond":
             assert task.status is None
-        elif which == "end_cond":
-            assert task.status == "success"
-
-        if execution != "main" and which != 'end_cond':
             errors = sched_logs.filter_by(levelname="ERROR").all()
             assert len(errors) == 3
 
             assert errors[0]['msg'] == "Condition crashed for task 'a task'"
+        elif which == "end_cond":
+            if execution == "main":
+                assert task.status == "success"
+            else:
+                assert task.status == "terminate"
+
 
     finally:
         logger.handlers = [

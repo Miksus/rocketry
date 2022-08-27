@@ -332,6 +332,9 @@ class Scheduler(RedBase):
                 if not self.session.config.silence_cond_check:
                     raise
 
+                # We operate the same way as people often do:
+                # If we don't know if the process should be killed, 
+                # we panic and shut it down
                 return True
 
     def handle_logs(self):
