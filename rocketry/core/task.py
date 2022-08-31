@@ -406,7 +406,8 @@ class Task(RedBase, BaseModel):
         except Exception as exc:
             # Something went wrong in the initiation
             # and it did not reach to log_running
-            self.log_running()
+            if self.status != "run":
+                self.log_running()
             self.log_failure()
             raise TaskSetupError("Task failed before logging") from exc
 
