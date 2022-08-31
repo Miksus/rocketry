@@ -371,6 +371,7 @@ class Task(RedBase, BaseModel):
             # Run the actual task
             if execution in ("main", "async"):
                 direct_params = self.parameters
+                self.log_running()
                 async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
                 if execution == "main":
                     await async_task
@@ -432,16 +433,12 @@ class Task(RedBase, BaseModel):
         return self._run_as_main(params, self.parameters)
 
     def _run_as_main(self, **kwargs):
+        self.log_running()
         return asyncio.run(self._run_as_async(**kwargs))
 
     async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
         """Run the task on the current thread and process"""
-        #self.logger.info(f'Running {self.name}', extra={"action": "run"})
-
-        #old_cwd = os.getcwd()
-        #if cwd is not None:
-        #    os.chdir(cwd)
-
+        # NOTE: Assumed that self.log_running() has been already called.
         # (If SystemExit is raised, it won't be catched in except Exception)
         if execution == "process":
             hooks = kwargs.get('hooks', [])
@@ -457,8 +454,6 @@ class Task(RedBase, BaseModel):
         params = Parameters(params) | Parameters(direct_params)
         params = params.materialize(task=self, session=self.session)
 
-        if execution in ('main', 'async'):
-            self.log_running()
         try:
             if inspect.iscoroutinefunction(self.execute):
                 output = await self.execute(**params)
