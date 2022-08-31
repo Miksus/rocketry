@@ -63,7 +63,7 @@ def test_failed_logging_run(execution, status, on, session):
     session.config.shut_cond = SchedulerCycles() >= 1
     with pytest.raises(TaskLoggingError):
         session.start()
-
+    assert task.status == "fail"
     session.config.silence_task_logging = True
 
     # TODO: Perhaps CI gets stuck here
@@ -92,9 +92,12 @@ def test_failed_logging_finish(execution, status, on, session):
         task.on_shutdown = True
     with pytest.raises(TaskLoggingError):
         session.start()
-    session.config.silence_task_logging = True
+    assert task.status == "fail"
 
+    session.config.silence_task_logging = True
     session.run(task)
+
+    assert task.status == "fail"
 
 @pytest.mark.parametrize(
     "query,expected",
