@@ -814,7 +814,13 @@ class Task(RedBase, BaseModel):
         "Handle next run log to make sure the task started running before continuing (otherwise may cause accidential multiple launches)"
         action = None
         timeout = 10 # Seconds allowed the setup to take before declaring setup to crash
-        #record = log_queue.get(block=True, timeout=None)
+        
+        # NOTE: The queue may return others task logs as well
+        # but the next run log should be only from this task
+        # as log_running is part of the task startup process.
+
+        err = None
+
         while action != "run":
             try:
                 record = log_queue.get(block=True, timeout=timeout)
@@ -827,9 +833,17 @@ class Task(RedBase, BaseModel):
                 
                 #self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = self.session[record.task_name]
-                task.log_record(record)
+                try:
+                    task.log_record(record)
+                except Exception as exc:
+                    # It must be made sure the task is set running 
+                    # so we ignore logging errors until that's sure
+                    err = exc
 
                 action = record.action
+        
+        if err is not None:
+            raise err
 
     def log_running(self):
         """Make a log that the task is currently running."""
