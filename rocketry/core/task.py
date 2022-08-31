@@ -886,8 +886,18 @@ class Task(RedBase, BaseModel):
         try:
             self.logger.handle(record)
         except Exception as exc:
+            if record.action == "run":
+                # The task started and the run must be set
+                # even though the task partly failed already
+                setattr(self, cache_attr, record_time)
+                self.status = record.action
+            else:
+                # Logging is part of the task so even if the task 
+                # function itself succeeded, the task failed
+                setattr(self, "last_fail", record_time)
+                self.status = "fail"
             raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
-        finally:
+        else:
             setattr(self, cache_attr, record_time)
             self.status = record.action
 
@@ -942,8 +952,14 @@ class Task(RedBase, BaseModel):
                 extra=extra
             )
         except Exception as exc:
+            if action == "run":
+                setattr(self, cache_attr, now)
+                self.status = action
+            else:
+                setattr(self, "last_fail", now)
+                self.status = "fail"
             raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
-        finally:
+        else:
             setattr(self, cache_attr, now)
             self.status = action
 
