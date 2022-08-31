@@ -393,6 +393,16 @@ class Task(RedBase, BaseModel):
                 self.run_as_thread(params=params, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
+        except TaskLoggingError:
+            if self.status == "run" and execution not in ('thread', 'process'):
+                # Task logging to run failed
+                # so we log it to fail
+
+                # NOTE: processes and threads log independently 
+                # and it is not aware the logging failed
+                # (there is a log record still coming about the finish)
+                self.log_failure()
+            raise
         except Exception as exc:
             # Something went wrong in the initiation
             # and it did not reach to log_running
@@ -546,6 +556,7 @@ class Task(RedBase, BaseModel):
         except TaskLoggingError as exc:
             # Logging failed
             self._thread_error = exc
+            self.log_failure()
             raise
         finally:
             event.set()
