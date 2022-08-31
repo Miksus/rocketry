@@ -430,10 +430,10 @@ class Task(RedBase, BaseModel):
         return cond
 
     def run_as_main(self, params:Parameters):
+        self.log_running()
         return self._run_as_main(params, self.parameters)
 
     def _run_as_main(self, **kwargs):
-        self.log_running()
         return asyncio.run(self._run_as_async(**kwargs))
 
     async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
