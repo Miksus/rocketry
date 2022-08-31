@@ -187,10 +187,10 @@ class Scheduler(RedBase):
                     task.force_run = False
                 elif self.is_timeouted(task):
                     # Terminate the task
-                    await self.terminate_task(task, reason="timeout")
+                    await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                 elif self.is_out_of_condition(task):
                     # Terminate the task
-                    await self.terminate_task(task)
+                    await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
 
         self.handle_logs()
         self.check_thread_errors()
@@ -264,7 +264,7 @@ class Scheduler(RedBase):
             try:
                 await task._async_task
             except asyncio.CancelledError:
-                self._log_task(task, "log_termination")
+                self._log_task(task, "log_termination", reason=reason)
         else:
             # The process/thread probably just died after the check
             pass
@@ -443,19 +443,19 @@ class Scheduler(RedBase):
                     for task in self.tasks:
                         if task.permanent_task:
                             # Would never "finish" anyways
-                            await self.terminate_task(task)
+                            await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                         elif self.is_timeouted(task):
                             # Terminate the task
-                            await self.terminate_task(task, reason="timeout")
+                            await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                         elif self.is_out_of_condition(task):
                             # Terminate the task
-                            await self.terminate_task(task)
+                            await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
             except Exception as exception:
                 # Fuck it, terminate all
                 await self._shut_down_tasks(exception=exception)
                 raise
         else:
-            await self.terminate_all(reason="shutdown")
+            await self.terminate_all(reason="Instant shutdown of the scheduler")
 
     async def wait_task_alive(self):
         """Wait till all, especially threading tasks, are finished."""
