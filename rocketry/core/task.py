@@ -828,7 +828,7 @@ class Task(RedBase, BaseModel):
                 if not self.is_alive():
                     # There will be no "run" log record thus ending the task gracefully
                     self.logger.critical(f"Task '{self.name}' crashed in setup", extra={"action": "fail"})
-                    return
+                    raise TaskSetupError(f"Task '{self.name}' process crashed silently")
             else:
                 
                 #self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
