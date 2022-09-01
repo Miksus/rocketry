@@ -51,8 +51,8 @@ class Config(BaseModel):
     task_logger_basename: str = "rocketry.task"
     scheduler_logger_basename: str = "rocketry.scheduler"
 
-    silence_task_prerun: Optional[bool] = None # Whether to silence errors occurred in setting a task to run
-    silence_task_logging: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_task_prerun: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_task_logging: bool = False # Whether to silence errors occurred in logging a task
     silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
