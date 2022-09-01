@@ -80,8 +80,9 @@ Options
     - ``False``: The scheduler crashes. Useful for debug but not for production. (default)
 
     A failure in task logging commonly occurs if there are connection problems with the 
-    logging repository. Failure in logging might be severe as there can be tasks that 
-    actually ran but Rocketry is unable to register them as runned.
+    logging repository. Failure in logging might be severe as it leads to that Rocketry
+    is unable to maintain the history of what tasks ran and when causing some conditions
+    to be inaccurate.
 
 **silence_cond_check**: Whether to silence errors occurred when checking conditions' values.
 
