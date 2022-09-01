@@ -1,5 +1,6 @@
 
 import datetime
+import logging
 import pickle
 from textwrap import dedent
 import pytest
@@ -7,8 +8,10 @@ from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
 from rocketry.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
 from rocketry.args import Arg, Session, Task
+from rocketry.exc import TaskLoggingError
 from rocketry.log import MinimalRecord
 from rocketry import Session as SessionClass
+from rocketry.testing.log import create_task_record
 
 class DummyTask(BaseTask):
 
@@ -48,6 +51,23 @@ def test_set_invalid_status(session):
     task = DummyTask(name="mytest", session=session)
     with pytest.raises(ValueError):
         task.status = "not valid"
+
+def test_failed_logging(session):
+
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            raise RuntimeError("Oops")
+
+    logging.getLogger("rocketry.task").handlers.insert(0, MyHandler())
+    task = DummyTask(name="mytest", session=session)
+    for func in (task.log_crash, task.log_failure, task.log_success, task.log_inaction, task.log_termination):
+        with pytest.raises(TaskLoggingError):
+            func()
+
+    record = create_task_record(created=1, task_name="mytest", action="run")
+
+    with pytest.raises(TaskLoggingError):
+        task.log_record(record) # Used by process logging
 
 def test_pickle(session):
     task_1 = DummyTask(name="mytest", session=session)

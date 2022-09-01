@@ -1,21 +1,27 @@
 
 import datetime
+import logging
 import time
 import os, re
 import multiprocessing
 
 import pytest
 
+from redbird.repos import MemoryRepo
+from redbird.logging import RepoHandler
+
 import rocketry
 from rocketry import Session
+from rocketry.args import TerminationFlag, Session as SessionArg
 from rocketry.conditions.task import TaskFailed
 from rocketry.core import Scheduler, Parameters
 from rocketry.core import BaseCondition
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.exc import TaskInactionException
+from rocketry.exc import TaskInactionException, TaskTerminationException
 from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 from rocketry.core import BaseArgument
+from rocketry.exc import TaskSetupError
 
 class FailingArgument(BaseArgument):
 
@@ -42,6 +48,15 @@ def do_stuff():
 
 def do_stuff_with_arg(arg):
     ...
+
+def run_slow_thread(flag=TerminationFlag(), session=SessionArg()):
+    while session.scheduler.n_cycles < 2 and not flag.is_set():
+        time.sleep(0.0001)
+    if flag.is_set():
+        raise TaskTerminationException()
+
+def run_slow():
+    time.sleep(2)
 
 @pytest.mark.parametrize(
     "execution,fail_in", [
@@ -107,14 +122,24 @@ def test_raise_param_failure(execution, session, fail_in):
     task = FuncTask(do_stuff_with_arg, name="a task", parameters={"arg": FailingArgument(fail_in)}, start_cond=AlwaysTrue(), execution=execution, session=session)
     session.config.shut_cond = (TaskStarted(task="a task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 second"))
     
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TaskSetupError):
         session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_raise_task_cond_failure(execution, session):
+def test_raise_task_start_cond_failure(execution, session):
     session.config.silence_cond_check = False
     task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution, session=session)
 
+    session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("5 second"))
+    
+    with pytest.raises(RuntimeError):
+        session.start()
+
+@pytest.mark.parametrize("execution", ["thread", "process"])
+def test_raise_task_end_cond_failure(execution, session):
+    session.config.silence_cond_check = False
+    func = run_slow if execution == "process" else run_slow_thread if execution == "thread" else do_stuff
+    task = FuncTask(func, name="a task", start_cond=AlwaysTrue(), end_cond=FailingCondition(), execution=execution, session=session)
 
     session.config.shut_cond = ~SchedulerStarted(period=TimeDelta("5 second"))
     
@@ -133,14 +158,43 @@ def test_raise_sched_cond_failure(execution, session):
         session.start()
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_silence_task_cond_failure(execution, session):
-    session.config.silence_cond_check = True
-    task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution)
+@pytest.mark.parametrize("which", ["start_cond", "end_cond"])
+def test_silence_task_cond_failure(execution, which, session):
+    logger = logging.getLogger("rocketry.scheduler")
+    sched_logs = MemoryRepo()
+    handler = RepoHandler(sched_logs)
+    try:
+        logger.addHandler(handler)
 
-    session.config.shut_cond =SchedulerCycles() >= 3
-    session.start()
+        session.config.silence_cond_check = True
+        session.config.shut_cond =SchedulerCycles() >= 3
+        if which == "start_cond":
+            task = FuncTask(do_stuff, name="a task", start_cond=FailingCondition(), execution=execution, session=session)
+        elif which == "end_cond":
+            func = run_slow if execution == "process" else run_slow_thread if execution == "thread" else do_stuff
+            task = FuncTask(func, name="a task", start_cond=~TaskStarted(), end_cond=FailingCondition(), execution=execution, session=session)
+        
+        session.start()
 
-    assert task.status is None
+        if which == "start_cond":
+            assert task.status is None
+            errors = sched_logs.filter_by(levelname="ERROR").all()
+            assert len(errors) == 3
+
+            assert errors[0]['msg'] == "Condition crashed for task 'a task'"
+        elif which == "end_cond":
+            if execution == "main":
+                assert task.status == "success"
+            else:
+                assert task.status == "terminate"
+
+
+    finally:
+        logger.handlers = [
+            hdlr
+            for hdlr in logger.handlers
+            if hdlr is not handler
+        ]
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_silence_sched_cond_failure(execution, session):

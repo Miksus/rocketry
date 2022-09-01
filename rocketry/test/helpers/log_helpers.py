@@ -3,6 +3,7 @@ import logging
 import sys
 
 from rocketry.pybox.time.convert import to_datetime
+from rocketry.testing.log import create_task_record
 
 def log_task_record(task, now, action, start_time=None):
     "Copy of the mechanism of creating an action log"
@@ -31,15 +32,12 @@ def log_task_record(task, now, action, start_time=None):
             start_time = to_datetime(start_time)
 
 
-    record = logging.LogRecord(
+    record = create_task_record(
         # The content here should not matter for task status
-        name='rocketry.core.task', level=logging.INFO, lineno=1, 
-        pathname='rocketry\\rocketry\\core\\task\\base.py',
         msg=msg, args=(), exc_info=exc_info,
+        created=now, action=action, taask_name=task.name,
     )
-    record.created = int(now.timestamp())
-    record.action = action
-    record.task_name = task.name
+
     record.start = start_time
     if action != "run":
         record.end = now

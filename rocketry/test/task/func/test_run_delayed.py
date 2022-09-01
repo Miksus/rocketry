@@ -37,7 +37,8 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             func_name="main",
             path=script_path, 
             name="a task",
-            execution=execution
+            execution=execution,
+            session=session
         )
         try:
             task()

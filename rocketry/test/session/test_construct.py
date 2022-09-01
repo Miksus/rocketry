@@ -27,6 +27,7 @@ def test_empty():
 
     assert isinstance(config, Config)
     assert not config.silence_task_prerun
+    assert not config.silence_task_logging
     assert not config.silence_cond_check
     assert config.task_pre_exist == 'raise'
     assert config.timeout == datetime.timedelta(minutes=30)

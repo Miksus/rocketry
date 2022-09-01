@@ -10,6 +10,7 @@ from rocketry import Session
 from rocketry.log.log_record import  MinimalRecord
 
 from rocketry.tasks import FuncTask
+from rocketry.testing.log import create_task_record
 
 def run_success():
     pass
@@ -117,18 +118,13 @@ def test_handle(session):
 
     def create_record(action, task_name):
         # Util func to create a LogRecord
-        record = logging.LogRecord(
-            level=logging.INFO,
+        record = create_task_record(
+            task_name=task_name,
+            action=action,
             exc_info=None,
             # These should not matter:
             name="rocketry.task._process",
-            pathname=__file__,
-            lineno=1,
-            msg="",
-            args=None,
         )
-        record.action = action
-        record.task_name = task_name
         return record
 
     task = FuncTask(

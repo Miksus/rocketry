@@ -130,7 +130,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
-    session = Session(config={"debug": True, "silence_task_prerun": False})
+    session = Session(config={"debug": True, "silence_task_logging": False})
     rocketry.session = session
     session.set_as_default()
 
@@ -190,7 +190,7 @@ def test_task_status(session, execution, func_type, mode):
 
     task_success = FuncTask(
         run_succeeding if func_type == "sync" else run_succeeding_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task success") < 3, 
         name="task success",
         execution=execution,
         priority=0,
@@ -198,7 +198,7 @@ def test_task_status(session, execution, func_type, mode):
     )
     task_fail = FuncTask(
         run_failing if func_type == "sync" else run_failing_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task fail") < 3, 
         name="task fail",
         execution=execution,
         priority=0,
@@ -206,7 +206,7 @@ def test_task_status(session, execution, func_type, mode):
     )
     task_inact = FuncTask(
         run_inacting if func_type == "sync" else run_inacting_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task inact") < 3, 
         name="task inact",
         execution=execution,
         priority=100,
@@ -220,7 +220,11 @@ def test_task_status(session, execution, func_type, mode):
         priority=0,
         session=session
     )
-    session.config.shut_cond = (TaskStarted(task="task inact") >= 3) | ~SchedulerStarted(period=TimeDelta("20 second"))
+    session.config.shut_cond = (
+        (TaskStarted(task="task success") >= 3)
+        & (TaskStarted(task="task fail") >= 3)
+        & (TaskStarted(task="task inact") >= 3)
+    ) | ~SchedulerStarted(period=TimeDelta("20 second"))
     session.start()
 
     # Test status

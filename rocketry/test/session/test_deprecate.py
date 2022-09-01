@@ -5,6 +5,7 @@ import pytest
 from rocketry.core.log.adapter import TaskAdapter
 from rocketry.tasks import FuncTask
 from rocketry.core import Parameters, Scheduler
+from rocketry import Session
 
 def test_shutdown(session):
     assert not session.scheduler._flag_shutdown.is_set()

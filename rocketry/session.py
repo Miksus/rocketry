@@ -41,6 +41,7 @@ class Config(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
+    # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
     task_execution: str = 'process'
@@ -51,6 +52,7 @@ class Config(BaseModel):
     scheduler_logger_basename: str = "rocketry.scheduler"
 
     silence_task_prerun: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_task_logging: bool = False # Whether to silence errors occurred in logging a task
     silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
