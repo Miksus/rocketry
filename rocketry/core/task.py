@@ -198,6 +198,7 @@ class Task(RedBase, BaseModel):
     _thread_error: Exception = PrivateAttr(default=None)
     _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
     _async_task: Optional[asyncio.Task] = PrivateAttr(default=None)
+    _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
 
@@ -374,6 +375,7 @@ class Task(RedBase, BaseModel):
                 self.log_running()
                 async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
                 if execution == "main":
+                    self._main_alive = True
                     await async_task
                 else:
                     self._async_task = async_task
@@ -410,6 +412,9 @@ class Task(RedBase, BaseModel):
                 self.log_running()
             self.log_failure()
             raise TaskSetupError("Task failed before logging") from exc
+        finally:
+            # Clean up
+            self._main_alive = False
 
     def __bool__(self):
         return self.is_runnable()
@@ -808,7 +813,10 @@ class Task(RedBase, BaseModel):
 
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
-        return self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+
+    def is_alive_as_main(self) -> bool:
+        return self._main_alive
 
     def is_alive_as_async(self) -> bool:
         return self._async_task is not None and not self._async_task.done()
