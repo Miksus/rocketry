@@ -406,7 +406,10 @@ class Scheduler(RedBase):
     def has_free_processors(self) -> bool:
         """Whether the Scheduler has free processors to
         allocate more tasks."""
-        return self.n_alive <= self.session.config.max_process_count
+        return self.count_process_tasks_alive() < self.session.config.max_process_count
+
+    def count_process_tasks_alive(self):
+        return sum(task.is_alive_as_process() for task in self.tasks)
 
     @property
     def n_alive(self) -> int:
