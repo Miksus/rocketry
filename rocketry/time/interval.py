@@ -159,7 +159,7 @@ class TimeOfWeek(AnchoredInterval):
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
-            microseconds = to_microseconds(day=1) - 1 if side == "end" else 0
+            microseconds = to_microseconds(day=1) if side == "end" else 0
         else:
             microseconds = TimeOfDay().anchor_str(time) 
 
