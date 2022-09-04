@@ -31,6 +31,8 @@ def pytest_generate_tests(metafunc):
             params = cls.scen_open_right
         elif method_name == "test_time_point":
             params = cls.scen_time_point
+        elif method_name == "test_starting":
+            params = cls.scen_starting
         elif method_name == "test_value_error":
             params = cls.scen_value_error
         else:
@@ -82,6 +84,17 @@ class ConstructTester:
         assert not time.is_full()
         assert expected_start == time._start
         assert expected_end == time._end
+
+    def test_starting(self, start, expected_start, **kwargs):
+        time = self.cls(start, starting=True)
+        assert time.is_full()
+        assert expected_start == time._start
+        assert expected_start == time._end
+
+        time = self.cls.starting(start)
+        assert time.is_full()
+        assert expected_start == time._start
+        assert expected_start == time._end
 
     def test_value_error(self, start, end):
         with pytest.raises(ValueError):
@@ -151,7 +164,12 @@ class TestTimeOfMinute(ConstructTester):
             "expected_end": 13 * MS_IN_SECOND,
         }
     ]
-
+    scen_starting = [
+        {
+            "start": "12:00",
+            "expected_start": 12 * MS_IN_SECOND,
+        }
+    ]
     scen_value_error = [
         {
             "start": 60,
@@ -197,6 +215,12 @@ class TestTimeOfHour(ConstructTester):
             "start": "12:00",
             "expected_start": 12 * MS_IN_MINUTE,
             "expected_end": 13 * MS_IN_MINUTE,
+        }
+    ]
+    scen_starting = [
+        {
+            "start": "12:00",
+            "expected_start": 12 * MS_IN_MINUTE,
         }
     ]
 
@@ -245,6 +269,12 @@ class TestTimeOfDay(ConstructTester):
             "start": "12:00",
             "expected_start": 12 * MS_IN_HOUR,
             "expected_end": 13 * MS_IN_HOUR,
+        },
+    ]
+    scen_starting = [
+        {
+            "start": "12:00",
+            "expected_start": 12 * MS_IN_HOUR,
         }
     ]
     scen_value_error = [
@@ -302,6 +332,12 @@ class TestTimeOfWeek(ConstructTester):
             "start": "Tue",
             "expected_start": 1 * MS_IN_DAY,
             "expected_end": 2 * MS_IN_DAY,
+        }
+    ]
+    scen_starting = [
+        {
+            "start": "Tue",
+            "expected_start": 1 * MS_IN_DAY,
         }
     ]
     scen_value_error = [
@@ -432,6 +468,12 @@ class TestTimeOfYear(ConstructTester):
             "expected_start": (366 - 31) * MS_IN_DAY,
             "expected_end": 366 * MS_IN_DAY - 1,
         },
+    ]
+    scen_starting = [
+        {
+            "start": "Feb",
+            "expected_start": 31 * MS_IN_DAY,
+        }
     ]
     scen_value_error = [
         {

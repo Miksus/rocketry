@@ -54,7 +54,7 @@ class AnchoredInterval(TimeInterval):
     _unit_names: ClassVar[List] = None
     _unit_mapping: ClassVar[Dict[str, int]] = {}
 
-    def __init__(self, start=None, end=None, time_point=None, right_closed=False):
+    def __init__(self, start=None, end=None, time_point=None, starting=None, right_closed=False):
 
         if start is None and end is None:
             if time_point:
@@ -63,7 +63,7 @@ class AnchoredInterval(TimeInterval):
             object.__setattr__(self, "_end", self._scope_max)
         else:
             self.set_start(start)
-            self.set_end(end, time_point=time_point, right_closed=right_closed)
+            self.set_end(end, time_point=time_point, right_closed=right_closed, starting=starting)
 
     def anchor(self, value, **kwargs):
         "Turn value to nanoseconds relative to scope of the class"
@@ -124,10 +124,12 @@ class AnchoredInterval(TimeInterval):
         object.__setattr__(self, "_start", ms)
         object.__setattr__(self, "_start_orig", val)
 
-    def set_end(self, val, right_closed=False, time_point=False):
+    def set_end(self, val, right_closed=False, time_point=False, starting=False):
         if time_point and val is None:
             # Interval is "at" type, ie. on monday, at 10:00 (10:00 - 10:59:59)
             ms = self.to_timepoint(self._start)
+        elif starting and val is None:
+            ms = self._start
         elif val is None:
             ms = self._scope_max            
         else:
@@ -421,4 +423,4 @@ class AnchoredInterval(TimeInterval):
 
     @classmethod
     def starting(cls, value):
-        return cls(value, value)
+        return cls(value, starting=True)
