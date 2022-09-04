@@ -65,12 +65,12 @@ class TimeOfHour(AnchoredInterval):
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
             return to_microseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
 
-        res = re.search(r"(?P<n>[1-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
+        res = re.search(r"(?P<n>[0-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
         if res:
             # ie. "1 quarter"
             n_quarters = int(res["n"])
             return (self._scope_max + 1) / 4 * n_quarters - 1
-
+        raise ValueError(f"Invalid value: {repr(s)}")
 
 @dataclass(frozen=True, init=False)
 class TimeOfDay(AnchoredInterval):
@@ -155,7 +155,10 @@ class TimeOfWeek(AnchoredInterval):
         comps = res.groupdict()
         dayofweek = comps.pop("dayofweek")
         time = comps.pop("time")
-        nth_day = self._unit_mapping[dayofweek.lower()]
+        try:
+            nth_day = self._unit_mapping[dayofweek.lower()]
+        except KeyError:
+            raise ValueError(f"Invalid day of week: {dayofweek}")
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
