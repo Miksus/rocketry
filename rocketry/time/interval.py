@@ -26,6 +26,11 @@ class TimeOfMinute(AnchoredInterval):
     _unit_resolution: ClassVar[int] = to_microseconds(second=1)
     _unit_names: ClassVar[List[str]] = [f"{i:02d}" for i in range(60)] # 00, 01 etc. till 59
 
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 59:
+            raise ValueError(f"Invalid minute: {i}. Minute is from 0 to 59")
+        return super().anchor_int(i, **kwargs)
+
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
         res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?", s, flags=re.IGNORECASE)
