@@ -378,7 +378,7 @@ class TestTimeOfMonth(ConstructTester):
     scen_open_left = [
         {
             "end": "3.",
-            "expected_end": 3 * MS_IN_DAY - 1 
+            "expected_end": 3 * MS_IN_DAY
         }
     ]
     scen_open_right = [
@@ -392,6 +392,12 @@ class TestTimeOfMonth(ConstructTester):
             "start": "2.",
             "expected_start": 1 * MS_IN_DAY,
             "expected_end": 2 * MS_IN_DAY,
+        }
+    ]
+    scen_starting = [
+        {
+            "start": "2.",
+            "expected_start": 1 * MS_IN_DAY,
         }
     ]
     scen_value_error = [
