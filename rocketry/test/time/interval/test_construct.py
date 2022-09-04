@@ -1,6 +1,7 @@
 
 import pytest
 from rocketry.time.interval import (
+    TimeOfMinute,
     TimeOfDay,
     TimeOfHour,
     TimeOfMonth,
@@ -8,6 +9,7 @@ from rocketry.time.interval import (
     TimeOfYear
 )
 
+MS_IN_MILLISECOND = 1000
 MS_IN_SECOND = int(1e+6)
 MS_IN_MINUTE = int(1e+6 * 60)
 MS_IN_HOUR   = int(1e+6 * 60 * 60)
@@ -40,7 +42,7 @@ def pytest_generate_tests(metafunc):
         argvalues = []
         argvalues = []
         for scen in params:
-            idlist.append(scen.pop("id", f'{scen.get("start")}, {scen.get("end")}'))
+            idlist.append(scen.pop("id", f'{repr(scen.get("start"))}, {repr(scen.get("end"))}'))
             argvalues.append(tuple(scen[name] for name in argnames))
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
@@ -84,6 +86,78 @@ class ConstructTester:
     def test_value_error(self, start, end):
         with pytest.raises(ValueError):
             time = self.cls(start, end)
+
+class TestTimeOfMinute(ConstructTester):
+
+    cls = TimeOfMinute
+
+    max_ms = MS_IN_MINUTE
+
+    scen_closed = [
+        {
+            "start": "15",
+            "end": "45",
+            "expected_start": 15 * MS_IN_SECOND,
+            "expected_end": 45 * MS_IN_SECOND,
+        },
+        {
+            "start": "15.000",
+            "end": "45.000",
+            "expected_start": 15 * MS_IN_SECOND,
+            "expected_end": 45 * MS_IN_SECOND,
+        },
+        {
+            "start": "15.5",
+            "end": "45.5",
+            "expected_start": 15 * MS_IN_SECOND + MS_IN_MILLISECOND * 500,
+            "expected_end": 45 * MS_IN_SECOND + MS_IN_MILLISECOND * 500,
+        },
+        {
+            "start": "15.005",
+            "end": "45.005",
+            "expected_start": 15 * MS_IN_SECOND + MS_IN_MILLISECOND * 5,
+            "expected_end": 45 * MS_IN_SECOND + MS_IN_MILLISECOND * 5,
+        },
+        {
+            "start": "15.000005",
+            "end": "45.000005",
+            "expected_start": 15 * MS_IN_SECOND + 5,
+            "expected_end": 45 * MS_IN_SECOND + 5,
+        },
+        {
+            "start": 15,
+            "end": 45,
+            "expected_start": 15 * MS_IN_SECOND,
+            "expected_end": 46 * MS_IN_SECOND - 1,
+        },
+    ]
+
+    scen_open_left = [
+        {
+            "end": "45.00",
+            "expected_end": 45 * MS_IN_SECOND
+        }
+    ]
+    scen_open_right = [
+        {
+            "start": "45",
+            "expected_start": 45 * MS_IN_SECOND
+        }
+    ]
+    scen_time_point = [
+        {
+            "start": "12:00",
+            "expected_start": 12 * MS_IN_SECOND,
+            "expected_end": 13 * MS_IN_SECOND,
+        }
+    ]
+
+    scen_value_error = [
+        {
+            "start": 60,
+            "end": None
+        }
+    ]
 
 class TestTimeOfHour(ConstructTester):
 
