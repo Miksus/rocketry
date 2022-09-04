@@ -120,7 +120,7 @@ class AnchoredInterval(TimeInterval):
             ms = 0
         else:
             ms = self.anchor(val, side="start")
-
+        self._validate(ms, orig=val)
         object.__setattr__(self, "_start", ms)
         object.__setattr__(self, "_start_orig", val)
 
@@ -138,7 +138,7 @@ class AnchoredInterval(TimeInterval):
             # given the end argument, ie. if "09:00 to 10:00" excludes 10:00 
             # we can include it by adding one nanosecond to 10:00
             ms += 1
-
+        self._validate(ms, orig=val)
         object.__setattr__(self, "_end", ms)
         object.__setattr__(self, "_end_orig", val)
 
@@ -148,6 +148,10 @@ class AnchoredInterval(TimeInterval):
         # By default assumes linear scale (like week)
         # but can be overridden for non linear such as year
         return ms + self._unit_resolution
+
+    def _validate(self, n:int, orig):
+        if n < 0 or n > self._scope_max:
+            raise ValueError(f"Out of bound: {repr(orig)}")
 
     @property
     def start(self):
