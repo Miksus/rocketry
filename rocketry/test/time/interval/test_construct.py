@@ -228,7 +228,11 @@ class TestTimeOfHour(ConstructTester):
         {
             "start": 60,
             "end": None
-        }
+        },
+        {
+            "start": None,
+            "end": "60:01"
+        },
     ]
 
 class TestTimeOfDay(ConstructTester):
@@ -270,6 +274,11 @@ class TestTimeOfDay(ConstructTester):
             "expected_start": 12 * MS_IN_HOUR,
             "expected_end": 13 * MS_IN_HOUR,
         },
+        {
+            "start": "23:00",
+            "expected_start": 23 * MS_IN_HOUR,
+            "expected_end": 24 * MS_IN_HOUR,
+        },
     ]
     scen_starting = [
         {
@@ -279,9 +288,21 @@ class TestTimeOfDay(ConstructTester):
     ]
     scen_value_error = [
         {
+            "start": -1,
+            "end": None,
+        },
+        {
+            "start": "asd",
+            "end": None,
+        },
+        {
             "start": 24,
             "end": None,
-        }
+        },
+        {
+            "start": None,
+            "end": "24:01",
+        },
     ]
 
 
@@ -344,7 +365,11 @@ class TestTimeOfWeek(ConstructTester):
         {
             "start": 0,
             "end": None
-        }
+        },
+        {
+            "start": "Asd",
+            "end": None
+        },
     ]
 
 
@@ -408,7 +433,11 @@ class TestTimeOfMonth(ConstructTester):
         {
             "start": None,
             "end": 32,
-        }
+        },
+        {
+            "start": "33.",
+            "end": None
+        },
     ]
 
 class TestTimeOfYear(ConstructTester):
