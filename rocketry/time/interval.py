@@ -225,7 +225,7 @@ class TimeOfMonth(AnchoredInterval):
             # If one says 'thing X was organized between 
             # 15th and 17th of July', the sentence
             # includes 17th till midnight.
-            microseconds = to_microseconds(day=1) - 1
+            microseconds = to_microseconds(day=1)
         elif time:
             microseconds = TimeOfDay().anchor_str(time) 
         else:

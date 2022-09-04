@@ -81,7 +81,7 @@ class AnchoredInterval(TimeInterval):
 
     def anchor_int(self, i, side=None, time_point=None, **kwargs):
         if side == "end":
-            return (i + 1) * self._unit_resolution - 1
+            return (i + 1) * self._unit_resolution
         return i * self._unit_resolution
 
     def anchor_dict(self, d, **kwargs):

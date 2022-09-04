@@ -141,7 +141,7 @@ class TestTimeOfMinute(ConstructTester):
             "start": 15,
             "end": 45,
             "expected_start": 15 * MS_IN_SECOND,
-            "expected_end": 46 * MS_IN_SECOND - 1,
+            "expected_end": 46 * MS_IN_SECOND,
         },
     ]
 
@@ -194,7 +194,7 @@ class TestTimeOfHour(ConstructTester):
             "start": 15,
             "end": 45,
             "expected_start": 15 * MS_IN_MINUTE,
-            "expected_end": 46 * MS_IN_MINUTE - 1,
+            "expected_end": 46 * MS_IN_MINUTE,
         },
     ]
 
@@ -248,7 +248,7 @@ class TestTimeOfDay(ConstructTester):
             "start": 10,
             "end": 12,
             "expected_start": 10 * MS_IN_HOUR,
-            "expected_end": 13 * MS_IN_HOUR - 1,
+            "expected_end": 13 * MS_IN_HOUR,
         },
     ]
 
@@ -297,28 +297,28 @@ class TestTimeOfWeek(ConstructTester):
             "start": "Tue",
             "end": "Wed",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 3 * MS_IN_DAY - 1,
+            "expected_end": 3 * MS_IN_DAY,
         },
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
             "start": "Tuesday",
             "end": "Wednesday",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 3 * MS_IN_DAY - 1,
+            "expected_end": 3 * MS_IN_DAY,
         },
         {
             # Spans from Tue 00:00:00 to Wed 23:59:59 999
             "start": 2,
             "end": 3,
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 3 * MS_IN_DAY - 1,
+            "expected_end": 3 * MS_IN_DAY,
         },
     ]
 
     scen_open_left = [
         {
             "end": "Tue",
-            "expected_end": 2 * MS_IN_DAY - 1 # Tuesday 23:59:59 ...
+            "expected_end": 2 * MS_IN_DAY # Tuesday 23:59:59 ...
         }
     ]
     scen_open_right = [
@@ -359,19 +359,19 @@ class TestTimeOfMonth(ConstructTester):
             "start": "2.",
             "end": "3.",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 3 * MS_IN_DAY - 1,
+            "expected_end": 3 * MS_IN_DAY,
         },
         {
             "start": "2nd",
             "end": "4th",
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 4 * MS_IN_DAY - 1,
+            "expected_end": 4 * MS_IN_DAY,
         },
         {
             "start": 2,
             "end": 4,
             "expected_start": 1 * MS_IN_DAY,
-            "expected_end": 4 * MS_IN_DAY - 1,
+            "expected_end": 4 * MS_IN_DAY,
         },
     ]
 
