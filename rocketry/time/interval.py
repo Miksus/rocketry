@@ -18,10 +18,6 @@ class TimeOfMinute(AnchoredInterval):
 
     min: 0 seconds, 0 microsecond
     max: 59 seconds, 999999 microsecond
-
-    Example:
-        # From 5th second of a minute to 30th second of a minute
-        TimeOfHour("5:00", "30:00")
     """
 
     _scope: ClassVar[str] = "minute"
@@ -34,15 +30,10 @@ class TimeOfMinute(AnchoredInterval):
         # ie. 30.123
         res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?", s, flags=re.IGNORECASE)
         if res:
+            res = res.groupdict()
             if res["microsecond"] is not None:
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
-            return to_microseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
-
-        res = re.search(r"(?P<n>[1-4] ?(quarter|q))", s, flags=re.IGNORECASE)
-        if res:
-            # ie. "1 quarter"
-            n_quarters = res["n"]
-            return (self._scope_max + 1) / 4 * n_quarters - 1
+            return to_microseconds(**{key: int(val) for key, val in res.items() if val is not None})
 
 
 @dataclass(frozen=True, init=False)
