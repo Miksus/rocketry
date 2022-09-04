@@ -152,6 +152,15 @@ def cron(__expr=None, **kwargs):
     period = Cron(*args, **kwargs)
     return TaskRunnable(period=period)
 
+def crontime(__expr=None, **kwargs):
+    if __expr:
+        args = __expr.split(" ")
+    else:
+        args = ()
+
+    period = Cron(*args, **kwargs)
+    return IsPeriod(period=period)
+
 # Task pipelining
 # ---------------
 
