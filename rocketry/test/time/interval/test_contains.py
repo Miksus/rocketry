@@ -3,12 +3,51 @@ import pytest
 from datetime import datetime
 
 from rocketry.time.interval import (
+    TimeOfSecond,
     TimeOfMinute,
     TimeOfHour,
     TimeOfDay,
     TimeOfWeek,
     TimeOfMonth,
 )
+
+# TimeOfSecond
+# ---------
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 0, 200_000),
+            TimeOfSecond(200, 700),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 0, 700_999),
+            TimeOfSecond(200, 700),
+            id="Right of interval"),
+    ],
+)
+def test_in_time_of_second(time, dt):
+    assert dt in time
+
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 0, 199_999),
+            TimeOfSecond(200, 700),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 0, 800_000),
+            TimeOfSecond(200, 700),
+            id="Right of interval"),
+    ],
+)
+def test_not_in_time_of_second(time, dt):
+    assert dt not in time
 
 # TimeOfMinute
 # ------------
