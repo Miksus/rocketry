@@ -48,6 +48,7 @@ cases_time = [
     pytest.param("monthly", monthly, id="monthly"),
 
     pytest.param("secondly starting 500",   TaskExecutable(period=TimeOfSecond.starting("500")), id="secondly starting"),
+    pytest.param("minutely starting 45:00",   TaskExecutable(period=TimeOfMinute.starting("45:00")), id="minutely starting"),
     pytest.param("hourly starting 45:00",   TaskExecutable(period=TimeOfHour("45:00", "45:00")), id="hourly starting"),
     pytest.param("daily starting 10:00",    TaskExecutable(period=TimeOfDay("10:00", "10:00")),  id="daily starting"),
     pytest.param("weekly starting Tuesday", TaskExecutable(period=TimeOfWeek("Tue", "Tue")),     id="weekly starting"),

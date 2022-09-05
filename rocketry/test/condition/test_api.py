@@ -35,6 +35,7 @@ params_basic = [
 
 params_time = [
     pytest.param(time_of_second.starting(500), IsPeriod(period=TimeOfSecond.starting(500)), id="time of second starting"),
+    pytest.param(time_of_minute.starting(45.00), IsPeriod(period=TimeOfMinute.starting(45.00)), id="time of minute starting"),
     pytest.param(time_of_hour.after("45:00"), IsPeriod(period=TimeOfHour("45:00", None)), id="time of hour after"),
 
     pytest.param(time_of_day.after("10:00"), IsPeriod(period=TimeOfDay("10:00", None)), id="time of day after"),
