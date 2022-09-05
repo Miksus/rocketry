@@ -28,7 +28,7 @@ class TimeOfMinute(AnchoredInterval):
 
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 59:
-            raise ValueError(f"Invalid minute: {i}. Minute is from 0 to 59")
+            raise ValueError(f"Invalid value: {i}. Allowed: 0-59")
         return super().anchor_int(i, **kwargs)
 
     def anchor_str(self, s, **kwargs):
