@@ -43,9 +43,10 @@ Options
 
     Options: 
 
-    - process: on separate process (default)
-    - thread: on separate thread
-    - main: no parallelization
+    - ``main``: no parallelization
+    - ``async``: run async if can (default in the future)
+    - ``thread``: on separate thread
+    - ``process``: on separate process (default)
 
 **task_pre_exist**: What happens if a task with given name already exists. 
 
