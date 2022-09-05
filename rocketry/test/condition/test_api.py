@@ -6,7 +6,7 @@ from rocketry.conds import (
     true, false,
     every,
     secondly, minutely, hourly, daily, weekly, monthly,
-    time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
+    time_of_second, time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
     after_finish, after_success, after_fail,
 
     after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
@@ -34,6 +34,7 @@ params_basic = [
 ]
 
 params_time = [
+    pytest.param(time_of_second.starting(500), IsPeriod(period=TimeOfSecond.starting(500)), id="time of second starting"),
     pytest.param(time_of_hour.after("45:00"), IsPeriod(period=TimeOfHour("45:00", None)), id="time of hour after"),
 
     pytest.param(time_of_day.after("10:00"), IsPeriod(period=TimeOfDay("10:00", None)), id="time of day after"),

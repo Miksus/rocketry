@@ -125,6 +125,7 @@ monthly = TimeCondWrapper(TaskExecutable, TimeOfMonth)
 # Time related
 # ------------
 
+time_of_second = TimeCondWrapper(IsPeriod, TimeOfSecond)
 time_of_minute = TimeCondWrapper(IsPeriod, TimeOfMinute)
 time_of_hour = TimeCondWrapper(IsPeriod, TimeOfHour)
 time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
