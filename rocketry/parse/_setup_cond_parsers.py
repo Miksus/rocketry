@@ -13,7 +13,7 @@ from rocketry.session import Session
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
 
 from rocketry.conds import (
-    minutely, hourly, daily, weekly, monthly, every,
+    secondly, minutely, hourly, daily, weekly, monthly, every,
     cron
 )
 
@@ -110,6 +110,7 @@ def _set_task_exec_parsing():
     cond_parsers = Session._cls_cond_parsers
 
     conds = {
+        "secondly": secondly,
         "minutely": minutely,
         "hourly": hourly,
         "daily": daily,

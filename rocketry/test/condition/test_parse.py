@@ -34,14 +34,14 @@ from rocketry.time import (
 )
 
 from rocketry.conds import (
-    minutely, hourly, daily, weekly, monthly
+    secondly, minutely, hourly, daily, weekly, monthly
 )
 from rocketry.time.cron import Cron
 from rocketry.time.interval import TimeOfSecond
 
 cases_time = [
-    pytest.param("secondly", minutely, id="hourly"),
-    pytest.param("minutely", minutely, id="hourly"),
+    pytest.param("secondly", secondly, id="secondly"),
+    pytest.param("minutely", minutely, id="minutely"),
     pytest.param("hourly", hourly, id="hourly"),
     pytest.param("daily", daily, id="daily"),
     pytest.param("weekly", weekly, id="weekly"),
