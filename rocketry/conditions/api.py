@@ -47,7 +47,7 @@ class TimeCondWrapper(BaseCondition):
         return self._get_cond(period)
 
     def starting(self, start):
-        period = self._cls_period(start, start)
+        period = self._cls_period.starting(start)
         return self._get_cond(period)
 
     def observe(self, **kwargs):
