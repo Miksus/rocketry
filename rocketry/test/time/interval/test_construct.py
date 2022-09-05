@@ -311,6 +311,11 @@ class TestTimeOfHour(ConstructTester):
             "start": None,
             "end": "60:01"
         },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
+        },
     ]
 
 class TestTimeOfDay(ConstructTester):
@@ -381,6 +386,11 @@ class TestTimeOfDay(ConstructTester):
             "start": None,
             "end": "24:01",
         },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
+        },
     ]
 
 
@@ -446,6 +456,11 @@ class TestTimeOfWeek(ConstructTester):
         },
         {
             "start": "Asd",
+            "end": None
+        },
+        {
+            # Float makes not much sense
+            "start": 2.5,
             "end": None
         },
     ]
@@ -514,6 +529,11 @@ class TestTimeOfMonth(ConstructTester):
         },
         {
             "start": "33.",
+            "end": None
+        },
+        {
+            # Float makes not much sense
+            "start": 2.5,
             "end": None
         },
     ]
@@ -596,5 +616,10 @@ class TestTimeOfYear(ConstructTester):
         {
             "start": None,
             "end": 13,
+        },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
         },
     ]
