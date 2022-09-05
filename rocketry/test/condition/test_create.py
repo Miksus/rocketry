@@ -1,6 +1,8 @@
 
 import re
 
+import pytest
+
 from rocketry.core import BaseCondition
 from rocketry.conditions import FuncCond
 from rocketry.parse.condition import parse_condition
@@ -30,3 +32,27 @@ def test_func_cond_with_kwargs():
     assert not bool(cond_false)
     
     assert cond_true is not cond_false
+
+def test_func_cond_pass():
+
+    @FuncCond()
+    def is_foo(myval):
+        return True if myval == "true" else False if myval == "false" else None
+
+    # Test cond API
+    cond = is_foo(myval="true")
+    assert cond.kwargs == {"myval": "true"}
+
+    cond = is_foo("true")
+    assert cond.args == ("true",)
+
+    assert is_foo(myval="true").observe()
+    assert is_foo("true").observe()
+    assert not is_foo(myval="false").observe()
+    assert not is_foo("false").observe()
+
+def test_func_cond_fail():
+    cond = FuncCond()
+    with pytest.raises(ValueError):
+        # Has no func specified so should fail
+        cond(value="asd")
