@@ -215,6 +215,12 @@ class TestTimeOfMinute(ConstructTester):
             "expected_start": 15 * MS_IN_SECOND,
             "expected_end": 46 * MS_IN_SECOND,
         },
+        {
+            "start": 15.005,
+            "end": 45.005,
+            "expected_start": 15 * MS_IN_SECOND + 5 * MS_IN_MILLISECOND,
+            "expected_end": 45 * MS_IN_SECOND + 5 * MS_IN_MILLISECOND,
+        },
     ]
 
     scen_open_left = [

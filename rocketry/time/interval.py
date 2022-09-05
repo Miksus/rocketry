@@ -54,6 +54,9 @@ class TimeOfMinute(AnchoredInterval):
     _unit_resolution: ClassVar[int] = to_microseconds(second=1)
     _unit_names: ClassVar[List[str]] = [f"{i:02d}" for i in range(60)] # 00, 01 etc. till 59
 
+    def anchor_float(self, i, **kwargs):
+        return to_microseconds(second=i)
+
     def anchor_int(self, i, **kwargs):
         if not 0 <= i <= 59:
             raise ValueError(f"Invalid value: {i}. Allowed: 0-59")
