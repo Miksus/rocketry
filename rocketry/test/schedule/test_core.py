@@ -515,3 +515,31 @@ def test_instant_shutdown(execution, session):
     assert 0 == task.logger.filter_by(action="fail").count()
     assert 0 == task.logger.filter_by(action="success").count()
     assert 1 == task.logger.filter_by(action="terminate").count()
+
+def test_cycle_sleep_none(session):
+    assert not session.config.instant_shutdown
+    session.config.instant_shutdown = True
+    session.config.cycle_sleep = None
+
+    order = []
+
+    async def run_async():
+        order.append("async start")
+        await asyncio.sleep(0)
+        order.append("async end")
+
+    def run_shutdown():
+        order.append("shutdown task")
+
+    FuncTask(run_async, execution="async", start_cond=true, session=session)
+    FuncTask(run_shutdown, execution="main", start_cond=true, session=session)
+
+    session.config.shut_cond = SchedulerCycles() == 1
+
+    session.start()
+
+    assert order == [
+        "async start",
+        "shutdown task",
+        "async end"
+    ]
