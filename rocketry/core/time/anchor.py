@@ -54,7 +54,7 @@ class AnchoredInterval(TimeInterval):
     _unit_names: ClassVar[List] = None
     _unit_mapping: ClassVar[Dict[str, int]] = {}
 
-    def __init__(self, start=None, end=None, time_point=None, right_closed=False):
+    def __init__(self, start=None, end=None, time_point=None, starting=None, right_closed=False):
 
         if start is None and end is None:
             if time_point:
@@ -63,7 +63,7 @@ class AnchoredInterval(TimeInterval):
             object.__setattr__(self, "_end", self._scope_max)
         else:
             self.set_start(start)
-            self.set_end(end, time_point=time_point, right_closed=right_closed)
+            self.set_end(end, time_point=time_point, right_closed=right_closed, starting=starting)
 
     def anchor(self, value, **kwargs):
         "Turn value to nanoseconds relative to scope of the class"
@@ -81,7 +81,7 @@ class AnchoredInterval(TimeInterval):
 
     def anchor_int(self, i, side=None, time_point=None, **kwargs):
         if side == "end":
-            return (i + 1) * self._unit_resolution - 1
+            return (i + 1) * self._unit_resolution
         return i * self._unit_resolution
 
     def anchor_dict(self, d, **kwargs):
@@ -120,14 +120,16 @@ class AnchoredInterval(TimeInterval):
             ms = 0
         else:
             ms = self.anchor(val, side="start")
-
+        self._validate(ms, orig=val)
         object.__setattr__(self, "_start", ms)
         object.__setattr__(self, "_start_orig", val)
 
-    def set_end(self, val, right_closed=False, time_point=False):
+    def set_end(self, val, right_closed=False, time_point=False, starting=False):
         if time_point and val is None:
             # Interval is "at" type, ie. on monday, at 10:00 (10:00 - 10:59:59)
             ms = self.to_timepoint(self._start)
+        elif starting and val is None:
+            ms = self._start
         elif val is None:
             ms = self._scope_max            
         else:
@@ -138,7 +140,7 @@ class AnchoredInterval(TimeInterval):
             # given the end argument, ie. if "09:00 to 10:00" excludes 10:00 
             # we can include it by adding one nanosecond to 10:00
             ms += 1
-
+        self._validate(ms, orig=val)
         object.__setattr__(self, "_end", ms)
         object.__setattr__(self, "_end_orig", val)
 
@@ -148,6 +150,10 @@ class AnchoredInterval(TimeInterval):
         # By default assumes linear scale (like week)
         # but can be overridden for non linear such as year
         return ms + self._unit_resolution
+
+    def _validate(self, n:int, orig):
+        if n < 0 or n > self._scope_max:
+            raise ValueError(f"Out of bound: {repr(orig)}")
 
     @property
     def start(self):
@@ -417,4 +423,4 @@ class AnchoredInterval(TimeInterval):
 
     @classmethod
     def starting(cls, value):
-        return cls(value, value)
+        return cls(value, starting=True)

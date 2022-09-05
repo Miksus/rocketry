@@ -8,6 +8,9 @@ from rocketry.time.interval import (
 
 from_iso = datetime.fromisoformat
 
+# TimeOfDay
+# ---------
+
 @pytest.mark.parametrize(
     "dt,start,end,roll_start,roll_end",
     [
@@ -68,7 +71,7 @@ from_iso = datetime.fromisoformat
             id="Left of full interval"),
     ],
 )
-def test_rollforward(start, end, dt, roll_start, roll_end):
+def test_rollforward_time_of_day(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollforward(dt)
@@ -136,7 +139,7 @@ def test_rollforward(start, end, dt, roll_start, roll_end):
             id="Left of full interval"),
     ],
 )
-def test_rollback(start, end, dt, roll_start, roll_end):
+def test_rollback_time_of_day(start, end, dt, roll_start, roll_end):
     time = TimeOfDay(start, end)
 
     interval = time.rollback(dt)
