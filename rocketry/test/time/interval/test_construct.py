@@ -1,10 +1,12 @@
 
+import datetime
 import pytest
 from rocketry.time.interval import (
     TimeOfMinute,
     TimeOfDay,
     TimeOfHour,
     TimeOfMonth,
+    TimeOfSecond,
     TimeOfWeek,
     TimeOfYear
 )
@@ -100,6 +102,77 @@ class ConstructTester:
         with pytest.raises(ValueError):
             time = self.cls(start, end)
 
+class TestTimeOfSecond(ConstructTester):
+
+    cls = TimeOfSecond
+
+    max_ms = MS_IN_SECOND
+
+    scen_closed = [
+        {
+            "start": "15.005",
+            "end": "45.005",
+            "expected_start": 15 * MS_IN_MILLISECOND + 5,
+            "expected_end": 45 * MS_IN_MILLISECOND + 5,
+        },
+       {
+            "start": 15,
+            "end": 45,
+            "expected_start": 15 * MS_IN_MILLISECOND,
+            "expected_end": 46 * MS_IN_MILLISECOND,
+        },
+       {
+            "start": 15.005,
+            "end": 45.005,
+            "expected_start": 15 * MS_IN_MILLISECOND + 5,
+            "expected_end": 45 * MS_IN_MILLISECOND + 5,
+        },
+    ]
+
+    scen_open_left = [
+        {
+            "end": 45,
+            "expected_end": 46 * MS_IN_MILLISECOND
+        }
+    ]
+    scen_open_right = [
+        {
+            "start": 45,
+            "expected_start": 45 * MS_IN_MILLISECOND
+        }
+    ]
+    scen_time_point = [
+        {
+            "start": 500,
+            "expected_start": 500 * MS_IN_MILLISECOND,
+            "expected_end": 501 * MS_IN_MILLISECOND,
+        }
+    ]
+    scen_starting = [
+        {
+            "start": 500,
+            "expected_start": 500 * MS_IN_MILLISECOND,
+        }
+    ]
+    scen_value_error = [
+        {
+            "start": 1001,
+            "end": None
+        },
+        {
+            "start": 1000.001,
+            "end": None
+        },
+        {
+            "start": "1001",
+            "end": None
+        },
+        {
+            "start": "asd",
+            "end": None
+        },
+    ]
+
 class TestTimeOfMinute(ConstructTester):
 
     cls = TimeOfMinute
@@ -142,6 +215,12 @@ class TestTimeOfMinute(ConstructTester):
             "end": 45,
             "expected_start": 15 * MS_IN_SECOND,
             "expected_end": 46 * MS_IN_SECOND,
+        },
+        {
+            "start": 15.005,
+            "end": 45.005,
+            "expected_start": 15 * MS_IN_SECOND + 5 * MS_IN_MILLISECOND,
+            "expected_end": 45 * MS_IN_SECOND + 5 * MS_IN_MILLISECOND,
         },
     ]
 
@@ -233,6 +312,11 @@ class TestTimeOfHour(ConstructTester):
             "start": None,
             "end": "60:01"
         },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
+        },
     ]
 
 class TestTimeOfDay(ConstructTester):
@@ -303,6 +387,11 @@ class TestTimeOfDay(ConstructTester):
             "start": None,
             "end": "24:01",
         },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
+        },
     ]
 
 
@@ -368,6 +457,11 @@ class TestTimeOfWeek(ConstructTester):
         },
         {
             "start": "Asd",
+            "end": None
+        },
+        {
+            # Float makes not much sense
+            "start": 2.5,
             "end": None
         },
     ]
@@ -436,6 +530,11 @@ class TestTimeOfMonth(ConstructTester):
         },
         {
             "start": "33.",
+            "end": None
+        },
+        {
+            # Float makes not much sense
+            "start": 2.5,
             "end": None
         },
     ]
@@ -519,4 +618,18 @@ class TestTimeOfYear(ConstructTester):
             "start": None,
             "end": 13,
         },
+        {
+            # Float makes not much sense
+            "start": 2.5,
+            "end": None
+        },
     ]
+
+@pytest.mark.parametrize("cls", [TimeOfSecond, TimeOfMinute, TimeOfHour, TimeOfDay])
+def test_type_error(cls):
+    with pytest.raises(TypeError):
+        time = cls.starting(lambda: None)
+    with pytest.raises(TypeError):
+        time = cls.starting(datetime.datetime(2022, 1, 1))
+    with pytest.raises(TypeError):
+        time = cls.starting(datetime.timedelta(days=2))

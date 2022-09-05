@@ -75,9 +75,16 @@ class AnchoredInterval(TimeInterval):
             # start is considered as unit of the second behind scope
             return self.anchor_int(value, **kwargs)
 
+        elif isinstance(value, float):
+            # start is considered as unit of the second behind scope
+            return self.anchor_float(value, **kwargs)
+
         elif isinstance(value, str):
             return self.anchor_str(value, **kwargs)
         raise TypeError(value)
+
+    def anchor_float(self, i, **kwargs):
+        raise ValueError("Float conversion not supported")
 
     def anchor_int(self, i, side=None, time_point=None, **kwargs):
         if side == "end":

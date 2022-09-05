@@ -13,7 +13,7 @@ from rocketry.time import Cron
 from .time import IsPeriod
 from .task import TaskExecutable, TaskRunning
 from rocketry.time import (
-    TimeOfMinute, TimeOfHour,
+    TimeOfSecond, TimeOfMinute, TimeOfHour,
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
@@ -47,7 +47,7 @@ class TimeCondWrapper(BaseCondition):
         return self._get_cond(period)
 
     def starting(self, start):
-        period = self._cls_period(start, start)
+        period = self._cls_period.starting(start)
         return self._get_cond(period)
 
     def observe(self, **kwargs):
@@ -115,6 +115,7 @@ false = AlwaysFalse()
 # Execution related
 # -----------------
 
+secondly = TimeCondWrapper(TaskExecutable, TimeOfSecond)
 minutely = TimeCondWrapper(TaskExecutable, TimeOfMinute)
 hourly = TimeCondWrapper(TaskExecutable, TimeOfHour)
 daily = TimeCondWrapper(TaskExecutable, TimeOfDay)
@@ -124,6 +125,7 @@ monthly = TimeCondWrapper(TaskExecutable, TimeOfMonth)
 # Time related
 # ------------
 
+time_of_second = TimeCondWrapper(IsPeriod, TimeOfSecond)
 time_of_minute = TimeCondWrapper(IsPeriod, TimeOfMinute)
 time_of_hour = TimeCondWrapper(IsPeriod, TimeOfHour)
 time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
