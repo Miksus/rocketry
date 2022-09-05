@@ -1,4 +1,5 @@
 
+import datetime
 import pytest
 from rocketry.time.interval import (
     TimeOfMinute,
@@ -623,3 +624,12 @@ class TestTimeOfYear(ConstructTester):
             "end": None
         },
     ]
+
+@pytest.mark.parametrize("cls", [TimeOfSecond, TimeOfMinute, TimeOfHour, TimeOfDay])
+def test_type_error(cls):
+    with pytest.raises(TypeError):
+        time = cls.starting(lambda: None)
+    with pytest.raises(TypeError):
+        time = cls.starting(datetime.datetime(2022, 1, 1))
+    with pytest.raises(TypeError):
+        time = cls.starting(datetime.timedelta(days=2))
