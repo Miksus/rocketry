@@ -13,6 +13,34 @@ from rocketry.core.time.utils import timedelta_to_str, to_dict, to_microseconds
 from rocketry.pybox.time.interval import Interval
 
 @dataclass(frozen=True, init=False)
+class TimeOfSecond(AnchoredInterval):
+    """Time interval anchored to second cycle of a clock
+
+    min: 0 microsecond
+    max: 999999 microsecond
+
+    """
+
+    _scope: ClassVar[str] = "second"
+
+    _scope_max: ClassVar[int] = to_microseconds(second=1)
+    _unit_resolution: ClassVar[int] = to_microseconds(millisecond=1)
+    _unit_names: ClassVar[List[str]] = [str(i) for i in range(1000)] # 00, 01 etc. till 59
+
+    def anchor_float(self, i, **kwargs):
+        return to_microseconds(millisecond=i)
+
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 1000:
+            raise ValueError(f"Invalid value: {i}. Allowed: 0-1000")
+        return super().anchor_int(i, **kwargs)
+
+    def anchor_str(self, s, **kwargs):
+        # ie. 30.123
+        res = float(s)
+        return to_microseconds(millisecond=res)
+
+@dataclass(frozen=True, init=False)
 class TimeOfMinute(AnchoredInterval):
     """Time interval anchored to minute cycle of a clock
 

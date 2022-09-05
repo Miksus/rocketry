@@ -5,6 +5,7 @@ from rocketry.time.interval import (
     TimeOfDay,
     TimeOfHour,
     TimeOfMonth,
+    TimeOfSecond,
     TimeOfWeek,
     TimeOfYear
 )
@@ -99,6 +100,77 @@ class ConstructTester:
     def test_value_error(self, start, end):
         with pytest.raises(ValueError):
             time = self.cls(start, end)
+
+class TestTimeOfSecond(ConstructTester):
+
+    cls = TimeOfSecond
+
+    max_ms = MS_IN_SECOND
+
+    scen_closed = [
+        {
+            "start": "15.005",
+            "end": "45.005",
+            "expected_start": 15 * MS_IN_MILLISECOND + 5,
+            "expected_end": 45 * MS_IN_MILLISECOND + 5,
+        },
+       {
+            "start": 15,
+            "end": 45,
+            "expected_start": 15 * MS_IN_MILLISECOND,
+            "expected_end": 46 * MS_IN_MILLISECOND,
+        },
+       {
+            "start": 15.005,
+            "end": 45.005,
+            "expected_start": 15 * MS_IN_MILLISECOND + 5,
+            "expected_end": 45 * MS_IN_MILLISECOND + 5,
+        },
+    ]
+
+    scen_open_left = [
+        {
+            "end": 45,
+            "expected_end": 46 * MS_IN_MILLISECOND
+        }
+    ]
+    scen_open_right = [
+        {
+            "start": 45,
+            "expected_start": 45 * MS_IN_MILLISECOND
+        }
+    ]
+    scen_time_point = [
+        {
+            "start": 500,
+            "expected_start": 500 * MS_IN_MILLISECOND,
+            "expected_end": 501 * MS_IN_MILLISECOND,
+        }
+    ]
+    scen_starting = [
+        {
+            "start": 500,
+            "expected_start": 500 * MS_IN_MILLISECOND,
+        }
+    ]
+    scen_value_error = [
+        {
+            "start": 1001,
+            "end": None
+        },
+        {
+            "start": 1000.001,
+            "end": None
+        },
+        {
+            "start": "1001",
+            "end": None
+        },
+        {
+            "start": "asd",
+            "end": None
+        },
+    ]
 
 class TestTimeOfMinute(ConstructTester):
 

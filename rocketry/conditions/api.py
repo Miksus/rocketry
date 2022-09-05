@@ -13,7 +13,7 @@ from rocketry.time import Cron
 from .time import IsPeriod
 from .task import TaskExecutable, TaskRunning
 from rocketry.time import (
-    TimeOfMinute, TimeOfHour,
+    TimeOfSecond, TimeOfMinute, TimeOfHour,
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
@@ -115,6 +115,7 @@ false = AlwaysFalse()
 # Execution related
 # -----------------
 
+secondly = TimeCondWrapper(TaskExecutable, TimeOfSecond)
 minutely = TimeCondWrapper(TaskExecutable, TimeOfMinute)
 hourly = TimeCondWrapper(TaskExecutable, TimeOfHour)
 daily = TimeCondWrapper(TaskExecutable, TimeOfDay)
