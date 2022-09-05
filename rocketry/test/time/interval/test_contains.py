@@ -3,10 +3,87 @@ import pytest
 from datetime import datetime
 
 from rocketry.time.interval import (
+    TimeOfMinute,
+    TimeOfHour,
     TimeOfDay,
     TimeOfWeek,
     TimeOfMonth,
 )
+
+# TimeOfMinute
+# ------------
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 15),
+            TimeOfMinute("15.00", "45.00"),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 44, 999_999),
+            TimeOfMinute("15.00", "45.00"),
+            id="Right of interval"),
+    ],
+)
+def test_in_time_of_minute(time, dt):
+    assert dt in time
+
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 0, 14, 999_999),
+            TimeOfMinute("15.00", "45.00"),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 00, 45, 0),
+            TimeOfMinute("15.00", "45.00"),
+            id="Right of interval"),
+    ],
+)
+def test_not_in_time_of_minute(time, dt):
+    assert dt not in time
+
+# TimeOfHour
+# ----------
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 15),
+            TimeOfHour("15:00", "45:00"),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 44, 59, 999_999),
+            TimeOfHour("15:00", "45:00"),
+            id="Right of interval"),
+    ],
+)
+def test_in_time_of_hour(time, dt):
+    assert dt in time
+
+@pytest.mark.parametrize(
+    "dt,time",
+    [
+        # Regular
+        pytest.param(
+            datetime(2020, 1, 1, 11, 14, 59, 999_999),
+            TimeOfHour("15:00", "45:00"),
+            id="Left of interval"),
+        pytest.param(
+            datetime(2020, 1, 1, 11, 45),
+            TimeOfHour("15:00", "45:00"),
+            id="Right of interval"),
+    ],
+)
+def test_not_in_time_of_hour(time, dt):
+    assert dt not in time
 
 # TimeOfDay
 # ---------
