@@ -338,6 +338,12 @@ class TestTimeOfDay(ConstructTester):
             "expected_start": 10 * MS_IN_HOUR,
             "expected_end": 13 * MS_IN_HOUR,
         },
+        {
+            "start": {"hour": 10, "second": 20},
+            "end": {"hour": 13, "second": 20},
+            "expected_start": 10 * MS_IN_HOUR + 20 * MS_IN_SECOND,
+            "expected_end": 13 * MS_IN_HOUR + 20 * MS_IN_SECOND,
+        },
     ]
 
     scen_open_left = [
@@ -633,3 +639,6 @@ def test_type_error(cls):
         time = cls.starting(datetime.datetime(2022, 1, 1))
     with pytest.raises(TypeError):
         time = cls.starting(datetime.timedelta(days=2))
+
+    with pytest.raises(TypeError):
+        time = cls(time_point=True)

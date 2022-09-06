@@ -28,5 +28,6 @@ def test_scheduler_started(session):
 
     session.scheduler.startup_time = datetime.datetime.now() - datetime.timedelta(0, 20, 0) # 20 seconds ago
     # Imitating the __bool__
+    assert SchedulerStarted().observe(session=session)
     assert (SchedulerStarted(period=TimeDelta("30 seconds"))).observe(session=session)
     assert not (SchedulerStarted(period=TimeDelta("10 seconds"))).observe(session=session)
