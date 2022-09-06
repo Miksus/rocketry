@@ -4,7 +4,6 @@ from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
 
 from rocketry._base import RedBase
-from rocketry.core.meta import _add_parser, _register
 from rocketry.core.parameters.parameters import Parameters
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}

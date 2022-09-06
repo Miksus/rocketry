@@ -7,7 +7,6 @@ import itertools
 from dataclasses import dataclass, field
 
 from rocketry._base import RedBase
-from rocketry.core.meta import _add_parser
 from rocketry.pybox.time import to_datetime, to_timedelta, Interval
 from rocketry.session import Session
 
