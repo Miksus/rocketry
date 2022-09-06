@@ -640,5 +640,5 @@ def test_type_error(cls):
     with pytest.raises(TypeError):
         time = cls.starting(datetime.timedelta(days=2))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         time = cls(time_point=True)
