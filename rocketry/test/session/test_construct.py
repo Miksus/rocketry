@@ -49,6 +49,22 @@ def test_timeout_parse():
     session = Session(config={"timeout": datetime.timedelta(seconds=0.1)})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
 
+def test_config():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        s = Session(config=Config(task_priority=10))
+        assert s.config.task_priority == 10
+
+        s = Session(config=dict(task_priority=10))
+        assert s.config.task_priority == 10
+
+        Session()
+        Session(config=None)
+
+    with pytest.raises(TypeError):
+        Session(config="invalid")
+
 def test_logging_level():
     task_logger = logging.getLogger("rocketry.task")
     task_logger.setLevel(logging.INFO)
