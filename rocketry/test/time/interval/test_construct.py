@@ -317,6 +317,10 @@ class TestTimeOfHour(ConstructTester):
             "start": 2.5,
             "end": None
         },
+        {
+            "start": "invalid",
+            "end": None
+        },
     ]
 
 class TestTimeOfDay(ConstructTester):
