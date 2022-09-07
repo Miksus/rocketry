@@ -72,23 +72,6 @@ class TimePeriod(RedBase):
         "Get previous time interval of the period."
         raise NotImplementedError
 
-    def next(self, dt):
-        "Get next interval (excluding currently ongoing if any)."
-        interv = self.rollforward(dt)
-        if dt in interv:
-            # Offsetting the end point with minimum amount to get new full interval
-            interv = self.rollforward(dt.right + self.resolution)
-        return interv
-
-    def prev(self, dt):
-        "Get previous interval (excluding currently ongoing if any)."
-        interv = self.rollback(dt)
-        if dt in interv:
-            # Offsetting the end point with minimum amount to get new full interval
-            interv = self.rollback(dt.left - self.resolution)
-        return interv
-
-
 class TimeInterval(TimePeriod):
     """Base for all time intervals
 

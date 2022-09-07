@@ -48,14 +48,3 @@ class IsPeriod(BaseCondition):
     def __repr__(self):
         cls_name = type(self).__name__
         return f"{cls_name}(period={repr(self.period)})"
-
-    @classmethod
-    def _from_parser(cls, span_type, **kwargs):
-        period_func = {
-            "between": get_between,
-            "after": get_after,
-            "before": get_before,
-        }[span_type]
-        period = period_func(**kwargs)
-        return cls(period=period)
-
