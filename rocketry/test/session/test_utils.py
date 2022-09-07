@@ -41,3 +41,16 @@ def test_dependency(session):
         Link(ta, td, relation=DependSuccess, type=Any),
         Link(tb, td, relation=DependSuccess, type=Any),
     ]
+
+def test_link(session):
+    ta = FuncTask(lambda: None, name="a", start_cond="daily", execution="main", session=session)
+    tb = FuncTask(lambda: None, name="b", start_cond="after task 'a'", execution="main", session=session)
+    tc = FuncTask(lambda: None, name="c", start_cond="after task 'a' & after task 'b' failed", execution="main", session=session)
+    td = FuncTask(lambda: None, name="d", start_cond="after task 'a' | after task 'b'", execution="main", session=session)
+
+    assert str(Link(ta, tb, relation=DependSuccess)) == "'a' -> 'b'"
+    assert str(Link(ta, tb, relation=DependFailure)) == "'a' -> 'b'"
+    assert str(Link(ta, tb, relation=DependSuccess, type=Any)) == "'a' -> 'b'"
+    assert str(Link(ta, tb, relation=DependSuccess, type=All)) == "'a' -> 'b' (multi)"
+
+    assert repr(Link(ta, tb, relation=DependSuccess, type=All)) == "Link('a', 'b', relation=DependSuccess, type=All)"
