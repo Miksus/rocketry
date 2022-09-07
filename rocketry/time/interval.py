@@ -97,9 +97,10 @@ class TimeOfHour(AnchoredInterval):
         # ie. 12:30.123
         res = re.search(r"(?P<minute>[0-9][0-9]):(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?", s, flags=re.IGNORECASE)
         if res:
+            res = res.groupdict()
             if res["microsecond"] is not None:
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
-            return to_microseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
+            return to_microseconds(**{key: int(val) for key, val in res.items() if val is not None})
 
         res = re.search(r"(?P<n>[0-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
         if res:

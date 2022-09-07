@@ -275,6 +275,12 @@ class TestTimeOfHour(ConstructTester):
             "expected_start": 15 * MS_IN_MINUTE,
             "expected_end": 46 * MS_IN_MINUTE,
         },
+        {
+            "start": "15:05.5",
+            "end": "45:10.005",
+            "expected_start": 15 * MS_IN_MINUTE + 5 * MS_IN_SECOND + MS_IN_MILLISECOND * 500,
+            "expected_end": 45 * MS_IN_MINUTE + 10 * MS_IN_SECOND + MS_IN_MILLISECOND * 5,
+        },
     ]
 
     scen_open_left = [
