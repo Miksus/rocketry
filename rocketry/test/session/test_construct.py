@@ -49,7 +49,7 @@ def test_timeout_parse():
     session = Session(config={"timeout": datetime.timedelta(seconds=0.1)})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
 
-def test_config():
+def test_create():
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
@@ -61,6 +61,11 @@ def test_config():
 
         Session()
         Session(config=None)
+
+        s = Session(parameters={"x": 5})
+        assert s.parameters == Parameters({"x": 5})
+        s = Session(parameters=Parameters({"x": 5}))
+        assert s.parameters == Parameters({"x": 5})
 
     with pytest.raises(TypeError):
         Session(config="invalid")
