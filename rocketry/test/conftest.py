@@ -88,6 +88,7 @@ def session():
         RepoHandler(repo=MemoryRepo(model=MinimalRecord)),
         logging.StreamHandler(sys.stdout)
     ]
+    task_logger.setLevel(logging.INFO)
 
     # enable logger
     # Some tests may disable especially scheduler logger if logging config has
