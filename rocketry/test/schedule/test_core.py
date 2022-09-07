@@ -346,7 +346,7 @@ def test_priority(execution, session):
 
     assert 0 == task_4.priority
 
-    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
 
     session.start()
     assert session.scheduler.n_cycles == 1 
@@ -364,7 +364,7 @@ def test_pass_params_as_global(execution, session):
 
     task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
 
     # Passing global parameters
     session.parameters["int_5"] = 5
@@ -393,7 +393,7 @@ def test_pass_params_as_local(execution, parameters, session):
         execution=execution,
         session=session
     )
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
 
     session.start()
 
@@ -414,7 +414,7 @@ def test_pass_params_as_local_and_global(execution, session):
         session=session
     )
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
 
     # Additional parameters
     session.parameters["extra_param"] = "something"
@@ -485,7 +485,7 @@ def test_logging_repo(tmpdir, execution):
 
         assert 0 == task_4.priority
 
-        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
         session.start()
         assert session.scheduler.n_cycles == 1 
 
