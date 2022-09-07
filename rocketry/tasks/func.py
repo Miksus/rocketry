@@ -34,10 +34,6 @@ def get_module(path, pkg_path=None):
         raise ImportError(f"Importing the file '{path}' failed.") from exc
     return task_module
 
-def to_import_path(src:stat_result):
-    imp = '.'.join(Path(src).with_suffix("").parts)
-    return imp
-
 class TempSysPath:
     # TODO: To utils.
     sys_path = sys.path
