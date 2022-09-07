@@ -43,7 +43,7 @@ class Link:
         return s
 
     def __repr__(self):
-        return f'Link({self.parent.name}, {self.child.name}, relation={getattr(self.relation, "__name__", None)}, type={getattr(self.type, "__name__", None)})'
+        return f'Link({self.parent.name!r}, {self.child.name!r}, relation={getattr(self.relation, "__name__", None)}, type={getattr(self.type, "__name__", None)})'
 
 class Dependencies(BaseModel):
     class Config:
