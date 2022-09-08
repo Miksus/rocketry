@@ -26,14 +26,6 @@ class _Hooker:
             except StopIteration:
                 pass
 
-    def __enter__(self):
-        self.prerun()
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.postrun()
-
-
 def clear_hooks():
     "Remove all hooks."
     from rocketry.core import Task, Scheduler
