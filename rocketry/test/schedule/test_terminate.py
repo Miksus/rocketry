@@ -154,3 +154,27 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
         assert 0 == logger.filter_by(action="fail").count()
 
         assert not os.path.exists("work.txt")
+
+@pytest.mark.parametrize("execution", ["async", "thread", "process"])
+def test_permanent_task(tmpdir, execution, session):
+    """Test the task.timeout is respected overt scheduler.timeout"""
+    with tmpdir.as_cwd() as old_dir:
+
+        func_run_slow = get_slow_func(execution)
+        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="1 ms", permanent_task=True, execution=execution, session=session)
+
+        session.config.shut_cond = (TaskStarted(task="slow task but passing") >= 3) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.timeout = 0.1
+        session.start()
+
+        logger = task.logger
+        # If Scheduler is quick, it may launch the task 3 times 
+        # but there still should not be any terminations
+        assert 3 <= logger.filter_by(action="run").count() 
+        assert 1 == logger.filter_by(action="terminate").count() # The last run is terminated
+        assert 2 <= logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
+
+        assert logger.filter_by(action="terminate").last().created >= logger.filter_by(action="success").last().created
+
+        assert os.path.exists("work.txt")
