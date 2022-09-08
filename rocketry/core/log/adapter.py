@@ -106,8 +106,8 @@ class TaskAdapter(logging.LoggerAdapter):
     def __eq__(self, o: object) -> bool:
         is_same_type = type(self) == type(o)
         has_same_logger = self.logger == o.logger
-        has_same_name = self.name == o.name
-        return is_same_type and has_same_logger and has_same_name
+        has_same_task_name = self.extra['task_name'] == o.extra['task_name']
+        return is_same_type and has_same_logger and has_same_task_name
 
     @property
     def task_name(self):
