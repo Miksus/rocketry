@@ -191,9 +191,6 @@ class All(_ConditionContainer, BaseCondition):
             string = ' & '.join(map(str, self.subconditions))
             return f'({string})'
 
-    def __getitem__(self, val):
-        return self.subconditions[val]
-
 
 class Not(_ConditionContainer, BaseCondition):
 
@@ -218,9 +215,6 @@ class Not(_ConditionContainer, BaseCondition):
     @property
     def subconditions(self):
         return (self.condition,)
-
-    def __iter__(self):
-        return iter((self.condition,))
         
     def __invert__(self):
         "inverse of inverse is the actual condition"
