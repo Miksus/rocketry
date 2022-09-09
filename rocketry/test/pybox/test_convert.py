@@ -22,6 +22,7 @@ from rocketry.pybox.time import to_timedelta, to_datetime, Interval, timedelta_t
         ("1 days 5 hours 10 minutes 20 seconds", timedelta(days=1, hours=5, minutes=10, seconds=20)),
         ("-1 days 5 hours 10 minutes 20 seconds", -timedelta(days=1, hours=5, minutes=10, seconds=20)),
         ("--1 days 5 hours 10 minutes 20 seconds", timedelta(days=1, hours=5, minutes=10, seconds=20)),
+        ("+1 days 5 hours 10 minutes 20 seconds", timedelta(days=1, hours=5, minutes=10, seconds=20)),
     ]
 )
 def test_timedelta_from_string(s, expected):
