@@ -128,7 +128,7 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     return components
 
 def timedelta_to_str(dt, 
-                     days_in_year=360, days_in_month=30, 
+                     days_in_year=365, days_in_month=30, 
                      sep=", ", format=None, include=None,
                      default_scope="microseconds"):
 
