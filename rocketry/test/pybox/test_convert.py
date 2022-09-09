@@ -53,3 +53,40 @@ def test_timedelta_from_timedelta():
 def test_timedelta_fail(obj):
     with pytest.raises(TypeError):
         to_timedelta(obj)
+
+@pytest.mark.parametrize("dt,kwargs,expected",
+    [
+        pytest.param(
+            timedelta(
+                days=2, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
+            ), {}, "2 days, 12 hours, 30 minutes, 59 seconds, 500 milliseconds, 500 microseconds", 
+            id="default"
+        ),
+        pytest.param(
+            timedelta(
+                days=2, 
+            ), {}, "2 days", 
+            id="default (only days)"
+        ),
+        pytest.param(
+            timedelta(
+                days=2, seconds=30, 
+            ), {}, "2 days, 0 hours, 0 minutes, 30 seconds", 
+            id="default (only days and seconds)"
+        ),
+        pytest.param(
+            timedelta(
+                days=2, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
+            ), {"format": "short"}, "2d, 12h, 30m, 59s, 500ms, 500μs", 
+            id="short"
+        ),
+        pytest.param(
+            timedelta(
+                days=2, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
+            ), {"format": "semishort"}, "2 days, 12 hrs, 30 mins, 59 secs, 500 ms, 500 μs", 
+            id="semishort"
+        ),
+    ]
+)
+def test_timedelta_to_str(dt, kwargs, expected): 
+    assert timedelta_to_str(dt, **kwargs) == expected

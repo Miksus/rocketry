@@ -62,72 +62,78 @@ def to_timedelta(s, **kwargs):
 def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     
     total_seconds = dt.total_seconds()
-    nanoseconds = total_seconds * 1e+9
+
+    microsec_in_day = 8.64e+10
+    microsec_in_hour = 3.6e+9
+    microsec_in_min = 6e+7
+    microsec_in_sec = 1e+6
+
+    microsec = total_seconds * microsec_in_sec
 
     components = {}
     if units == "all":
         allowed_units = (
             "years", "months", "weeks", 
             "days", "hours", "minutes", 
-            "seconds", "microseconds", 
-            "nanoseconds")
+            "seconds", "milliseconds", 
+            "microseconds")
     elif units == "fixed" or units is None:
         # Only fixed length units
         allowed_units = (
             "days", "hours", "minutes", 
-            "seconds", "microseconds", 
-            "nanoseconds")
+            "seconds", "milliseconds", 
+            "microseconds")
     else:
         allowed_units = units
 
     # Non fixed units
     if "years" in allowed_units:
-        components["years"] = int(nanoseconds // (8.64e+13 * days_in_year))
-        nanoseconds = nanoseconds - (components["years"] * 8.64e+13 * days_in_year)
+        components["years"] = int(microsec // (microsec_in_day * days_in_year))
+        microsec = microsec - (components["years"] * microsec_in_day * days_in_year)
     
     if "months" in allowed_units:
-        components["months"] = int(nanoseconds // (8.64e+13 * days_in_month))
-        nanoseconds = nanoseconds - (components["months"] * 8.64e+13 * days_in_month)
+        components["months"] = int(microsec // (microsec_in_day * days_in_month))
+        microsec = microsec - (components["months"] * microsec_in_day * days_in_month)
     
     # Alternating units
     if "weeks" in allowed_units:
-        components["weeks"] = int(nanoseconds // (8.64e+13 * 7))
-        nanoseconds = nanoseconds - components["weeks"] * 8.64e+13 * 7
+        components["weeks"] = int(microsec // (microsec_in_day * 7))
+        microsec = microsec - components["weeks"] * microsec_in_day * 7
     
     # Fixed units
     if "days" in allowed_units:
-        components["days"] = int(nanoseconds // 8.64e+13)
-        nanoseconds = nanoseconds - components["days"] * 8.64e+13
+        components["days"] = int(microsec // microsec_in_day)
+        microsec = microsec - components["days"] * microsec_in_day
     
     if "hours" in allowed_units:
-        components["hours"] = int(nanoseconds // 3.6e+12)
-        nanoseconds = nanoseconds - components["hours"] * 3.6e+12
+        components["hours"] = int(microsec // microsec_in_hour)
+        microsec = microsec - components["hours"] * microsec_in_hour
     
     if "minutes" in allowed_units:
-        components["minutes"] = int(nanoseconds // 6e+10)
-        nanoseconds = nanoseconds - components["minutes"] * 6e+10
+        components["minutes"] = int(microsec // microsec_in_min)
+        microsec = microsec - components["minutes"] * microsec_in_min
     
     if "seconds" in allowed_units:
-        components["seconds"] = int(nanoseconds // 1e+9)
-        nanoseconds = nanoseconds - components["seconds"] * 1e+9
+        components["seconds"] = int(microsec // microsec_in_sec)
+        microsec = microsec - components["seconds"] * microsec_in_sec
     
-    if "microseconds" in allowed_units:
-        components["microseconds"] = int(nanoseconds // 1_000)
-        nanoseconds = nanoseconds - components["microseconds"] * 1_000
-    
-    # And the rest is nanoseconds
-    if "nanoseconds" in allowed_units:
-        components["nanoseconds"] = int(nanoseconds)
+    if "milliseconds" in allowed_units:
+        components["milliseconds"] = int(microsec // 1_000)
+        microsec = microsec - components["milliseconds"] * 1_000
 
+    if "microseconds" in allowed_units:
+        components["microseconds"] = int(microsec)
+        microsec = microsec - components["microseconds"]
+    
     return components
 
 def timedelta_to_str(dt, 
                      days_in_year=360, days_in_month=30, 
-                     sep=", ", mapping=None, units=None,
-                     default_scope="nanoseconds"):
+                     sep=", ", format=None, include=None,
+                     default_scope="microseconds"):
 
     
-    components = timedelta_to_dict(dt, days_in_year=days_in_year, days_in_month=days_in_month, units=units)
+    components = timedelta_to_dict(dt, days_in_year=days_in_year, days_in_month=days_in_month, units=include)
     
     # Min and max units (components must be ordered from biggest to smallest units)
     min_unit = default_scope
@@ -142,10 +148,9 @@ def timedelta_to_str(dt,
             max_unit = unit
             break
             
-    
-    # Determine mapping
-    if mapping is None:
-        mapping = {
+    # Determine units
+    if format is None:
+        format = {
             "years": " years",
             "months": " months",
             "weeks": " weeks",
@@ -153,23 +158,23 @@ def timedelta_to_str(dt,
             "hours": " hours",
             "minutes": " minutes",
             "seconds": " seconds",
+            "milliseconds": " milliseconds",
             "microseconds": " microseconds",
-            "nanoseconds": " nanoseconds",
         }
-    elif mapping == "semishort":
-        mapping = {
+    elif format == "semishort":
+        format = {
             "years": " years",
             "months": " months",
             "weeks": " weeks",
             "days": " days",
-            "hours": " h",
-            "minutes": " min",
-            "seconds": " sec",
-            "microseconds": " microsec",
-            "nanoseconds": "nanosec",
+            "hours": " hrs",
+            "minutes": " mins",
+            "seconds": " secs",
+            "milliseconds": " ms",
+            "microseconds": " μs",
         }
-    elif mapping == "short":
-        mapping = {
+    elif format in ("short", "abbrs"):
+        format = {
             "years": "Y",
             "months": "M",
             "weeks": "W",
@@ -177,8 +182,8 @@ def timedelta_to_str(dt,
             "hours": "h",
             "minutes": "m",
             "seconds": "s",
-            "microseconds": "ms",
-            "nanoseconds": "ns",
+            "milliseconds": "ms",
+            "microseconds": "μs",
         }
 
     # String format
@@ -189,7 +194,7 @@ def timedelta_to_str(dt,
         is_min_reached = min_unit == unit
         is_max_reached = is_max_reached or unit == max_unit
 
-        unit_name = mapping[unit]
+        unit_name = format[unit]
         if max_unit == unit:
             s = s + f"{value}{unit_name}"
         elif is_max_reached:
