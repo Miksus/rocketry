@@ -42,6 +42,12 @@ def test_app_create(session, tmpdir):
 
     assert isinstance(app.session, Session)
 
+def test_app():
+    set_logging_defaults()
+
+    app = Rocketry(execution="thread")
+    assert app.session.config.task_execution == "thread"
+
 def test_app_tasks():
     set_logging_defaults()
 

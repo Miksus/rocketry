@@ -91,9 +91,6 @@ class Scheduler(RedBase):
 
         self._log_queue = multiprocessing.Queue(-1)
 
-    def _register_instance(self):
-        self.session.scheduler = self
-
     @property
     def tasks(self):
 

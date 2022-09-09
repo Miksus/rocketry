@@ -19,6 +19,11 @@ def test_static():
         datetime.fromisoformat("2022-08-10 00:00:00"),
         closed="left"
     )
+    assert t.rollforward("2022-09-01 00:00:00") == Interval(
+        datetime.fromisoformat("2260-01-01 00:00:00"),
+        datetime.fromisoformat("2260-01-01 00:00:00"),
+        closed="left"
+    )
 
     assert t.rollforward("2022-08-03 00:00:00") == Interval(
         datetime.fromisoformat("2022-08-03 00:00:00"),
@@ -43,6 +48,7 @@ def test_always():
         datetime(2022, 1, 1, 0, 0),
         closed='left'
     )
+    assert always.is_max_interval
 
 def test_never():
     assert datetime(2022, 1, 1) not in never
@@ -56,3 +62,4 @@ def test_never():
         datetime(1970, 1, 3, 2, 0),
         closed='left'
     )
+    assert not never.is_max_interval

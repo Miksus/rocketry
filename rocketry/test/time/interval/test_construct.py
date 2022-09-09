@@ -275,6 +275,12 @@ class TestTimeOfHour(ConstructTester):
             "expected_start": 15 * MS_IN_MINUTE,
             "expected_end": 46 * MS_IN_MINUTE,
         },
+        {
+            "start": "15:05.5",
+            "end": "45:10.005",
+            "expected_start": 15 * MS_IN_MINUTE + 5 * MS_IN_SECOND + MS_IN_MILLISECOND * 500,
+            "expected_end": 45 * MS_IN_MINUTE + 10 * MS_IN_SECOND + MS_IN_MILLISECOND * 5,
+        },
     ]
 
     scen_open_left = [
@@ -317,6 +323,10 @@ class TestTimeOfHour(ConstructTester):
             "start": 2.5,
             "end": None
         },
+        {
+            "start": "invalid",
+            "end": None
+        },
     ]
 
 class TestTimeOfDay(ConstructTester):
@@ -337,6 +347,12 @@ class TestTimeOfDay(ConstructTester):
             "end": 12,
             "expected_start": 10 * MS_IN_HOUR,
             "expected_end": 13 * MS_IN_HOUR,
+        },
+        {
+            "start": {"hour": 10, "second": 20},
+            "end": {"hour": 13, "second": 20},
+            "expected_start": 10 * MS_IN_HOUR + 20 * MS_IN_SECOND,
+            "expected_end": 13 * MS_IN_HOUR + 20 * MS_IN_SECOND,
         },
     ]
 
@@ -633,3 +649,6 @@ def test_type_error(cls):
         time = cls.starting(datetime.datetime(2022, 1, 1))
     with pytest.raises(TypeError):
         time = cls.starting(datetime.timedelta(days=2))
+
+    with pytest.raises(ValueError):
+        time = cls(time_point=True)

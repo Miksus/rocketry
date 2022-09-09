@@ -1,7 +1,9 @@
 
 import datetime
+import logging
 import os
 from textwrap import dedent
+import warnings
 
 import pytest
 
@@ -10,6 +12,7 @@ from rocketry.parse import parse_condition, parse_time
 from rocketry.session import Config
 from rocketry.tasks import FuncTask
 from rocketry.core import Task, Scheduler, BaseCondition, BaseArgument, Parameters
+from rocketry.conds import true
 
 def assert_default(session:Session):
     for cls in (Task, Scheduler, BaseCondition, BaseArgument, Parameters):
@@ -45,3 +48,53 @@ def test_timeout_parse():
 
     session = Session(config={"timeout": datetime.timedelta(seconds=0.1)})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
+
+def test_create():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        s = Session(config=Config(task_priority=10))
+        assert s.config.task_priority == 10
+
+        s = Session(config=dict(task_priority=10))
+        assert s.config.task_priority == 10
+
+        Session()
+        Session(config=None)
+
+        s = Session(parameters={"x": 5})
+        assert s.parameters == Parameters({"x": 5})
+        s = Session(parameters=Parameters({"x": 5}))
+        assert s.parameters == Parameters({"x": 5})
+
+    with pytest.raises(TypeError):
+        Session(config="invalid")
+
+def test_logging_level():
+    task_logger = logging.getLogger("rocketry.task")
+    task_logger.setLevel(logging.INFO)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        # Should not raise warning
+        s = Session()
+        s.config.shut_cond = true
+        s.start()
+    
+    task_logger.setLevel(logging.DEBUG)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        # Should not raise warning
+        s = Session()
+        s.config.shut_cond = true
+        s.start()
+
+    task_logger.setLevel(logging.WARNING)
+    with pytest.warns(UserWarning):
+        s = Session()
+        s.config.shut_cond = true
+        s.start()
+    
+    # Level is changed to INFO
+    assert task_logger.getEffectiveLevel() == logging.INFO

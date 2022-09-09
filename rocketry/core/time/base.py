@@ -7,7 +7,6 @@ import itertools
 from dataclasses import dataclass, field
 
 from rocketry._base import RedBase
-from rocketry.core.meta import _add_parser
 from rocketry.pybox.time import to_datetime, to_timedelta, Interval
 from rocketry.session import Session
 
@@ -72,23 +71,6 @@ class TimePeriod(RedBase):
     def rollback(self, dt):
         "Get previous time interval of the period."
         raise NotImplementedError
-
-    def next(self, dt):
-        "Get next interval (excluding currently ongoing if any)."
-        interv = self.rollforward(dt)
-        if dt in interv:
-            # Offsetting the end point with minimum amount to get new full interval
-            interv = self.rollforward(dt.right + self.resolution)
-        return interv
-
-    def prev(self, dt):
-        "Get previous interval (excluding currently ongoing if any)."
-        interv = self.rollback(dt)
-        if dt in interv:
-            # Offsetting the end point with minimum amount to get new full interval
-            interv = self.rollback(dt.left - self.resolution)
-        return interv
-
 
 class TimeInterval(TimePeriod):
     """Base for all time intervals
@@ -549,6 +531,22 @@ class StaticInterval(TimePeriod):
     @property
     def is_max_interval(self):
         return (self.start == self.min) and (self.end == self.max)
+
+    def __str__(self):
+        if self.is_max_interval:
+            return 'always'
+        elif self.start == self.max:
+            return 'never'
+        else:
+            return f'between {self.start} and {self.end}'
+
+    def __repr__(self):
+        if self.is_max_interval:
+            return 'always'
+        elif self.start == self.max:
+            return 'never'
+        else:
+            return f"StaticInterval(start={self.start!r}, end={self.end!r})"
 
 always = StaticInterval()
 never = StaticInterval(StaticInterval.max, StaticInterval.max)

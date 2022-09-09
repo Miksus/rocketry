@@ -289,6 +289,8 @@ def test_process_no_double_logging(session):
     # while this is not occuring on Windows. This tests the bug.
     #!NOTE: This test requires there are two handlers in 
     # rocketry.task logger (Memory and Stream in this order)
+    task_logger = logging.getLogger("rocketry.task")
+    task_logger.addHandler(logging.StreamHandler())
 
     expected_actions = ["run", "success"]
 

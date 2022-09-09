@@ -75,7 +75,7 @@ def run_with_termination_flag(flag=TerminationFlag(), task=Task()):
 def test_func_arg(execution, session):
     task = FuncTask(func=run_with_func_arg, start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
     session.start()
 
     logger = task.logger
@@ -87,7 +87,7 @@ def test_func_arg(execution, session):
 def test_session_arg(execution, session):
     task = FuncTask(func=run_with_session_arg, start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
     session.parameters['my_arg'] = 'some session value'
     session.start()
 
@@ -121,7 +121,7 @@ def test_return(execution, session):
 def test_session_as_arg(execution, session):
     task = FuncTask(func=run_with_session, start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
     session.parameters['my_arg'] = 'some session value'
     session.start()
 
@@ -135,7 +135,7 @@ def test_task_as_arg(execution, session):
     another_task = FuncTask(func=run_with_output, name="another_task", session=session)
     task = FuncTask(func=run_with_task, name="my_task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
     session.start()
 
     logger = task.logger
@@ -155,7 +155,7 @@ def test_termination_flag_as_arg(execution, session):
     def task_terminate(session=Session()):
         session["my_task"].terminate()
 
-    session.config.shut_cond = (TaskStarted(task="my_task") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="my_task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     if execution in ("main", "process"):
         with pytest.warns(UserWarning):

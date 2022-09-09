@@ -10,7 +10,8 @@ from rocketry.args import Task, Session
 from rocketry.core.condition import BaseCondition
 from rocketry.core.condition.base import BaseComparable
 from rocketry.core.time import TimePeriod
-from rocketry.core.time.utils import get_period_span, to_timestamp
+from rocketry.core.time.utils import get_period_span
+from rocketry.pybox.time import to_timestamp
 from rocketry.log.utils import get_field_value
 
 class DependMixin(BaseCondition):

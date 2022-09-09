@@ -338,7 +338,7 @@ def test_task_force_disabled(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_priority(execution, session):
-
+    session.config.max_process_count = 4
     task_1 = FuncTask(run_succeeding, name="1", priority=100, start_cond=AlwaysTrue(), execution=execution, session=session)
     task_3 = FuncTask(run_failing, name="3", priority=10, start_cond=AlwaysTrue(), execution=execution, session=session)
     task_2 = FuncTask(run_failing, name="2", priority=50, start_cond=AlwaysTrue(), execution=execution, session=session)
@@ -346,7 +346,7 @@ def test_priority(execution, session):
 
     assert 0 == task_4.priority
 
-    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     session.start()
     assert session.scheduler.n_cycles == 1 
@@ -364,7 +364,7 @@ def test_pass_params_as_global(execution, session):
 
     task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     # Passing global parameters
     session.parameters["int_5"] = 5
@@ -393,7 +393,7 @@ def test_pass_params_as_local(execution, parameters, session):
         execution=execution,
         session=session
     )
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     session.start()
 
@@ -414,7 +414,7 @@ def test_pass_params_as_local_and_global(execution, session):
         session=session
     )
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     # Additional parameters
     session.parameters["extra_param"] = "something"
@@ -468,6 +468,7 @@ def test_logging_repo(tmpdir, execution):
     from redbird.repos import MemoryRepo
     session = Session()
     session.set_as_default()
+    session.config.max_process_count = 4
 
     handler = RepoHandler(repo=MemoryRepo(model=MinimalRecord))
 
@@ -485,7 +486,7 @@ def test_logging_repo(tmpdir, execution):
 
         assert 0 == task_4.priority
 
-        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
         assert session.scheduler.n_cycles == 1 
 
