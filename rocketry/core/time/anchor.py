@@ -5,7 +5,7 @@ from typing import ClassVar, Dict, List, Tuple, Union
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
-from .utils import to_microseconds, timedelta_to_str, to_dict, to_timedelta
+from rocketry.pybox.time import to_microseconds, timedelta_to_str, datetime_to_dict, to_timedelta
 from .base import Any, TimeInterval
 
 @dataclass(frozen=True, repr=False)
@@ -100,7 +100,7 @@ class AnchoredInterval(TimeInterval):
         "Turn datetime to nanoseconds according to the scope (by removing higher time elements)"
         components = self.components
         components = components[components.index(self._scope) + 1:]
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()

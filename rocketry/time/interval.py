@@ -9,7 +9,7 @@ import dateutil
 
 from rocketry.core.time.anchor import AnchoredInterval
 from rocketry.core.time.base import TimeInterval
-from rocketry.core.time.utils import timedelta_to_str, to_dict, to_microseconds
+from rocketry.pybox.time import timedelta_to_str, datetime_to_dict, to_microseconds
 from rocketry.pybox.time.interval import Interval
 
 @dataclass(frozen=True, init=False)
@@ -133,13 +133,13 @@ class TimeOfDay(AnchoredInterval):
     def anchor_str(self, s, **kwargs):
         # ie. "10:00:15"
         dt = dateutil.parser.parse(s)
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         components = ("hour", "minute", "second", "microsecond")
         return to_microseconds(**{key: int(val) for key, val in d.items() if key in components})
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -207,7 +207,7 @@ class TimeOfWeek(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -275,7 +275,7 @@ class TimeOfMonth(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -390,7 +390,7 @@ class TimeOfYear(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        dt_dict = to_dict(dt)
+        dt_dict = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in dt_dict.items()
