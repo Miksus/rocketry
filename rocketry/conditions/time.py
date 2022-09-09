@@ -41,7 +41,7 @@ class IsPeriod(BaseCondition):
         if hasattr(self, "_str"):
             return self._str
         elif hasattr(self, "period"):
-            return f'is {str(self.period)}'
+            return f'currently {str(self.period)}'
         else:
             return type(self).__name__
 

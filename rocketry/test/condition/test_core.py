@@ -6,7 +6,7 @@ from rocketry.conditions import (
     Any, All
 )
 from rocketry.conds import true, false
-from rocketry.time import TimeDelta
+from rocketry.time import TimeDelta, always
 
 def test_true():
     assert bool(true)
@@ -97,7 +97,12 @@ def test_fail(get_cond,exc):
             Any(true, false), 
             "(true | false)", 
             "Any(true, false)", 
-            id="Any")
+            id="Any"),
+        pytest.param(
+            IsPeriod(always), 
+            "currently always", 
+            "IsPeriod(period=always)", 
+            id="IsPeriod"),
     ]
 )
 def test_representation(obj, string, represent):
