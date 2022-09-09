@@ -1,4 +1,6 @@
 
+import datetime
+from rocketry.core.time.base import StaticInterval
 from rocketry.parse import parse_time, ParserError
 from rocketry.time import TimeOfDay, TimeOfHour, TimeOfMinute, TimeDelta, TimeOfWeek, TimeOfYear, TimeOfMonth, always, never
 
@@ -36,6 +38,22 @@ import pytest
 def test_string(time_str, expected):
     cond = parse_time(time_str)
     assert cond == expected
+
+@pytest.mark.parametrize(
+    "t,s,r", [
+        pytest.param(always, "always", "always", id="always"),
+        pytest.param(never, "never", "never", id="never"),
+        pytest.param(
+            StaticInterval(datetime.datetime(2022, 1, 1), datetime.datetime(2022, 12, 31)), 
+            "between 2022-01-01 00:00:00 and 2022-12-31 00:00:00", 
+            "StaticInterval(start=datetime.datetime(2022, 1, 1, 0, 0), end=datetime.datetime(2022, 12, 31, 0, 0))", 
+            id="static interval"
+        ),
+    ]
+)
+def test_representation(t, s, r):
+    assert str(t) == s
+    assert repr(t) == r
 
 def test_error():
     with pytest.raises(ParserError):

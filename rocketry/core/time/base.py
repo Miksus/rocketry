@@ -532,5 +532,21 @@ class StaticInterval(TimePeriod):
     def is_max_interval(self):
         return (self.start == self.min) and (self.end == self.max)
 
+    def __str__(self):
+        if self.is_max_interval:
+            return 'always'
+        elif self.start == self.max:
+            return 'never'
+        else:
+            return f'between {self.start} and {self.end}'
+
+    def __repr__(self):
+        if self.is_max_interval:
+            return 'always'
+        elif self.start == self.max:
+            return 'never'
+        else:
+            return f"StaticInterval(start={self.start!r}, end={self.end!r})"
+
 always = StaticInterval()
 never = StaticInterval(StaticInterval.max, StaticInterval.max)
