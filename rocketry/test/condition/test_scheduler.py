@@ -1,6 +1,8 @@
 
 import datetime
 
+import pytest
+
 from rocketry.conditions import (
     SchedulerStarted,
     SchedulerCycles
@@ -22,6 +24,9 @@ def test_scheduler_cycles(session):
     assert not (SchedulerCycles() < 3).observe(session=session)
     assert not (SchedulerCycles() > 3).observe(session=session)
     assert not (SchedulerCycles() == 4).observe(session=session)
+
+    with pytest.raises(ValueError):
+        SchedulerCycles.from_magic(invalid=3)
 
 def test_scheduler_started(session):
 
