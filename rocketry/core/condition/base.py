@@ -228,6 +228,11 @@ class Not(_ConditionContainer, BaseCondition):
 
     def __eq__(self, other):
         "Equal operation"
+        if isinstance(other, AlwaysTrue):
+            return isinstance(self.condition, AlwaysFalse)
+        elif isinstance(other, AlwaysFalse):
+            return isinstance(self.condition, AlwaysTrue)
+            
         is_same_class = isinstance(other, type(self))
         if is_same_class:
             return self.condition == other.condition
