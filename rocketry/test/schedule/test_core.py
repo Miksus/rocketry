@@ -468,6 +468,7 @@ def test_logging_repo(tmpdir, execution):
     from redbird.repos import MemoryRepo
     session = Session()
     session.set_as_default()
+    session.config.max_process_count = 4
 
     handler = RepoHandler(repo=MemoryRepo(model=MinimalRecord))
 
