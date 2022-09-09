@@ -206,7 +206,7 @@ class Not(_ConditionContainer, BaseCondition):
 
     def __repr__(self):
         string = repr(self.condition)
-        return f'~{string}'
+        return f'Not({string})'
 
     def __str__(self):
         try:
@@ -246,14 +246,10 @@ class AlwaysTrue(BaseCondition):
         return True
 
     def __repr__(self):
-        return 'AlwaysTrue'
+        return 'true'
 
     def __str__(self):
-        try:
-            return super().__str__()
-        except AttributeError:
-            return 'true'
-
+        return 'true'
 
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
@@ -262,13 +258,10 @@ class AlwaysFalse(BaseCondition):
         return False
 
     def __repr__(self):
-        return 'AlwaysFalse'
+        return 'false'
 
     def __str__(self):
-        try:
-            return super().__str__()
-        except AttributeError:
-            return 'false'
+        return 'false'
 
 
 class BaseComparable(BaseCondition):

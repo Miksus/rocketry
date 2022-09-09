@@ -103,6 +103,11 @@ def test_fail(get_cond,exc):
             "currently always", 
             "IsPeriod(period=always)", 
             id="IsPeriod"),
+        pytest.param(
+            Not(true), 
+            "~true", 
+            "Not(true)", 
+            id="Not"),
     ]
 )
 def test_representation(obj, string, represent):
