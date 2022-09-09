@@ -485,7 +485,7 @@ def test_logging_repo(tmpdir, execution):
 
         assert 0 == task_4.priority
 
-        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
         assert session.scheduler.n_cycles == 1 
 
