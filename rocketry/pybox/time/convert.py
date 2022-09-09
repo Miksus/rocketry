@@ -258,6 +258,7 @@ def string_to_timedelta(s:str):
 
         'seconds': 'second',
         'second': 'second',
+        'secs': 'second',
         'sec': 'second',
         's': 'second',
 
@@ -269,6 +270,8 @@ def string_to_timedelta(s:str):
 
         'hours': 'hour',
         'hour': 'hour',
+        'hrs': 'hour',
+        'hr': 'hour',
         'h': 'hour',
 
         'days': 'day',
