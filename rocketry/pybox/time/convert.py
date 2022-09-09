@@ -332,7 +332,3 @@ def string_to_timedelta(s:str):
 def to_microseconds(day=0, hour=0, minute=0, second=0, millisecond=0, microsecond=0) -> int:
     "Turn time components to microseconds"
     return microsecond + millisecond * 1_000 + second * int(1e+6) + minute * int(6e+7) + hour * int(3.6e+9) + day * int(8.64e+10)
-
-def to_nanoseconds(day=0, hour=0, minute=0, second=0, millisecond=0, microsecond=0, nanosecond=0) -> int:
-    "Turn time components to nanoseconds"
-    return nanosecond + microsecond * 1_000 + millisecond * 1_000_000 + second * int(1e+9) + minute * int(6e+10) + hour * int(3.6e+12) + day * int(8.64e+13)
