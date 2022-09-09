@@ -58,9 +58,15 @@ def test_timedelta_fail(obj):
     [
         pytest.param(
             timedelta(
-                days=2, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
-            ), {}, "2 days, 12 hours, 30 minutes, 59 seconds, 500 milliseconds, 500 microseconds", 
+                days=400, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
+            ), {}, "400 days, 12 hours, 30 minutes, 59 seconds, 500 milliseconds, 500 microseconds", 
             id="default"
+        ),
+        pytest.param(
+            timedelta(
+                days=435, hours=12, minutes=30, seconds=59, milliseconds=500, microseconds=500
+            ), {"include": "all"}, "1 years, 2 months, 1 weeks, 3 days, 12 hours, 30 minutes, 59 seconds, 500 milliseconds, 500 microseconds", 
+            id="default (all)"
         ),
         pytest.param(
             timedelta(
@@ -86,7 +92,35 @@ def test_timedelta_fail(obj):
             ), {"format": "semishort"}, "2 days, 12 hrs, 30 mins, 59 secs, 500 ms, 500 μs", 
             id="semishort"
         ),
+        pytest.param(
+            timedelta(
+                days=16, hours=6
+            ), 
+            {"include": ("weeks", "days", "hours")}, 
+            "2 weeks, 2 days, 6 hours", 
+            id="include week"
+        ),
+        pytest.param(
+            timedelta(
+                days=62, hours=6
+            ), 
+            {"include": ("months", "days", "hours"), "days_in_month": 30}, 
+            "2 months, 2 days, 6 hours", 
+            id="include month"
+        ),
+        pytest.param(
+            timedelta(
+                days=365*2 + 2, hours=6
+            ), 
+            {"include": ("years", "days", "hours"), "days_in_year": 365}, 
+            "2 years, 2 days, 6 hours", 
+            id="include year"
+        ),
     ]
 )
 def test_timedelta_to_str(dt, kwargs, expected): 
     assert timedelta_to_str(dt, **kwargs) == expected
+
+def test_to_datetime_error():
+    with pytest.raises(TypeError):
+        to_datetime(sum)
