@@ -109,7 +109,7 @@ and get started with :ref:`tutorials <tutorials>`. There are also
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    tutorial/index
