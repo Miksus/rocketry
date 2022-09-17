@@ -88,3 +88,28 @@ def test_custom_cond():
 
     logger = app.session['do_things'].logger
     assert logger.filter_by(action="success").count() == 1
+
+def test_custom_cond_parametrized():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    # Creating some tasks
+    @app.cond('is foo')
+    def is_foo(x, task=Task()):
+        assert x == "a value"
+        assert task.name == "do_things"
+        return True
+
+    @app.task(true & is_foo(x="a value"))
+    def do_things():
+        ...
+
+    assert is_foo(x="a value") is not is_foo(x="a value")
+
+    app.session.config.shut_cond = TaskStarted(task=do_things)
+    app.run()
+
+    logger = app.session['do_things'].logger
+    assert logger.filter_by(action="success").count() == 1
