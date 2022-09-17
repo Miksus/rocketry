@@ -8,6 +8,49 @@ is not discussed in this section.
 Time Related
 ------------
 
+Run at specific time
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    from rocketry.conds import minutely, hourly, daily, weekly, monthly
+
+    @app.task(minutely.at("45"))
+    def do_minutely():
+        ... # Runs once a minute, 45 seconds past full minute
+
+    @app.task(hourly.at("30:00"))
+    def do_hourly():
+        ... # Runs half past
+
+    @app.task(daily.at("08:00"))
+    def do_daily():
+        ... # Runs at 8 a.m.
+
+    @app.task(weekly.at("Mon"))
+    def do_weekly():
+        ... # Runs on Monday
+
+    @app.task(monthly.at("5th"))
+    def do_weekly():
+        ... # Runs on 5th day of month
+
+Run using Cron
+^^^^^^^^^^^^^^
+
+There is also a cron condition that works
+the same as the official cron specifications.
+You might find `crontab.guru <https://crontab.guru/>`_
+useful to come up with the correct statement.
+
+.. code-block:: python
+
+    from rocketry.conds import cron
+
+    @app.task(cron("* 2 * * *"))
+    def do_things():
+        ...
+
 Run twice a week at different times
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
