@@ -116,6 +116,7 @@ def test_json(session):
         "permanent_task": false,
         "fmt_log_message": "Task '{task}' status: '{action}'",
         "daemon": null,
+        "batches": [],
         "name": "mytest",
         "description": null,
         "logger_name": "rocketry.task",
