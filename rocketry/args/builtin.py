@@ -1,4 +1,6 @@
 
+import os
+import sys
 from typing import Any, Callable, Optional
 import warnings
 try:
@@ -8,6 +10,12 @@ except ImportError: # pragma: no cover
 
 from rocketry.core.parameters import BaseArgument, Parameters
 from rocketry.core.utils import filter_keyword_args
+
+class NotSet:
+    def __repr__(self):
+        return 'NOTSET'
+
+NOTSET = NotSet()
 
 class SimpleArg(BaseArgument):
     """A simple argument.
@@ -33,16 +41,31 @@ class Arg(BaseArgument):
         Value of the argument.
 
     """
-    def __init__(self, key:Any):
+    def __init__(self, key:Any, default=NOTSET):
         self.key = key
+        self.default = default
 
     def get_value(self, task=None, session=None, **kwargs) -> Any:
         if session is None:
             session = task.session
-        return session.parameters._get(self.key, task=task, session=session, **kwargs)
+        try:
+            return session.parameters._get(self.key, task=task, session=session, **kwargs)
+        except KeyError:
+            if self.default is NOTSET:
+                raise
+            return self.default
+
+    def __str__(self):
+        return self.key
 
     def __repr__(self):
         return f'session.parameters[{repr(self.key)}]'
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.key == other.key
+        else:
+            return False
 
 class Session(BaseArgument):
     "An argument that represents the session"
@@ -102,23 +125,29 @@ class Return(BaseArgument):
             ...
     """
 
-    def __init__(self, task_name, default=None):
+    def __init__(self, task_name, default=NOTSET):
         self.task_name = task_name
         self.default = default
 
     def get_value(self, task=None, session=None, **kwargs) -> Any:
         if session is None:
             session = task.session
-        input_task = session[self.task_name]
+        try:
+            input_task = session[self.task_name]
+        except KeyError:
+            raise ValueError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
         try:
             return session.returns[input_task]
         except KeyError:
-            if input_task not in session:
-                raise KeyError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
+            if self.default is NOTSET:
+                raise KeyError(f"Return value not found for {repr(task)}")
             return self.default
 
     def __repr__(self):
         return f'Return({repr(self.task_name)}{"" if self.default is None else ", default=" + repr(self.default)})'
+
+    def __str__(self):
+        return f'Return of {self.task_name!r}'
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
@@ -199,3 +228,48 @@ class TerminationFlag(BaseArgument):
         if execution in ("process", "main"):
             warnings.warn(f"Passing termination flag to task with 'execution_type={execution}''. Flag cannot be used.")
         return task._thread_terminate
+
+    def __repr__(self):
+        return 'TerminationFlag()'
+
+    def __str__(self):
+        return 'termination flag'
+
+class EnvArg(BaseArgument):
+    """Argument that has the value of an environment variable"""
+
+    def __init__(self, var, default=NOTSET):
+        self.var = var
+        self.default = default
+
+    def get_value(self, **kwargs) -> Any:
+        try:
+            return os.environ[self.var]
+        except KeyError:
+            if self.default is NOTSET:
+                raise
+            return self.default
+
+class CliArg(BaseArgument):
+    """Argument that has the value of a command line argument"""
+
+    cli_args = sys.argv
+
+    def __init__(self, param, default=NOTSET):
+        self.param = param
+        self.default = default
+
+    def get_value(self, **kwargs) -> Any:
+        return self._get_arg(self.cli_args)
+
+    def _get_arg(self, args:list):
+        arg_name = self.param
+        for i, arg in enumerate(args):
+            if arg == arg_name:
+                break
+        else:
+            if self.default is NOTSET:
+                raise KeyError("CLI argument not found")
+            else:
+                return self.default
+        return args[i+1]

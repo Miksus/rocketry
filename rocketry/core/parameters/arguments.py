@@ -80,10 +80,10 @@ class BaseArgument(RedBase):
         return self.get_value(**kwargs)
 
     def __eq__(self, other):
-        if isinstance(other, BaseArgument):
+        if isinstance(other, type(self)):
             return self.get_value() == other.get_value()
         else:
-            return self.get_value() == other
+            return False
 
     def __repr__(self):
         cls_name = type(self).__name__
@@ -91,3 +91,31 @@ class BaseArgument(RedBase):
 
     def __str__(self):
         return str(self.get_value())
+
+    def __rshift__(self, other):
+        args = []
+        if not isinstance(other, BaseArgument):
+            raise TypeError(f"Invalid type {type(other)}")
+        for inst in (self, other):
+            if isinstance(inst, PipeArg):
+                args += list(inst)
+            else:
+                args.append(inst)
+        return PipeArg(args)
+
+class PipeArg(BaseArgument):
+
+    def __init__(self, args:list):
+        self._args = args
+
+    def __iter__(self):
+        return iter(self._args)
+
+    def get_value(self, **kwargs) -> Any:
+        for arg in self:
+            try:
+                return arg.get_value(**kwargs)
+            except KeyError:
+                continue
+        else:
+            raise KeyError("No value found")

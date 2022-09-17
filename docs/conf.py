@@ -33,7 +33,6 @@ extensions = [
     'sphinx.ext.autodoc', 
     'sphinx.ext.coverage', 
     'sphinx.ext.napoleon',
-    'sphinx_book_theme',
     'sphinx_copybutton',
 ]
 rst_prolog = """
@@ -43,14 +42,7 @@ rst_prolog = """
 
 doctest_global_setup = '''
 def cleanup():
-    from rocketry import Session
-    from rocketry.core.hook import clear_hooks
-    Session.default_config['task_pre_exist'] = 'replace'
-
-    clear_hooks()
-    session = Session()
-    session.set_as_default()
-    #session.config['use_instance_naming'] = True
+    ...
     
 cleanup()
 '''
@@ -78,7 +70,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_title = "Rocketry"
-html_theme = 'sphinx_book_theme'
+html_theme = 'sphinx_material'
 html_logo = "logo.svg"
 html_favicon = 'favicon.ico'
 
@@ -88,6 +80,43 @@ html_favicon = 'favicon.ico'
 html_static_path = ['_static']
 
 html_css_files = [
-    'css/types.css',
-    'css/colors.css',
+    #'css/types.css',
+    #'css/colors.css',
 ]
+
+html_sidebars = {
+    "**": [
+        "logo-text.html", 
+        "globaltoc.html", 
+        "localtoc.html", 
+        "searchbox.html"
+    ]
+}
+
+html_theme_options = {
+    'nav_title': 'Rocketry',
+
+    'color_primary': 'white',
+    'color_accent': 'grey',
+
+    'repo_url': 'https://github.com/Miksus/rocketry/',
+    'repo_name': 'Rocketry',
+    "repo_type": "github",
+
+    # Visible levels of the global TOC; -1 means unlimited
+    'globaltoc_depth': 3,
+    # If False, expand all TOC entries
+    'globaltoc_collapse': True,
+    # If True, show hidden TOC entries
+    'globaltoc_includehidden': False,
+
+    "html_minify": False,
+    "html_prettify": False,
+    "css_minify": True,
+
+    "heroes": {
+        "index": "Scheduler to power your Python apps.",
+    },
+    "nav_links": [
+    ],
+}

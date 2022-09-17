@@ -116,6 +116,7 @@ def test_json(session):
         "permanent_task": false,
         "fmt_log_message": "Task '{task}' status: '{action}'",
         "daemon": null,
+        "batches": [],
         "name": "mytest",
         "description": null,
         "logger_name": "rocketry.task",
@@ -127,7 +128,7 @@ def test_json(session):
         "status": "success",
         "timeout": null,
         "parameters": {
-            "arg_2": "Return('another')",
+            "arg_2": "Return('another', default=NOTSET)",
             "session": "session",
             "task": "Task()",
             "another_task": "Task('another')"

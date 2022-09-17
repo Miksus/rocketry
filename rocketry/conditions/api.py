@@ -1,6 +1,11 @@
 from typing import Callable, Union
-from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskRunnable, TaskStarted, TaskSucceeded
+from rocketry.conditions import (
+    DependFailure, DependFinish, DependSuccess, TaskFailed, 
+    TaskFinished, TaskRunnable, 
+    TaskStarted, TaskSucceeded,
+    Retry,
+    SchedulerStarted,
+)
 from rocketry.core import (
     BaseCondition
 )
@@ -17,6 +22,9 @@ from rocketry.time import (
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
+
+# Utility classes
+# ---------------
 
 class TimeCondWrapper(BaseCondition):
 
@@ -105,6 +113,18 @@ class TimeActionWrapper(BaseCondition):
     def get_cond(self):
         "Get condition the wrapper represents"
         return self.cls_cond(task=self.task)
+
+class RetryWrapper(BaseCondition):
+
+    def __call__(self, n:int):
+        return Retry(n)
+
+    def observe(self, **kwargs):
+        return self.get_cond().observe(**kwargs)
+
+    def get_cond(self):
+        "Get condition the wrapper represents"
+        return Retry(-1)
 
 # Basics
 # ------
@@ -204,6 +224,8 @@ def running(more_than:str=None, less_than=None, task=None):
     else:
         period = None
     return TaskRunning(task=task, period=period)
+
+retry = RetryWrapper()
 
 started = TimeActionWrapper(TaskStarted)
 failed = TimeActionWrapper(TaskFailed)

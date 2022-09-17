@@ -17,15 +17,17 @@ from rocketry.conds import (
     running,
 
     cron,
+    retry,
     crontime,
 )
 
-from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable
+from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
 from rocketry.core.condition.base import Not
 from rocketry.time import TimeDelta
 from rocketry.time import Cron
 from rocketry.time.delta import TimeSpanDelta
+from rocketry.tasks import FuncTask
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfSecond, TimeOfWeek
 
 params_basic = [
@@ -105,6 +107,9 @@ params_action = [
     pytest.param(finished("a_task").this_day.between("12:00", "15:00"), TaskFinished(task="a_task", period=TimeOfDay("12:00", "15:00")), id="has finished (this day between)"),
     pytest.param(started("a_task").this_week.get_cond(), TaskStarted(task="a_task", period=TimeOfWeek()), id="has started (this week)"),
     pytest.param(succeeded("a_task").this_week.before("Mon"), TaskSucceeded(task="a_task", period=TimeOfWeek(None, "Mon")), id="has succeeded (this week before)"),
+
+    pytest.param(retry.get_cond(), Retry(n=-1), id="Retry infinite"),
+    pytest.param(retry(2), Retry(n=2), id="Retry twice"),
 ]
 
 params_running = [
@@ -131,6 +136,20 @@ cron_like = [
 )
 def test_api(cond, result):
     assert cond == result
+
+@pytest.mark.parametrize(
+    "cond",
+    [
+        pytest.param(retry, id="Retry"),
+        pytest.param(finished, id="Finished"),
+        pytest.param(daily, id="Daily"),
+    ]
+)
+def test_observe(cond, session):
+    # NOTE: We test that observe does not crash (not the output)
+    task = FuncTask(func=lambda: None, name="mytask", session=session)
+
+    cond.observe(task=task, session=session)
 
 def test_fail():
     with pytest.raises(ValueError):

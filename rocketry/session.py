@@ -44,7 +44,7 @@ class Config(BaseModel):
     # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
-    task_execution: str = 'process'
+    task_execution: Optional[str] = None
     task_pre_exist: str = 'raise'
     force_status_from_logs: bool = False # Force to check status from logs every time (slow but robust)
     
@@ -66,6 +66,18 @@ class Config(BaseModel):
     shut_cond: Optional['BaseCondition'] = None
 
     param_materialize:Literal['pre', 'post'] = 'post'
+
+    @validator('task_execution', pre=True, always=True)
+    def parse_task_execution(cls, value):
+        if value is None:
+            warnings.warn(
+                "Default execution will be changed to 'async'. "
+                "To suppress this warning, specify task_execution, "
+                "ie. Rocketry(task_execution='async')", 
+                FutureWarning
+            )
+            return 'process'
+        return value
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):
