@@ -63,7 +63,7 @@ def test_create():
 
         s = Session(parameters={"x": 5}, config={'task_execution': 'async'})
         assert s.parameters == Parameters({"x": 5})
-        s = Session(parameters=Parameters({"x": 5}))
+        s = Session(parameters=Parameters({"x": 5}), config={'task_execution': 'async'})
         assert s.parameters == Parameters({"x": 5})
 
     with pytest.warns(FutureWarning):
