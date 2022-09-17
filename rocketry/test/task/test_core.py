@@ -128,7 +128,7 @@ def test_json(session):
         "status": "success",
         "timeout": null,
         "parameters": {
-            "arg_2": "Return('another')",
+            "arg_2": "Return('another', default=NOTSET)",
             "session": "session",
             "task": "Task()",
             "another_task": "Task('another')"

@@ -11,8 +11,11 @@ except ImportError: # pragma: no cover
 from rocketry.core.parameters import BaseArgument, Parameters
 from rocketry.core.utils import filter_keyword_args
 
-class NOTSET:
-    pass
+class NotSet:
+    def __repr__(self):
+        return 'NOTSET'
+
+NOTSET = NotSet()
 
 class SimpleArg(BaseArgument):
     """A simple argument.
