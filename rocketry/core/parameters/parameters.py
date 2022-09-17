@@ -200,6 +200,9 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         "Empty the parameters"
         self._params = {}
 
+    def copy(self):
+        return Parameters(self._params.copy())
+
     def to_dict(self):
         return self._params
 

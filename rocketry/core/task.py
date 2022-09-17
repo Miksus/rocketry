@@ -707,7 +707,7 @@ class Task(RedBase, BaseModel):
 
     def get_task_params(self):
         "Get parameters passed to the task"
-        return self.parameters
+        return self.parameters.copy()
 
     def prefilter_params(self, params:Parameters):
         """Pre filter the parameters.
