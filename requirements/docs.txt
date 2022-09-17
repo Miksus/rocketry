@@ -7,3 +7,4 @@ sphinx >= 1.7.5
 pydata-sphinx-theme
 sphinx_book_theme
 sphinx-copybutton
+git+https://github.com/bashtage/sphinx-material.git

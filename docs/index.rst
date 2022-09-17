@@ -3,31 +3,8 @@
    :description: Rocketry, modern scheduling framework
    :keywords: schedule, task, script, run, Python
 
-
 .. raw:: html
-
-    <h1 align="center"><a href="https://rocketry.readthedocs.io">Rocketry</a></h1>
-    <p align="center">
-        <em>The engine to power your Python apps</em>
-    </p>
-    <p align="center">
-        <a href="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" target="_blank">
-            <img src="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" alt="Test">
-        </a>
-        <a href="https://codecov.io/gh/Miksus/rocketry" target="_blank">
-            <img src="https://codecov.io/gh/Miksus/rocketry/branch/master/graph/badge.svg?token=U2KF1QA5HT" alt="Test coverage">
-        </a>
-        <a href="https://pypi.org/project/rocketry" target="_blank">
-            <img src="https://badgen.net/pypi/v/rocketry?color=969696" alt="Package version">
-        </a>
-        <a href="https://pypi.org/project/rocketry" target="_blank">
-            <img src="https://badgen.net/pypi/python/rocketry?color=969696&labelColor=black" alt="Supported Python versions">
-        </a>
-    </p>
-
-.. raw:: html
-
-   <hr>
+   :file: header.html
 
 - `Documentation <https://rocketry.readthedocs.io/>`_
 - `Source code (Github) <https://github.com/Miksus/rocketry>`_
@@ -40,35 +17,32 @@ applications. It is simple, clean and extensive.
 
 **Key features:**
 
-- Simple: productive and easy to set up
-- Clean: Scheduling is just plain English
+- Simple: Productive and easy to set up
 - Robust: Well tested and production ready
-- Extensive: Has a lot of built-in features
+- Extensive: A lot of built-in features
 - Customizable: Designed to be modified
 
 **Core functionalities:**
 
-- Powerful scheduling syntax
+- Powerful scheduling
 - A lot of built-in scheduling options (including :ref:`cron <cron>`)
-- Task parallelization
-- Task parametrization
+- Concurrency (async, threading, multiprocessing)
+- Parametrization
 - Task pipelining
-- Modifiable session also in runtime
+- Modifiable runtime session
 - Async support
 
 **It looks like this:**
 
-.. literalinclude:: /code/demos/minimal.py
+.. literalinclude:: /code/demos/minimal_with_api.py
     :language: py
 
 .. raw:: html
 
    <details>
-   <summary><a>Dislike the syntax?</a></summary>
+   <summary><a>There is also a string based option</a></summary>
 
-You can also use the condition API instead of the string syntax:
-
-.. literalinclude:: /code/demos/minimal_with_api.py
+.. literalinclude:: /code/demos/minimal.py
     :language: py
 
 .. raw:: html
@@ -76,7 +50,7 @@ You can also use the condition API instead of the string syntax:
    </details>
 
 Why Rocketry?
----------------
+-------------
 
 There are some alternatives for a scheduler:
 
@@ -84,14 +58,20 @@ There are some alternatives for a scheduler:
 - APScheduler
 - Airflow
 
-Compared to alternatives, Rocketry is highly productive and 
-easy to use. It also has perhaps the most advanced 
-mechanism for scheduling and creating custom rules to run tasks.
+Unlike the alternatives, Rocketry's scheduler is 
+statement-based. Rocketry natively supports the 
+same scheduling strategies as the other options, 
+including cron and task pipelining, but it can also be
+arbitrarily extended using custom scheduling statements.
 
-Rocketry is the automation backend that sets your applications alive. 
-It has customization built into it and it is possible to build really
-complex systems that are can self update, self restart and interact with 
-users.
+In addition, Rocketry is very easy to use. It does not 
+require complex setup but it can be used for bigger applications. 
+It has a lot of options to fine-tune and a lot of features 
+to support various needs.
+ 
+Rocketry is designed to be modified and it suits well as the 
+engine for autonomous applications. It is the automation 
+back-end that sets your applications alive.
 
 Here is a demonstration of more advanced case:
 
@@ -119,9 +99,9 @@ and get started with :ref:`tutorials <tutorials>`. There are also
 
    tutorial/index
    handbooks/index
-   condition_syntax/index
    cookbook/index
    examples/index
+   condition_syntax/index
    how_it_works
    rocketry_vs_alternatives
    contributing
