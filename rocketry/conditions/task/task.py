@@ -1,7 +1,7 @@
 
 import re, time
 import datetime
-from typing import Tuple
+from typing import Optional, Tuple
 from rocketry.core import task
 from rocketry.core.condition import BaseCondition
 
@@ -9,7 +9,7 @@ from rocketry.core.time import TimePeriod
 from rocketry.core.time.utils import get_period_span
 from .utils import DependMixin, TaskStatusMixin
 
-from redbird.oper import between
+from redbird.oper import between, in_, greater_equal
 
 from rocketry.core.condition import BaseComparable, All
 from rocketry.core.time import TimeDelta
@@ -406,3 +406,31 @@ class DependFailure(DependMixin):
         task_name = getattr(task, 'name', str(task))
         depend_task_name = getattr(depend_task, 'name', str(depend_task))
         return f"task '{depend_task_name}' failed before '{task_name}' started"
+
+class Retry(BaseCondition):
+    """Condition for retrying failed attempts"""
+    def __init__(self, n: Optional[int] = 1):
+        self.n = int(n) if n is not None else -1
+        super().__init__()
+
+    def get_state(self, task=Task(), session=Session()):
+        if self.n == 0:
+            return False
+        elif task.get_status() != "fail":
+            # Previously did not fail, no need to retry
+            return False
+        elif self.n == -1:
+            # Infinite retries
+            return True
+
+        last_non_fail = task.logger.filter_by( 
+            action=in_(['success', 'crash', 'inaction', 'terminate'])
+        ).last()
+
+        last_non_fail_created = 0 if last_non_fail is None else last_non_fail.created
+
+        n_failed_in_row = task.logger.filter_by(
+            created=greater_equal(last_non_fail_created), 
+            action='fail'
+        ).count()
+        return self.n >= n_failed_in_row
