@@ -163,6 +163,10 @@ class Task(RedBase, BaseModel):
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
+    batches: List[Parameters] = Field(
+        default_factory=list,
+        description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
+    )
 
     # Instance
     name: Optional[str] = Field(description="Name of the task. Must be unique")
@@ -190,11 +194,6 @@ class Task(RedBase, BaseModel):
     last_terminate: Optional[datetime.datetime]
     last_inaction: Optional[datetime.datetime]
     last_crash: Optional[datetime.datetime]
-
-    batches: List[Parameters] = Field(
-        default_factory=list,
-        description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
-    )
 
     _process: multiprocessing.Process = None
     _thread: threading.Thread = None
