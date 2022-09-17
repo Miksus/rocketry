@@ -49,7 +49,7 @@ def test_without_timeout(tmpdir, execution, session):
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution, session=session)
 
-        session.config.shut_cond = (TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskFinished(task="slow task but passing") >= 2) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.config.timeout = 0.1
         session.start()
 
@@ -72,7 +72,7 @@ def test_task_timeout_set_in_session(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.config.timeout = 0.1
         assert session.config.timeout == datetime.timedelta(milliseconds=100)
         session.start()
@@ -94,7 +94,7 @@ def test_task_timeout_set_in_task(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), timeout="0.1 sec", execution=execution, session=session)
 
-        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         assert task.timeout == datetime.timedelta(milliseconds=100)
         session.start()
 
@@ -119,7 +119,7 @@ def test_task_terminate(tmpdir, execution, session):
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main", session=session)
-        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
 
         logger = task.logger
@@ -144,7 +144,7 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution, session=session)
 
-        session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("5 seconds"))
+        session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
 
         logger = task.logger
@@ -154,3 +154,27 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
         assert 0 == logger.filter_by(action="fail").count()
 
         assert not os.path.exists("work.txt")
+
+@pytest.mark.parametrize("execution", ["async", "thread", "process"])
+def test_permanent_task(tmpdir, execution, session):
+    """Test the task.timeout is respected overt scheduler.timeout"""
+    with tmpdir.as_cwd() as old_dir:
+
+        func_run_slow = get_slow_func(execution)
+        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="1 ms", permanent_task=True, execution=execution, session=session)
+
+        session.config.shut_cond = (TaskStarted(task="slow task but passing") >= 3) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
+        session.config.timeout = 0.1
+        session.start()
+
+        logger = task.logger
+        # If Scheduler is quick, it may launch the task 3 times 
+        # but there still should not be any terminations
+        assert 3 <= logger.filter_by(action="run").count() 
+        assert 1 == logger.filter_by(action="terminate").count() # The last run is terminated
+        assert 2 <= logger.filter_by(action="success").count()
+        assert 0 == logger.filter_by(action="fail").count()
+
+        assert logger.filter_by(action="terminate").last().created >= logger.filter_by(action="success").last().created
+
+        assert os.path.exists("work.txt")

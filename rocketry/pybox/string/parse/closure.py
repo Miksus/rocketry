@@ -19,13 +19,9 @@ class ClosureParser:
     # TODO: check if next_closure is opening/closing using regex
     # TODO: .apply(string, func) : Visit all closures and apply the function
     
-    def __init__(self, opening="(", closing=")", regex=False):
+    def __init__(self, opening="(", closing=")"):
         self.opening = opening
         self.closing = closing
-        self.regex = regex
-        if regex:
-            self._regex_opening = re.compile(opening)
-            self._regex_closing = re.compile(closing)
         
     def to_list(self, string):
         "Turn the string to (nested) list of strings of closures"
@@ -79,10 +75,6 @@ class ClosureParser:
             start = index
         
         return (opening, closing)
-    
-    def find(self, string, start=None):
-        s, e = self.find_outer_indices(string, start)
-        return string[s:e+len(self.closing)]
     
     def count(self, string):
         "Count number of closures in the string"

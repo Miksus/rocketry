@@ -5,8 +5,8 @@ from rocketry.conditions.task.task import TaskFailed, TaskFinished, TaskRunning,
 from rocketry.conds import (
     true, false,
     every,
-    minutely, hourly, daily, weekly, monthly,
-    time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
+    secondly, minutely, hourly, daily, weekly, monthly,
+    time_of_second, time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
     after_finish, after_success, after_fail,
 
     after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
@@ -18,6 +18,7 @@ from rocketry.conds import (
 
     cron,
     retry,
+    crontime,
 )
 
 from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
@@ -26,8 +27,8 @@ from rocketry.core.condition.base import Not
 from rocketry.time import TimeDelta
 from rocketry.time import Cron
 from rocketry.time.delta import TimeSpanDelta
-from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek
 from rocketry.tasks import FuncTask
+from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfSecond, TimeOfWeek
 
 params_basic = [
     pytest.param(true, AlwaysTrue(), id="true"),
@@ -35,6 +36,8 @@ params_basic = [
 ]
 
 params_time = [
+    pytest.param(time_of_second.starting(500), IsPeriod(period=TimeOfSecond.starting(500)), id="time of second starting"),
+    pytest.param(time_of_minute.starting(45.00), IsPeriod(period=TimeOfMinute.starting(45.00)), id="time of minute starting"),
     pytest.param(time_of_hour.after("45:00"), IsPeriod(period=TimeOfHour("45:00", None)), id="time of hour after"),
 
     pytest.param(time_of_day.after("10:00"), IsPeriod(period=TimeOfDay("10:00", None)), id="time of day after"),
@@ -51,6 +54,7 @@ params_task_exec = [
     pytest.param(every("10 mins", based="success"), TaskSucceeded(period=TimeDelta("10 mins")) == 0, id="every (success)"),
     pytest.param(every("10 mins", based="fail"), TaskFailed(period=TimeDelta("10 mins")) == 0, id="every (fail)"),
 
+    pytest.param(secondly.get_cond(), TaskExecutable(period=TimeOfSecond(None, None)), id="secondly"),
     pytest.param(minutely.get_cond(), TaskExecutable(period=TimeOfMinute(None, None)), id="minutely"),
     pytest.param(hourly.get_cond(), TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),
     pytest.param(daily.get_cond(), TaskExecutable(period=TimeOfDay(None, None)), id="daily"),
@@ -121,6 +125,9 @@ params_schedule = [
 cron_like = [
     pytest.param(cron("1 2 3 4 5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5"),
     pytest.param(cron(minute="1", hour="2", day_of_month="3", month="4", day_of_week="5"), TaskRunnable(period=Cron('1', '2', '3', '4', '5')), id="cron 1 2 3 4 5 (kwargs)"),
+
+    pytest.param(crontime("1 2 3 4 5"), IsPeriod(period=Cron('1', '2', '3', '4', '5')), id="crontime 1 2 3 4 5"),
+    pytest.param(crontime(minute="1", hour="2", day_of_month="3", month="4", day_of_week="5"), IsPeriod(period=Cron('1', '2', '3', '4', '5')), id="crontime 1 2 3 4 5 (kwargs)"),
 ]
 
 @pytest.mark.parametrize(

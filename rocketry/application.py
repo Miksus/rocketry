@@ -89,21 +89,10 @@ class Rocketry(_AppMixin):
         return logging.getLogger(logger_name)
 
     def _set_logger_with_repo(self, repo):
-        if isinstance(repo, str):
-            self._get_repo(repo)
-        elif repo is None:
+        if repo is None:
             repo = MemoryRepo(model=LogRecord)
         logger = self._get_task_logger()
         logger.handlers.insert(0, RepoHandler(repo=repo))
-    
-    def _get_repo(self, repo:str):
-        if repo == "memory":
-            return MemoryRepo(model=LogRecord)
-        elif repo == "csv":
-            filepath = Path(tempfile.gettempdir()) / "rocketry.csv"
-            return CSVFileRepo(filename=filepath, model=LogRecord)
-        else:
-            raise NotImplementedError(f"Repo creation for {repo} not implemented")
 
 class Grouper(_AppMixin):
 

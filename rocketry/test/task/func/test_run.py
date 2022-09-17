@@ -1,9 +1,10 @@
 
+import logging
 import pytest
 
 from rocketry.tasks import FuncTask
 from rocketry.core.task import Task
-from rocketry.exc import TaskInactionException
+from rocketry.exc import TaskInactionException, TaskLoggingError
 from rocketry.conditions import AlwaysFalse, AlwaysTrue
 
 from task_helpers import wait_till_task_finish
@@ -126,6 +127,78 @@ def test_run_async(task_func, expected_outcome, execution, session):
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": expected_outcome},
     ] == records
+
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize(
+    "task_func,expected_outcome",
+    [
+        pytest.param(run_async_successful, "success", id="Success"),
+        pytest.param(run_async_fail, "fail", id="Failure"),
+        pytest.param(run_async_inaction, "inaction", id="Inaction"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_run_log_fail_at_start(task_func, expected_outcome, execution, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action == "run":
+                raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution,
+        session=session
+    )
+
+    with pytest.raises(TaskLoggingError):
+        await task.start_async()
+    # Wait for finish
+    await session.scheduler.wait_task_alive()
+    session.scheduler.handle_logs()
+
+    # At the moment the run log is not propagated to 
+    # finish
+    assert task.status != "run"
+
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize(
+    "task_func,expected_outcome",
+    [
+        pytest.param(run_async_successful, "success", id="Success"),
+        pytest.param(run_async_fail, "fail", id="Failure"),
+        pytest.param(run_async_inaction, "inaction", id="Inaction"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_run_log_fail_at_end(task_func, expected_outcome, execution, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action != "run":
+                raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution,
+        session=session
+    )
+    if execution == "main":
+        with pytest.raises(TaskLoggingError):
+            await task.start_async()
+    else:
+        await task.start_async()
+
+    await session.scheduler.wait_task_alive()
+
+    if execution == "process":
+        with pytest.raises(TaskLoggingError):
+            session.scheduler.handle_logs()
+    assert task.status == "fail"
 
 def test_force_run(session):
     

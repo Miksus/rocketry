@@ -1,6 +1,7 @@
 # Testing
 pytest
 pytest-cov
+pytest-asyncio
 
 # Package requirements
 python-dateutil

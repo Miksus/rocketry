@@ -15,6 +15,7 @@ from rocketry.time import (
 )
 from rocketry.tasks import FuncTask
 from rocketry.time.interval import TimeOfMinute
+from rocketry.testing.log import create_task_record
 
 @pytest.mark.parametrize("from_logs", [pytest.param(True, id="from logs"), pytest.param(False, id="optimized")])
 @pytest.mark.parametrize(
@@ -198,16 +199,10 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
         for log in logs:
             log_time, log_action = log[0], log[1]
             log_created = to_datetime(log_time).timestamp()
-            record = logging.LogRecord(
-                # The content here should not matter for task status
-                name='rocketry.core.task', level=logging.INFO, lineno=1, 
-                pathname='d:\\Projects\\rocketry\\rocketry\\core\\task\\base.py',
-                msg="Logging of 'task'", args=(), exc_info=None,
+            record = create_task_record(
+                msg="Logging of 'task'", args=(),
+                task_name="the task", created=log_created, action=log_action
             )
-
-            record.created = log_created
-            record.action = log_action
-            record.task_name = "the task"
 
             task.logger.handle(record)
             setattr(task, f'last_{log_action}', to_datetime(log_time))

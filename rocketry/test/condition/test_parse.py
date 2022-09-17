@@ -34,22 +34,25 @@ from rocketry.time import (
 )
 
 from rocketry.conds import (
-    minutely, hourly, daily, weekly, monthly
+    secondly, minutely, hourly, daily, weekly, monthly
 )
 from rocketry.time.cron import Cron
+from rocketry.time.interval import TimeOfSecond
 
 cases_time = [
-    pytest.param("minutely", minutely, id="hourly"),
+    pytest.param("secondly", secondly, id="secondly"),
+    pytest.param("minutely", minutely, id="minutely"),
     pytest.param("hourly", hourly, id="hourly"),
     pytest.param("daily", daily, id="daily"),
     pytest.param("weekly", weekly, id="weekly"),
     pytest.param("monthly", monthly, id="monthly"),
 
-    pytest.param("minutely starting 45:00",   TaskExecutable(period=TimeOfMinute("45:00", "45:00")), id="hourly starting"),
-    pytest.param("hourly starting 45:00",   TaskExecutable(period=TimeOfHour("45:00", "45:00")), id="hourly starting"),
-    pytest.param("daily starting 10:00",    TaskExecutable(period=TimeOfDay("10:00", "10:00")),  id="daily starting"),
-    pytest.param("weekly starting Tuesday", TaskExecutable(period=TimeOfWeek("Tue", "Tue")),     id="weekly starting"),
-    pytest.param("monthly starting 1.",  TaskExecutable(period=TimeOfMonth("1.", "1.")), id="monthly starting"),
+    pytest.param("secondly starting 500",   TaskExecutable(period=TimeOfSecond.starting("500")), id="secondly starting"),
+    pytest.param("minutely starting 45:00",   TaskExecutable(period=TimeOfMinute.starting("45:00")), id="minutely starting"),
+    pytest.param("hourly starting 45:00",   TaskExecutable(period=TimeOfHour.starting("45:00")), id="hourly starting"),
+    pytest.param("daily starting 10:00",    TaskExecutable(period=TimeOfDay.starting("10:00")),  id="daily starting"),
+    pytest.param("weekly starting Tuesday", TaskExecutable(period=TimeOfWeek.starting("Tue")),     id="weekly starting"),
+    pytest.param("monthly starting 1.",  TaskExecutable(period=TimeOfMonth.starting("1.")), id="monthly starting"),
 
     pytest.param("hourly between 45:00 and 50:00",       TaskExecutable(period=TimeOfHour("45:00", "50:00")), id="hourly between"),
     pytest.param("daily between 10:00 and 14:00",        TaskExecutable(period=TimeOfDay("10:00", "14:00")),  id="daily between"),

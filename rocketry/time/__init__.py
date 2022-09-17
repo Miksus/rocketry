@@ -5,7 +5,7 @@ from .construct import get_between, get_before, get_after, get_full_cycle, get_o
 from .delta import TimeSpanDelta
 from .cron import Cron
 
-from rocketry.core.time import always
+from rocketry.core.time import always, never
 
 from rocketry.session import Session
 
@@ -19,6 +19,6 @@ Session._time_parsers.update(
         re.compile(r"every (?P<past>.+)"): TimeDelta,
         re.compile(r"past (?P<past>.+)"): TimeDelta,
         "always": always,
-        "never": StaticInterval(start=StaticInterval.max - StaticInterval.resolution),
+        "never": never,
     }
 )

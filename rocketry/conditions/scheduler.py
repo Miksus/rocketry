@@ -28,10 +28,16 @@ class SchedulerCycles(BaseComparable):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        comps = {"_eq_": "has", "_gt_": "more than", "_lt_": "less than"}
+        comps = {
+            "__eq__": "has", 
+            "__gt__": "has more than", 
+            "__lt__": "has less than",
+            "__ge__": "has more or equal than", 
+            "__le__": "has less or equal than",
+        }
         s = "scheduler"
-        for key, val in self.kwargs.items():
-            s = s + " has " + comps.get(key, key) + " " + str(val) + " cycles"
+        for key, val in self._comps.items():
+            s = s + " " + comps.get(key, key) + " " + str(val) + " cycles"
         return s
 
     @classmethod
@@ -68,4 +74,4 @@ class SchedulerStarted(BaseCondition):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        return f"scheduler {self.period} "
+        return f"scheduler {self.period}"

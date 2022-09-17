@@ -3,10 +3,10 @@ import pytest
 
 from rocketry.conditions import (
     ParamExists, IsPeriod,
-    Any, All
+    Any, All, Not
 )
 from rocketry.conds import true, false
-from rocketry.time import TimeDelta
+from rocketry.time import TimeDelta, always
 
 def test_true():
     assert bool(true)
@@ -97,9 +97,34 @@ def test_fail(get_cond,exc):
             Any(true, false), 
             "(true | false)", 
             "Any(true, false)", 
-            id="Any")
+            id="Any"),
+        pytest.param(
+            IsPeriod(always), 
+            "currently always", 
+            "IsPeriod(period=always)", 
+            id="IsPeriod"),
+        pytest.param(
+            Not(true), 
+            "~true", 
+            "Not(true)", 
+            id="Not"),
     ]
 )
 def test_representation(obj, string, represent):
     assert str(obj) == string
     assert repr(obj) == represent
+
+def test_logic():
+    assert list(All(true, true, false)) == [true, true, false]
+    assert list(Any(true, true, false)) == [true, true, false]
+
+    assert All(true, true, false)[2] is false
+    assert Any(true, true, false)[2] is false
+
+    assert Not(true) == false
+    assert Not(true) != true
+
+    assert Not(false) == true
+    assert Not(false) != false
+    
+    assert Not(false) != "invalid"

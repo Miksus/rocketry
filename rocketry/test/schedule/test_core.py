@@ -130,7 +130,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
-    session = Session(config={"debug": True, "silence_task_prerun": False})
+    session = Session(config={"debug": True, "silence_task_logging": False})
     rocketry.session = session
     session.set_as_default()
 
@@ -190,7 +190,7 @@ def test_task_status(session, execution, func_type, mode):
 
     task_success = FuncTask(
         run_succeeding if func_type == "sync" else run_succeeding_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task success") < 3, 
         name="task success",
         execution=execution,
         priority=0,
@@ -198,7 +198,7 @@ def test_task_status(session, execution, func_type, mode):
     )
     task_fail = FuncTask(
         run_failing if func_type == "sync" else run_failing_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task fail") < 3, 
         name="task fail",
         execution=execution,
         priority=0,
@@ -206,7 +206,7 @@ def test_task_status(session, execution, func_type, mode):
     )
     task_inact = FuncTask(
         run_inacting if func_type == "sync" else run_inacting_async, 
-        start_cond=true, 
+        start_cond=TaskStarted(task="task inact") < 3, 
         name="task inact",
         execution=execution,
         priority=100,
@@ -220,7 +220,11 @@ def test_task_status(session, execution, func_type, mode):
         priority=0,
         session=session
     )
-    session.config.shut_cond = (TaskStarted(task="task inact") >= 3) | ~SchedulerStarted(period=TimeDelta("20 second"))
+    session.config.shut_cond = (
+        (TaskStarted(task="task success") >= 3)
+        & (TaskStarted(task="task fail") >= 3)
+        & (TaskStarted(task="task inact") >= 3)
+    ) | ~SchedulerStarted(period=TimeDelta("20 second"))
     session.start()
 
     # Test status
@@ -334,7 +338,7 @@ def test_task_force_disabled(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_priority(execution, session):
-
+    session.config.max_process_count = 4
     task_1 = FuncTask(run_succeeding, name="1", priority=100, start_cond=AlwaysTrue(), execution=execution, session=session)
     task_3 = FuncTask(run_failing, name="3", priority=10, start_cond=AlwaysTrue(), execution=execution, session=session)
     task_2 = FuncTask(run_failing, name="2", priority=50, start_cond=AlwaysTrue(), execution=execution, session=session)
@@ -342,7 +346,7 @@ def test_priority(execution, session):
 
     assert 0 == task_4.priority
 
-    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     session.start()
     assert session.scheduler.n_cycles == 1 
@@ -360,7 +364,7 @@ def test_pass_params_as_global(execution, session):
 
     task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     # Passing global parameters
     session.parameters["int_5"] = 5
@@ -389,7 +393,7 @@ def test_pass_params_as_local(execution, parameters, session):
         execution=execution,
         session=session
     )
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     session.start()
 
@@ -410,7 +414,7 @@ def test_pass_params_as_local_and_global(execution, session):
         session=session
     )
 
-    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+    session.config.shut_cond = (TaskStarted(task="parametrized") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     # Additional parameters
     session.parameters["extra_param"] = "something"
@@ -464,6 +468,7 @@ def test_logging_repo(tmpdir, execution):
     from redbird.repos import MemoryRepo
     session = Session()
     session.set_as_default()
+    session.config.max_process_count = 4
 
     handler = RepoHandler(repo=MemoryRepo(model=MinimalRecord))
 
@@ -481,7 +486,7 @@ def test_logging_repo(tmpdir, execution):
 
         assert 0 == task_4.priority
 
-        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("2 seconds"))
+        session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
         assert session.scheduler.n_cycles == 1 
 

@@ -4,7 +4,6 @@ from abc import abstractmethod
 from typing import Callable, Dict, Pattern, Union, Type
 
 from rocketry._base import RedBase
-from rocketry.core.meta import _add_parser, _register
 from rocketry.core.parameters.parameters import Parameters
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}
@@ -192,9 +191,6 @@ class All(_ConditionContainer, BaseCondition):
             string = ' & '.join(map(str, self.subconditions))
             return f'({string})'
 
-    def __getitem__(self, val):
-        return self.subconditions[val]
-
 
 class Not(_ConditionContainer, BaseCondition):
 
@@ -207,7 +203,7 @@ class Not(_ConditionContainer, BaseCondition):
 
     def __repr__(self):
         string = repr(self.condition)
-        return f'~{string}'
+        return f'Not({string})'
 
     def __str__(self):
         try:
@@ -219,9 +215,6 @@ class Not(_ConditionContainer, BaseCondition):
     @property
     def subconditions(self):
         return (self.condition,)
-
-    def __iter__(self):
-        return iter((self.condition,))
         
     def __invert__(self):
         "inverse of inverse is the actual condition"
@@ -229,6 +222,11 @@ class Not(_ConditionContainer, BaseCondition):
 
     def __eq__(self, other):
         "Equal operation"
+        if isinstance(other, AlwaysTrue):
+            return isinstance(self.condition, AlwaysFalse)
+        elif isinstance(other, AlwaysFalse):
+            return isinstance(self.condition, AlwaysTrue)
+            
         is_same_class = isinstance(other, type(self))
         if is_same_class:
             return self.condition == other.condition
@@ -242,14 +240,10 @@ class AlwaysTrue(BaseCondition):
         return True
 
     def __repr__(self):
-        return 'AlwaysTrue'
+        return 'true'
 
     def __str__(self):
-        try:
-            return super().__str__()
-        except AttributeError:
-            return 'true'
-
+        return 'true'
 
 class AlwaysFalse(BaseCondition):
     "Condition that is always false"
@@ -258,13 +252,10 @@ class AlwaysFalse(BaseCondition):
         return False
 
     def __repr__(self):
-        return 'AlwaysFalse'
+        return 'false'
 
     def __str__(self):
-        try:
-            return super().__str__()
-        except AttributeError:
-            return 'false'
+        return 'false'
 
 
 class BaseComparable(BaseCondition):

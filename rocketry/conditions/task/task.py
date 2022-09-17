@@ -6,7 +6,7 @@ from rocketry.core import task
 from rocketry.core.condition import BaseCondition
 
 from rocketry.core.time import TimePeriod
-from rocketry.core.time.utils import get_period_span, to_timestamp
+from rocketry.core.time.utils import get_period_span
 from .utils import DependMixin, TaskStatusMixin
 
 from redbird.oper import between, in_, greater_equal

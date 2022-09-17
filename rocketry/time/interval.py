@@ -9,8 +9,36 @@ import dateutil
 
 from rocketry.core.time.anchor import AnchoredInterval
 from rocketry.core.time.base import TimeInterval
-from rocketry.core.time.utils import timedelta_to_str, to_dict, to_microseconds
+from rocketry.pybox.time import timedelta_to_str, datetime_to_dict, to_microseconds
 from rocketry.pybox.time.interval import Interval
+
+@dataclass(frozen=True, init=False)
+class TimeOfSecond(AnchoredInterval):
+    """Time interval anchored to second cycle of a clock
+
+    min: 0 microsecond
+    max: 999999 microsecond
+
+    """
+
+    _scope: ClassVar[str] = "second"
+
+    _scope_max: ClassVar[int] = to_microseconds(second=1)
+    _unit_resolution: ClassVar[int] = to_microseconds(millisecond=1)
+    _unit_names: ClassVar[List[str]] = [str(i) for i in range(1000)] # 00, 01 etc. till 59
+
+    def anchor_float(self, i, **kwargs):
+        return to_microseconds(millisecond=i)
+
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 1000:
+            raise ValueError(f"Invalid value: {i}. Allowed: 0-1000")
+        return super().anchor_int(i, **kwargs)
+
+    def anchor_str(self, s, **kwargs):
+        # ie. 30.123
+        res = float(s)
+        return to_microseconds(millisecond=res)
 
 @dataclass(frozen=True, init=False)
 class TimeOfMinute(AnchoredInterval):
@@ -18,10 +46,6 @@ class TimeOfMinute(AnchoredInterval):
 
     min: 0 seconds, 0 microsecond
     max: 59 seconds, 999999 microsecond
-
-    Example:
-        # From 5th second of a minute to 30th second of a minute
-        TimeOfHour("5:00", "30:00")
     """
 
     _scope: ClassVar[str] = "minute"
@@ -30,19 +54,22 @@ class TimeOfMinute(AnchoredInterval):
     _unit_resolution: ClassVar[int] = to_microseconds(second=1)
     _unit_names: ClassVar[List[str]] = [f"{i:02d}" for i in range(60)] # 00, 01 etc. till 59
 
+    def anchor_float(self, i, **kwargs):
+        return to_microseconds(second=i)
+
+    def anchor_int(self, i, **kwargs):
+        if not 0 <= i <= 59:
+            raise ValueError(f"Invalid value: {i}. Allowed: 0-59")
+        return super().anchor_int(i, **kwargs)
+
     def anchor_str(self, s, **kwargs):
         # ie. 30.123
         res = re.search(r"(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?", s, flags=re.IGNORECASE)
         if res:
+            res = res.groupdict()
             if res["microsecond"] is not None:
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
-            return to_microseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
-
-        res = re.search(r"(?P<n>[1-4] ?(quarter|q))", s, flags=re.IGNORECASE)
-        if res:
-            # ie. "1 quarter"
-            n_quarters = res["n"]
-            return (self._scope_max + 1) / 4 * n_quarters - 1
+            return to_microseconds(**{key: int(val) for key, val in res.items() if val is not None})
 
 
 @dataclass(frozen=True, init=False)
@@ -70,16 +97,17 @@ class TimeOfHour(AnchoredInterval):
         # ie. 12:30.123
         res = re.search(r"(?P<minute>[0-9][0-9]):(?P<second>[0-9][0-9])([.](?P<microsecond>[0-9]{0,6}))?", s, flags=re.IGNORECASE)
         if res:
+            res = res.groupdict()
             if res["microsecond"] is not None:
                 res["microsecond"] = res["microsecond"].ljust(6, "0")
-            return to_microseconds(**{key: int(val) for key, val in res.groupdict().items() if val is not None})
+            return to_microseconds(**{key: int(val) for key, val in res.items() if val is not None})
 
-        res = re.search(r"(?P<n>[1-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
+        res = re.search(r"(?P<n>[0-4]) ?(quarter|q)", s, flags=re.IGNORECASE)
         if res:
             # ie. "1 quarter"
             n_quarters = int(res["n"])
             return (self._scope_max + 1) / 4 * n_quarters - 1
-
+        raise ValueError(f"Invalid value: {repr(s)}")
 
 @dataclass(frozen=True, init=False)
 class TimeOfDay(AnchoredInterval):
@@ -105,13 +133,13 @@ class TimeOfDay(AnchoredInterval):
     def anchor_str(self, s, **kwargs):
         # ie. "10:00:15"
         dt = dateutil.parser.parse(s)
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         components = ("hour", "minute", "second", "microsecond")
         return to_microseconds(**{key: int(val) for key, val in d.items() if key in components})
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -164,11 +192,14 @@ class TimeOfWeek(AnchoredInterval):
         comps = res.groupdict()
         dayofweek = comps.pop("dayofweek")
         time = comps.pop("time")
-        nth_day = self._unit_mapping[dayofweek.lower()]
+        try:
+            nth_day = self._unit_mapping[dayofweek.lower()]
+        except KeyError:
+            raise ValueError(f"Invalid day of week: {dayofweek}")
 
         # TODO: TimeOfDay.anchor_str as function
         if not time:
-            microseconds = to_microseconds(day=1) - 1 if side == "end" else 0
+            microseconds = to_microseconds(day=1) if side == "end" else 0
         else:
             microseconds = TimeOfDay().anchor_str(time) 
 
@@ -176,7 +207,7 @@ class TimeOfWeek(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -234,7 +265,7 @@ class TimeOfMonth(AnchoredInterval):
             # If one says 'thing X was organized between 
             # 15th and 17th of July', the sentence
             # includes 17th till midnight.
-            microseconds = to_microseconds(day=1) - 1
+            microseconds = to_microseconds(day=1)
         elif time:
             microseconds = TimeOfDay().anchor_str(time) 
         else:
@@ -244,7 +275,7 @@ class TimeOfMonth(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        d = to_dict(dt)
+        d = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in d.items()
@@ -359,7 +390,7 @@ class TimeOfYear(AnchoredInterval):
 
     def anchor_dt(self, dt, **kwargs):
         "Turn datetime to microseconds according to the scope (by removing higher time elements)"
-        dt_dict = to_dict(dt)
+        dt_dict = datetime_to_dict(dt)
         d = {
             key: val
             for key, val in dt_dict.items()
