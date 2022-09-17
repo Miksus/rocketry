@@ -341,15 +341,18 @@ class Task(RedBase, BaseModel):
     def run(self, _params:Union[Parameters, Dict]=None, **kwargs):
         """Set the task running (with given parameters)
 
-        Creates a run batch that will set the task running.
+        Creates a run batch that will set the task running
+        once. Given parameters are only used once. Can be 
+        called multiple times to put the task running multiple
+        times.
         
-        
+
         Parameters
         ----------
         _params : dict, Parameters, optional
-            Parameters 
+            Parameters for the batch
         **kwargs
-
+            Parameters for the batch
         """
         params = Parameters()
         if _params:
@@ -679,18 +682,7 @@ class Task(RedBase, BaseModel):
             pass
 
     def get_extra_params(self, params:Parameters) -> Parameters:
-        """Get additional parameters from
-        the session and extra for meta tasks
-        including the task itself, session 
-        and the thread terminate event.
-        These parameters may or may not be used
-        by the task.
-
-        Included parameters:
-
-        - _session_ : task's session
-        - _task_ : the task itself
-        - _thread_terminate_ : Task termination event if threading used (threading.Event)
+        """Get additional parameters
 
         Returns
         -------
