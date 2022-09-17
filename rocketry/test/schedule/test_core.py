@@ -265,25 +265,7 @@ def test_task_status(session, execution, func_type, mode):
     assert 0 == task_fail.logger.filter_by(action="inaction").count()
     assert 3 == task_inact.logger.filter_by(action="inaction").count()
 
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_run(execution, session):
-    task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
-        name="task",
-        execution=execution,
-        session=session
-    )
-    task.force_run = True
 
-    session.config.shut_cond = SchedulerCycles() >= 5
-    session.start()
-
-    logger = task.logger
-    assert 1 == logger.filter_by(action="run").count()
-
-    # The force_run should have reseted as it should have run once
-    assert not task.force_run
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
@@ -305,36 +287,6 @@ def test_task_disabled(tmpdir, execution, session):
         assert 0 == sum([record for record in history if record["action"] == "run"])
 
         assert task.disabled
-
-
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_disabled(tmpdir, execution, session):
-    # NOTE: force_run overrides disabled
-    # as it is more practical to keep 
-    # a task disabled and force it running
-    # manually than prevent force run with
-    # disabling
-    with tmpdir.as_cwd() as old_dir:
-
-        task = FuncTask(
-            run_succeeding, 
-            start_cond=AlwaysFalse(), 
-            name="task",
-            execution=execution,
-            session=session
-        )
-        task.disabled = True
-        task.force_run = True
-
-        session.config.shut_cond = SchedulerCycles() >= 5
-        session.start()
-
-        logger = task.logger
-        assert 1 == logger.filter_by(action="run").count()
-        assert 1 == logger.filter_by(action="success").count()
-
-        assert task.disabled
-        assert not task.force_run # This should be reseted
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_priority(execution, session):
