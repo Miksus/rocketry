@@ -220,7 +220,7 @@ class FuncTask(Task):
             # Not-delayed, setting parameters from the
             # function signature
             params = Parameters._from_signature(self.func)
-            self.parameters.update(params)
+            self.parameters = params | self.parameters
         self._is_delayed = is_delayed
 
     async def execute(self, **params):
@@ -277,13 +277,16 @@ class FuncTask(Task):
         return self._is_delayed
         
     def get_task_params(self):
-        params = super().get_task_params()
+        task_params = super().get_task_params()
 
         if self._is_delayed:
-            # Get params from the typehints
+            # Get params from the typehints 
             cache = False if self.path is not None else True
             func = self.get_func(cache=cache)
-            params.update(Parameters._from_signature(func, task=self, session=self.session))
+            func_params = Parameters._from_signature(func, task=self, session=self.session)
+            params = func_params | task_params
+        else:
+            params = task_params
         return params
 
     def prefilter_params(self, params):

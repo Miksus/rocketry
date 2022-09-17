@@ -1,4 +1,6 @@
 
+from pathlib import Path
+from textwrap import dedent
 import pytest
 from rocketry.args.builtin import SimpleArg
 from rocketry.conditions.task.task import TaskStarted
@@ -38,19 +40,36 @@ def test_batch_favored(execution, session):
     assert 1 == logger.filter_by(action="run").count()
     assert 1 == logger.filter_by(action="success").count()
 
+@pytest.mark.parametrize("delayed", [True, False])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_favored(execution, session):
+def test_task_favored(execution, session, tmpdir, delayed):
     # task params > func params > session params
     session.parameters['arg'] = 'incorrect'
 
-    task = FuncTask(
-        run_parametrized_incorrect, 
-        start_cond=AlwaysTrue(), 
-        name="task",
-        execution=execution,
-        session=session,
-        parameters={"arg": "correct"}
-    )
+    if delayed:
+        funcfile = tmpdir.join("script_task_favored.py")
+        funcfile.write(dedent("""
+            from rocketry.args import SimpleArg
+            def run_parametrized_incorrect(arg=SimpleArg("incorrect")):
+                assert arg == "correct"
+        """))
+        task = FuncTask(
+            path=Path(funcfile), func_name="run_parametrized_incorrect", 
+            start_cond=AlwaysTrue(), 
+            name="task",
+            execution=execution,
+            session=session,
+            parameters={"arg": "correct"}
+        )
+    else:
+        task = FuncTask(
+            run_parametrized_incorrect, 
+            start_cond=AlwaysTrue(), 
+            name="task",
+            execution=execution,
+            session=session,
+            parameters={"arg": "correct"}
+        )
     session.config.shut_cond = SchedulerCycles() == 1
     session.start()
 
