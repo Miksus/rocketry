@@ -76,6 +76,7 @@ def session():
     session = Session(config={
         "debug": True,
         "silence_task_prerun": False,
+        "silence_task_logging": False,
         "silence_cond_check": False,
         "cycle_sleep": 0.001,
     }, delete_existing_loggers=True)
@@ -85,8 +86,9 @@ def session():
     task_logger = logging.getLogger(session.config.task_logger_basename)
     task_logger.handlers = [
         RepoHandler(repo=MemoryRepo(model=MinimalRecord)),
-        logging.StreamHandler(sys.stdout)
+        #logging.StreamHandler(sys.stdout)
     ]
+    task_logger.setLevel(logging.INFO)
 
     # enable logger
     # Some tests may disable especially scheduler logger if logging config has

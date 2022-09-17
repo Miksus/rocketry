@@ -41,6 +41,7 @@ class Config(BaseModel):
         validate_assignment = True
         arbitrary_types_allowed = True
 
+    # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
     task_execution: str = 'process'
@@ -51,6 +52,7 @@ class Config(BaseModel):
     scheduler_logger_basename: str = "rocketry.scheduler"
 
     silence_task_prerun: bool = False # Whether to silence errors occurred in setting a task to run
+    silence_task_logging: bool = False # Whether to silence errors occurred in logging a task
     silence_cond_check: bool = False # Whether to silence errors occurred in checking conditions
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
@@ -338,12 +340,31 @@ class Session(RedBase):
         return self.tasks
 
     def get_task(self, task):
-        #! TODO: Do we need this?
+        warnings.warn((
+            "Method get_task will be removed in the future version." 
+            "Please use instead: session['task name']"
+        ), DeprecationWarning)
         return self[task]
 
     def get_cond_parsers(self):
         "Used by the actual string condition parser"
         return self._cond_parsers
+
+    def create_task(self, *, command=None, path=None, **kwargs):
+        "Create a task and put it to the session"
+        
+        # To avoid circular imports
+        from rocketry.tasks import CommandTask, FuncTask
+
+        kwargs['session'] = self
+
+        if command is not None:
+            return CommandTask(command=command, **kwargs)
+        elif path is not None:
+            # Non-wrapped FuncTask
+            return FuncTask(path=path, **kwargs)
+        else:
+            return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
 
     def add_task(self, task: 'Task'):
         "Add the task to the session"
@@ -359,6 +380,14 @@ class Session(RedBase):
                 raise KeyError(f"Task '{task.name}' already exists")
         else:
             self.tasks.add(task)
+        
+        # Adding the session to the task
+        task.session = self
+
+    def remove_task(self, task: Union['Task', str]):
+        if isinstance(task, str):
+            task = self[task]
+        self.session.tasks.remove(task)
 
     def task_exists(self, task: 'Task'):
         warnings.warn((

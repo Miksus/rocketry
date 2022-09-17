@@ -1,5 +1,6 @@
 
 import datetime
+import logging
 import pickle
 from textwrap import dedent
 import pytest
@@ -7,7 +8,10 @@ from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
 from rocketry.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
 from rocketry.args import Arg, Session, Task
+from rocketry.exc import TaskLoggingError
 from rocketry.log import MinimalRecord
+from rocketry import Session as SessionClass
+from rocketry.testing.log import create_task_record
 
 class DummyTask(BaseTask):
 
@@ -15,10 +19,17 @@ class DummyTask(BaseTask):
         return 
 
 def test_defaults(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     assert task.name == "mytest"
     assert isinstance(task.start_cond, AlwaysFalse)
     assert isinstance(task.end_cond, AlwaysFalse)
+
+def test_defaults_no_session(session):
+    with pytest.warns(UserWarning):
+        task = DummyTask(name="mytest")
+    assert task.session is not session
+    assert isinstance(task.session, SessionClass)
+    assert task.session.tasks == {task}
 
 def test_set_timeout(session):
     task = DummyTask(timeout="1 hour 20 min", session=session, name="1")
@@ -31,18 +42,35 @@ def test_set_timeout(session):
     assert task.timeout == datetime.timedelta(seconds=20)
 
 def test_delete(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     assert session.tasks == {task}
     task.delete()
     assert session.tasks == set()
 
 def test_set_invalid_status(session):
-    task = DummyTask(name="mytest")
+    task = DummyTask(name="mytest", session=session)
     with pytest.raises(ValueError):
         task.status = "not valid"
 
+def test_failed_logging(session):
+
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            raise RuntimeError("Oops")
+
+    logging.getLogger("rocketry.task").handlers.insert(0, MyHandler())
+    task = DummyTask(name="mytest", session=session)
+    for func in (task.log_crash, task.log_failure, task.log_success, task.log_inaction, task.log_termination):
+        with pytest.raises(TaskLoggingError):
+            func()
+
+    record = create_task_record(created=1, task_name="mytest", action="run")
+
+    with pytest.raises(TaskLoggingError):
+        task.log_record(record) # Used by process logging
+
 def test_pickle(session):
-    task_1 = DummyTask(name="mytest")
+    task_1 = DummyTask(name="mytest", session=session)
     pkl_obj = pickle.dumps(task_1)
     task_2 = pickle.loads(pkl_obj)
     assert task_1.name == task_2.name

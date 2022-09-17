@@ -16,7 +16,7 @@ def test_construct(session):
         def main():
             ...
         main()
-        """), start_cond="daily", name="mytask")
+        """), start_cond="daily", name="mytask", session=session)
     assert task.name == "mytask"
     assert "mytask" in session
 
@@ -26,7 +26,7 @@ def test_construct_missing_name(session):
             def main():
                 ...
             main()
-            """))
+            """), session=session)
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success(session, execution):
@@ -36,7 +36,7 @@ def test_run_success(session, execution):
             return 'myvalue'
 
         return_value = main()
-        """), execution=execution, name="mytask")
+        """), execution=execution, name="mytask", session=session)
     task.force_run = True
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
@@ -52,7 +52,7 @@ def test_run_success_parametrize(session, execution):
             return 'myvalue' + param
 
         return_value = main(myparam)
-        """), name="mytask", execution=execution, parameters={'myparam': ' + myparam'})
+        """), name="mytask", execution=execution, parameters={'myparam': ' + myparam'}, session=session)
     task.force_run = True
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
@@ -74,7 +74,7 @@ def test_run_fail(session, execution):
             raise RuntimeError('Failed')
 
         return_value = main()
-        """), execution=execution, name="mytask")
+        """), execution=execution, name="mytask", session=session)
     task.force_run = True
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1

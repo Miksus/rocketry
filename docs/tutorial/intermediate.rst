@@ -237,6 +237,69 @@ An example of the task argument:
 
 This is more advanced and we will get to the usage of these later.
 
+Custom Conditions
+-----------------
+
+Creating custom conditions is easy and you can combine your conditions
+with other conditions using simple logic. Simply call the condition wrapper
+in the app:
+
+.. code-block:: python
+
+    from rocketry.conds import daily
+
+    @app.cond()
+    def things_ready():
+        ...
+        return True or False
+
+    @app.task(daily & things_ready)
+    def do_things():
+        ...
+
+You can also pass arguments to the conditions:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from rocketry.conds import daily
+
+    @app.cond()
+    def file_exists(file):
+        return Path(file).is_file()
+
+    @app.task(daily & file_exists("myfile.csv"))
+    def do_things():
+        ...
+
+.. note::
+
+    You can pass the arguments as positional (ie. ``file_exists("myfile.csv")``)
+    or as keyword arguments (ie. ``file_exists(file="myfile.csv")``).
+
+You can also use Rocketry's arguments:
+
+.. code-block:: python
+
+    from rocketry.args import Task
+    from rocketry.conds import daily
+
+    @app.cond()
+    def is_right_task(this_task=Task()):
+        return this_task.name.startswith("do_")
+
+    @app.task(daily & is_right_task)
+    def do_things():
+        ...
+
+.. warning::
+
+    The conditions should be relatively simple and light.
+    If your condition takes long time to inspect, it might
+    slow down the scheduler. You can fix this by caching
+    the value or by creating a task that runs parallel checking
+    the value for the task.
+
 Task Logging
 ------------
 
@@ -301,3 +364,49 @@ you can also add other logging handlers as well:
     Make sure the logger ``rocketry.task`` has at least 
     one ``redbird.logging.RepoHandler`` in handlers or 
     the system cannot read the log information.
+
+Task Naming
+-----------
+
+Each task should have a unique name within
+the session. If a name is not given to a task,
+the name is derived from the arguments of the
+task.
+
+For function tasks if the name is not specified,
+the name is set as the name of the function:
+
+.. code-block:: python
+
+    >>> @app.task()
+    >>> def do_things():
+    >>>     ...
+
+    >>> app.session[do_things].name
+    'do_things'
+
+.. warning::
+
+    As the name must be unique, an error is raised if you try
+    to create multiple tasks from the same function or from 
+    multiple functions with same names without specifying name.
+
+You can pass the name yourself as well:
+
+.. literalinclude:: /code/naming.py
+    :language: py
+
+.. note::
+
+    If you use the decotator (``@app.task()``) to define function
+    task, the decorator returns the function itself due to pickling
+    issues on some platforms. However, the task can be fetched from
+    session using just the function: ``session[do_things]``.
+    There is a special attribute (``__rocketry__``) in 
+    the task function for enabling this.
+
+.. note::
+
+    Task names are used in many conditions and in logging.
+    They are essential in order to find out when a task 
+    started, failed or succeeded. 

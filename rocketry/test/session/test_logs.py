@@ -10,10 +10,13 @@ import pytest
 from redbird.oper import in_, between
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
+from rocketry.conditions import TaskFinished
+from rocketry.conditions.scheduler import SchedulerCycles
 
 from rocketry.log.log_record import LogRecord, TaskLogRecord, MinimalRecord
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
+from rocketry.exc import TaskLoggingError
 
 def create_line_to_startup_file():
     with open("start.txt", "w") as file:
@@ -22,6 +25,12 @@ def create_line_to_startup_file():
 def create_line_to_shutdown():
     with open("shut.txt", "w") as file:
         file.write("line created\n")
+
+def do_success():
+    ...
+
+def do_fail():
+    raise RuntimeError("Oops")
 
 class CustomRecord(MinimalRecord):
     timestamp: Optional[datetime.datetime]
@@ -34,6 +43,61 @@ class CustomRecord(MinimalRecord):
     def validate_timestamp(cls, values):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("status", ["success", "fail"])
+@pytest.mark.parametrize("on", ["startup", "normal", "shutdown"])
+def test_failed_logging_run(execution, status, on, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
+
+    if on == "startup":
+        task.on_startup = True
+    elif on == "shutdown":
+        task.on_shutdown = True
+
+    session.config.shut_cond = SchedulerCycles() >= 1
+    with pytest.raises(TaskLoggingError):
+        session.start()
+    assert task.status == "fail"
+    session.config.silence_task_logging = True
+
+    # TODO: Perhaps CI gets stuck here
+    #session.start()
+
+@pytest.mark.parametrize("execution", ["main", "thread", "process"])
+@pytest.mark.parametrize("status", ["success", "fail"])
+@pytest.mark.parametrize("on", ["startup", "normal", "shutdown"])
+def test_failed_logging_finish(execution, status, on, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action != "run":
+                raise RuntimeError("Oops")
+
+    if on == "normal":
+        session.config.shut_cond = TaskFinished(task="a task") >= 1
+    else:
+        session.config.shut_cond = SchedulerCycles() == 1
+
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
+    if on == "startup":
+        task.on_startup = True
+    elif on == "shutdown":
+        task.on_shutdown = True
+    with pytest.raises(TaskLoggingError):
+        session.start()
+    assert task.status == "fail"
+
+    session.config.silence_task_logging = True
+    session.run(task)
+
+    assert task.status == "fail"
 
 @pytest.mark.parametrize(
     "query,expected",

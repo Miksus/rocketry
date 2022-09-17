@@ -5,7 +5,11 @@ from .base import (
     StaticInterval,
     All, Any,
 
-    PARSERS
+    PARSERS,
+
+    # Constants
+    always,
+    never,
 )
 
 

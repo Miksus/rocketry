@@ -10,6 +10,7 @@ from rocketry import Session
 from rocketry.log.log_record import  MinimalRecord
 
 from rocketry.tasks import FuncTask
+from rocketry.testing.log import create_task_record
 
 def run_success():
     pass
@@ -66,110 +67,97 @@ def test_set_cached_in_init(session, optimized, last_status):
     else:
         assert task.status == last_status
 
-def test_running(tmpdir, session):
+def test_running(session):
     
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
-
-        task = FuncTask(
-            lambda : None,
-            execution="main"
-        )
-        task.log_running()
-        assert "run" == task.status
-        assert task.is_running
+    task = FuncTask(
+        lambda : None,
+        execution="main", 
+        session=session
+    )
+    task.log_running()
+    assert "run" == task.status
+    assert task.is_running
 
 def test_success(tmpdir, session):
     
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
-
-        task = FuncTask(
-            lambda : None,
-            execution="main"
-        )
-        task.log_running()
-        task.log_success()
-        assert "success" == task.status
-        assert not task.is_running
+    task = FuncTask(
+        lambda : None,
+        execution="main", 
+        session=session
+    )
+    task.log_running()
+    task.log_success()
+    assert "success" == task.status
+    assert not task.is_running
 
 def test_fail(tmpdir, session):
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
 
-        task = FuncTask(
-            lambda : None,
-            execution="main"
-        )
-        task.log_running()
-        task.log_failure()
-        assert "fail" == task.status
-        assert not task.is_running
+    task = FuncTask(
+        lambda : None,
+        execution="main", 
+        session=session
+    )
+    task.log_running()
+    task.log_failure()
+    assert "fail" == task.status
+    assert not task.is_running
 
 def test_without_running(tmpdir, session):
     "An edge case if for mysterious reason the task did not log running. Logging should still not crash"
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
 
-        task = FuncTask(
-            lambda : None,
-            execution="main"
-        )
-        task.log_failure()
-        assert "fail" == task.status
-        assert not task.is_running
+    task = FuncTask(
+        lambda : None,
+        execution="main", 
+        session=session
+    )
+    task.log_failure()
+    assert "fail" == task.status
+    assert not task.is_running
 
-def test_handle(tmpdir, session):
+def test_handle(session):
 
     def create_record(action, task_name):
         # Util func to create a LogRecord
-        record = logging.LogRecord(
-            level=logging.INFO,
+        record = create_task_record(
+            task_name=task_name,
+            action=action,
             exc_info=None,
             # These should not matter:
             name="rocketry.task._process",
-            pathname=__file__,
-            lineno=1,
-            msg="",
-            args=None,
         )
-        record.action = action
-        record.task_name = task_name
         return record
 
-    # Tests Task.handle (used in process tasks)
-    with tmpdir.as_cwd() as old_dir:
+    task = FuncTask(
+        lambda : None,
+        execution="main",
+        name="a task", 
+        session=session
+    )
+    # Creating the run log
+    record_run = create_record("run", task_name="a task")
 
-        task = FuncTask(
-            lambda : None,
-            execution="main",
-            name="a task"
-        )
-        # Creating the run log
-        record_run = create_record("run", task_name="a task")
+    # Creating the outcome log
+    record_finish = create_record("success", task_name="a task")
+    
+    task.log_record(record_run)
+    assert "run" == task.status
+    assert task.is_running
 
-        # Creating the outcome log
-        record_finish = create_record("success", task_name="a task")
-        
-        task.log_record(record_run)
-        assert "run" == task.status
-        assert task.is_running
+    task.log_record(record_finish)
+    assert "success" == task.status
+    assert not task.is_running
 
-        task.log_record(record_finish)
-        assert "success" == task.status
-        assert not task.is_running
+    records = session.get_task_log()
+    records = [
+        record.dict(exclude={"created"})
+        for record in records
+    ]
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": "success"},
+    ] == records
 
-        records = session.get_task_log()
-        records = [
-            record.dict(exclude={"created"})
-            for record in records
-        ]
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": "success"},
-        ] == records
-
-def test_without_handlers(tmpdir, session):
+def test_without_handlers(session):
     session.config.force_status_from_logs = True
     session.config.task_logger_basename = 'hdlr_test.task'
 
@@ -184,7 +172,8 @@ def test_without_handlers(tmpdir, session):
             name="task 1",
             start_cond="always true",
             #logger="rocketry.task.test",
-            execution="main",
+            execution="main", 
+            session=session
         )
     
     # Test warnings
@@ -198,7 +187,7 @@ def test_without_handlers(tmpdir, session):
     assert len(logger.handlers) == 1
     assert isinstance(logger.handlers[0], RepoHandler)
 
-def test_without_handlers_status_warnings(tmpdir, session):
+def test_without_handlers_status_warnings(session):
     session.config.force_status_from_logs = True
 
     logger = logging.getLogger("rocketry.task")
@@ -213,6 +202,7 @@ def test_without_handlers_status_warnings(tmpdir, session):
             start_cond="always true",
             logger_name="rocketry.task.test",
             execution="main",
+            session=session
         )
     # Removing the handlers that were added
     
@@ -253,6 +243,7 @@ def test_without_handlers_status_warnings(tmpdir, session):
             start_cond="always true",
             logger="rocketry.task.test",
             execution="main",
+            session=session
         )
     assert list(str(w.message) for w in warns) == [
         'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)'
@@ -273,91 +264,91 @@ def test_without_handlers_status_warnings(tmpdir, session):
 )
 def test_action_start(tmpdir, method, session):
     
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    task = FuncTask(
+        lambda : None,
+        execution="main",
+        session=session
+    )
+    task.log_running()
+    getattr(task, method)()
 
-        task = FuncTask(
-            lambda : None,
-            execution="main",
-        )
-        task.log_running()
-        getattr(task, method)()
+    records = list(map(lambda e: e.dict(), session.get_task_log()))
+    assert len(records) == 2
 
-        records = list(map(lambda e: e.dict(), session.get_task_log()))
-        assert len(records) == 2
+    # First should not have "end"
+    first = records[0]
+    assert first['created'] >= datetime.datetime(2000, 1, 1).timestamp()
 
-        # First should not have "end"
-        first = records[0]
-        assert first['created'] >= datetime.datetime(2000, 1, 1).timestamp()
+    # Second should and that should be datetime
+    last = records[1]
+    assert first['created'] <= last['created']
+    assert last['created'] < datetime.datetime(2200, 1, 1).timestamp()
 
-        # Second should and that should be datetime
-        last = records[1]
-        assert first['created'] <= last['created']
-        assert last['created'] < datetime.datetime(2200, 1, 1).timestamp()
-
-def test_process_no_double_logging(tmpdir, session):
+def test_process_no_double_logging(session):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
     # while this is not occuring on Windows. This tests the bug.
     #!NOTE: This test requires there are two handlers in 
     # rocketry.task logger (Memory and Stream in this order)
+    task_logger = logging.getLogger("rocketry.task")
+    task_logger.addHandler(logging.StreamHandler())
 
     expected_actions = ["run", "success"]
-    with tmpdir.as_cwd() as old_dir:
 
-        task = FuncTask(
-            run_success, 
-            name="a task",
-            execution="process"
-        )
+    task = FuncTask(
+        run_success, 
+        name="a task",
+        execution="process",
+        session=session
+    )
 
-        log_queue = multiprocessing.Queue(-1)
+    log_queue = multiprocessing.Queue(-1)
 
-        # Start the process
-        proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, log_queue, session.config, []), daemon=None) 
-        proc.start()
+    # Start the process
+    proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, log_queue, session.config, []), daemon=None) 
+    proc.start()
 
-        # Do the logging manually (copied from the method)
-        actual_actions = []
-        records = []
-        while True:
-            try:
-                record = log_queue.get(block=True, timeout=3)
-            except Empty:
-                break
-            else:
-                records.append(record)
-                # task.log_record(record)
-                actual_actions.append(record.action)
+    # Do the logging manually (copied from the method)
+    actual_actions = []
+    records = []
+    while True:
+        try:
+            record = log_queue.get(block=True, timeout=3)
+        except Empty:
+            break
+        else:
+            records.append(record)
+            # task.log_record(record)
+            actual_actions.append(record.action)
 
-        # If fails here, double logging caused by creating too many records
-        # Obseved to fail rarely with py36 (c2f0368ffa56c5b8933f1afa2917f2be1555fb7a)
-        assert len(records) >= 2 # Testing not too few records (else not double logging bug)
-        assert (
-            ["run", "success"] == [rec.action for rec in records]
-        ), "Double logging. Caused by creating multiple records (Task.log_running & Task.log_success) to the queue."
+    # If fails here, double logging caused by creating too many records
+    # Obseved to fail rarely with py36 (c2f0368ffa56c5b8933f1afa2917f2be1555fb7a)
+    assert len(records) >= 2 # Testing not too few records (else not double logging bug)
+    assert (
+        ["run", "success"] == [rec.action for rec in records]
+    ), "Double logging. Caused by creating multiple records (Task.log_running & Task.log_success) to the queue."
 
-        # Testing there is no log records yet in the log
-        # (as the records should not been handled yet)
-        recs = list(session.get_task_log())
-        assert len(recs) == 0, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
-        
-        for record in records:
-            task.log_record(record)
+    # Testing there is no log records yet in the log
+    # (as the records should not been handled yet)
+    recs = list(session.get_task_log())
+    assert len(recs) == 0, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
+    
+    for record in records:
+        task.log_record(record)
 
-        # If fails here, double logging caused by multiple handlers
-        handlers = task.logger.logger.handlers
-        handlers[0] # Checking it has atleast 2
-        handlers[1] # Checking it has atleast 2
-        assert (
-            isinstance(handlers[1], logging.StreamHandler)
-            and isinstance(handlers[0], RepoHandler)
-            and len(handlers) == 2
-        ), f"Double logging. Too many handlers: {handlers}"
+    # If fails here, double logging caused by multiple handlers
+    handlers = task.logger.logger.handlers
+    handlers[0] # Checking it has atleast 2
+    handlers[1] # Checking it has atleast 2
+    assert (
+        isinstance(handlers[1], logging.StreamHandler)
+        and isinstance(handlers[0], RepoHandler)
+        and len(handlers) == 2
+    ), f"Double logging. Too many handlers: {handlers}"
 
-        # If fails here, double logging caused by Task.log_record
-        n_run = len(list(session.get_task_log(task_name="a task", action="run")))
-        n_success = len(list(session.get_task_log(task_name="a task", action="success")))
+    # If fails here, double logging caused by Task.log_record
+    n_run = len(list(session.get_task_log(task_name="a task", action="run")))
+    n_success = len(list(session.get_task_log(task_name="a task", action="success")))
 
-        assert n_run > 0 and n_success > 0, "No log records formed to log."
+    assert n_run > 0 and n_success > 0, "No log records formed to log."
 
-        assert n_run == 1 and n_success == 1, "Double logging. Bug in Task.log_record probably."
+    assert n_run == 1 and n_success == 1, "Double logging. Bug in Task.log_record probably."

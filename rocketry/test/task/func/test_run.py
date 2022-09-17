@@ -1,9 +1,10 @@
 
+import logging
 import pytest
 
 from rocketry.tasks import FuncTask
 from rocketry.core.task import Task
-from rocketry.exc import TaskInactionException
+from rocketry.exc import TaskInactionException, TaskLoggingError
 from rocketry.conditions import AlwaysFalse, AlwaysTrue
 
 from task_helpers import wait_till_task_finish
@@ -59,7 +60,8 @@ def test_run(task_func, expected_outcome, exc_cls, execution, session):
     task = FuncTask(
         task_func, 
         name="a task",
-        execution=execution
+        execution=execution,
+        session=session
     )
 
     try:
@@ -104,7 +106,8 @@ def test_run_async(task_func, expected_outcome, execution, session):
     task = FuncTask(
         task_func, 
         name="a task",
-        execution=execution
+        execution=execution,
+        session=session
     )
 
     try:
@@ -125,106 +128,176 @@ def test_run_async(task_func, expected_outcome, execution, session):
         {"task_name": "a task", "action": expected_outcome},
     ] == records
 
-def test_force_run(tmpdir, session):
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize(
+    "task_func,expected_outcome",
+    [
+        pytest.param(run_async_successful, "success", id="Success"),
+        pytest.param(run_async_fail, "fail", id="Failure"),
+        pytest.param(run_async_inaction, "inaction", id="Inaction"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_run_log_fail_at_start(task_func, expected_outcome, execution, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action == "run":
+                raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution,
+        session=session
+    )
+
+    with pytest.raises(TaskLoggingError):
+        await task.start_async()
+    # Wait for finish
+    await session.scheduler.wait_task_alive()
+    session.scheduler.handle_logs()
+
+    # At the moment the run log is not propagated to 
+    # finish
+    assert task.status != "run"
+
+@pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
+@pytest.mark.parametrize(
+    "task_func,expected_outcome",
+    [
+        pytest.param(run_async_successful, "success", id="Success"),
+        pytest.param(run_async_fail, "fail", id="Failure"),
+        pytest.param(run_async_inaction, "inaction", id="Inaction"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_run_log_fail_at_end(task_func, expected_outcome, execution, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action != "run":
+                raise RuntimeError("Oops")
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+
+    task = FuncTask(
+        task_func, 
+        name="a task",
+        execution=execution,
+        session=session
+    )
+    if execution == "main":
+        with pytest.raises(TaskLoggingError):
+            await task.start_async()
+    else:
+        await task.start_async()
+
+    await session.scheduler.wait_task_alive()
+
+    if execution == "process":
+        with pytest.raises(TaskLoggingError):
+            session.scheduler.handle_logs()
+    assert task.status == "fail"
+
+def test_force_run(session):
     
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    task = FuncTask(
+        run_successful_func, 
+        name="task",
+        start_cond=AlwaysFalse(),
+        execution="main",
+        session=session
+    )
+    task.force_run = True
 
-        task = FuncTask(
-            run_successful_func, 
-            name="task",
-            start_cond=AlwaysFalse(),
-            execution="main"
-        )
-        task.force_run = True
+    assert bool(task)
+    assert bool(task)
 
-        assert bool(task)
-        assert bool(task)
-
-        task()
-        assert not task.force_run
+    task()
+    assert not task.force_run
 
 
 def test_dependency(tmpdir, session):
 
-    # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
-
-        task_a = FuncTask(
-            run_successful_func, 
-            name="task_a", 
-            start_cond=AlwaysTrue(),
-            execution="main"
-        )
-        task_b = FuncTask(
-            run_successful_func, 
-            name="task_b", 
-            start_cond=AlwaysTrue(),
-            execution="main"
-        )
-        task_dependent = FuncTask(
-            run_successful_func,
-            name="task_dependent", 
-            start_cond="after task 'task_a' & after task 'task_b'",
-            execution="main"
-        )
-        assert not bool(task_dependent)
-        task_a()
-        assert not bool(task_dependent)
-        task_b()
-        assert bool(task_dependent)
+    task_a = FuncTask(
+        run_successful_func, 
+        name="task_a", 
+        start_cond=AlwaysTrue(),
+        execution="main",
+        session=session
+    )
+    task_b = FuncTask(
+        run_successful_func, 
+        name="task_b", 
+        start_cond=AlwaysTrue(),
+        execution="main",
+        session=session
+    )
+    task_dependent = FuncTask(
+        run_successful_func,
+        name="task_dependent", 
+        start_cond="after task 'task_a' & after task 'task_b'",
+        execution="main",
+        session=session
+    )
+    assert not bool(task_dependent)
+    task_a()
+    assert not bool(task_dependent)
+    task_b()
+    assert bool(task_dependent)
 
 
 # Parametrization
-def test_parametrization_runtime(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+def test_parametrization_runtime(session):
 
-        task = FuncTask(
-            run_parametrized, 
-            name="a task",
-            execution="main"
-        )
+    task = FuncTask(
+        run_parametrized, 
+        name="a task",
+        execution="main",
+        session=session
+    )
 
-        task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
+    task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": "success"},
-        ] == records
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": "success"},
+    ] == records
 
-def test_parametrization_local(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+def test_parametrization_local(session):
 
-        task = FuncTask(
-            run_parametrized, 
-            name="a task",
-            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
-            execution="main"
-        )
+    task = FuncTask(
+        run_parametrized, 
+        name="a task",
+        parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+        execution="main",
+        session=session
+    )
 
-        task()
+    task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": "success"},
-        ] == records
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": "success"},
+    ] == records
 
-def test_parametrization_kwargs(tmpdir, session):
-    with tmpdir.as_cwd() as old_dir:
+def test_parametrization_kwargs(session):
 
-        task = FuncTask(
-            run_parametrized_kwargs, 
-            name="a task",
-            parameters={"integer": 1, "string": "X", "optional_float": 1.1},
-            execution="main"
-        )
+    task = FuncTask(
+        run_parametrized_kwargs, 
+        name="a task",
+        parameters={"integer": 1, "string": "X", "optional_float": 1.1},
+        execution="main",
+        session=session
+    )
 
-        task()
+    task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
-        assert [
-            {"task_name": "a task", "action": "run"},
-            {"task_name": "a task", "action": "success"},
-        ] == records
+    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    assert [
+        {"task_name": "a task", "action": "run"},
+        {"task_name": "a task", "action": "success"},
+    ] == records

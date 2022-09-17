@@ -4,7 +4,7 @@ TOLERANCE = 2
 
 def wait_till_task_finish(task):
     start = time.time()
-    while task.status == "run":
+    while task.is_alive():
         time.sleep(0.001)
         task.session.scheduler.handle_logs()
         if time.time() - start >= TOLERANCE:

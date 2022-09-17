@@ -2,11 +2,18 @@
 Examples
 ========
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+Example Projects
+^^^^^^^^^^^^^^^^
 
-   demos/fastapi
+.. glossary::
+
+    `Rocketry with FastAPI (and React) <https://github.com/Miksus/rocketry-with-fastapi>`_
+
+        Rocketry template that has FastAPI (REST API) integrated and also has web UI built
+        with React.
+
+Example Snippets
+^^^^^^^^^^^^^^^^
 
 **Minimal example:**
 

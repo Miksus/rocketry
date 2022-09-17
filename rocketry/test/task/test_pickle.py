@@ -61,8 +61,8 @@ class TestFunc:
     def test_unpicklable_session(self, session):
         def func_nested():
             pass
-        unpkl_task = FuncTask(func_nested, execution="thread", name="unpicklable")
-        task = FuncTask(func_on_main_level, execution="process", name="picklable")
+        unpkl_task = FuncTask(func_nested, execution="thread", name="unpicklable", session=session)
+        task = FuncTask(func_on_main_level, execution="process", name="picklable", session=session)
 
         assert session.tasks == {unpkl_task, task}
 
@@ -75,7 +75,7 @@ class TestFunc:
     def test_unpicklable_session_params(self, session):
         session.parameters["unpicklable"] = FuncTask(lambda:None, execution="main", name="unpicklable")
         session.parameters["picklable"] = "myval"
-        task = FuncTask(func_on_main_level, execution="process", name="picklable")
+        task = FuncTask(func_on_main_level, execution="process", name="picklable", session=session)
         pick_task = pickle_dump_read(task)
         
         assert pick_task.session is None

@@ -37,7 +37,8 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
             func_name="main",
             path=script_path, 
             name="a task",
-            execution=execution
+            execution=execution,
+            session=session
         )
         try:
             task()
@@ -69,7 +70,8 @@ def test_run_specified_func(tmpdir, session):
             func_name="myfunc",
             path="mytasks/myfile.py", 
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
         task()
 
@@ -98,7 +100,8 @@ def test_import_relative(tmpdir, session):
             func_name="main",
             path="mytasks/myfile.py", 
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
         task()
 
@@ -131,7 +134,8 @@ def test_import_package(tmpdir, session):
             func_name="main",
             path="mypkg6574/subpkg/myfile.py", 
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
         task()
 
@@ -192,7 +196,8 @@ def test_additional_sys_paths(tmpdir, session):
             path="mytasks/myfile.py", 
             name="a task",
             execution="main",
-            sys_paths=["mytasks/subfolder/another"]
+            sys_paths=["mytasks/subfolder/another"],
+            session=session
         )
         task(params={"val_5":5})
 
@@ -210,7 +215,8 @@ def test_parametrization_runtime(tmpdir, script_files, session):
             func_name="main",
             path="scripts/parameterized_script.py", 
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
@@ -229,7 +235,8 @@ def test_parametrization_local(tmpdir, script_files, session):
             path="scripts/parameterized_script.py", 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
-            execution="main"
+            execution="main",
+            session=session
         )
 
         task()
@@ -248,7 +255,8 @@ def test_parametrization_kwargs(tmpdir, script_files, session):
             path="scripts/parameterized_kwargs_script.py", 
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
-            execution="main"
+            execution="main",
+            session=session
         )
 
         task()

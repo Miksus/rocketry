@@ -58,3 +58,20 @@ def test_overlaps(l, r):
 )
 def test_not_overlaps(l, r):
     assert not l.overlaps(r)
+
+def test_fail():
+    with pytest.raises(ValueError):
+        Interval(datetime(2022, 1, 1), datetime(2019, 1, 1))
+    with pytest.raises(ValueError):
+        Interval(datetime(2022, 1, 1), datetime(2022, 1, 2), closed="typo")
+
+def test_empty():
+    assert not Interval(datetime(2022, 1, 1), datetime(2022, 1, 1), closed="both").is_empty
+    for closed in ("left", "right", "both", "neither"):
+        assert not Interval(datetime(2022, 1, 1), datetime(2022, 1, 2), closed=closed).is_empty
+    for closed in ("left", "right", "neither"):
+        assert Interval(datetime(2022, 1, 1), datetime(2022, 1, 1), closed=closed).is_empty
+
+def test_repr():
+    for closed in ("left", "right", "neither"):
+        assert repr(Interval(datetime(2022, 1, 1), datetime(2022, 1, 1), closed=closed))

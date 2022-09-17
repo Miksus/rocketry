@@ -28,26 +28,29 @@ def test_dependent(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
         # Running the master tasks only once
-        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(), execution=execution)
-        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(), execution=execution)
+        task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(), execution=execution, session=session)
+        task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(), execution=execution, session=session)
 
         task_after_a = FuncTask(
             run_succeeding, 
             name="After A", 
             start_cond=DependSuccess(depend_task="A"),
-            execution=execution
+            execution=execution,
+            session=session
         )
         task_after_b = FuncTask(
             run_succeeding, 
             name="After B", 
             start_cond=DependSuccess(depend_task="B"),
-            execution=execution
+            execution=execution,
+            session=session
         )
         task_after_all = FuncTask(
             run_succeeding, 
             name="After all", 
             start_cond=DependSuccess(depend_task="After A") & DependSuccess(depend_task="After B"),
-            execution=execution
+            execution=execution,
+            session=session
         )
 
         session.config.shut_cond = (TaskStarted(task="After all") >= 1) | ~SchedulerStarted(period=TimeDelta("10 seconds"))

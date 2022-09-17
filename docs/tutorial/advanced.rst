@@ -5,33 +5,6 @@ Advanced Tutorial
 
 This is an advanced level tutorial.
 
-Task References
----------------
-
-Each task should have a unique name within
-the session. So far we have not set the name
-ourselves and let Rocketry to come up with
-such (from the functions we used as tasks).
-
-You can pass the name yourself:
-
-.. literalinclude:: /code/naming.py
-    :language: py
-
-If you don't give a name for the task, the 
-task itself will make up a name for it. For
-function tasks, the name of the task is the 
-name of the function (combined with import path).
-
-Function tasks created by decorating functions 
-(the method we have done so far) can also be 
-addressed using the function instance. There 
-is a special attribute stored in the function
-that contains the real name of the task so 
-the session can look it up if you ask the task 
-from the session.
-
-
 Task Types
 ----------
 

@@ -14,6 +14,7 @@ from rocketry.conditions import (
     TaskRunning
 )
 from rocketry.pybox.time.convert import to_datetime
+from rocketry.testing.log import create_task_record
 from rocketry.time import (
     TimeDelta, 
     TimeOfDay
@@ -21,7 +22,7 @@ from rocketry.time import (
 from rocketry.tasks import FuncTask
 
 
-def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None):
+def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None, session=None):
     """A mock up that sets up a task to test the 
     condition with given logs
 
@@ -39,22 +40,18 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
         task = FuncTask(
             lambda:None, 
             name="the task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
     for log in logs:
         log_time, log_action = log[0], log[1]
-        log_created = int(to_datetime(log_time).timestamp())
-        record = logging.LogRecord(
+        record = create_task_record(
+            created=log_time, action=log_action, task_name="the task",
             # The content here should not matter for task status
-            name='rocketry.core.task', level=logging.INFO, lineno=1, 
             pathname='rocketry\\rocketry\\core\\task\\base.py',
             msg="Logging of 'task'", args=(), exc_info=None,
         )
-
-        record.created = log_created
-        record.action = log_action
-        record.task_name = "the task"
 
         task.logger.handle(record)
 
@@ -147,7 +144,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
 )
 def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    task = setup_task_state(mock_datetime_now, logs, time_after)
+    task = setup_task_state(mock_datetime_now, logs, time_after, session=session)
     cond = get_condition()
     if outcome:
         assert cond.observe(session=session)
@@ -211,7 +208,7 @@ def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, se
 )
 def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    setup_task_state(mock_datetime_now, logs, time_after)
+    setup_task_state(mock_datetime_now, logs, time_after, session=session)
     cond = get_condition()
     if outcome:
         assert cond.observe(session=session)
@@ -313,7 +310,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
 )
 def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    setup_task_state(mock_datetime_now, logs, time_after)
+    setup_task_state(mock_datetime_now, logs, time_after, session=session)
     cond = get_condition()
     if outcome:
         assert cond.observe(session=session)
@@ -409,7 +406,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
 )
 def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    setup_task_state(mock_datetime_now, logs, time_after)
+    setup_task_state(mock_datetime_now, logs, time_after, session=session)
     cond = get_condition()
     if outcome:
         assert cond.observe(session=session)
@@ -477,7 +474,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
             [
                 ("2020-01-01 07:10", "run"),
-                ("2020-01-01 07:20", "succeess"),
+                ("2020-01-01 07:20", "success"),
             ],
             "2020-01-01 07:30",
             False,
@@ -505,7 +502,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
 )
 def test_fail(mock_datetime_now, logs, time_after, get_condition, outcome, session):
     session.config.force_status_from_logs = True
-    setup_task_state(mock_datetime_now, logs, time_after)
+    setup_task_state(mock_datetime_now, logs, time_after, session=session)
     cond = get_condition()
     if outcome:
         assert cond.observe(session=session)

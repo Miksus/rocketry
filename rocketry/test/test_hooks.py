@@ -94,10 +94,10 @@ def test_scheduler_startup(session):
         timeline.append("ran hook (shutdown, generator second)")
     
 
-    FuncTask(lambda: timeline.append("ran TASK (startup)"), name="start", on_startup=True, execution="main")
-    task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true, priority=1)
-    task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1), priority=0)
-    FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main")
+    FuncTask(lambda: timeline.append("ran TASK (startup)"), name="start", on_startup=True, execution="main", session=session)
+    task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true, priority=1, session=session)
+    task2 = FuncTask(lambda: timeline.append("ran TASK (normal 2)"), name="2", execution="main", start_cond=DependSuccess(depend_task=task1), priority=0, session=session)
+    FuncTask(lambda: timeline.append("ran TASK (shutdown)"), name="shut", on_shutdown=True, execution="main", session=session)
 
     session.config.shut_cond = SchedulerCycles() == 2
     session.start()
@@ -158,7 +158,7 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
     with open(file, "w") as f:
         f.write("\nStarting\n")
 
-    task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask")
+    task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask", session=session)
     session.config.shut_cond = TaskStarted(task="mytask") >= 1
     session.start()
     with open(file) as f:

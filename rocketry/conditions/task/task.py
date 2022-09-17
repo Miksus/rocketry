@@ -6,7 +6,7 @@ from rocketry.core import task
 from rocketry.core.condition import BaseCondition
 
 from rocketry.core.time import TimePeriod
-from rocketry.core.time.utils import get_period_span, to_timestamp
+from rocketry.core.time.utils import get_period_span
 from .utils import DependMixin, TaskStatusMixin
 
 from redbird.oper import between
@@ -257,6 +257,7 @@ class TaskExecutable(BaseCondition):
         isin_period = (
             # TimeDelta has no __contains__. One cannot say whether now is "past 2 hours".
             #   And please tell why this does not raise an exception then? - Future me
+            #   Because the period is used in the sub statements and TimeDelta is still accepted - Senior me
             True  
             if isinstance(period, TimeDelta) 
             else IsPeriod(period=period).observe()
@@ -290,6 +291,36 @@ class TaskExecutable(BaseCondition):
         }[span_type]
         period = period_func(**kwargs)
         return cls(period=period)
+
+
+class TaskRunnable(BaseCondition):
+    """Condition for checking whether a given
+    task has not run (for given period).
+    Useful to set the given task to run once 
+    in given period.
+    """
+
+    def __init__(self, task=None, period=None):
+        self.period = period
+        self.task = task
+        super().__init__()
+
+    def get_state(self, task=Task(), session=Session()):
+        task = self.task if self.task is not None else task
+        period = self.period
+
+        has_not_run = TaskStarted(period=period, task=task) == 0
+
+        isin_period = (
+            True  
+            if isinstance(period, TimeDelta) 
+            else IsPeriod(period=period).observe()
+        )
+
+        return (
+            isin_period
+            and has_not_run.observe(task=task, session=session)
+        )
 
 
 class DependFinish(DependMixin):

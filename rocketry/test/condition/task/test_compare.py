@@ -18,7 +18,8 @@ def test_task_finish_compare(tmpdir, session):
         task = FuncTask(
             run_task, 
             name="runned task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         # Has not yet ran

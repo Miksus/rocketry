@@ -103,11 +103,15 @@ class TaskAdapter(logging.LoggerAdapter):
         "See `Logger.addHandler <https://docs.python.org/3/library/logging.html#logging.Logger.addHandler>`_"
         return self.logger.addHandler(*args, **kwargs)
 
+    @property
+    def handlers(self):
+        return self.logger.handlers
+
     def __eq__(self, o: object) -> bool:
         is_same_type = type(self) == type(o)
         has_same_logger = self.logger == o.logger
-        has_same_name = self.name == o.name
-        return is_same_type and has_same_logger and has_same_name
+        has_same_task_name = self.extra['task_name'] == o.extra['task_name']
+        return is_same_type and has_same_logger and has_same_task_name
 
     @property
     def task_name(self):

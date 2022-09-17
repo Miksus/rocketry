@@ -1,21 +1,27 @@
 import time
 import datetime
+from dataclasses import dataclass, field
 
 from rocketry.core.time import TimeDelta
 from rocketry.pybox.time import to_datetime, to_timedelta, Interval
 
+@dataclass(frozen=True, init=False)
 class TimeSpanDelta(TimeDelta):
 
-    def __init__(self, near=None, far=None, **kwargs):
+    near: int 
+    far: int
+    reference: datetime.datetime = field(default=None)
 
-        near = 0 if near is None else near        
-        self.near = abs(to_timedelta(near, **kwargs))
-        self.far = abs(to_timedelta(far, **kwargs)) if far is not None else None
+    def __init__(self, near=None, far=None, reference=None, **kwargs):
 
+        near = 0 if near is None else near
+        object.__setattr__(self, "near", abs(to_timedelta(near, **kwargs)))
+        object.__setattr__(self, "far", abs(to_timedelta(far, **kwargs)) if far is not None else None)
+        object.__setattr__(self, "reference", reference)
 
     def __contains__(self, dt):
         "Check whether the datetime is in "
-        reference = getattr(self, "reference", datetime.datetime.fromtimestamp(time.time()))
+        reference = self.reference if self.reference is not None else datetime.datetime.fromtimestamp(time.time())
         if reference >= dt:
             start = reference - self.far if self.far is not None else self.min
             end = reference - self.near

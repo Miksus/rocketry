@@ -15,7 +15,7 @@ from queue import Empty
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse
 from rocketry.core.task import Task
-from rocketry.exc import SchedulerRestart, SchedulerExit
+from rocketry.exc import SchedulerRestart, SchedulerExit, TaskLoggingError, TaskSetupError
 from rocketry.core.hook import _Hooker
 
 if TYPE_CHECKING:
@@ -90,9 +90,6 @@ class Scheduler(RedBase):
         self.is_alive = None
 
         self._log_queue = multiprocessing.Queue(-1)
-
-    def _register_instance(self):
-        self.session.scheduler = self
 
     @property
     def tasks(self):
@@ -187,11 +184,13 @@ class Scheduler(RedBase):
                     task.force_run = False
                 elif self.is_timeouted(task):
                     # Terminate the task
-                    await self.terminate_task(task, reason="timeout")
+                    await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                 elif self.is_out_of_condition(task):
                     # Terminate the task
-                    await self.terminate_task(task)
+                    await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
 
+        self.handle_logs()
+        self.check_thread_errors()
         # Running hooks
         hooker.postrun()
         
@@ -207,6 +206,7 @@ class Scheduler(RedBase):
         try:
             return task.is_runnable()
         except:
+            self.logger.exception(f"Condition crashed for task '{task.name}'")
             if not self.session.config.silence_cond_check:
                 raise
             return False
@@ -219,7 +219,12 @@ class Scheduler(RedBase):
             await task.start_async(log_queue=self._log_queue)
         except (SchedulerRestart, SchedulerExit) as exc:
             raise 
-        except Exception as exc:
+        except TaskLoggingError:
+            self.logger.exception(f"Logging failed for task '{task.name}'")
+            if not self.session.config.silence_task_logging:
+                raise
+        except TaskSetupError:
+            self.logger.exception(f"Task '{task.name}' crashed outside execution.")
             if not self.session.config.silence_task_prerun:
                 raise
         else:
@@ -246,8 +251,8 @@ class Scheduler(RedBase):
             task._process.terminate()
             # Waiting till the termination is finished. 
             # Otherwise may try to terminate it many times as the process is alive for a brief moment
-            task._process.join() 
-            task.log_termination(reason=reason)
+            task._process.join()
+            self._log_task(task, "log_termination", reason=reason)
 
             # Resetting attr force_termination
             task.force_termination = False
@@ -256,7 +261,7 @@ class Scheduler(RedBase):
             try:
                 await task._async_task
             except asyncio.CancelledError:
-                task.log_termination()
+                self._log_task(task, "log_termination", reason=reason)
         else:
             # The process/thread probably just died after the check
             pass
@@ -317,8 +322,18 @@ class Scheduler(RedBase):
             return True
 
         else:
-            return task.is_terminable()
-            
+            try:
+                return task.is_terminable()
+            except:
+                self.logger.exception(f"Condition crashed for task '{task.name}'")
+                if not self.session.config.silence_cond_check:
+                    raise
+
+                # We operate the same way as people often do:
+                # If we don't know if the process should be killed, 
+                # we panic and shut it down
+                return True
+
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
         # TODO: This could be maybe done in the tasks
@@ -330,7 +345,7 @@ class Scheduler(RedBase):
                 break
             else:
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
-                task = self.session.get_task(record.task_name)
+                task = self.session[record.task_name]
                 if record.action == "fail":
                     # There is a caveat in logging 
                     # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383 
@@ -351,8 +366,7 @@ class Scheduler(RedBase):
                     return_value = record.__return__
                     task._handle_return(return_value)
                     del record.__return__
-                
-                task.log_record(record)
+                self._log_task(task, "log_record", record)
 
     async def _hibernate(self):
         """Go to sleep and wake up when next task can be executed."""
@@ -373,7 +387,7 @@ class Scheduler(RedBase):
         self.n_cycles = 0
         self.startup_time = datetime.datetime.fromtimestamp(time.time())
 
-        self.logger.info(f"Beginning startup sequence...")
+        self.logger.debug(f"Beginning startup sequence...")
         for task in self.tasks:
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
@@ -384,18 +398,33 @@ class Scheduler(RedBase):
                     await self.run_task(task)
 
         hooker.postrun()
-        self.logger.info(f"Setup complete.")
+        self.logger.info(f"Startup complete.")
 
     def has_free_processors(self) -> bool:
         """Whether the Scheduler has free processors to
         allocate more tasks."""
-        return self.n_alive <= self.session.config.max_process_count
+        return self.count_process_tasks_alive() < self.session.config.max_process_count
+
+    def count_process_tasks_alive(self):
+        return sum(task.is_alive_as_process() for task in self.tasks)
 
     @property
     def n_alive(self) -> int:
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
         
+    async def run_shutdown_tasks(self):
+        # Make sure the tasks run if start_cond not set
+        for task in self.tasks:
+            if task.on_shutdown:
+
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                    # Make sure the tasks run if start_cond not set
+                    task.force_run = True
+
+                if self.is_task_runnable(task):
+                    await self.run_task(task)
+
     async def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         wait_for_finish = (
@@ -414,21 +443,19 @@ class Scheduler(RedBase):
                     for task in self.tasks:
                         if task.permanent_task:
                             # Would never "finish" anyways
-                            await self.terminate_task(task)
+                            await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                         elif self.is_timeouted(task):
                             # Terminate the task
-                            await self.terminate_task(task, reason="timeout")
+                            await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                         elif self.is_out_of_condition(task):
                             # Terminate the task
-                            await self.terminate_task(task)
-            except Exception as exc:
+                            await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
+            except Exception as exception:
                 # Fuck it, terminate all
-                await self._shut_down_tasks(exception=exc)
-                return
-            else:
-                self.handle_logs()
+                await self._shut_down_tasks(exception=exception)
+                raise
         else:
-            await self.terminate_all(reason="shutdown")
+            await self.terminate_all(reason="Instant shutdown of the scheduler")
 
     async def wait_task_alive(self):
         """Wait till all, especially threading tasks, are finished."""
@@ -451,31 +478,37 @@ class Scheduler(RedBase):
         tasks to finish their termination.
         """
         
-        self.logger.info(f"Beginning shutdown sequence...")
+        self.logger.debug(f"Beginning shutdown sequence...")
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
 
-        # Make sure the tasks run if start_cond not set
-        for task in self.tasks:
-            if task.on_shutdown:
+        # First the shut down tasks are run
+        # Then all tasks are waited to finish or terminated
+        # Then all threads/processes are wait to die
+        try:
+            try:
+                try:
+                    await self.run_shutdown_tasks()
+                finally:
+                    # Tasks are shut down/waited for shut down regardless if running shutdown
+                    # tasks failed
+                    self.logger.debug(f"Shutting down tasks...")
+                    await self._shut_down_tasks(traceback, exception)
+            finally:
+                # Processes/threads are wait to shut down regardless if there has been any 
+                # additional errors previously
+                await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
-                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
-                    # Make sure the tasks run if start_cond not set
-                    task.force_run = True
+                # Finally check logs once more
+                # and raise TaskLoggingError if has occurred in a thread and they are not silenced
+                self.handle_logs()
+                self.check_thread_errors()
+        finally:
+            # Running hooks and finalize the shutdown
+            hooker.postrun()
+            self.is_alive = False
+            self.logger.info(f"Shutdown completed. Good bye.")
 
-                if self.is_task_runnable(task):
-                    await self.run_task(task)
-
-        self.logger.info(f"Shutting down tasks...")
-        await self._shut_down_tasks(traceback, exception)
-
-        await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
-
-        # Running hooks
-        hooker.postrun()
-
-        self.is_alive = False
-        self.logger.info(f"Shutdown completed. Good bye.")
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
             # possible
@@ -549,3 +582,19 @@ class Scheduler(RedBase):
 
         # TODO: Use TaskAdapter to relay the scheduler name?
         self._logger = logger
+
+    def _log_task(self, task, log_method:str, *args, **kwargs):
+        func = getattr(task, log_method)
+        try:
+            func(*args)
+        except:
+            self.logger.exception(f"Logging failed for task '{task.name}'")
+            if not self.session.config.silence_task_logging:
+                raise
+
+    def check_thread_errors(self):
+        silence_logging = self.session.config.silence_task_logging
+        if not silence_logging:
+            for task in self.tasks:
+                if task._thread_error:
+                    raise task._thread_error

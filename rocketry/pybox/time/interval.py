@@ -1,13 +1,37 @@
 
+from dataclasses import dataclass, field
+from typing import Any
 
+try:
+    from typing import Literal
+except ImportError: # pragma: no cover
+    from typing_extensions import Literal
+
+@dataclass(frozen=True)
 class Interval:
     "Mimics pandas.Interval"
 
-    def __init__(self, left, right, closed="right"):
-        self.left = left
-        self.right = right
-        self.closed = closed
+    left: Any
+    right: Any
+    closed: Literal['left', 'right', 'both', 'neither'] = "left"
 
+    def __post_init__(self):
+        if self.left > self.right:
+            raise ValueError("Left cannot be greater than right")
+        
+        if self.closed not in ('left', 'right', 'both', 'neither'):
+            raise ValueError(f"Invalid close: {self.closed}")
+
+
+    def __contains__(self, dt):
+        if self.closed == "right":
+            return self.left < dt <= self.right
+        elif self.closed == "left":
+            return self.left <= dt < self.right
+        elif self.closed == "both":
+            return self.left <= dt <= self.right
+        else:
+            return self.left < dt < self.right
 
     def overlaps(self, other:'Interval'):
         # Simple case: No overlap if:
@@ -48,3 +72,50 @@ class Interval:
                 return False
 
         return True
+
+    def __and__(self, other):
+        "Find interval that both overlaps"
+
+        if self.left > other.left:
+            left = self.left
+            left_closed = self.closed in ('left', 'both')
+        elif self.left < other.left:
+            left = other.left
+            left_closed = other.closed in ('left', 'both')
+        else:
+            # Equal
+            left = self.left
+            left_closed = self.closed in ('left', 'both') and other.closed in ('left', 'both')
+
+        if self.right < other.right:
+            right = self.right
+            right_closed = self.closed in ('right', 'both')
+        elif self.right > other.right:
+            right = other.right
+            right_closed = other.closed in ('right', 'both')
+        else:
+            # Equal
+            right = self.right
+            right_closed = self.closed in ('right', 'both') and other.closed in ('right', 'both')
+
+        closed = (
+            "both" if left_closed and right_closed 
+            else 'left' if left_closed
+            else 'right' if right_closed
+            else 'neither'
+        )
+
+        return Interval(left, right, closed=closed)
+
+    @property
+    def is_empty(self):
+        "Check if constains no points"
+        if self.closed == "both":
+            has_points = self.left <= self.right
+        elif self.closed in ('left', 'right', 'neither'):
+            has_points = self.left < self.right
+
+        return not has_points
+
+    def __repr__(self):
+        return f'Interval({repr(self.left)}, {repr(self.right)}, closed={repr(self.closed)})'

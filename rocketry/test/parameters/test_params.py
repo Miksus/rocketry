@@ -68,3 +68,8 @@ def test_update(a, b, union):
     union = union()
     a.update(b)
     assert union.materialize() == a.materialize()
+
+def test_equal():
+    assert Parameters({"a": 0, "b": 1}) == Parameters({"a": 0, "b": 1})
+    assert not (Parameters({"a": 0, "b": 1}) == 1)
+    assert Parameters({"a": 0, "b": 1}) != 1

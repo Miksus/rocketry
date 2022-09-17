@@ -1,6 +1,6 @@
 from typing import Callable, Union
 from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskStarted, TaskSucceeded
+from rocketry.conditions.task.task import DependFailure, DependFinish, DependSuccess, TaskFailed, TaskFinished, TaskRunnable, TaskStarted, TaskSucceeded
 from rocketry.core import (
     BaseCondition
 )
@@ -9,10 +9,11 @@ from rocketry.core.condition import (
 )
 from rocketry.core.condition.base import All, Any, Not
 from rocketry.core.task import Task
+from rocketry.time import Cron
 from .time import IsPeriod
 from .task import TaskExecutable, TaskRunning
 from rocketry.time import (
-    TimeOfMinute, TimeOfHour,
+    TimeOfSecond, TimeOfMinute, TimeOfHour,
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
@@ -37,11 +38,16 @@ class TimeCondWrapper(BaseCondition):
         return self._get_cond(period)
 
     def on(self, span):
+        # Alias for "at"
+        return self.at(span)
+
+    def at(self, span):
+        # Alias for "on"
         period = self._cls_period(span, time_point=True)
         return self._get_cond(period)
 
     def starting(self, start):
-        period = self._cls_period(start, start)
+        period = self._cls_period.starting(start)
         return self._get_cond(period)
 
     def observe(self, **kwargs):
@@ -109,6 +115,7 @@ false = AlwaysFalse()
 # Execution related
 # -----------------
 
+secondly = TimeCondWrapper(TaskExecutable, TimeOfSecond)
 minutely = TimeCondWrapper(TaskExecutable, TimeOfMinute)
 hourly = TimeCondWrapper(TaskExecutable, TimeOfHour)
 daily = TimeCondWrapper(TaskExecutable, TimeOfDay)
@@ -118,6 +125,7 @@ monthly = TimeCondWrapper(TaskExecutable, TimeOfMonth)
 # Time related
 # ------------
 
+time_of_second = TimeCondWrapper(IsPeriod, TimeOfSecond)
 time_of_minute = TimeCondWrapper(IsPeriod, TimeOfMinute)
 time_of_hour = TimeCondWrapper(IsPeriod, TimeOfHour)
 time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
@@ -136,6 +144,24 @@ def every(past:str, based="run"):
         return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
     else:
         raise ValueError(f"Invalid status: {based}")
+
+def cron(__expr=None, **kwargs):
+    if __expr:
+        args = __expr.split(" ")
+    else:
+        args = ()
+
+    period = Cron(*args, **kwargs)
+    return TaskRunnable(period=period)
+
+def crontime(__expr=None, **kwargs):
+    if __expr:
+        args = __expr.split(" ")
+    else:
+        args = ()
+
+    period = Cron(*args, **kwargs)
+    return IsPeriod(period=period)
 
 # Task pipelining
 # ---------------

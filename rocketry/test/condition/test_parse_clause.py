@@ -58,6 +58,14 @@ import pytest
             id="Multiple Not"),
 
         pytest.param(
+            "(always true & always true) & (always true & always true)", 
+            AlwaysTrue() & AlwaysTrue() & AlwaysTrue() & AlwaysTrue(),
+            id="Nested AND"),
+        pytest.param(
+            "(always true | always true) | (always true | always true)", 
+            AlwaysTrue() | AlwaysTrue() | AlwaysTrue() | AlwaysTrue(),
+            id="Nested OR"),
+        pytest.param(
             "always true & (always true | always true & (always true | always true))", 
             AlwaysTrue() & (AlwaysTrue() | AlwaysTrue() & (AlwaysTrue() | AlwaysTrue())),
             id="Deeply nested"),
@@ -76,6 +84,12 @@ def test_string(cond_str, expected):
     cond = parse_condition(cond_str)
     assert cond == expected
 
+def test_bool():
+    cond = parse_condition(True)
+    assert cond == AlwaysTrue()
+
+    cond = parse_condition(False)
+    assert cond == AlwaysFalse()
 
 @pytest.mark.parametrize(
     "cond_str",
