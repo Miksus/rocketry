@@ -191,6 +191,11 @@ class Task(RedBase, BaseModel):
     last_inaction: Optional[datetime.datetime]
     last_crash: Optional[datetime.datetime]
 
+    batches: List[Parameters] = Field(
+        default_factory=list,
+        description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
+    )
+
     _process: multiprocessing.Process = None
     _thread: threading.Thread = None
     _thread_terminate: threading.Event = PrivateAttr(default_factory=threading.Event)
@@ -324,8 +329,35 @@ class Task(RedBase, BaseModel):
         else:
             return Parameters(value)
 
+    @validator('force_run', pre=False)
+    def parse_force_run(cls, value, values):
+        if value:
+            warnings.warn("Attribute 'force_run' is deprecated. Please use method set_running() instead", DeprecationWarning)
+            values['batches'].append(Parameters())
+        return value
+
     def __hash__(self):
         return id(self)
+
+    def run(self, _params:Union[Parameters, Dict]=None, **kwargs):
+        """Set the task running (with given parameters)
+
+        Creates a run batch that will set the task running.
+        
+        
+        Parameters
+        ----------
+        _params : dict, Parameters, optional
+            Parameters 
+        **kwargs
+
+        """
+        params = Parameters()
+        if _params:
+            params.update(_params)
+        if kwargs:
+            params.update(kwargs)
+        self.batches.append(params)
 
     def __call__(self, *args, **kwargs):
         "Run sync"
@@ -368,9 +400,14 @@ class Task(RedBase, BaseModel):
         execution = self.get_execution()
         try:
             params = self.get_extra_params(params)
+            direct_params = self.get_task_params()
+            if self.batches:
+                direct_params.update(self.batches.pop(0))
+
+            self.force_run = False
+
             # Run the actual task
             if execution in ("main", "async"):
-                direct_params = self.parameters
                 self.log_running()
                 async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
                 if execution == "main":
@@ -389,9 +426,9 @@ class Task(RedBase, BaseModel):
                     # in tests will succeed. 
                     time.sleep(1e-6)
             elif execution == "process":
-                self.run_as_process(params=params, **kwargs)
+                self.run_as_process(params=params, direct_params=direct_params, **kwargs)
             elif execution == "thread":
-                self.run_as_thread(params=params, **kwargs)
+                self.run_as_thread(params=params, direct_params=direct_params, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
         except TaskLoggingError:
@@ -434,8 +471,8 @@ class Task(RedBase, BaseModel):
         #    set_pending() : Set forced_state to False
         #    resume() : Reset forced_state to None
         #    set_running() : Set forced_state to True
-
-        if self.force_run:
+        forced_run = bool(self.batches)
+        if forced_run:
             return True
         elif self.disabled:
             return False
@@ -446,7 +483,7 @@ class Task(RedBase, BaseModel):
 
     def run_as_main(self, params:Parameters):
         self.log_running()
-        return self._run_as_main(params, self.parameters)
+        return self._run_as_main(params, direct_params=self.get_task_params())
 
     def _run_as_main(self, **kwargs):
         return asyncio.run(self._run_as_async(**kwargs))
@@ -530,16 +567,13 @@ class Task(RedBase, BaseModel):
 
         finally:
             self.process_finish(status=status)
-            self.force_run = False
-            #if cwd is not None:
-            #    os.chdir(old_cwd)
             hooker.postrun(*exc_info)
 
-    def run_as_thread(self, params:Parameters, **kwargs):
+    def run_as_thread(self, params:Parameters, direct_params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self, session=self.session)
-        direct_params = self.parameters.pre_materialize(task=self, session=self.session)
+        direct_params = direct_params.pre_materialize(task=self, session=self.session)
 
         self._thread_terminate.clear()
         self._thread_error = None
@@ -578,12 +612,12 @@ class Task(RedBase, BaseModel):
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
+    def run_as_process(self, params:Parameters, direct_params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
         session = self.session
 
         params = params.pre_materialize(task=self, session=session)
-        direct_params = self.parameters.pre_materialize(task=self, session=session)
+        direct_params = direct_params.pre_materialize(task=self, session=session)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         log_queue = session.scheduler._log_queue if log_queue is None else log_queue
@@ -666,7 +700,6 @@ class Task(RedBase, BaseModel):
         """
         passed_params = Parameters(params)
         session_params = self.session.parameters
-        task_params = Parameters(self.get_task_params())
         extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
 
         params = Parameters(self.prefilter_params(session_params | passed_params | extra_params))
