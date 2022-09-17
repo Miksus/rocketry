@@ -28,8 +28,14 @@ def test_parametrization_private(session):
 
     session.parameters.update({"secret": Private("psst"), "public": "hello", "secret_list": Private([1,2,3])})
 
-    task = FuncTask(run_task, name="a task", execution="main", parameters={"task_secret": Private("hsss"), "task_public": "world"}, force_run=True, session=session)
-
+    task = FuncTask(
+        run_task, 
+        name="a task", 
+        execution="main", 
+        parameters={"task_secret": Private("hsss"), "task_public": "world"},  
+        session=session
+    )
+    task.run()
     session.config.shut_cond = TaskStarted(task="a task") >= 1
     session.start()
 
@@ -41,7 +47,8 @@ def test_params_failure(session):
     def get_value():
         raise RuntimeError("Not working")
 
-    task = FuncTask(simple_task_func, parameters={'value': FuncArg(get_value)}, name="a task", execution="main", force_run=True, session=session)
+    task = FuncTask(simple_task_func, parameters={'value': FuncArg(get_value)}, name="a task", execution="main", session=session)
+    task.run()
 
     assert task.status is None
 

@@ -13,6 +13,8 @@ operates.
 
    structure
    task/index
+   parameterization
+   arguments
    conditions/index
    config
    logging
