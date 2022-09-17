@@ -20,7 +20,7 @@ def assert_default(session:Session):
 
 
 def test_empty():
-    session = Session()
+    session = Session(config={'task_execution': 'async'})
     session.set_as_default()
     assert session.parameters.to_dict() == {}
     assert session.returns.to_dict() == {}
@@ -40,32 +40,37 @@ def test_empty():
     assert_default(session)
 
 def test_timeout_parse():
-    session = Session(config={"timeout": 0.1})
+    session = Session(config={"timeout": 0.1, 'task_execution': 'async'})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
 
-    session = Session(config={"timeout": "0.1 seconds"})
+    session = Session(config={"timeout": "0.1 seconds", 'task_execution': 'async'})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
 
-    session = Session(config={"timeout": datetime.timedelta(seconds=0.1)})
+    session = Session(config={"timeout": datetime.timedelta(seconds=0.1), 'task_execution': 'async'})
     assert session.config.timeout == datetime.timedelta(seconds=0.1)
 
 def test_create():
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
-        s = Session(config=Config(task_priority=10))
+        s = Session(config=Config(task_priority=10, task_execution="async"))
         assert s.config.task_priority == 10
 
-        s = Session(config=dict(task_priority=10))
+        s = Session(config=dict(task_priority=10, task_execution= 'async'))
         assert s.config.task_priority == 10
 
-        Session()
+        Session(config={'task_execution': 'async'})
+
+        s = Session(parameters={"x": 5}, config={'task_execution': 'async'})
+        assert s.parameters == Parameters({"x": 5})
+        s = Session(parameters=Parameters({"x": 5}), config={'task_execution': 'async'})
+        assert s.parameters == Parameters({"x": 5})
+
+    with pytest.warns(FutureWarning):
         Session(config=None)
 
-        s = Session(parameters={"x": 5})
-        assert s.parameters == Parameters({"x": 5})
-        s = Session(parameters=Parameters({"x": 5}))
-        assert s.parameters == Parameters({"x": 5})
+    with pytest.warns(FutureWarning):
+        Session()
 
     with pytest.raises(TypeError):
         Session(config="invalid")
@@ -77,7 +82,7 @@ def test_logging_level():
         warnings.simplefilter("error")
 
         # Should not raise warning
-        s = Session()
+        s = Session(config={'task_execution': 'async'})
         s.config.shut_cond = true
         s.start()
     
@@ -86,13 +91,13 @@ def test_logging_level():
         warnings.simplefilter("error")
 
         # Should not raise warning
-        s = Session()
+        s = Session(config={'task_execution': 'async'})
         s.config.shut_cond = true
         s.start()
 
     task_logger.setLevel(logging.WARNING)
     with pytest.warns(UserWarning):
-        s = Session()
+        s = Session(config={'task_execution': 'async'})
         s.config.shut_cond = true
         s.start()
     

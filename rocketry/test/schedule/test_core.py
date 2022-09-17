@@ -418,7 +418,7 @@ def test_startup_shutdown(tmpdir, execution, session):
 def test_logging_repo(tmpdir, execution):
     from redbird.logging import RepoHandler
     from redbird.repos import MemoryRepo
-    session = Session()
+    session = Session(config={'task_execution': 'async'})
     session.set_as_default()
     session.config.max_process_count = 4
 
