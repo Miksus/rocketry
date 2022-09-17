@@ -61,7 +61,7 @@ def test_create():
 
         Session(config={'task_execution': 'async'})
 
-        s = Session(parameters={"x": 5})
+        s = Session(parameters={"x": 5}, config={'task_execution': 'async'})
         assert s.parameters == Parameters({"x": 5})
         s = Session(parameters=Parameters({"x": 5}))
         assert s.parameters == Parameters({"x": 5})
