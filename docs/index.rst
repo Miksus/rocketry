@@ -99,10 +99,9 @@ and get started with :ref:`tutorials <tutorials>`. There are also
 
    tutorial/index
    handbooks/index
-   condition_syntax/index
    cookbook/index
    examples/index
-   references/index
+   condition_syntax/index
    how_it_works
    rocketry_vs_alternatives
    contributing
