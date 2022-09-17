@@ -10,6 +10,7 @@ Version history
     - Add: Now tasks can be set running with parameters using ``task.run(arg="value")``
     - Add: Config option ``silence_task_logging`` to silence logging errors
     - Fix: Async and threaded tasks no longer limit max simultaneous processes
+    - Fix: Timeperiod ``at`` for end of a period, ie. ``daily.at("23:00")``
     - Fix: More consistent parameters
     - Update: Async will be default execution in the future. Warns if execution not defined
 

@@ -70,10 +70,18 @@ params_task_exec = [
 
     pytest.param(daily.between("10:00", "12:00"), TaskExecutable(period=TimeOfDay("10:00", "12:00")), id="daily between"),
 
-    pytest.param(weekly.on("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly on"),
-    pytest.param(daily.at("10:00"), TaskExecutable(period=TimeOfDay("10:00", "11:00")), id="daily at"),
+    pytest.param(secondly.at("45"), TaskExecutable(period=TimeOfSecond("45", "46")), id="minutely at"),
+    pytest.param(minutely.at("45"), TaskExecutable(period=TimeOfMinute("45", "46")), id="minutely at"),
+    pytest.param(hourly.at("30:00.0000"), TaskExecutable(period=TimeOfHour("30:00", "31:00")), id="hourly at"),
+    pytest.param(daily.at("10:00:00"), TaskExecutable(period=TimeOfDay("10:00", "11:00")), id="daily at"),
+    pytest.param(weekly.at("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly at"),
+    pytest.param(monthly.at("1st"), TaskExecutable(period=TimeOfMonth("1st", time_point=True)), id="monthly at"),
 
+    pytest.param(weekly.on("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly on"),
     pytest.param(monthly.on("1st"), TaskExecutable(period=TimeOfMonth("1st", time_point=True)), id="monthly on"),
+
+    pytest.param(daily.at("23:00:00"), TaskExecutable(period=TimeOfDay("23:00:00", "00:00:00")), id="daily at end"),
+    pytest.param(daily.at("23:00:01"), TaskExecutable(period=TimeOfDay("23:00:01", "00:00:01")), id="daily at specific"),
 ]
 
 params_pipeline = [
