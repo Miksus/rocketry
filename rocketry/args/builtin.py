@@ -55,6 +55,9 @@ class Arg(BaseArgument):
                 raise
             return self.default
 
+    def __str__(self):
+        return self.key
+
     def __repr__(self):
         return f'session.parameters[{repr(self.key)}]'
 
@@ -129,18 +132,22 @@ class Return(BaseArgument):
     def get_value(self, task=None, session=None, **kwargs) -> Any:
         if session is None:
             session = task.session
-        input_task = session[self.task_name]
+        try:
+            input_task = session[self.task_name]
+        except KeyError:
+            raise ValueError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
         try:
             return session.returns[input_task]
         except KeyError:
-            if input_task not in session:
-                raise ValueError(f"Task {repr(self.task_name)} does not exists. Cannot get return value")
             if self.default is NOTSET:
-                raise KeyError("Return value not found")
+                raise KeyError(f"Return value not found for {repr(task)}")
             return self.default
 
     def __repr__(self):
         return f'Return({repr(self.task_name)}{"" if self.default is None else ", default=" + repr(self.default)})'
+
+    def __str__(self):
+        return f'Return of {self.task_name!r}'
 
 class FuncArg(BaseArgument):
     """An argument which value is defined by the 
@@ -221,6 +228,12 @@ class TerminationFlag(BaseArgument):
         if execution in ("process", "main"):
             warnings.warn(f"Passing termination flag to task with 'execution_type={execution}''. Flag cannot be used.")
         return task._thread_terminate
+
+    def __repr__(self):
+        return 'TerminationFlag()'
+
+    def __str__(self):
+        return 'termination flag'
 
 class EnvArg(BaseArgument):
     """Argument that has the value of an environment variable"""

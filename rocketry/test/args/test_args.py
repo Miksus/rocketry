@@ -1,6 +1,6 @@
 import os, sys
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag
 from rocketry.tasks import FuncTask
 
 def test_simple():
@@ -51,6 +51,23 @@ def test_cli_arg():
     finally:
         CliArg.cli_args = orig_arg
 
+def test_return(session):
+    runned = FuncTask(lambda x: x, name="runned", session=session)
+    unrunned = FuncTask(lambda x: x, name="unrunned", session=session)
+
+    session.returns[runned] = 'a value'
+
+    assert Return("runned").get_value(session=session) == "a value"
+    assert Return(runned).get_value(session=session) == "a value"
+    assert Return("unrunned", default="a value").get_value(session=session) == "a value"
+    assert Return(unrunned, default="a value").get_value(session=session) == "a value"
+
+    with pytest.raises(ValueError):
+        Return("non_existent").get_value(session=session)
+ 
+    with pytest.raises(KeyError):
+        Return("unrunned").get_value(session=session)
+
 def test_private():
     task = FuncTask(lambda x: x)
 
@@ -60,7 +77,11 @@ def test_private():
     assert str(value) == "*****"
     assert repr(value) == "Private(*****)"
 
-@pytest.mark.parametrize("obj", [Arg('x'), SimpleArg('value'), Private('value'), FuncArg(lambda: None)])
-def test_kwargs(obj, session):
+@pytest.mark.parametrize("obj", [Arg('x'), SimpleArg('value'), Private('value'), FuncArg(lambda: None), Return('a_task'), TerminationFlag()])
+def test_no_errors(obj, session):
+    task = FuncTask(lambda: None, name="a_task", session=session)
+    session.returns[task] = None
     session.parameters['x'] = None
-    obj.get_value(dont_use="something", session=session)
+    obj.get_value(dont_use="something", session=session, task=task)
+    str(obj)
+    repr(obj)
