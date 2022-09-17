@@ -3,31 +3,8 @@
    :description: Rocketry, modern scheduling framework
    :keywords: schedule, task, script, run, Python
 
-
 .. raw:: html
-
-    <h1 align="center"><a href="https://rocketry.readthedocs.io">Rocketry</a></h1>
-    <p align="center">
-        <em>The engine to power your Python apps</em>
-    </p>
-    <p align="center">
-        <a href="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" target="_blank">
-            <img src="https://github.com/Miksus/rocketry/actions/workflows/main.yml/badge.svg?branch=master" alt="Test">
-        </a>
-        <a href="https://codecov.io/gh/Miksus/rocketry" target="_blank">
-            <img src="https://codecov.io/gh/Miksus/rocketry/branch/master/graph/badge.svg?token=U2KF1QA5HT" alt="Test coverage">
-        </a>
-        <a href="https://pypi.org/project/rocketry" target="_blank">
-            <img src="https://badgen.net/pypi/v/rocketry?color=969696" alt="Package version">
-        </a>
-        <a href="https://pypi.org/project/rocketry" target="_blank">
-            <img src="https://badgen.net/pypi/python/rocketry?color=969696&labelColor=black" alt="Supported Python versions">
-        </a>
-    </p>
-
-.. raw:: html
-
-   <hr>
+   :file: header.html
 
 - `Documentation <https://rocketry.readthedocs.io/>`_
 - `Source code (Github) <https://github.com/Miksus/rocketry>`_
