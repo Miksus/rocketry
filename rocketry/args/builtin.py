@@ -44,6 +44,12 @@ class Arg(BaseArgument):
     def __repr__(self):
         return f'session.parameters[{repr(self.key)}]'
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.key == other.key
+        else:
+            return False
+
 class Session(BaseArgument):
     "An argument that represents the session"
 
