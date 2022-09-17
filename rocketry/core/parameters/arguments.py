@@ -80,10 +80,10 @@ class BaseArgument(RedBase):
         return self.get_value(**kwargs)
 
     def __eq__(self, other):
-        if isinstance(other, BaseArgument):
+        if isinstance(other, type(self)):
             return self.get_value() == other.get_value()
         else:
-            return self.get_value() == other
+            return False
 
     def __repr__(self):
         cls_name = type(self).__name__
