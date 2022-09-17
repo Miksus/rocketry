@@ -361,6 +361,29 @@ class Task(RedBase, BaseModel):
             params.update(kwargs)
         self.batches.append(params)
 
+    def delete(self):
+        """Delete the task from the session. 
+        Overried if needed additional cleaning."""
+        self.session.tasks.remove(self)
+
+    def terminate(self):
+        "Terminate the task"
+        self.force_termination = True
+
+# Inspection
+
+    @property
+    def is_running(self):
+        """bool: Whether the task is currently running or not."""
+        return self.get_status() == "run"
+
+    def is_alive(self) -> bool:
+        """Whether the task is alive: check if the task has a live process or thread."""
+        #! TODO: Use property
+        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+
+# Task Execution
+
     def __call__(self, *args, **kwargs):
         "Run sync"
         self.start(*args, **kwargs)
@@ -789,11 +812,6 @@ class Task(RedBase, BaseModel):
         """
         pass
 
-    @property
-    def is_running(self):
-        """bool: Whether the task is currently running or not."""
-        return self.get_status() == "run"
-
     def register(self):
         if hasattr(self, "_mark_register") and not self._mark_register:
             del self._mark_register
@@ -833,10 +851,6 @@ class Task(RedBase, BaseModel):
         """Create a name for the task when name was not passed to initiation of
         the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
-
-    def is_alive(self) -> bool:
-        """Whether the task is alive: check if the task has a live process or thread."""
-        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
 
     def is_alive_as_main(self) -> bool:
         return self._main_alive
@@ -1133,15 +1147,6 @@ class Task(RedBase, BaseModel):
     def _handle_return(self, value):
         "Handle the return value (ie. store to parameters)"
         self.session.returns[self] = value
-
-    def delete(self):
-        """Delete the task from the session. 
-        Overried if needed additional cleaning."""
-        self.session.tasks.remove(self)
-
-    def terminate(self):
-        "Terminate this task"
-        self.force_termination = True
 
     def _get_hooks(self, name:str):
         return getattr(self.session.hooks, name)
