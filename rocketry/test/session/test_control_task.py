@@ -23,7 +23,7 @@ def test_set_running(execution, session):
         session=session
     )
     assert task.batches == []
-    task.set_running()
+    task.run()
     assert task.batches == [Parameters()]
 
     session.config.shut_cond = SchedulerCycles() >= 5
@@ -45,9 +45,9 @@ def test_set_running_with_params(execution, session):
         execution=execution,
         session=session
     )
-    task.set_running(arg="correct")
-    task.set_running(arg="correct")
-    task.set_running(arg="incorrect")
+    task.run(arg="correct")
+    task.run(arg="correct")
+    task.run(arg="incorrect")
     assert task.batches == [
         Parameters({"arg": "correct"}), Parameters({"arg": "correct"}), Parameters({"arg": "incorrect"})
     ]
@@ -77,7 +77,7 @@ def test_set_running_disabled(execution, session):
         session=session
     )
     task.disabled = True
-    task.set_running()
+    task.run()
 
     session.config.shut_cond = SchedulerCycles() >= 5
     session.start()
