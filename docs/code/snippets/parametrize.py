@@ -1,12 +1,14 @@
-from rocketry.args import Arg
+from rocketry.args import Arg, FuncArg, EnvArg, CliArg
+
+def get_value():
+    return 'Hello World'
 
 @app.param('my_param')
-def get_my_param():
-    "Get a session level parameter"
-    return 'Hello world'
+def get_session_param():
+    "Session level parameter (named as 'my_param')"
+    return 'Hello Python'
 
-@app.task("daily")
-def do_with_param(arg=Arg('my_param')):
-    # 'arg' 
-    assert arg == 'Hello world'
+@app.task()
+def do_with_param(arg1=Arg('my_param'), arg2=FuncArg(get_value), 
+                  arg3=EnvArg('ENV_VARIABLE'), arg4=CliArg('--cli_arg')):
     ...

@@ -1,12 +1,12 @@
 from rocketry.args import Return
+from rocketry.conds import daily, after_success
 
-@app.task("daily after 07:00")
+@app.task(daily)
 def do_first():
     ...
     return 'Hello World'
 
-@app.task("after task 'do_first'")
-def do_second(arg=Return('do_first')):
-    # arg contains the value of the task do_first's return
+@app.task(after_success(do_first))
+def do_second(arg=Return(do_first)):
     ...
     return 'Hello Python'

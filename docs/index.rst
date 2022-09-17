@@ -73,11 +73,26 @@ Rocketry is designed to be modified and it suits well as the
 engine for autonomous applications. It is the automation 
 back-end that sets your applications alive.
 
-Here is a demonstration of more advanced case:
+More Examples
+-------------
 
-.. literalinclude:: /code/demos/intermediate.py
+You can easily create your own condition and combine
+it with other conditions:
+
+.. literalinclude:: /code/snippets/custom_condition.py
     :language: py
 
+You can also run tasks one after another and put the 
+output value of one as the input argument for another:
+
+.. literalinclude:: /code/snippets/pipeline.py
+    :language: py
+
+You can also set parameters to tasks, custom conditions
+or even to other parameters. Here is an example:
+
+.. literalinclude:: /code/snippets/parametrize.py
+    :language: py
 
 Interested?
 -----------
