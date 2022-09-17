@@ -11,6 +11,7 @@ from rocketry.conditions.api import (
     after_any_finish, after_any_success, after_any_fail,
 
     started, succeeded, failed, finished,
+    retry,
 
     scheduler_running,
     running,

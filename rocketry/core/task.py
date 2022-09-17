@@ -163,6 +163,10 @@ class Task(RedBase, BaseModel):
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
     daemon: Optional[bool]
+    batches: List[Parameters] = Field(
+        default_factory=list,
+        description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
+    )
 
     # Instance
     name: Optional[str] = Field(description="Name of the task. Must be unique")
@@ -324,8 +328,61 @@ class Task(RedBase, BaseModel):
         else:
             return Parameters(value)
 
+    @validator('force_run', pre=False)
+    def parse_force_run(cls, value, values):
+        if value:
+            warnings.warn("Attribute 'force_run' is deprecated. Please use method set_running() instead", DeprecationWarning)
+            values['batches'].append(Parameters())
+        return value
+
     def __hash__(self):
         return id(self)
+
+    def run(self, _params:Union[Parameters, Dict]=None, **kwargs):
+        """Set the task running (with given parameters)
+
+        Creates a run batch that will set the task running
+        once. Given parameters are only used once. Can be 
+        called multiple times to put the task running multiple
+        times.
+        
+
+        Parameters
+        ----------
+        _params : dict, Parameters, optional
+            Parameters for the batch
+        **kwargs
+            Parameters for the batch
+        """
+        params = Parameters()
+        if _params:
+            params.update(_params)
+        if kwargs:
+            params.update(kwargs)
+        self.batches.append(params)
+
+    def delete(self):
+        """Delete the task from the session. 
+        Overried if needed additional cleaning."""
+        self.session.tasks.remove(self)
+
+    def terminate(self):
+        "Terminate the task"
+        self.force_termination = True
+
+# Inspection
+
+    @property
+    def is_running(self):
+        """bool: Whether the task is currently running or not."""
+        return self.get_status() == "run"
+
+    def is_alive(self) -> bool:
+        """Whether the task is alive: check if the task has a live process or thread."""
+        #! TODO: Use property
+        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+
+# Task Execution
 
     def __call__(self, *args, **kwargs):
         "Run sync"
@@ -368,9 +425,14 @@ class Task(RedBase, BaseModel):
         execution = self.get_execution()
         try:
             params = self.get_extra_params(params)
+            direct_params = self.get_task_params()
+            if self.batches:
+                direct_params.update(self.batches.pop(0))
+
+            self.force_run = False
+
             # Run the actual task
             if execution in ("main", "async"):
-                direct_params = self.parameters
                 self.log_running()
                 async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
                 if execution == "main":
@@ -389,9 +451,9 @@ class Task(RedBase, BaseModel):
                     # in tests will succeed. 
                     time.sleep(1e-6)
             elif execution == "process":
-                self.run_as_process(params=params, **kwargs)
+                self.run_as_process(params=params, direct_params=direct_params, **kwargs)
             elif execution == "thread":
-                self.run_as_thread(params=params, **kwargs)
+                self.run_as_thread(params=params, direct_params=direct_params, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
         except TaskLoggingError:
@@ -434,8 +496,8 @@ class Task(RedBase, BaseModel):
         #    set_pending() : Set forced_state to False
         #    resume() : Reset forced_state to None
         #    set_running() : Set forced_state to True
-
-        if self.force_run:
+        forced_run = bool(self.batches)
+        if forced_run:
             return True
         elif self.disabled:
             return False
@@ -446,7 +508,7 @@ class Task(RedBase, BaseModel):
 
     def run_as_main(self, params:Parameters):
         self.log_running()
-        return self._run_as_main(params, self.parameters)
+        return self._run_as_main(params, direct_params=self.get_task_params())
 
     def _run_as_main(self, **kwargs):
         return asyncio.run(self._run_as_async(**kwargs))
@@ -530,16 +592,13 @@ class Task(RedBase, BaseModel):
 
         finally:
             self.process_finish(status=status)
-            self.force_run = False
-            #if cwd is not None:
-            #    os.chdir(old_cwd)
             hooker.postrun(*exc_info)
 
-    def run_as_thread(self, params:Parameters, **kwargs):
+    def run_as_thread(self, params:Parameters, direct_params:Parameters, **kwargs):
         """Create a new thread and run the task on that."""
 
         params = params.pre_materialize(task=self, session=self.session)
-        direct_params = self.parameters.pre_materialize(task=self, session=self.session)
+        direct_params = direct_params.pre_materialize(task=self, session=self.session)
 
         self._thread_terminate.clear()
         self._thread_error = None
@@ -578,12 +637,12 @@ class Task(RedBase, BaseModel):
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
+    def run_as_process(self, params:Parameters, direct_params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
         session = self.session
 
         params = params.pre_materialize(task=self, session=session)
-        direct_params = self.parameters.pre_materialize(task=self, session=session)
+        direct_params = direct_params.pre_materialize(task=self, session=session)
 
         # Daemon resolution: task.daemon >> scheduler.tasks_as_daemon
         log_queue = session.scheduler._log_queue if log_queue is None else log_queue
@@ -646,18 +705,7 @@ class Task(RedBase, BaseModel):
             pass
 
     def get_extra_params(self, params:Parameters) -> Parameters:
-        """Get additional parameters from
-        the session and extra for meta tasks
-        including the task itself, session 
-        and the thread terminate event.
-        These parameters may or may not be used
-        by the task.
-
-        Included parameters:
-
-        - _session_ : task's session
-        - _task_ : the task itself
-        - _thread_terminate_ : Task termination event if threading used (threading.Event)
+        """Get additional parameters
 
         Returns
         -------
@@ -666,7 +714,6 @@ class Task(RedBase, BaseModel):
         """
         passed_params = Parameters(params)
         session_params = self.session.parameters
-        task_params = Parameters(self.get_task_params())
         extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
 
         params = Parameters(self.prefilter_params(session_params | passed_params | extra_params))
@@ -675,7 +722,7 @@ class Task(RedBase, BaseModel):
 
     def get_task_params(self):
         "Get parameters passed to the task"
-        return self.parameters
+        return self.parameters.copy()
 
     def prefilter_params(self, params:Parameters):
         """Pre filter the parameters.
@@ -765,11 +812,6 @@ class Task(RedBase, BaseModel):
         """
         pass
 
-    @property
-    def is_running(self):
-        """bool: Whether the task is currently running or not."""
-        return self.get_status() == "run"
-
     def register(self):
         if hasattr(self, "_mark_register") and not self._mark_register:
             del self._mark_register
@@ -809,10 +851,6 @@ class Task(RedBase, BaseModel):
         """Create a name for the task when name was not passed to initiation of
         the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
-
-    def is_alive(self) -> bool:
-        """Whether the task is alive: check if the task has a live process or thread."""
-        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
 
     def is_alive_as_main(self) -> bool:
         return self._main_alive
@@ -1109,15 +1147,6 @@ class Task(RedBase, BaseModel):
     def _handle_return(self, value):
         "Handle the return value (ie. store to parameters)"
         self.session.returns[self] = value
-
-    def delete(self):
-        """Delete the task from the session. 
-        Overried if needed additional cleaning."""
-        self.session.tasks.remove(self)
-
-    def terminate(self):
-        "Terminate this task"
-        self.force_termination = True
 
     def _get_hooks(self, name:str):
         return getattr(self.session.hooks, name)

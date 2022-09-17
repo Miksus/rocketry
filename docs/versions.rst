@@ -2,6 +2,17 @@
 Version history
 ===============
 
+- ``2.4.0``
+
+    - Add: New condition, ``Retry``
+    - Add: New condition to condition API, ``crontime``
+    - Add: New arguments, ``EnvArg`` and ``CliArg``
+    - Add: Now tasks can be set running with parameters using ``task.run(arg="value")``
+    - Add: Config option ``silence_task_logging`` to silence logging errors
+    - Fix: Async and threaded tasks no longer limit max simultaneous processes
+    - Fix: More consistent parameters
+    - Update: Async will be default execution in the future. Warns if execution not defined
+
 - ``2.3.0``
 
     - Add: Cron style scheduling
@@ -11,8 +22,8 @@ Version history
     - Add: ``always`` time period
     - Fix: Various bugs related to ``Any``, ``All`` and ``StaticInterval`` time periods
     - Fix: Integers as start and end in time periods
-    - Upd: Now time periods are immutable 
-    - Upd: Now if session is not specified, tasks create new one.
+    - Update: Now time periods are immutable 
+    - Update: Now if session is not specified, tasks create new one.
 
 - ``2.2.0``
 

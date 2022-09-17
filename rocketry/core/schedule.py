@@ -373,6 +373,9 @@ class Scheduler(RedBase):
         delay = self.session.config.cycle_sleep
         if delay is not None:
             await asyncio.sleep(delay)
+        else:
+            # delay is None, sleep 0 to release the async execution
+            await asyncio.sleep(0)
 
     async def startup(self):
         """Start up the scheduler.

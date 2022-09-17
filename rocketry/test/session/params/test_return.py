@@ -4,7 +4,7 @@ import pytest
 from rocketry.args import Private, Return
 from rocketry import Scheduler
 from rocketry.conditions.scheduler import SchedulerCycles
-from rocketry.core import parameters
+from rocketry.core import Parameters
 from rocketry.tasks import FuncTask
 from rocketry.conditions import TaskStarted
 from rocketry.args import FuncArg
@@ -85,7 +85,7 @@ def test_normal_pass_func(session, execution):
         name="return task",
         start_cond="~has started",
         execution="main",
-        force_run=True,
+        batches=[Parameters()],
         session=session
     )
     def func_with_arg_local():
@@ -118,11 +118,10 @@ def test_missing(session, execution):
         func_with_arg, 
         parameters={"myparam": Return('return task')},
         name="a task",  
-        force_run=True,
         execution=execution,
         session=session
     )
- 
+    task.run()
     assert task.status is None
     session.config.shut_cond = TaskStarted(task="a task") >= 1
     session.start()
@@ -140,10 +139,10 @@ def test_default(session, execution):
         func_x_with_arg, 
         parameters={"myparam": Return('return task', default="x")},
         name="a task", 
-        execution=execution, 
-        force_run=True,
+        execution=execution,
         session=session
     )
+    task.run()
 
     assert task.status is None
     session.config.shut_cond = TaskStarted(task="a task") >= 1

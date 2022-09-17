@@ -265,25 +265,7 @@ def test_task_status(session, execution, func_type, mode):
     assert 0 == task_fail.logger.filter_by(action="inaction").count()
     assert 3 == task_inact.logger.filter_by(action="inaction").count()
 
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_run(execution, session):
-    task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
-        name="task",
-        execution=execution,
-        session=session
-    )
-    task.force_run = True
 
-    session.config.shut_cond = SchedulerCycles() >= 5
-    session.start()
-
-    logger = task.logger
-    assert 1 == logger.filter_by(action="run").count()
-
-    # The force_run should have reseted as it should have run once
-    assert not task.force_run
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
@@ -305,36 +287,6 @@ def test_task_disabled(tmpdir, execution, session):
         assert 0 == sum([record for record in history if record["action"] == "run"])
 
         assert task.disabled
-
-
-@pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_task_force_disabled(tmpdir, execution, session):
-    # NOTE: force_run overrides disabled
-    # as it is more practical to keep 
-    # a task disabled and force it running
-    # manually than prevent force run with
-    # disabling
-    with tmpdir.as_cwd() as old_dir:
-
-        task = FuncTask(
-            run_succeeding, 
-            start_cond=AlwaysFalse(), 
-            name="task",
-            execution=execution,
-            session=session
-        )
-        task.disabled = True
-        task.force_run = True
-
-        session.config.shut_cond = SchedulerCycles() >= 5
-        session.start()
-
-        logger = task.logger
-        assert 1 == logger.filter_by(action="run").count()
-        assert 1 == logger.filter_by(action="success").count()
-
-        assert task.disabled
-        assert not task.force_run # This should be reseted
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_priority(execution, session):
@@ -516,3 +468,31 @@ def test_instant_shutdown(execution, session):
     assert 0 == task.logger.filter_by(action="fail").count()
     assert 0 == task.logger.filter_by(action="success").count()
     assert 1 == task.logger.filter_by(action="terminate").count()
+
+def test_cycle_sleep_none(session):
+    assert not session.config.instant_shutdown
+    session.config.instant_shutdown = True
+    session.config.cycle_sleep = None
+
+    order = []
+
+    async def run_async():
+        order.append("async start")
+        await asyncio.sleep(0)
+        order.append("async end")
+
+    def run_shutdown():
+        order.append("shutdown task")
+
+    FuncTask(run_async, execution="async", start_cond=true, session=session)
+    FuncTask(run_shutdown, execution="main", start_cond=true, session=session)
+
+    session.config.shut_cond = SchedulerCycles() == 1
+
+    session.start()
+
+    assert order == [
+        "async start",
+        "shutdown task",
+        "async end"
+    ]

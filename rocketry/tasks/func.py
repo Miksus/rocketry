@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable, List, Optional
 import warnings
 
-from pydantic import Field, validator
+from pydantic import Field, PrivateAttr, validator
 from rocketry.core.parameters.arguments import BaseArgument
 
 from rocketry.core.task import Task
@@ -139,11 +139,12 @@ class FuncTask(Task):
 
     sys_paths: List[Path] = []
 
+    _is_delayed: bool = PrivateAttr(default=False)
     _delayed_kwargs: dict = {}
     _name_template: str = '{module_name}:{func_name}'
     @property
     def delayed(self):
-        return self.func is None
+        return self._is_delayed
 
     @validator('path')
     def validate_path(cls, value: Path, values):
@@ -186,15 +187,14 @@ class FuncTask(Task):
             # the execution to else than process
             # as it's obvious it would not work.
             kwargs["execution"] = "thread"
-
         super().__init__(func=func, **kwargs)
-        self._set_descr()
+        self._set_descr(is_delayed=func is None)
 
     def __call__(self, *args, **kwargs):
         if not hasattr(self, "func"):
             func = args[0]
             super().__init__(func=func, **self._delayed_kwargs)
-            self._set_descr()
+            self._set_descr(is_delayed=False)
             self._delayed_kwargs = {}
 
             # Note that we must return the function or 
@@ -211,10 +211,17 @@ class FuncTask(Task):
         else:
             return super().__call__(*args, **kwargs)
 
-    def _set_descr(self):
+    def _set_descr(self, is_delayed:bool):
         "Set description from func doc if desc missing"
         if self.description is None and hasattr(self.func, "__doc__"):
             self.description = self.func.__doc__
+        # Set params
+        if not is_delayed:
+            # Not-delayed, setting parameters from the
+            # function signature
+            params = Parameters._from_signature(self.func)
+            self.parameters = params | self.parameters
+        self._is_delayed = is_delayed
 
     async def execute(self, **params):
         "Run the actual, given, task"
@@ -260,22 +267,26 @@ class FuncTask(Task):
             return f'{module_name}:{func_name}'
 
     def process_finish(self, *args, **kwargs):
-        if self.is_delayed():
+        if self._is_delayed:
             # Deleting the _func so it is refreshed
             # next time the task is run.
-            self._func = None
+            self.func = None
         super().process_finish(*args, **kwargs)
 
     def is_delayed(self):
-        return self.func is None
+        return self._is_delayed
         
     def get_task_params(self):
-        params = super().get_task_params()
+        task_params = super().get_task_params()
 
-        # Get params from the typehints
-        cache = False if self.path is not None else True
-        func = self.get_func(cache=cache)
-        params.update(Parameters._from_signature(func, task=self, session=self.session))
+        if self._is_delayed:
+            # Get params from the typehints 
+            cache = False if self.path is not None else True
+            func = self.get_func(cache=cache)
+            func_params = Parameters._from_signature(func, task=self, session=self.session)
+            params = func_params | task_params
+        else:
+            params = task_params
         return params
 
     def prefilter_params(self, params):
@@ -293,7 +304,7 @@ class FuncTask(Task):
             return params
 
     def postfilter_params(self, params:Parameters):
-        if self.is_delayed():
+        if self._is_delayed:
             # Was not filtered in prefiltering.
             return {
                 key: val for key, val in params.items()
