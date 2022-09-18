@@ -76,23 +76,57 @@ back-end that sets your applications alive.
 More Examples
 -------------
 
-You can easily create your own condition and combine
-it with other conditions:
+.. raw:: html
+
+   <details>
+   <summary><a>Choosing Execution Option</a></summary>
+
+.. literalinclude:: /code/snippets/parallelization.py
+    :language: py
+
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Custom Conditions</a></summary>
 
 .. literalinclude:: /code/snippets/custom_condition.py
     :language: py
 
-You can also run tasks one after another and put the 
-output value of one as the input argument for another:
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Pipelining Tasks</a></summary>
 
 .. literalinclude:: /code/snippets/pipeline.py
     :language: py
 
-You can also set parameters to tasks, custom conditions
-or even to other parameters. Here is an example:
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Parametrizing Tasks</a></summary>
 
 .. literalinclude:: /code/snippets/parametrize.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
 
 Interested?
 -----------
