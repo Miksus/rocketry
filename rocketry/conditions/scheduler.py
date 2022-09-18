@@ -10,15 +10,6 @@ class SchedulerCycles(BaseComparable):
     """Condition for whether the scheduler have had
     more/less/equal given amount of cycles of executing
     tasks.
-
-    Examples
-    --------
-
-    **Parsing example:**
-
-    >>> from rocketry.parse import parse_condition
-    >>> parse_condition("scheduler had more than 3 cycles")
-    SchedulerCycles(_gt_=3)
     """
 
     def get_measurement(self, session=Session()) -> int:
