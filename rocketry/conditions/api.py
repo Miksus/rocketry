@@ -4,7 +4,7 @@ from rocketry.conditions import (
     TaskFinished, TaskRunnable, 
     TaskStarted, TaskSucceeded,
     Retry,
-    SchedulerStarted,
+    SchedulerStarted, SchedulerCycles,
 )
 from rocketry.core import (
     BaseCondition
@@ -235,5 +235,13 @@ finished = TimeActionWrapper(TaskFinished)
 # Scheduler
 # ---------
 
-def scheduler_running(more_than:str=None, less_than=None):
+def scheduler_running(more_than:str=None, less_than:str=None):
     return SchedulerStarted(period=TimeSpanDelta(near=more_than, far=less_than))
+
+def scheduler_cycles(more_than:int=None, less_than:int=None):
+    kwds = {}
+    if more_than is not None:
+        kwds['__gt__'] = more_than
+    if less_than is not None:
+        kwds['__lt__'] = less_than
+    return SchedulerCycles.from_magic(**kwds)
