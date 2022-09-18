@@ -6,17 +6,23 @@ Arguments
 Arguments are dynamic values for parameter key-value pairs. 
 Read first about parameters from :ref:`handbook-parametrization`.
 
-There are several argument types:
+There are several argument types including:
 
-- ``SimpleArg``: dummy argument, useful only for testing
-- ``FuncArg``: the value is the return of a given function
-- ``Arg``: session argument
-- ``Task``: a task instance
-- ``Session``: the session instance
+- ``SimpleArg``: simple wrapper for a value, useful only for testing
+- ``FuncArg``: represents the return value of a given function
+- ``Arg``: represents a session parameter
+- ``Return``: represents the return value of a task
+- ``EnvArg``: represents an environment variable
+- ``CliArg``: represents a command line argument for the whole program
 
-The value of the arguments inspected only when needed, ie. when 
-executing a task. This process of inspecting the argument values 
-is called argument *materialization*.
+There are also arguments that simply represent a Rocketry component:
+
+- ``Task``: represents a task instance
+- ``Session``: represents the session instance
+
+Arguments are lazy in a sense that their value is defined only 
+when needed, ie. when a task is about to start or when a condition
+is about to be inspected. 
 
 .. note::
 
@@ -40,9 +46,9 @@ sources for a parameter and would like to get the one that is available.
     def do_things(arg=env_arg):
         ...
 
-The above will take the value of the environment ``ROCKETRY_ENV`` if this exists,
-else it will take the CLI argument ``--env`` if this exists, else it will take
-the session argument ``env`` if this exists and if none of the previous exists 
+The above will take the value of the environment variable ``ROCKETRY_ENV`` if this exists,
+else it will take the value of the CLI argument ``--env`` if this exists, else it will take
+the session argument ``env`` if this exists and if none of the previous exists, 
 it will take the value ``test``. 
 
 SimpleArg
@@ -57,7 +63,7 @@ It is useful mostly in testing.
 
     @app.task()
     def do_things(arg=SimpleArg('a value')):
-        ...
+        assert arg == 'a value'
 
 Arg
 ---
@@ -71,7 +77,7 @@ It is useful mostly in testing.
 
     @app.task()
     def do_things(arg=Arg('my_session_param')):
-        ...
+        assert arg == 'a value'
 
     app.params(my_session_param="a value")
 
@@ -95,7 +101,7 @@ of a given function when the argument is materialized.
 
     @app.task()
     def do_things(arg=FuncArg(get_value)):
-        ...
+        assert arg == 'a value'
 
 EnvArg
 ------
@@ -110,7 +116,7 @@ of a given environment variable.
 
     @app.task()
     def do_things(arg=EnvArg("MY_ARG")):
-        ...
+        assert arg == 'a value'
 
     os.environ['MY_ARG'] = 'a value'
 
@@ -131,7 +137,7 @@ of a given CLI argument.
 
     @app.task()
     def do_things(arg=CliArg("--myparam")):
-        ...
+        assert arg == 'a value'
 
 Then call the program:
 
@@ -161,7 +167,7 @@ of another task. It is useful for pipelining tasks' outputs.
 
     @app.task()
     def do_second(arg=Return(do_first)):
-        ...
+        assert arg == 'a value'
 
 .. note::
 
@@ -210,10 +216,13 @@ process.
 .. code-block:: python
 
     from rocketry.args import TerminationFlag
+    from rocketry.exc import TaskTerminationException
 
     @app.task()
     def do_second(arg=TerminationFlag()):
-        while not flag.is_set():
+        while True:
+            if flag.is_set():
+                raise TaskTerminationException("Task was terminated")
             ... # Do things
 
 .. note::

@@ -73,10 +73,59 @@ Rocketry is designed to be modified and it suits well as the
 engine for autonomous applications. It is the automation 
 back-end that sets your applications alive.
 
-Here is a demonstration of more advanced case:
+More Examples
+-------------
 
-.. literalinclude:: /code/demos/intermediate.py
+.. raw:: html
+
+   <details>
+   <summary><a>Choosing Execution Option</a></summary>
+
+.. literalinclude:: /code/snippets/parallelization.py
     :language: py
+
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Custom Conditions</a></summary>
+
+.. literalinclude:: /code/snippets/custom_condition.py
+    :language: py
+
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Pipelining Tasks</a></summary>
+
+.. literalinclude:: /code/snippets/pipeline.py
+    :language: py
+
+.. raw:: html
+
+   </details>
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Parametrizing Tasks</a></summary>
+
+.. literalinclude:: /code/snippets/parametrize.py
+    :language: py
+
+.. raw:: html
+
+   </details>
 
 
 Interested?
@@ -94,7 +143,7 @@ and get started with :ref:`tutorials <tutorials>`. There are also
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    tutorial/index

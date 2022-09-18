@@ -8,7 +8,7 @@ There are four core components in Rocketry's ecosystem:
 - **Rocketry**: acts as the top level interface
 - **Session**: handles the configuration and act as a medium level interface
 - **Scheduler**: handles the flow of the system
-- **Task**: handles how to execute a task
+- **Task**: handles how to a task is executed
 
 Additionally there are several subcomponents:
 

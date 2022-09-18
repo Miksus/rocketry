@@ -7,6 +7,7 @@ Version history
     - Add: New condition, ``Retry``
     - Add: New condition to condition API, ``crontime``
     - Add: New arguments, ``EnvArg`` and ``CliArg``
+    - Add: Argument pipelining, ``Arg('missing') >> Arg('found')``
     - Add: Now tasks can be set running with parameters using ``task.run(arg="value")``
     - Add: Config option ``silence_task_logging`` to silence logging errors
     - Fix: Async and threaded tasks no longer limit max simultaneous processes
