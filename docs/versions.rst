@@ -6,6 +6,7 @@ Version history
 
     - Add: New condition, ``Retry``
     - Add: New condition to condition API, ``crontime``
+    - Add: New condition to condition API, ``scheduler_cycles`` (useful for testing)
     - Add: New arguments, ``EnvArg`` and ``CliArg``
     - Add: Argument pipelining, ``Arg('missing') >> Arg('found')``
     - Add: Now tasks can be set running with parameters using ``task.run(arg="value")``

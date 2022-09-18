@@ -1,5 +1,5 @@
 import pytest
-from rocketry.conditions.scheduler import SchedulerStarted
+from rocketry.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from rocketry.conditions.task.task import TaskFailed, TaskFinished, TaskRunning, TaskStarted, TaskSucceeded
 
 from rocketry.conds import (
@@ -11,7 +11,7 @@ from rocketry.conds import (
 
     after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
 
-    scheduler_running,
+    scheduler_running, scheduler_cycles,
 
     succeeded, failed, finished, started,
     running,
@@ -128,6 +128,9 @@ params_running = [
 
 params_schedule = [
     pytest.param(scheduler_running("10 mins"), SchedulerStarted(period=TimeSpanDelta("10 mins")), id="scheduler running (at least)"),
+    pytest.param(scheduler_cycles(5), SchedulerCycles() > 5, id="scheduler cycles (at least)"),
+    pytest.param(scheduler_cycles(less_than=5), SchedulerCycles() < 5, id="scheduler cycles (less than)"),
+    pytest.param(scheduler_cycles(1, 5), (SchedulerCycles() > 1) < 5, id="scheduler cycles (between)"),
 ]
 
 cron_like = [
