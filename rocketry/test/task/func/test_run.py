@@ -152,9 +152,12 @@ async def test_run_log_fail_at_start(task_func, expected_outcome, execution, ses
         execution=execution,
         session=session
     )
-
-    with pytest.raises(TaskLoggingError):
+    if execution != "thread":
+        with pytest.raises(TaskLoggingError):
+            await task.start_async()
+    else:
         await task.start_async()
+        assert task._thread_error
     # Wait for finish
     await session.scheduler.wait_task_alive()
     session.scheduler.handle_logs()

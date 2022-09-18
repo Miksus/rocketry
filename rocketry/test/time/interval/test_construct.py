@@ -377,7 +377,12 @@ class TestTimeOfDay(ConstructTester):
         {
             "start": "23:00",
             "expected_start": 23 * MS_IN_HOUR,
-            "expected_end": 24 * MS_IN_HOUR,
+            "expected_end": 0,
+        },
+        {
+            "start": "23:01",
+            "expected_start": 23 * MS_IN_HOUR + MS_IN_MINUTE,
+            "expected_end": MS_IN_MINUTE,
         },
     ]
     scen_starting = [

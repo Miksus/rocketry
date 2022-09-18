@@ -156,7 +156,11 @@ class AnchoredInterval(TimeInterval):
         # Ie. Monday --> Monday 00:00 to Monday 24:00
         # By default assumes linear scale (like week)
         # but can be overridden for non linear such as year
-        return ms + self._unit_resolution
+        end_ms = ms + self._unit_resolution
+        if end_ms >= self._scope_max:
+            # Over period
+            end_ms = end_ms - self._scope_max
+        return end_ms
 
     def _validate(self, n:int, orig):
         if n < 0 or n > self._scope_max:

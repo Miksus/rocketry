@@ -609,9 +609,6 @@ class Task(RedBase, BaseModel):
         self._thread.start()
         event_is_running.wait() # Wait until the task is confirmed to run 
 
-        if self._thread_error is not None:
-            raise self._thread_error
- 
     def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""

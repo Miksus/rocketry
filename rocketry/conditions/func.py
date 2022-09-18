@@ -84,11 +84,9 @@ class FuncCond(BaseCondition):
         return new_self
 
     def __call__(self, *args, **kwargs):
-        if self.func is not None:
-            # Setting args and kwargs for the func
-            return self._recreate(*args, **kwargs)
-        elif len(args) == 1 and not kwargs:
-            # Called as decorator
+        if self.func is None and (len(args) != 1 or kwargs):
+            raise ValueError("Expected decorated function.")
+        elif self.func is None:
             func = args[0]
             self.func = func
             if self.decor_return_func:
@@ -96,7 +94,8 @@ class FuncCond(BaseCondition):
             else:
                 return self
         else:
-            raise ValueError("Expected decorated function as positional argument")
+            return self._recreate(*args, **kwargs)
+        
 
     def __bool__(self):
         return self.func(*self.args, **self.kwargs)
