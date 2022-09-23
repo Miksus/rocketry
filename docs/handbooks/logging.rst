@@ -63,7 +63,7 @@ Here are some premade log record models you may use:
 
 - ``rocketry.log.MinimalRecord``: Bare minimum for the logging to work.
 - ``rocketry.log.LogRecord``: Has the typical elements of `logging.LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ and extras required by rocketry.
-- ``rocketry.log.MinimalRecord``: Has the same as ``LogRecord`` but also includes start, end and runtimes.
+- ``rocketry.log.TaskLogRecord``: Has the same as ``LogRecord`` but also includes start, end and runtimes.
 
 
 Setting Up Repo to a Logger
