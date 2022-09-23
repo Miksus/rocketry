@@ -32,5 +32,5 @@ This is nothing fancy but gets you stared.
 What next
 ^^^^^^^^^
 
-This is only a small slice what Rocketry has to offer. Read furher 
+This is only a small slice what Rocketry has to offer. Read further 
 to explore the features.
