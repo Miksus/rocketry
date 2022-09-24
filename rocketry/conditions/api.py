@@ -1,7 +1,6 @@
-from typing import Callable, Union
 from rocketry.conditions import (
-    DependFailure, DependFinish, DependSuccess, TaskFailed, 
-    TaskFinished, TaskRunnable, 
+    DependFailure, DependFinish, DependSuccess, TaskFailed,
+    TaskFinished, TaskRunnable,
     TaskStarted, TaskSucceeded,
     Retry,
     SchedulerStarted, SchedulerCycles,
@@ -12,16 +11,17 @@ from rocketry.core import (
 from rocketry.core.condition import (
     AlwaysTrue, AlwaysFalse,
 )
-from rocketry.core.condition.base import All, Any, Not
-from rocketry.core.task import Task
+from rocketry.core.condition.base import All, Any
 from rocketry.time import Cron
-from .time import IsPeriod
-from .task import TaskExecutable, TaskRunning
+
 from rocketry.time import (
     TimeOfSecond, TimeOfMinute, TimeOfHour,
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
+
+from .time import IsPeriod
+from .task import TaskExecutable, TaskRunning
 
 # Utility classes
 # ---------------

@@ -1,5 +1,3 @@
-
-from os import stat_result
 import sys
 import inspect
 import importlib
@@ -8,7 +6,6 @@ from typing import Callable, List, Optional
 import warnings
 
 from pydantic import Field, PrivateAttr, validator
-from rocketry.core.parameters.arguments import BaseArgument
 
 from rocketry.core.task import Task
 from rocketry.core.parameters import Parameters
@@ -39,7 +36,7 @@ class TempSysPath:
     sys_path = sys.path
     def __init__(self, paths:list):
         self.paths = paths
-    
+
     def __enter__(self):
         for path in self.paths:
             sys.path.append(path)
@@ -58,15 +55,15 @@ class FuncTask(Task):
     ----------
     func : Callable, str
         Function or name of a function to be executed. If string is
-        passed, the path to the file where the function is should 
+        passed, the path to the file where the function is should
         be passed with ``path`` or in the argument, like
         "path/to/file.py:my_func".
     path : path-like
         Path to the function. Not needed if ``func`` is callable.
     delay : bool, optional
         If True, the function is imported and set to the task
-        immediately. If False, the function is imported only 
-        when running the task. By default False if ``func`` is 
+        immediately. If False, the function is imported only
+        when running the task. By default False if ``func`` is
         callable and True if ``func`` is a name of a function.
     sys_path : list of paths
         Paths that are appended to ``sys.path`` when the function
@@ -157,7 +154,7 @@ class FuncTask(Task):
     def validate_func(cls, value, values):
         execution = values.get('execution')
         func = value
-    
+
         if execution == "process" and getattr(func, "__name__", None) == "<lambda>":
             raise AttributeError(
                 f"Cannot pickle lambda function '{func}'. "
@@ -177,13 +174,13 @@ class FuncTask(Task):
             # almost empty shell class that is populated
             # in next __call__ (which should occur immediately)
             self._delayed_kwargs = kwargs
-            return 
+            return
         elif only_func_set:
             # Most likely called as:
             # @FuncTask
             # def myfunc(...): ...
-            
-            # We are slightly forgiving and set 
+
+            # We are slightly forgiving and set
             # the execution to else than process
             # as it's obvious it would not work.
             kwargs["execution"] = "thread"
@@ -197,7 +194,7 @@ class FuncTask(Task):
             self._set_descr(is_delayed=False)
             self._delayed_kwargs = {}
 
-            # Note that we must return the function or 
+            # Note that we must return the function or
             # we are in deep shit with multiprocessing
             # (or pickling the function).
 
@@ -275,12 +272,12 @@ class FuncTask(Task):
 
     def is_delayed(self):
         return self._is_delayed
-        
+
     def get_task_params(self):
         task_params = super().get_task_params()
 
         if self._is_delayed:
-            # Get params from the typehints 
+            # Get params from the typehints
             cache = False if self.path is not None else True
             func = self.get_func(cache=cache)
             func_params = Parameters._from_signature(func, task=self, session=self.session)
@@ -291,10 +288,10 @@ class FuncTask(Task):
 
     def prefilter_params(self, params):
         if not self.is_delayed():
-            # Filter the parameters now so that 
-            # we pass as little as possible to 
+            # Filter the parameters now so that
+            # we pass as little as possible to
             # pickling. If lazy, we filter after
-            # pickling to handle problems in 
+            # pickling to handle problems in
             # pickling functions.
             return {
                 key: val for key, val in params.items()

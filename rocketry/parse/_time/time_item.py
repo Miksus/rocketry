@@ -1,9 +1,9 @@
 
 from typing import Pattern
-
-from ..utils import ParserError
-from rocketry.core.time.base import PARSERS, TimePeriod
+from rocketry.core.time.base import TimePeriod
 from rocketry.session import Session
+from ..utils import ParserError
+
 
 def parse_time_item(s:str, session=None):
     "Parse one condition"

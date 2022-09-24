@@ -13,11 +13,11 @@ class FuncCond(BaseCondition):
     Parameters
     ----------
         func : callable
-            Function that should return True or False 
+            Function that should return True or False
             depending on the state of the condition.
             Can also be passed later as decorator.
         syntax : str, Patter, list
-            String, regex pattern or list of such to be 
+            String, regex pattern or list of such to be
             passed to the string parser.
         args : tuple
             Argumnets to be passed to the function.
@@ -58,10 +58,10 @@ class FuncCond(BaseCondition):
     FuncCond(is_foo, syntax=re.compile('is foo in (?P<myval>.+)'), args=(), kwargs={'myval': 'house'})
     """
 
-    def __init__(self, 
+    def __init__(self,
                  func:Callable[..., bool]=None,
-                 syntax:Union[str, Pattern, List[Union[str, Pattern]]]=None, 
-                 args:Optional[tuple]=None, 
+                 syntax:Union[str, Pattern, List[Union[str, Pattern]]]=None,
+                 args:Optional[tuple]=None,
                  kwargs:Optional[dict]=None,
                  decor_return_func=False,
                  session=None):
@@ -95,7 +95,7 @@ class FuncCond(BaseCondition):
                 return self
         else:
             return self._recreate(*args, **kwargs)
-        
+
 
     def __bool__(self):
         return self.func(*self.args, **self.kwargs)

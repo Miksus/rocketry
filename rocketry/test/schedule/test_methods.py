@@ -1,6 +1,6 @@
 
 """
-Tests for methods if one wish to run 
+Tests for methods if one wish to run
 only some parts of the scheduler (like
 executing one task)
 """
@@ -29,23 +29,23 @@ def run_inacting():
     "task_func,run_count,fail_count,success_count",
     [
         pytest.param(
-            run_succeeding, 
+            run_succeeding,
             1, 0, 1,
             id="Succeeding task"),
 
         pytest.param(
-            run_failing, 
+            run_failing,
             1, 1, 0,
             id="Failing task"),
         pytest.param(
-            run_inacting, 
+            run_inacting,
             1, 0, 0,
             id="Inacting task"),
     ],
 )
 def test_run_task(execution, task_func, run_count, fail_count, success_count, session):
     "Example of how to run only one task once using the scheduler"
-        
+
     task = FuncTask(func=task_func, name="task", start_cond=AlwaysFalse(), execution=execution, session=session)
     logger = task.logger
 

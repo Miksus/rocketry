@@ -1,4 +1,3 @@
-
 import asyncio
 import datetime
 import time
@@ -8,11 +7,10 @@ import pytest
 from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conditions.task import TaskTerminated
 
-from rocketry.core import Scheduler
 from rocketry.core.time.base import TimeDelta
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
-from rocketry.conditions import TaskFinished, TaskStarted, AlwaysTrue, AlwaysFalse
+from rocketry.conditions import TaskFinished, TaskStarted, AlwaysTrue
 from rocketry.args import Session
 
 def run_slow():
@@ -54,9 +52,9 @@ def test_without_timeout(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        # If Scheduler is quick, it may launch the task 3 times 
+        # If Scheduler is quick, it may launch the task 3 times
         # but there still should not be any terminations
-        assert 2 <= logger.filter_by(action="run").count() 
+        assert 2 <= logger.filter_by(action="run").count()
         assert 0 == logger.filter_by(action="terminate").count()
         assert 2 <= logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
@@ -78,7 +76,7 @@ def test_task_timeout_set_in_session(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        assert 2 == logger.filter_by(action="run").count() 
+        assert 2 == logger.filter_by(action="run").count()
         assert 2 == logger.filter_by(action="terminate").count()
         assert 0 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
@@ -99,7 +97,7 @@ def test_task_timeout_set_in_task(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        assert 2 == logger.filter_by(action="run").count() 
+        assert 2 == logger.filter_by(action="run").count()
         assert 2 == logger.filter_by(action="terminate").count()
         assert 0 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
@@ -123,7 +121,7 @@ def test_task_terminate(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        assert 2 == logger.filter_by(action="run").count() 
+        assert 2 == logger.filter_by(action="run").count()
         assert 2 == logger.filter_by(action="terminate").count()
         assert 0 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
@@ -148,7 +146,7 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        assert 1 <= logger.filter_by(action="run").count() 
+        assert 1 <= logger.filter_by(action="run").count()
         assert 1 <=logger.filter_by(action="terminate").count()
         assert 0 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
@@ -168,9 +166,9 @@ def test_permanent_task(tmpdir, execution, session):
         session.start()
 
         logger = task.logger
-        # If Scheduler is quick, it may launch the task 3 times 
+        # If Scheduler is quick, it may launch the task 3 times
         # but there still should not be any terminations
-        assert 3 <= logger.filter_by(action="run").count() 
+        assert 3 <= logger.filter_by(action="run").count()
         assert 1 == logger.filter_by(action="terminate").count() # The last run is terminated
         assert 2 <= logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()

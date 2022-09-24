@@ -59,7 +59,7 @@ def test_func_param(session:rocketry.Session):
     @FuncParam()
     def my_param():
         return 5
-    
+
     assert my_param() == 5
     assert 'my_param' in session.parameters
     assert isinstance(session.parameters._params['my_param'], FuncArg)
@@ -70,7 +70,7 @@ def test_func_param_named(session:rocketry.Session):
     @FuncParam(name="a_param")
     def my_param():
         return 5
-    
+
     assert my_param() == 5
     assert 'a_param' in session.parameters
     assert isinstance(session.parameters._params['a_param'], FuncArg)

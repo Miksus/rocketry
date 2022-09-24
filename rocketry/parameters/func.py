@@ -1,4 +1,3 @@
-
 from typing import Callable
 from rocketry.args import FuncArg
 
@@ -47,5 +46,4 @@ class FuncParam:
     def _get_name(self, func):
         if self.name is not None:
             return self.name
-        else:
-            return func.__name__
+        return func.__name__

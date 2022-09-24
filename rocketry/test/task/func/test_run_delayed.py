@@ -1,30 +1,28 @@
-
-from rocketry.tasks.func import FuncTask
 from textwrap import dedent
 import pytest
 
-from rocketry.tasks import FuncTask
-
 from task_helpers import wait_till_task_finish
 
+from rocketry.tasks.func import FuncTask
+from rocketry.tasks import FuncTask
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "script_path,expected_outcome,exc_cls",
     [
         pytest.param(
-            "scripts/succeeding_script.py", 
+            "scripts/succeeding_script.py",
             "success",
             None,
             id="Success"),
         pytest.param(
-            "scripts/failing_script.py", 
-            "fail", 
+            "scripts/failing_script.py",
+            "fail",
             RuntimeError,
             id="Failure"),
         pytest.param(
-            "scripts/syntax_error_script.py", 
-            "fail", 
+            "scripts/syntax_error_script.py",
+            "fail",
             ImportError,
             id="Import failure"),
     ],
@@ -35,7 +33,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
 
         task = FuncTask(
             func_name="main",
-            path=script_path, 
+            path=script_path,
             name="a task",
             execution=execution,
             session=session
@@ -68,7 +66,7 @@ def test_run_specified_func(tmpdir, session):
 
         task = FuncTask(
             func_name="myfunc",
-            path="mytasks/myfile.py", 
+            path="mytasks/myfile.py",
             name="a task",
             execution="main",
             session=session
@@ -98,7 +96,7 @@ def test_import_relative(tmpdir, session):
 
         task = FuncTask(
             func_name="main",
-            path="mytasks/myfile.py", 
+            path="mytasks/myfile.py",
             name="a task",
             execution="main",
             session=session
@@ -132,7 +130,7 @@ def test_import_package(tmpdir, session):
 
         task = FuncTask(
             func_name="main",
-            path="mypkg6574/subpkg/myfile.py", 
+            path="mypkg6574/subpkg/myfile.py",
             name="a task",
             execution="main",
             session=session
@@ -162,7 +160,7 @@ def test_import_relative_with_params(tmpdir, session):
 
         task = FuncTask(
             func_name="main",
-            path="mytasks/myfile.py", 
+            path="mytasks/myfile.py",
             name="a task",
             execution="main"
         )
@@ -193,7 +191,7 @@ def test_additional_sys_paths(tmpdir, session):
 
         task = FuncTask(
             func_name="main",
-            path="mytasks/myfile.py", 
+            path="mytasks/myfile.py",
             name="a task",
             execution="main",
             sys_paths=["mytasks/subfolder/another"],
@@ -213,7 +211,7 @@ def test_parametrization_runtime(tmpdir, script_files, session):
 
         task = FuncTask(
             func_name="main",
-            path="scripts/parameterized_script.py", 
+            path="scripts/parameterized_script.py",
             name="a task",
             execution="main",
             session=session
@@ -232,7 +230,7 @@ def test_parametrization_local(tmpdir, script_files, session):
 
         task = FuncTask(
             func_name="main",
-            path="scripts/parameterized_script.py", 
+            path="scripts/parameterized_script.py",
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
             execution="main",
@@ -252,7 +250,7 @@ def test_parametrization_kwargs(tmpdir, script_files, session):
 
         task = FuncTask(
             func_name="main",
-            path="scripts/parameterized_kwargs_script.py", 
+            path="scripts/parameterized_kwargs_script.py",
             name="a task",
             parameters={"integer": 1, "string": "X", "optional_float": 1.1},
             execution="main",

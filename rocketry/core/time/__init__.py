@@ -1,7 +1,7 @@
 # Imports
 from .base import (
-    TimePeriod, TimeInterval, 
-    TimeDelta, 
+    TimePeriod, TimeInterval,
+    TimeDelta,
     StaticInterval,
     All, Any,
 
@@ -14,4 +14,3 @@ from .base import (
 
 
 #from .factory import period_factory
-

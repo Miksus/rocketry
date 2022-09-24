@@ -1,6 +1,6 @@
 from rocketry.conds import (
-    every, hourly, daily, 
-    after_success, 
+    every, hourly, daily,
+    after_success,
     true, false
 )
 

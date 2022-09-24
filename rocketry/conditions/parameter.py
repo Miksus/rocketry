@@ -7,7 +7,7 @@ from rocketry.args import Session
 
 class IsEnv(BaseCondition):
     """Condition checks whether session parameter `env`
-    has the given value. 
+    has the given value.
 
     Parameters
     ----------
@@ -35,7 +35,7 @@ class IsEnv(BaseCondition):
 
     def __init__(self, env):
         self.env = env
-    
+
     def get_state(self, session=Session()):
         return session.parameters.get("env", None) == self.env
 
@@ -46,19 +46,19 @@ class ParamExists(BaseCondition):
     Parameters
     ----------
     *args : iterable of strings
-        Names of the parameters expected to be 
-        found from the session (in order the 
+        Names of the parameters expected to be
+        found from the session (in order the
         condition to be True)
     **kwargs : dict
-        Names of the parameters and their values 
-        expected from the session (in order the 
+        Names of the parameters and their values
+        expected from the session (in order the
         condition to be True)
 
     Examples
     --------
     >>> from rocketry.conditions import ParamExists
     >>> condition = ParamExists("z", x=1, y=2)
-    
+
     >>> # Parameters found
     >>> from rocketry import session
     >>> session.parameters = {"x": 1, "y": 2, "z": 3, "k": 4}
@@ -81,7 +81,7 @@ class ParamExists(BaseCondition):
     def __init__(self, *args, **kwargs):
         self.param_keys = args
         self.param_values = kwargs
-    
+
     def __bool__(self):
         params = self.session.parameters
         for key in self.param_keys:
@@ -98,7 +98,7 @@ class ParamExists(BaseCondition):
     @classmethod
     def _from_list(cls, l:Union[tuple, list]):
         return cls(*l)
-    
+
     @classmethod
     def _from_key_value(cls, key:str, value):
         return cls(**{key: value})

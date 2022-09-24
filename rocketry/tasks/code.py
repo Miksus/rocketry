@@ -4,10 +4,10 @@ from rocketry.core import Task
 class CodeTask(Task):
     """Task to run a piece of Python code
 
-    This task may be useful for APIs where a trusted 
+    This task may be useful for APIs where a trusted
     user can create tasks or if you have your tasks stored,
     for example, in a database.
-    
+
     Parameters
     ----------
     code : str
@@ -21,7 +21,7 @@ class CodeTask(Task):
     --------
         Note that it is potentially dangerous if you let the user
         to create CodeTasks to your system and you don't trust the
-        user. The task can do anything and is practically impossible 
+        user. The task can do anything and is practically impossible
         to restrict running non-safe code.
 
     Examples

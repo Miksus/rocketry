@@ -1,4 +1,3 @@
-
 from rocketry.core.condition.base import BaseCondition
 from rocketry.conds import true, false
 from ._condition import parse_condition_string
@@ -22,5 +21,4 @@ PARSER = ParserPicker(
 def parse_condition(conf, **kwargs):
     if isinstance(conf, BaseCondition):
         return conf
-    else:
-        return PARSER(conf, **kwargs)
+    return PARSER(conf, **kwargs)

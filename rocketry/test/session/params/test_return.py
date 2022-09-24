@@ -1,13 +1,10 @@
-
 import pytest
 
-from rocketry.args import Private, Return
-from rocketry import Scheduler
+from rocketry.args import Return
 from rocketry.conditions.scheduler import SchedulerCycles
 from rocketry.core import Parameters
 from rocketry.tasks import FuncTask
 from rocketry.conditions import TaskStarted
-from rocketry.args import FuncArg
 
 
 def func_with_arg(value):
@@ -24,7 +21,7 @@ def func_x_with_arg(myparam):
 def test_normal(session, execution):
 
     task_return = FuncTask(
-        func_x_with_return, 
+        func_x_with_return,
         name="return task",
         start_cond="~has started",
         execution=execution,
@@ -32,7 +29,7 @@ def test_normal(session, execution):
         session=session
     )
     task = FuncTask(
-        func_x_with_arg, 
+        func_x_with_arg,
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return('return task')},
@@ -53,7 +50,7 @@ def test_normal(session, execution):
 def test_normal_pass_task(session, execution):
 
     task_return = FuncTask(
-        func_x_with_return, 
+        func_x_with_return,
         name="return task",
         start_cond="~has started",
         execution=execution,
@@ -61,7 +58,7 @@ def test_normal_pass_task(session, execution):
         session=session
     )
     task = FuncTask(
-        func_x_with_arg, 
+        func_x_with_arg,
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return(task_return)},
@@ -92,7 +89,7 @@ def test_normal_pass_func(session, execution):
         return 'x'
 
     task = FuncTask(
-        func_x_with_arg, 
+        func_x_with_arg,
         name="a task",
         start_cond="after task 'return task'",
         parameters={"myparam": Return(func_with_arg_local)},
@@ -113,11 +110,11 @@ def test_normal_pass_func(session, execution):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_missing(session, execution):
     session.config.silence_task_prerun = True # Default in prod
-    
+
     task = FuncTask(
-        func_with_arg, 
+        func_with_arg,
         parameters={"myparam": Return('return task')},
-        name="a task",  
+        name="a task",
         execution=execution,
         session=session
     )
@@ -131,14 +128,14 @@ def test_missing(session, execution):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_default(session, execution):
     task = FuncTask(
-        func_with_arg, 
-        name="return task", 
+        func_with_arg,
+        name="return task",
         session=session
     )
     task = FuncTask(
-        func_x_with_arg, 
+        func_x_with_arg,
         parameters={"myparam": Return('return task', default="x")},
-        name="a task", 
+        name="a task",
         execution=execution,
         session=session
     )

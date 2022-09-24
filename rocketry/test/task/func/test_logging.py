@@ -1,14 +1,13 @@
 import datetime
 import logging
-import pytest
-import multiprocessing
 from queue import Empty
+import multiprocessing
+
+import pytest
 
 from redbird.logging import RepoHandler
 
-from rocketry import Session
 from rocketry.log.log_record import  MinimalRecord
-
 from rocketry.tasks import FuncTask
 from rocketry.testing.log import create_task_record
 
@@ -32,7 +31,7 @@ def test_set_cached_in_init(session, optimized, last_status):
         "terminate": 1656882000.0,
         "inaction":1656968400.0,
     }
-    
+
 
     # A log record that should not be used
     for action, created in times.items():
@@ -41,7 +40,7 @@ def test_set_cached_in_init(session, optimized, last_status):
             action=action,
             created=created
         ))
-    # Add one extra (which should be used instead of what we did above) 
+    # Add one extra (which should be used instead of what we did above)
     times[last_status] = 1752958800.0
     repo.add(MinimalRecord(
         task_name="mytask",
@@ -68,10 +67,10 @@ def test_set_cached_in_init(session, optimized, last_status):
         assert task.status == last_status
 
 def test_running(session):
-    
+
     task = FuncTask(
         lambda : None,
-        execution="main", 
+        execution="main",
         session=session
     )
     task.log_running()
@@ -79,10 +78,10 @@ def test_running(session):
     assert task.is_running
 
 def test_success(tmpdir, session):
-    
+
     task = FuncTask(
         lambda : None,
-        execution="main", 
+        execution="main",
         session=session
     )
     task.log_running()
@@ -94,7 +93,7 @@ def test_fail(tmpdir, session):
 
     task = FuncTask(
         lambda : None,
-        execution="main", 
+        execution="main",
         session=session
     )
     task.log_running()
@@ -107,7 +106,7 @@ def test_without_running(tmpdir, session):
 
     task = FuncTask(
         lambda : None,
-        execution="main", 
+        execution="main",
         session=session
     )
     task.log_failure()
@@ -130,7 +129,7 @@ def test_handle(session):
     task = FuncTask(
         lambda : None,
         execution="main",
-        name="a task", 
+        name="a task",
         session=session
     )
     # Creating the run log
@@ -138,7 +137,7 @@ def test_handle(session):
 
     # Creating the outcome log
     record_finish = create_record("success", task_name="a task")
-    
+
     task.log_record(record_run)
     assert "run" == task.status
     assert task.is_running
@@ -168,16 +167,16 @@ def test_without_handlers(session):
 
     with pytest.warns(UserWarning) as warns:
         task = FuncTask(
-            lambda : None, 
+            lambda : None,
             name="task 1",
             start_cond="always true",
             #logger="rocketry.task.test",
-            execution="main", 
+            execution="main",
             session=session
         )
-    
+
     # Test warnings
-    
+
     #assert str(warns[0].message) == "Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized."
     warn_messages = [str(w.message) for w in warns]
     assert warn_messages == [
@@ -197,7 +196,7 @@ def test_without_handlers_status_warnings(session):
 
     with pytest.warns(UserWarning) as warns:
         task = FuncTask(
-            lambda : None, 
+            lambda : None,
             name="task 1",
             start_cond="always true",
             logger_name="rocketry.task.test",
@@ -205,7 +204,7 @@ def test_without_handlers_status_warnings(session):
             session=session
         )
     # Removing the handlers that were added
-    
+
     # Test warnings
     expected_warnings = [
         'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
@@ -229,7 +228,7 @@ def test_without_handlers_status_warnings(session):
     assert task.status == 'success'
     with pytest.warns(UserWarning) as warns:
         assert task.get_status() is None
-    
+
     assert list(str(w.message) for w in warns) == [
         "Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
         "Task 'task 1' logger is not readable. Status unknown."
@@ -238,7 +237,7 @@ def test_without_handlers_status_warnings(session):
     session.config.force_status_from_logs = False
     with pytest.warns(UserWarning) as warns:
         task = FuncTask(
-            lambda : None, 
+            lambda : None,
             name="task 2",
             start_cond="always true",
             logger="rocketry.task.test",
@@ -263,7 +262,7 @@ def test_without_handlers_status_warnings(session):
     ],
 )
 def test_action_start(tmpdir, method, session):
-    
+
     task = FuncTask(
         lambda : None,
         execution="main",
@@ -287,7 +286,7 @@ def test_action_start(tmpdir, method, session):
 def test_process_no_double_logging(session):
     # 2021-02-27 there is a bug that Raspbian logs process task logs twice
     # while this is not occuring on Windows. This tests the bug.
-    #!NOTE: This test requires there are two handlers in 
+    #!NOTE: This test requires there are two handlers in
     # rocketry.task logger (Memory and Stream in this order)
     task_logger = logging.getLogger("rocketry.task")
     task_logger.addHandler(logging.StreamHandler())
@@ -295,7 +294,7 @@ def test_process_no_double_logging(session):
     expected_actions = ["run", "success"]
 
     task = FuncTask(
-        run_success, 
+        run_success,
         name="a task",
         execution="process",
         session=session
@@ -304,7 +303,7 @@ def test_process_no_double_logging(session):
     log_queue = multiprocessing.Queue(-1)
 
     # Start the process
-    proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, log_queue, session.config, []), daemon=None) 
+    proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, log_queue, session.config, []), daemon=None)
     proc.start()
 
     # Do the logging manually (copied from the method)
@@ -331,7 +330,7 @@ def test_process_no_double_logging(session):
     # (as the records should not been handled yet)
     recs = list(session.get_task_log())
     assert len(recs) == 0, "Double logging. The log file is not empty before handling the records. Process bypasses the queue."
-    
+
     for record in records:
         task.log_record(record)
 

@@ -1,6 +1,3 @@
-
-import re
-
 class ClosureParser:
     """
 
@@ -18,11 +15,11 @@ class ClosureParser:
     # TODO: get offsets (closure len) using match for better regex support
     # TODO: check if next_closure is opening/closing using regex
     # TODO: .apply(string, func) : Visit all closures and apply the function
-    
+
     def __init__(self, opening="(", closing=")"):
         self.opening = opening
         self.closing = closing
-        
+
     def to_list(self, string):
         "Turn the string to (nested) list of strings of closures"
         # "1 * (21 + (211 - 212) / 22) ^ 3 * (21 + (211 - 212) / 22)"
@@ -55,11 +52,11 @@ class ClosureParser:
         offset = len(self.opening)
         start = 0 if start is None else start
         start -= offset
-        
+
         openings = 0
         closings = 0
         while openings != closings or openings == 0:
-            
+
             index, next_closure = self._get_next_element(string, start + offset)
 
             if next_closure == self.opening:
@@ -73,13 +70,13 @@ class ClosureParser:
                 offset = len(self.closing)
 
             start = index
-        
+
         return (opening, closing)
-    
+
     def count(self, string):
         "Count number of closures in the string"
         return string.count(self.opening)
-        
+
     def _get_next_element(self, string, start=None, end=None):
         closures = (self.opening, self.closing)
         indexes = {
@@ -89,5 +86,3 @@ class ClosureParser:
         }
         minimum = min(indexes)
         return minimum, indexes[minimum]
-    
-        

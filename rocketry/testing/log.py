@@ -1,14 +1,10 @@
-import datetime
 import logging
-import time
-from typing import Union
 from rocketry.pybox.time import to_datetime
 from rocketry.core import Task
-from rocketry import Session
 
 def create_record(
     level,
-    pathname="", 
+    pathname="",
     lineno=1,
     name="",
     msg="",

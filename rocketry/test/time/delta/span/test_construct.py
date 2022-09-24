@@ -1,6 +1,6 @@
 
 import datetime
-import pytest
+
 from rocketry.time import (
     TimeSpanDelta
 )
@@ -26,9 +26,9 @@ def test_construct():
 def test_equal():
     assert TimeSpanDelta("2 days") == TimeSpanDelta("2 days")
     assert TimeSpanDelta("2 days", "1 days") == TimeSpanDelta("2 days", "1 days")
-    assert not (TimeSpanDelta("2 days") == TimeSpanDelta("3 days"))
-    assert not (TimeSpanDelta("2 days", "1 days") == TimeSpanDelta("3 days"))
-    assert not (TimeSpanDelta("1 days", "2 days") == TimeSpanDelta("5 hours", "2 days"))
+    assert not TimeSpanDelta("2 days") == TimeSpanDelta("3 days")
+    assert not TimeSpanDelta("2 days", "1 days") == TimeSpanDelta("3 days")
+    assert not TimeSpanDelta("1 days", "2 days") == TimeSpanDelta("5 hours", "2 days")
 
 def test_repr():
     assert str(TimeSpanDelta("2 days"))

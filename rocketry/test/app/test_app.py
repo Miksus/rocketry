@@ -1,13 +1,12 @@
-
 import asyncio
 import logging
+
+from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo, CSVFileRepo
 
 from rocketry import Rocketry
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.args import Return, Arg, FuncArg
-from redbird.logging import RepoHandler
-from redbird.repos import MemoryRepo, CSVFileRepo
-
 from rocketry import Session
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
@@ -25,7 +24,7 @@ def test_app_create(session, tmpdir):
 
     # Test logging
     task_logger = logging.getLogger("rocketry.task")
-    
+
     # Till Red Bird supports equal, we need to test the handler one obj at a time
     assert len(task_logger.handlers) == 1
     assert isinstance(task_logger.handlers[0], RepoHandler)
@@ -146,7 +145,7 @@ def test_arg_ref():
     @app.param('arg_1')
     def my_arg_1():
         return 'arg 1'
-    
+
     @app.param('arg_2')
     def my_arg_2():
         return 'arg 2'
@@ -189,7 +188,7 @@ def test_app_run():
     app = Rocketry(config={'task_execution': 'main'})
     app.params(my_arg='session value')
 
-    # Creating some params and conditions 
+    # Creating some params and conditions
     @app.param('my_func_arg')
     def my_func():
         return 'func arg value'
@@ -204,7 +203,7 @@ def test_app_run():
     def do_daily():
         ...
         return 'return value'
-    
+
     @app.task("after task 'do_daily'")
     def do_after(arg=Return('do_daily'), session_arg=Arg('my_arg'), func_arg=Arg('my_func_arg'), func_arg_2=FuncArg(lambda: 'my val')):
         assert arg == 'return value'

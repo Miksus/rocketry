@@ -7,7 +7,7 @@ class CondParser:
         self.func = func
         self.session = session
         self.cached = cached
-    
+
     def __call__(self, s:str, *args, **kwargs):
         session = self.session
         if self.cached and s in session._cond_cache:

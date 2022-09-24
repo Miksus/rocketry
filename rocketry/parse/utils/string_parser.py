@@ -1,4 +1,3 @@
-
 from functools import partial
 import re
 
@@ -27,7 +26,7 @@ class InstructionParser:
             ")" : closing closure
 
         These characters cannot be found in
-        individual condition parsing (ie. 
+        individual condition parsing (ie.
         in the names of tasks).
         """
         p = ClosureParser()
@@ -38,13 +37,13 @@ class InstructionParser:
 
         # 2. Split operations
         v.assign_elements(l, self._split_operations)
-        
+
         # 2a. Remove extra tuples
         v.apply(l, _flatten_tuples)
-        
+
         v.assign_elements(l, partial(self._parse, **kwargs))
-        
-        e = v.reduce(l, self._assemble) 
+
+        e = v.reduce(l, self._assemble)
         return e
 
     def _parse(self, __s:tuple, **kwargs):
@@ -75,7 +74,7 @@ class InstructionParser:
             oper_func = operator["func"]
             oper_side = operator["side"]
             s = self._assemble_oper(s, oper_str=oper_str, oper_func=oper_func, side=oper_side)
-        
+
         # TODO: Clean this mess (but be careful)
 
         return s[0] if isinstance(s, tuple) else s
@@ -86,11 +85,11 @@ class InstructionParser:
             pos = self._index(s, [oper_str])
 
             # Set the comparison object to "|" in the list
-            
+
             if side == "both":
                 obj = oper_func(s[pos+1], s[pos-1])
                 s[pos] = obj
-                # NOTE: We have reversed the "s" thus we also put the arguments to 
+                # NOTE: We have reversed the "s" thus we also put the arguments to
 
                 # Remove lhs and rhs of the comparison as they are embedded in comparison object
                 del s[pos-1]
@@ -133,7 +132,7 @@ class InstructionParser:
             l = re.split(regex, s)
             l = [elem for elem in l if elem.strip()]
             if len(l) == 1:
-                # Has only the 
+                # Has only the
                 return l[0]
 
             return tuple(l)
@@ -148,9 +147,8 @@ def _flatten_tuples(cont):
             cont.pop(i)
             for j, tpl_item in enumerate(item):
                 cont.insert(i+j, tpl_item)
-    
+
     return cont
 
 
 # Conditions
-

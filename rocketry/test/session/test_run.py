@@ -1,17 +1,16 @@
 from rocketry.args import Task
 from rocketry.tasks import FuncTask
-from rocketry.core import Parameters, Scheduler
 
 def test_run(tmpdir, session):
     task1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 1",
         execution="main",
         session=session,
     )
-    
+
     task2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 2",
         execution="main",
         session=session,
@@ -24,14 +23,14 @@ def test_run(tmpdir, session):
 
 def test_run_obey_cond(session):
     task1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 1",
         execution="main",
         session=session,
     )
-    
+
     task2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 2",
         execution="main",
         session=session,
@@ -49,19 +48,19 @@ def test_run_execution(session):
         assert task.is_alive_as_main()
         assert not task.is_alive_as_process()
     task1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 1",
         execution="main",
         session=session,
     )
-    
+
     task2 = FuncTask(
-        run_task, 
+        run_task,
         name="example 2",
         execution="process",
         session=session,
     )
     # Should crash in pickling if ran with execution process
-    session.run("example 2", execution="main") 
+    session.run("example 2", execution="main")
     assert task1.status is None
     assert task2.status == "success"

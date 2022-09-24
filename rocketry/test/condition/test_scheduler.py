@@ -1,4 +1,3 @@
-
 import datetime
 
 import pytest
@@ -8,8 +7,7 @@ from rocketry.conditions import (
     SchedulerCycles
 )
 from rocketry.time import (
-    TimeDelta, 
-    TimeOfDay
+    TimeDelta,
 )
 
 def test_scheduler_cycles(session):

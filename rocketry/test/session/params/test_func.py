@@ -30,10 +30,10 @@ def get_with_nested_args(arg = FuncArg(get_y), arg_2 = Arg('session_arg')):
 def test_simple(session, execution):
 
     task = FuncTask(
-        func_x_with_arg, 
-        parameters={"myparam": FuncArg(get_x)}, 
-        execution=execution, 
-        name="a task", 
+        func_x_with_arg,
+        parameters={"myparam": FuncArg(get_x)},
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
@@ -48,9 +48,9 @@ def test_simple(session, execution):
 def test_embedded(session, execution):
 
     task = FuncTask(
-        func_with_embed_arg, 
-        execution=execution, 
-        name="a task", 
+        func_with_embed_arg,
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
@@ -76,9 +76,9 @@ def test_embedded_script(session, execution, tmpdir):
 
     task = FuncTask(
         path=Path(funcfile),
-        func_name="main", 
-        execution=execution, 
-        name="a task", 
+        func_name="main",
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
@@ -98,9 +98,9 @@ def test_session(session, execution):
     session.parameters["myparam"] = FuncArg(get_x)
 
     task = FuncTask(
-        func_x_with_arg, 
-        execution=execution, 
-        name="a task", 
+        func_x_with_arg,
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
@@ -117,9 +117,9 @@ def test_session_with_arg(session, execution):
     session.parameters["a_param"] = FuncArg(get_x)
 
     task = FuncTask(
-        func_x_with_arg, 
+        func_x_with_arg,
         execution=execution,
-        name="a task", 
+        name="a task",
         parameters={"myparam": Arg('a_param')},
         start_cond=AlwaysTrue(),
         session=session
@@ -141,9 +141,9 @@ def test_nested(session, execution, materialize, config_mater):
     session.parameters["myparam"] = FuncArg(get_with_nested_args, materialize=materialize)
 
     task = FuncTask(
-        func_x_with_arg, 
-        execution=execution, 
-        name="a task", 
+        func_x_with_arg,
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
@@ -171,15 +171,15 @@ def func_check_unpicklable(myparam):
 def test_unpicklable(session, execution):
     "Test a FuncArg that returns unpicklable item"
     task = FuncTask(
-        func_check_unpicklable, 
-        parameters={"myparam": FuncArg(get_unpicklable)}, 
-        execution=execution, 
-        name="a task", 
+        func_check_unpicklable,
+        parameters={"myparam": FuncArg(get_unpicklable)},
+        execution=execution,
+        name="a task",
         start_cond=AlwaysTrue(),
         session=session
     )
 
-    session.config.shut_cond = (TaskStarted(task="a task") >= 1) 
+    session.config.shut_cond = (TaskStarted(task="a task") >= 1)
 
     assert task.status is None
     session.start()

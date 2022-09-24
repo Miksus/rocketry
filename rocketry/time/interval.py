@@ -1,4 +1,3 @@
-
 import calendar
 import datetime
 import re
@@ -9,7 +8,7 @@ import dateutil
 
 from rocketry.core.time.anchor import AnchoredInterval
 from rocketry.core.time.base import TimeInterval
-from rocketry.pybox.time import timedelta_to_str, datetime_to_dict, to_microseconds
+from rocketry.pybox.time import datetime_to_dict, to_microseconds
 from rocketry.pybox.time.interval import Interval
 
 @dataclass(frozen=True, init=False)
@@ -112,7 +111,7 @@ class TimeOfHour(AnchoredInterval):
 @dataclass(frozen=True, init=False)
 class TimeOfDay(AnchoredInterval):
     """Time interval anchored to day cycle of a clock
-    
+
     min: 0 hours, 0 minutes, 0 seconds, 0 microsecond
     max: 23 hours, 59 minutes, 59 seconds, 999999 microsecond
 
@@ -145,12 +144,12 @@ class TimeOfDay(AnchoredInterval):
             for key, val in d.items()
             if key in ("hour", "minute", "second", "microsecond")
         }
-        return to_microseconds(**d) 
+        return to_microseconds(**d)
 
 @dataclass(frozen=True, init=False)
 class TimeOfWeek(AnchoredInterval):
     """Time interval anchored to week cycle
-    
+
     min: Monday, 0 hours, 0 minutes, 0 seconds, 0 microsecond
     max: Sunday, 23 hours, 59 minutes, 59 seconds, 999999 microsecond
 
@@ -159,7 +158,7 @@ class TimeOfWeek(AnchoredInterval):
         TimeOfWeek("Mon 15:00", "Wed 16:00")
     """
     _scope: ClassVar[str] = "week"
-    _scope_max: ClassVar[int] = to_microseconds(day=7) # Sun day end of day 
+    _scope_max: ClassVar[int] = to_microseconds(day=7) # Sun day end of day
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
     _unit_names: ClassVar[List[str]] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -201,7 +200,7 @@ class TimeOfWeek(AnchoredInterval):
         if not time:
             microseconds = to_microseconds(day=1) if side == "end" else 0
         else:
-            microseconds = TimeOfDay().anchor_str(time) 
+            microseconds = TimeOfDay().anchor_str(time)
 
         return to_microseconds(day=1) * nth_day + microseconds
 
@@ -220,7 +219,7 @@ class TimeOfWeek(AnchoredInterval):
 @dataclass(frozen=True, init=False)
 class TimeOfMonth(AnchoredInterval):
     """Time interval anchored to day cycle of a clock
-    
+
     min: first day of month, 0 hours, 0 minutes, 0 seconds, 0 microsecond
     max: last day of month, 23 hours, 59 minutes, 59 seconds, 999999 microsecond
 
@@ -230,7 +229,7 @@ class TimeOfMonth(AnchoredInterval):
     """
     # TODO: Support for month end (ie. last 5th day of month to last 2nd)
     # Could be implemented by allowing minus _start and minus _end
-    #   rollforward/rollback/contains would need slight changes 
+    #   rollforward/rollback/contains would need slight changes
 
     _scope: ClassVar[str] = "year"
     _scope_max: ClassVar[int] = to_microseconds(day=31) # 31st end of day
@@ -262,12 +261,12 @@ class TimeOfMonth(AnchoredInterval):
             # If time is not defined and the end
             # is being anchored, the time is ceiled.
 
-            # If one says 'thing X was organized between 
+            # If one says 'thing X was organized between
             # 15th and 17th of July', the sentence
             # includes 17th till midnight.
             microseconds = to_microseconds(day=1)
         elif time:
-            microseconds = TimeOfDay().anchor_str(time) 
+            microseconds = TimeOfDay().anchor_str(time)
         else:
             microseconds = 0
 
@@ -318,7 +317,7 @@ class TimeOfYear(AnchoredInterval):
 
     _unit_mapping: ClassVar = {
         **dict(zip(range(12), range(12))),
-        
+
         # English
         **{day.lower(): i for i, day in enumerate(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])},
         **{day.lower(): i for i, day in enumerate(_unit_names)},
@@ -350,7 +349,7 @@ class TimeOfYear(AnchoredInterval):
         #   "January", "Dec", "12", "Dec last 5th 10:00:00"
         res = re.search(r"(?P<monthofyear>[a-z]+) ?(?P<day_of_month>.*)", s, flags=re.IGNORECASE)
         comps = res.groupdict()
-        monthofyear = comps.pop("monthofyear") # This is jan, january 
+        monthofyear = comps.pop("monthofyear") # This is jan, january
         day_of_month_str = comps.pop("day_of_month")
         nth_month = self._unit_mapping[monthofyear.lower()]
 
@@ -359,12 +358,12 @@ class TimeOfYear(AnchoredInterval):
             # If time is not defined and the end
             # is being anchored, the time is ceiled.
 
-            # If one says 'thing X was organized between 
-            # May and June', the sentence includes 
+            # If one says 'thing X was organized between
+            # May and June', the sentence includes
             # time between 1st of May to 30th of June.
-            return self._month_start_mapping[nth_month+1] - 1 
+            return self._month_start_mapping[nth_month+1] - 1
         elif day_of_month_str:
-            microseconds = TimeOfMonth().anchor_str(day_of_month_str) 
+            microseconds = TimeOfMonth().anchor_str(day_of_month_str)
         else:
             microseconds = 0
 

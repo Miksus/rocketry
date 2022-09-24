@@ -1,19 +1,20 @@
-
 import asyncio
 import datetime
 import logging
 import time
-import os, re
+import os
+import re
 import multiprocessing
 
 import pytest
+
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
-from rocketry.log.log_record import LogRecord, TaskLogRecord
+from rocketry.log.log_record import TaskLogRecord
 import rocketry
 from rocketry import Session
-from rocketry.core import Scheduler, Parameters
+from rocketry.core import Parameters
 from rocketry.log.log_record import MinimalRecord
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
@@ -75,7 +76,7 @@ def run_creating_child():
 
 def test_scheduler_shut_cond(session):
     assert not session.scheduler.check_shut_cond(None)
-    
+
     assert session.scheduler.check_shut_cond(true)
     assert not session.scheduler.check_shut_cond(~true)
     assert session.scheduler.check_shut_cond(true & true)
@@ -106,23 +107,23 @@ def test_task_execution(tmpdir, execution, func, session):
     "task_func,run_count,fail_count,success_count,inact_count",
     [
         pytest.param(
-            run_succeeding, 
+            run_succeeding,
             3, 0, 3, 0,
             id="Succeeding task"),
 
         pytest.param(
-            run_failing, 
+            run_failing,
             3, 3, 0, 0,
             id="Failing task"),
         pytest.param(
-            run_inacting, 
+            run_inacting,
             3, 0, 0, 3,
             id="Inacting task"),
     ],
 )
 def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_count, inact_count, get_handler):
     """Test the task logging thoroughly including the common
-    logging schemes, execution (main, thread, process) and 
+    logging schemes, execution (main, thread, process) and
     outcomes (fail, success, inaction).
 
     This task may take some time but should cover most of the
@@ -168,7 +169,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
         # Test traceback
         if record["action"] == "fail":
             assert re.match(
-                r'Traceback \(most recent call last\):\n  File ".+", line [0-9]+, in [\s\S]+, in run_failing\n    raise RuntimeError\("Task failed"\)\nRuntimeError: Task failed', 
+                r'Traceback \(most recent call last\):\n  File ".+", line [0-9]+, in [\s\S]+, in run_failing\n    raise RuntimeError\("Task failed"\)\nRuntimeError: Task failed',
                 record["exc_text"]
             )
 
@@ -189,32 +190,32 @@ def test_task_status(session, execution, func_type, mode):
     session.config.force_status_from_logs = True if mode == "use logs" else False
 
     task_success = FuncTask(
-        run_succeeding if func_type == "sync" else run_succeeding_async, 
-        start_cond=TaskStarted(task="task success") < 3, 
+        run_succeeding if func_type == "sync" else run_succeeding_async,
+        start_cond=TaskStarted(task="task success") < 3,
         name="task success",
         execution=execution,
         priority=0,
         session=session
     )
     task_fail = FuncTask(
-        run_failing if func_type == "sync" else run_failing_async, 
-        start_cond=TaskStarted(task="task fail") < 3, 
+        run_failing if func_type == "sync" else run_failing_async,
+        start_cond=TaskStarted(task="task fail") < 3,
         name="task fail",
         execution=execution,
         priority=0,
         session=session
     )
     task_inact = FuncTask(
-        run_inacting if func_type == "sync" else run_inacting_async, 
-        start_cond=TaskStarted(task="task inact") < 3, 
+        run_inacting if func_type == "sync" else run_inacting_async,
+        start_cond=TaskStarted(task="task inact") < 3,
         name="task inact",
         execution=execution,
         priority=100,
         session=session
     )
     task_not_run = FuncTask(
-        run_inacting if func_type == "sync" else run_inacting_async, 
-        start_cond=false, 
+        run_inacting if func_type == "sync" else run_inacting_async,
+        start_cond=false,
         name="task not run",
         execution=execution,
         priority=0,
@@ -245,7 +246,7 @@ def test_task_status(session, execution, func_type, mode):
     assert task_success.status == "success"
     assert task_fail.status == "fail"
     assert task_inact.status == "inaction"
-    assert task_not_run.status == None
+    assert task_not_run.status is None
 
     # Test logs
     assert 3 == task_success.logger.filter_by(action="run").count()
@@ -273,8 +274,8 @@ def test_task_disabled(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
 
         task = FuncTask(
-            run_succeeding, 
-            start_cond=AlwaysFalse(), 
+            run_succeeding,
+            start_cond=AlwaysFalse(),
             name="task",
             execution=execution
         )
@@ -301,13 +302,13 @@ def test_priority(execution, session):
     session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
 
     session.start()
-    assert session.scheduler.n_cycles == 1 
+    assert session.scheduler.n_cycles == 1
 
     task_1_start = list(task_1.logger.get_records())[0].created
     task_2_start = list(task_2.logger.get_records())[0].created
     task_3_start = list(task_3.logger.get_records())[0].created
     task_4_start = list(task_4.logger.get_records())[0].created
-    
+
     assert task_1_start < task_2_start < task_3_start < task_4_start
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
@@ -330,7 +331,7 @@ def test_pass_params_as_global(execution, session):
     assert 0 == logger.filter_by(action="fail").count()
 
 @pytest.mark.parametrize("parameters", [
-    pytest.param({"int_5": 5}, id="dict"), 
+    pytest.param({"int_5": 5}, id="dict"),
     pytest.param(Parameters(int_5=5), id="Parameters"),
     pytest.param(Parameters(int_5=Private(5)), id="Parameter with secret"),
 ])
@@ -338,8 +339,8 @@ def test_pass_params_as_global(execution, session):
 def test_pass_params_as_local(execution, parameters, session):
 
     task = FuncTask(
-        run_with_param, 
-        name="parametrized", 
+        run_with_param,
+        name="parametrized",
         parameters=parameters,
         start_cond=AlwaysTrue(),
         execution=execution,
@@ -358,8 +359,8 @@ def test_pass_params_as_local(execution, parameters, session):
 def test_pass_params_as_local_and_global(execution, session):
 
     task = FuncTask(
-        run_with_param, 
-        name="parametrized", 
+        run_with_param,
+        name="parametrized",
         parameters={"int_5": 5},
         start_cond=AlwaysTrue(),
         execution=execution,
@@ -391,7 +392,7 @@ def create_line_to_shutdown():
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_startup_shutdown(tmpdir, execution, session):
     with tmpdir.as_cwd() as old_dir:
-        
+
         FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution, session=session)
         FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution, session=session)
 
@@ -408,7 +409,7 @@ def test_startup_shutdown(tmpdir, execution, session):
                 time_taken += 0.01
                 if time_taken > timeout:
                     break
-        
+
         assert os.path.exists("start.txt")
         assert os.path.exists("shut.txt")
 
@@ -416,8 +417,6 @@ def test_startup_shutdown(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_logging_repo(tmpdir, execution):
-    from redbird.logging import RepoHandler
-    from redbird.repos import MemoryRepo
     session = Session(config={'task_execution': 'async'})
     session.set_as_default()
     session.config.max_process_count = 4
@@ -440,13 +439,13 @@ def test_logging_repo(tmpdir, execution):
 
         session.config.shut_cond = (SchedulerCycles() == 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
-        assert session.scheduler.n_cycles == 1 
+        assert session.scheduler.n_cycles == 1
 
         task_1_start = list(task_1.logger.get_records())[0].created
         task_2_start = list(task_2.logger.get_records())[0].created
         task_3_start = list(task_3.logger.get_records())[0].created
         task_4_start = list(task_4.logger.get_records())[0].created
-        
+
         assert task_1_start < task_2_start < task_3_start < task_4_start
 
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])

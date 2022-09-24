@@ -1,6 +1,6 @@
-from rocketry import Rocketry
-from rocketry.args import Arg
 from redmail import EmailSender
+from rocketry import Rocketry
+
 
 app = Rocketry()
 app.params(receivers=['me@example.com'])

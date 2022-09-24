@@ -14,7 +14,7 @@ from rocketry.core.task import Task
 
 
 class CommandTask(Task):
-    """Task that executes a command from 
+    """Task that executes a command from
     shell/terminal.
 
     Parameters
@@ -49,8 +49,8 @@ class CommandTask(Task):
 
     def get_kwargs_popen(self) -> dict:
         kwargs = {
-            "cwd": self.cwd, 
-            "shell": self.shell, 
+            "cwd": self.cwd,
+            "shell": self.shell,
             "stdin": subprocess.PIPE,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE,
@@ -71,7 +71,7 @@ class CommandTask(Task):
     def execute(self, **parameters):
         """Run the command."""
         command = self.command
-        
+
         for param, val in parameters.items():
             if not param.startswith("-"):
                 param = self.argform + param
@@ -90,7 +90,7 @@ class CommandTask(Task):
             pipe.kill()
             outs, errs = pipe.communicate()
             raise
-        
+
         return_code = pipe.returncode
         if return_code != 0:
             if hasattr(errs, "decode"):

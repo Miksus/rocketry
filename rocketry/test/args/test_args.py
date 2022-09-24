@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import pytest
 from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag
 from rocketry.tasks import FuncTask
@@ -15,7 +16,7 @@ def test_func():
     assert arg.get_value() == "a value"
 
 def test_arg(session):
-    
+
     session.parameters['myarg'] = 'a value'
     arg = Arg('myarg')
     assert arg.get_value(session=session) == "a value"
@@ -64,7 +65,7 @@ def test_return(session):
 
     with pytest.raises(ValueError):
         Return("non_existent").get_value(session=session)
- 
+
     with pytest.raises(KeyError):
         Return("unrunned").get_value(session=session)
 

@@ -2,7 +2,7 @@
 import pytest
 
 from rocketry.conditions import (
-    AlwaysTrue, AlwaysFalse, 
+    AlwaysTrue, AlwaysFalse,
     All, Any, Not,
     TaskFinished, TaskRunning,
 )
@@ -28,26 +28,26 @@ def test_equal(get_cond):
     "get_a,get_b",
     [
         pytest.param(
-            lambda: AlwaysTrue(), 
-            lambda: AlwaysFalse(), 
+            lambda: AlwaysTrue(),
+            lambda: AlwaysFalse(),
             id="AlwaysTrue/AlwaysFalse"
         ),
         pytest.param(
-            lambda: All(AlwaysTrue(), AlwaysTrue()), 
-            lambda: Any(AlwaysTrue(), AlwaysTrue()), 
+            lambda: All(AlwaysTrue(), AlwaysTrue()),
+            lambda: Any(AlwaysTrue(), AlwaysTrue()),
             id="All/Any"
         ),
         pytest.param(
-            lambda: AlwaysTrue(), 
-            lambda: Not(AlwaysTrue()), 
+            lambda: AlwaysTrue(),
+            lambda: Not(AlwaysTrue()),
             id="Not"
         ),
         pytest.param(
-            lambda: TaskFinished(task="mytask"), 
-            lambda: TaskFinished(task="another task"), 
+            lambda: TaskFinished(task="mytask"),
+            lambda: TaskFinished(task="another task"),
             id="TaskFinished"
         ),
     ],
 )
 def test_equal_not(get_a, get_b):
-    assert not (get_a() == get_b())
+    assert not get_a() == get_b()

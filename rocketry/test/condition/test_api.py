@@ -23,7 +23,6 @@ from rocketry.conds import (
 
 from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
-from rocketry.core.condition.base import Not
 from rocketry.time import TimeDelta
 from rocketry.time import Cron
 from rocketry.time.delta import TimeSpanDelta

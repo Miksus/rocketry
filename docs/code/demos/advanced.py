@@ -1,5 +1,5 @@
 from rocketry import Rocketry
-from rocketry.args import Return, Arg, FuncArg
+from rocketry.args import Return, Arg
 
 app = Rocketry()
 
@@ -33,7 +33,7 @@ def do_on_process():
     return ...
 
 @app.task("after task 'do_things'")
-def do_pipeline(arg1=Return('do_on_process'), 
+def do_pipeline(arg1=Return('do_on_process'),
                 arg2=Arg('item'),
                 arg3=Arg('my_arg')):
     """This task runs when 'do_on_process' has succeeded.

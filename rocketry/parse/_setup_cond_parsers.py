@@ -1,16 +1,13 @@
+import re
 from functools import partial
 
-from rocketry.time.interval import TimeOfHour, TimeOfMinute, TimeOfMonth
-
-from rocketry.conditions.func import FuncCond
 from rocketry.conditions.task import *
 from rocketry.conditions.scheduler import *
 from rocketry.conditions.time import *
 from rocketry.conditions.parameter import ParamExists, IsEnv
-from rocketry.conditions.meta import TaskCond
 
 from rocketry.session import Session
-from rocketry.core.condition import AlwaysFalse, AlwaysTrue, All, Any, Not, BaseCondition
+from rocketry.core.condition import Not, BaseCondition
 
 from rocketry.conds import (
     secondly, minutely, hourly, daily, weekly, monthly, every,
@@ -44,7 +41,7 @@ def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
 
 
 def _set_is_period_parsing():
-    
+
     from functools import partial
 
     def _get_is_period(period_constructor, *args, **kwargs):
@@ -53,7 +50,7 @@ def _set_is_period_parsing():
 
     cond_parsers = Session._cls_cond_parsers
     time_parsers = Session._time_parsers
-    
+
     cond_parsers.update(
         {
             parsing: partial(_get_is_period, period_constructor=parser)

@@ -16,7 +16,7 @@ def do_daily():
     ...
     return ...
 
-@app.task((daily.at("10:00") | daily.at("19:00")) & time_of_week.between("Mon", "Fri"), 
+@app.task((daily.at("10:00") | daily.at("19:00")) & time_of_week.between("Mon", "Fri"),
           execution="process")
 def do_complex():
     "This task runs on complex interval and on separate process"
@@ -26,7 +26,7 @@ def do_complex():
 
 @app.task(after_success(do_daily))
 def do_after_another(arg=Return(do_daily)):
-    """This task runs after 'do_daily' and it has its the 
+    """This task runs after 'do_daily' and it has its the
     return argument as an input"""
     ...
 

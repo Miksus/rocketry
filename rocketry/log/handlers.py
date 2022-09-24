@@ -9,8 +9,8 @@ _DEFAULT_FORMATTER = Formatter()
 class QueueHandler(_QueueHandler):
     """
     The logging.handlers.QueueHandler gives priority for the message but does
-    not maintain the other info in a record when passing it to the queue. 
-    These 
+    not maintain the other info in a record when passing it to the queue.
+    These
     """
 
     def prepare(self, record):

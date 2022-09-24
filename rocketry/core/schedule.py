@@ -1,15 +1,14 @@
-
 import asyncio
-from multiprocessing import cpu_count
 import multiprocessing
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import TYPE_CHECKING, Optional
 import threading
 import time
-import sys, os, subprocess
+import sys
+import os
+import subprocess
 import logging
 import datetime
 import platform
-from copy import copy
 from queue import Empty
 
 from rocketry._base import RedBase
@@ -28,11 +27,11 @@ class Scheduler(RedBase):
     ----------
     session : rocketry.session.Session, optional
         Session object containing tasks,
-        parameters and settings, 
+        parameters and settings,
         by default None
     max_processes : int, optional
         Maximum number of processes
-        allowed to be started, 
+        allowed to be started,
         by default number of CPUs
     tasks_as_daemon : bool, optional
         Whether process tasks are run
@@ -44,15 +43,15 @@ class Scheduler(RedBase):
         string, by default "30 minutes"
     parameters : [type], optional
         Parameters of the session.
-        Can also be passed directly to the 
+        Can also be passed directly to the
         session, by default None
     logger : [type], optional
         [description], by default None
     name : str, optional
         Name of the scheduler, deprecated, by default None
     restarting : str, optional
-        How the scheduler is restarted if 
-        Restart exception is raised, by default 
+        How the scheduler is restarted if
+        Restart exception is raised, by default
         "replace"
     instant_shutdown : bool, optional
         Whether the scheduler tries to shut down
@@ -63,7 +62,7 @@ class Scheduler(RedBase):
     ----------
     session : rocketry.session.Session
         Session for which the scheduler is
-        for. One session has only one 
+        for. One session has only one
         scheduler.
     """
     session: 'Session'
@@ -85,7 +84,7 @@ class Scheduler(RedBase):
         self._flag_restart = threading.Event()
         self._flag_enabled.set() # Not on hold by default
 
-        # is_alive is used by testing whether the scheduler is 
+        # is_alive is used by testing whether the scheduler is
         # still running or not
         self.is_alive = None
 
@@ -156,12 +155,12 @@ class Scheduler(RedBase):
 
     async def run_cycle(self):
         """Run one round of tasks.
-        
+
         Each task is inspected and in case their starting condition
-        is fulfilled, they are run.  A task can be running once at 
-        any given time (in other words, multiple paraller execution 
-        of a single task is not supported at the moment). Tasks that 
-        are running but their termination condition is fulfilled are 
+        is fulfilled, they are run.  A task can be running once at
+        any given time (in other words, multiple paraller execution
+        of a single task is not supported at the moment). Tasks that
+        are running but their termination condition is fulfilled are
         terminated.
         """
         tasks = self.tasks
@@ -193,7 +192,7 @@ class Scheduler(RedBase):
         self.check_thread_errors()
         # Running hooks
         hooker.postrun()
-        
+
         self.n_cycles += 1
 
     def check_shut_cond(self, cond: Optional[BaseCondition]) -> bool:
@@ -218,7 +217,7 @@ class Scheduler(RedBase):
         try:
             await task.start_async(log_queue=self._log_queue)
         except (SchedulerRestart, SchedulerExit) as exc:
-            raise 
+            raise
         except TaskLoggingError:
             self.logger.exception(f"Logging failed for task '{task.name}'")
             if not self.session.config.silence_task_logging:
@@ -249,7 +248,7 @@ class Scheduler(RedBase):
 
         elif task.is_alive_as_process():
             task._process.terminate()
-            # Waiting till the termination is finished. 
+            # Waiting till the termination is finished.
             # Otherwise may try to terminate it many times as the process is alive for a brief moment
             task._process.join()
             self._log_task(task, "log_termination", reason=reason)
@@ -283,7 +282,7 @@ class Scheduler(RedBase):
             task.timeout if task.timeout is not None
             else self.session.config.timeout
         )
-        
+
         if timeout is None:
             return False
         run_duration = datetime.datetime.fromtimestamp(time.time()) - task.get_last_run()
@@ -330,7 +329,7 @@ class Scheduler(RedBase):
                     raise
 
                 # We operate the same way as people often do:
-                # If we don't know if the process should be killed, 
+                # If we don't know if the process should be killed,
                 # we panic and shut it down
                 return True
 
@@ -347,11 +346,11 @@ class Scheduler(RedBase):
                 self.logger.debug(f"Inserting record for '{record.task_name}' ({record.action})")
                 task = self.session[record.task_name]
                 if record.action == "fail":
-                    # There is a caveat in logging 
-                    # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383 
+                    # There is a caveat in logging
+                    # https://github.com/python/cpython/blame/fad6af2744c0b022568f7f4a8afc93fed056d4db/Lib/logging/handlers.py#L1383
                     # https://bugs.python.org/issue34334
 
-                    # The traceback/exception info is no longer in record.exc_info/record.exc_text 
+                    # The traceback/exception info is no longer in record.exc_info/record.exc_text
                     # and it has been formatted to record.message/record.msg
                     # This means we have to rely that message really contains
                     # the full traceback
@@ -379,7 +378,7 @@ class Scheduler(RedBase):
 
     async def startup(self):
         """Start up the scheduler.
-        
+
         Starting up includes setting up attributes and
         running tasks that have ``on_startup`` as ``True``."""
         #self.setup_listener()
@@ -393,7 +392,7 @@ class Scheduler(RedBase):
         self.logger.debug(f"Beginning startup sequence...")
         for task in self.tasks:
             if task.on_startup:
-                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set
                     task.force_run = True
 
@@ -415,13 +414,13 @@ class Scheduler(RedBase):
     def n_alive(self) -> int:
         """Count of tasks that are alive."""
         return sum(task.is_alive() for task in self.tasks)
-        
+
     async def run_shutdown_tasks(self):
         # Make sure the tasks run if start_cond not set
         for task in self.tasks:
             if task.on_shutdown:
 
-                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled: 
+                if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set
                     task.force_run = True
 
@@ -431,7 +430,7 @@ class Scheduler(RedBase):
     async def _shut_down_tasks(self, traceback=None, exception=None):
         non_fatal_excs = (SchedulerRestart,) # Exceptions that are allowed to have graceful exit
         wait_for_finish = (
-            not self.session.config.instant_shutdown 
+            not self.session.config.instant_shutdown
             and (exception is None or isinstance(exception, non_fatal_excs))
         ) and not self._flag_force_exit.is_set()
         if wait_for_finish:
@@ -467,20 +466,20 @@ class Scheduler(RedBase):
 
     async def shut_down(self, traceback=None, exception=None):
         """Shut down the scheduler.
-        
-        Shutting down includes running tasks that have 
-        ``on_shutdown`` as ``True``, handling the 
-        shutting down of already running tasks and 
+
+        Shutting down includes running tasks that have
+        ``on_shutdown`` as ``True``, handling the
+        shutting down of already running tasks and
         restarting the scheduler in case restart was
         called.
-        
+
         If non fatal exception was raised and ``instant_shutdown``
         is ``False``, remaining running tasks are waited to finish.
         Else all the tasks are terminated. If ``instant_shutdown``
-        is ``True``, the scheduler won't wait for the terminated 
+        is ``True``, the scheduler won't wait for the terminated
         tasks to finish their termination.
         """
-        
+
         self.logger.debug(f"Beginning shutdown sequence...")
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
@@ -498,7 +497,7 @@ class Scheduler(RedBase):
                     self.logger.debug(f"Shutting down tasks...")
                     await self._shut_down_tasks(traceback, exception)
             finally:
-                # Processes/threads are wait to shut down regardless if there has been any 
+                # Processes/threads are wait to shut down regardless if there has been any
                 # additional errors previously
                 await self.wait_task_alive() # Wait till all tasks' threads and processes are dead
 
@@ -542,8 +541,8 @@ class Scheduler(RedBase):
                 subprocess.Popen([python, *sys.argv], shell=True, close_fds=True)
         elif restarting == "recall":
             # Mostly useful for testing.
-            # Restart by calling the self.__call__ again 
-            await asyncio.create_task(self.serve()) 
+            # Restart by calling the self.__call__ again
+            await asyncio.create_task(self.serve())
         else:
             raise ValueError(f"Invalid restaring: {restarting}")
 
@@ -563,7 +562,7 @@ class Scheduler(RedBase):
             self._flag_enabled.set()
 
     def set_shut_down(self):
-        """Shut down the scheduler. Useful to shut down the 
+        """Shut down the scheduler. Useful to shut down the
         scheduler in a controller task."""
         self.on_hold = False # In case was set to wait
         self._flag_shutdown.set()

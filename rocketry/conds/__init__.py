@@ -15,6 +15,6 @@ from rocketry.conditions.api import (
 
     scheduler_running, scheduler_cycles,
     running,
-    cron, 
+    cron,
     crontime,
 )

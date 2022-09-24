@@ -1,7 +1,6 @@
 from copy import copy
-import datetime
 from abc import abstractmethod
-from typing import Callable, Dict, Pattern, Union, Type
+from typing import Callable, Dict, Pattern, Union
 
 from rocketry._base import RedBase
 from rocketry.core.parameters.parameters import Parameters
@@ -10,11 +9,11 @@ PARSERS: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']] = {}
 
 
 class BaseCondition(RedBase):
-    """A condition is a thing/occurence that should happen in 
+    """A condition is a thing/occurence that should happen in
     order to something happen.
 
     Conditions are used to determine whether a task can be started,
-    a task should be terminated or the scheduler should shut 
+    a task should be terminated or the scheduler should shut
     down. Conditions are either true or false.
 
     A condition could answer for any of the following questions:
@@ -25,7 +24,7 @@ class BaseCondition(RedBase):
 
     Each condition should have the method ``__bool__`` specified
     as minimum. This method should return ``True`` or ``False``
-    depending on whether the condition holds or does not hold.  
+    depending on whether the condition holds or does not hold.
 
     Examples
     --------
@@ -35,7 +34,7 @@ class BaseCondition(RedBase):
     >>> from rocketry.core import BaseCondition
     >>> class MyCondition(BaseCondition):
     ...     def __bool__(self):
-    ...         ... # Code that defines state either 
+    ...         ... # Code that defines state either
     ...         return True
 
     Complicated example with parser:
@@ -73,9 +72,9 @@ class BaseCondition(RedBase):
 
     @abstractmethod
     def get_state(self):
-        """Get the status of the condition 
+        """Get the status of the condition
         (using arguments)
-        
+
         Override this method."""
 
     def __and__(self, other):
@@ -199,7 +198,7 @@ class Not(_ConditionContainer, BaseCondition):
         self.condition = condition
 
     def observe(self, **kwargs):
-        return not(self.condition.observe(**kwargs))
+        return not self.condition.observe(**kwargs)
 
     def __repr__(self):
         string = repr(self.condition)
@@ -215,7 +214,7 @@ class Not(_ConditionContainer, BaseCondition):
     @property
     def subconditions(self):
         return (self.condition,)
-        
+
     def __invert__(self):
         "inverse of inverse is the actual condition"
         return self.condition
@@ -226,7 +225,7 @@ class Not(_ConditionContainer, BaseCondition):
             return isinstance(self.condition, AlwaysFalse)
         elif isinstance(other, AlwaysFalse):
             return isinstance(self.condition, AlwaysTrue)
-            
+
         is_same_class = isinstance(other, type(self))
         if is_same_class:
             return self.condition == other.condition
@@ -334,10 +333,10 @@ class BaseComparable(BaseCondition):
     def __le__(self, other):
         # self <= other
         return self._set_comparison("__le__", other)
-        
+
     def __ge__(self, other):
         # self >= other
-        return self._set_comparison("__ge__", other)        
+        return self._set_comparison("__ge__", other)
 
     def _set_comparison(self, key, val):
         obj = copy(self)

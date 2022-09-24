@@ -1,32 +1,27 @@
-
-
 import logging
-from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.core import Scheduler
-from rocketry.conditions import TaskStarted, AlwaysTrue
+import pytest
 
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 from rocketry.core.time.base import TimeDelta
 
+from rocketry.conditions.scheduler import SchedulerStarted
+from rocketry.conditions import TaskStarted, AlwaysTrue
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import FuncTask
-
-import pytest
-
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
     "script_path,expected_outcome,exc_cls",
     [
         pytest.param(
-            "scripts/succeeding_script.py", 
+            "scripts/succeeding_script.py",
             "success",
             None,
             id="Success"),
         pytest.param(
-            "scripts/failing_script.py", 
-            "fail", 
+            "scripts/failing_script.py",
+            "fail",
             RuntimeError,
             id="Failure"),
     ],
@@ -39,13 +34,13 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         ]
         task = FuncTask(
             func_name="main",
-            path=script_path, 
+            path=script_path,
             name="a task",
             start_cond=AlwaysTrue(),
             execution=execution,
             session=session
         )
-        
+
         session.config.shut_cond = (TaskStarted(task="a task") >= 3) | ~SchedulerStarted(period=TimeDelta("15 seconds"))
         session.start()
 
@@ -61,4 +56,3 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         else:
             success = list(task.logger.filter_by(action="success").all())
             assert 3 == len(success)
-

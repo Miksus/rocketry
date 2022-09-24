@@ -1,18 +1,9 @@
-
-import logging
-from typing import List, Tuple
-
 import pytest
 
 from rocketry.conditions import (
     Retry
 )
-from rocketry.pybox.time.convert import to_datetime
-from rocketry.time import (
-    TimeDelta, 
-    TimeOfDay
-)
-from rocketry.tasks import FuncTask
+
 from .test_time import setup_task_state
 
 def test_construct():
@@ -28,7 +19,7 @@ def test_construct():
     "cond,logs,time_after",
     [
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -36,7 +27,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry once (failed once)"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "fail"),
@@ -48,7 +39,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry once (success and failed once)"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "fail"),
@@ -60,7 +51,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry once (terminated and failed once)"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "fail"),
@@ -72,7 +63,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry once (crashed and failed once)"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "fail"),
@@ -84,7 +75,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry once (inacted and failed once)"),
         pytest.param(
-            Retry(n=2), 
+            Retry(n=2),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "success"),
@@ -96,7 +87,7 @@ def test_construct():
             "2020-01-01 07:30",
             id="Retry twice (failed twice)"),
         pytest.param(
-            Retry(n=None), 
+            Retry(n=None),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "success"),
@@ -123,12 +114,12 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
     "cond,logs,time_after",
     [
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [],
             "2020-01-01 07:30",
             id="No logs"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -137,7 +128,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Running"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -147,7 +138,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Succeeded"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -157,7 +148,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Terminated"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -167,7 +158,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Crashed"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -177,7 +168,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Inacted"),
         pytest.param(
-            Retry(n=1), 
+            Retry(n=1),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -187,7 +178,7 @@ def test_retry(mock_datetime_now, logs, time_after, cond, session):
             "2020-01-01 07:30",
             id="Retry once (failed twice)"),
         pytest.param(
-            Retry(n=2), 
+            Retry(n=2),
             [
                 ("2020-01-01 07:00", "run"),
                 ("2020-01-01 07:05", "fail"),

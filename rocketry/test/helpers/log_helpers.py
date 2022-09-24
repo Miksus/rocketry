@@ -1,5 +1,3 @@
-
-import logging
 import sys
 
 from rocketry.pybox.time.convert import to_datetime

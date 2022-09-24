@@ -1,11 +1,10 @@
-
-import pytest
-from rocketry.conditions import TaskCond
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
 import re
 
+import pytest
+
+from rocketry.conditions import TaskCond
+from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted
 from rocketry import Session
-from rocketry.core import Scheduler
 from rocketry.tasks import FuncTask
 
 N_PARSERS = len(Session._cls_cond_parsers)
@@ -23,7 +22,7 @@ def test_taskcond_true(session, execution):
 
     cond = TaskCond(syntax=re.compile(r"is foo (?P<status>.+)"), start_cond="every 1 min", active_time="past 10 seconds", execution=execution, session=session)
     cond(is_foo)
-    
+
     task = FuncTask(lambda: None, start_cond="is foo true", name="a task", execution="main", session=session)
 
     # Test that there is only one more cond parser
@@ -31,7 +30,7 @@ def test_taskcond_true(session, execution):
 
     session.config.shut_cond = (TaskStarted(task="a task") >= 2) | ~SchedulerStarted(period="past 5 seconds")
     session.start()
-    
+
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
         rec
@@ -58,7 +57,7 @@ def test_taskcond_true(session, execution):
     assert history_check == [
         {"task_name": cond_task.name, "action": "run"},
         {"task_name": cond_task.name, "action": "success"},
-    ] 
+    ]
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_taskcond_false(session, execution):
@@ -69,12 +68,12 @@ def test_taskcond_false(session, execution):
 
     # Test that there is only one more cond parser
     assert len(session._cond_parsers) == N_PARSERS + 1
-    
+
     task = FuncTask(lambda: None, start_cond="is foo false", name="a task", execution="main", session=session)
 
     session.config.shut_cond = SchedulerCycles() >= 3
     session.start()
-    
+
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
     history_task = [
         rec
@@ -86,7 +85,7 @@ def test_taskcond_false(session, execution):
     # Check cond task
     cond_tasks = [task for task in session.tasks if task.name.startswith("_condition")]
     assert len(cond_tasks) == 1
-    
+
     cond_task = cond_tasks[0]
     history_check = [
         rec
@@ -96,5 +95,4 @@ def test_taskcond_false(session, execution):
     assert history_check == [
         {"task_name": cond_task.name, "action": "run"},
         {"task_name": cond_task.name, "action": "success"},
-    ] 
-
+    ]

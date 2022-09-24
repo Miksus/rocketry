@@ -3,7 +3,7 @@ from rocketry.core.parameters import BaseArgument
 
 class Private(BaseArgument):
     """Private argument not meant to be shown outside.
-    
+
     The value of the argument is hidden from else except
     tasks.
     """

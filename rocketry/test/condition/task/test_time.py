@@ -1,29 +1,25 @@
-
-import logging
 from typing import List, Tuple
 
 import pytest
 
 from rocketry.conditions import (
-    TaskStarted, 
+    TaskStarted,
 
-    TaskFinished, 
-    TaskFailed, 
+    TaskFinished,
+    TaskFailed,
     TaskSucceeded,
 
     TaskRunning
 )
-from rocketry.pybox.time.convert import to_datetime
 from rocketry.testing.log import create_task_record
 from rocketry.time import (
-    TimeDelta, 
     TimeOfDay
 )
 from rocketry.tasks import FuncTask
 
 
 def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None, session=None):
-    """A mock up that sets up a task to test the 
+    """A mock up that sets up a task to test the
     condition with given logs
 
     Parameters
@@ -38,7 +34,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
     """
     if task is None:
         task = FuncTask(
-            lambda:None, 
+            lambda:None,
             name="the task",
             execution="main",
             session=session
@@ -64,7 +60,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
             ],
@@ -72,7 +68,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             True,
             id="Is running"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "run"),
@@ -82,7 +78,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             id="Is running (multiple times)"),
 
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "success"),
@@ -91,7 +87,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             False,
             id="Is not running (succeeded)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "fail"),
@@ -100,7 +96,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             False,
             id="Is not running (failed)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "terminate"),
@@ -109,7 +105,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             False,
             id="Is not running (terminated)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "inaction"),
@@ -118,7 +114,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             False,
             id="Is not running (inacted)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "crash"),
@@ -127,13 +123,13 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             False,
             id="Is not running (crash_release)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [],
             "2020-01-01 07:30",
             False,
             id="Is not running (and has never ran)"),
         pytest.param(
-            lambda:TaskRunning(task="the task"), 
+            lambda:TaskRunning(task="the task"),
             [
                 ("2020-01-01 07:50", "run"),
             ],
@@ -158,7 +154,7 @@ def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, se
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
             ],
@@ -166,7 +162,7 @@ def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, se
             True,
             id="Has started"),
         pytest.param(
-            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:12", "fail"),
@@ -179,13 +175,13 @@ def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, se
             id="Has started (also failed, succeeded, terminated & inacted)"),
 
         pytest.param(
-            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")),
             [],
             "2020-01-02 07:30",
             False,
             id="Not started (at all)"),
         pytest.param(
-            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:15", "run"),
@@ -194,7 +190,7 @@ def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, se
             False,
             id="Not started (today)"),
         pytest.param(
-            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskStarted(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:12", "fail"),
                 ("2020-01-01 07:12", "success"),
@@ -223,7 +219,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -232,7 +228,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             True,
             id="Has finished (succeded)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -241,7 +237,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             True,
             id="Has finished (failed)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "terminate"),
@@ -253,7 +249,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
 
         # Not
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
             ],
@@ -261,7 +257,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not finished (only started)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "inaction"),
@@ -271,7 +267,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             id="Not finished (inacted)"),
 
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 00:10", "run"),
                 ("2020-01-01 00:20", "success"),
@@ -280,7 +276,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not finished (success out of period)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 00:10", "run"),
                 ("2020-01-01 00:20", "fail"),
@@ -289,7 +285,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not finished (fail out of period)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 00:10", "run"),
                 ("2020-01-01 00:20", "terminate"),
@@ -298,7 +294,7 @@ def test_started(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not finished (termination out of period)"),
         pytest.param(
-            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFinished(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 00:10", "run"),
                 ("2020-01-01 00:20", "inaction"),
@@ -322,7 +318,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -331,7 +327,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             True,
             id="Has succeeded"),
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -343,7 +339,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             id="Has succeeded (multiple times)"),
 
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -356,7 +352,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
 
         # Not
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -367,7 +363,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             False,
             id="Not succeeded (today)"),
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
             ],
@@ -375,7 +371,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             False,
             id="Not succeeded (only started)"),
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -384,7 +380,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             False,
             id="Not succeeded (only failed)"),
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "inaction"),
@@ -393,7 +389,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             False,
             id="Not succeeded (only inacted)"),
         pytest.param(
-            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskSucceeded(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "terminate"),
@@ -401,7 +397,7 @@ def test_finish(tmpdir, mock_datetime_now, logs, time_after, get_condition, outc
             "2020-01-01 07:30",
             False,
             id="Not succeeded (only terminated)"),
-            
+
     ],
 )
 def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session):
@@ -418,7 +414,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -427,7 +423,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             True,
             id="Has failed"),
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -439,7 +435,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             id="Has failed (multiple times)"),
 
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -452,7 +448,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
 
         # Not
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "fail"),
@@ -463,7 +459,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not failed (today)"),
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
             ],
@@ -471,7 +467,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not failed (only started)"),
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -480,7 +476,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not failed (only succeeded)"),
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "inaction"),
@@ -489,7 +485,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             False,
             id="Not failed (only inacted)"),
         pytest.param(
-            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskFailed(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "terminate"),
@@ -497,7 +493,7 @@ def test_success(tmpdir, mock_datetime_now, logs, time_after, get_condition, out
             "2020-01-01 07:30",
             False,
             id="Not failed (only terminated)"),
-            
+
     ],
 )
 def test_fail(mock_datetime_now, logs, time_after, get_condition, outcome, session):

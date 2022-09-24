@@ -1,4 +1,3 @@
-
 from functools import partial
 from textwrap import dedent
 import sys
@@ -25,20 +24,20 @@ def test_task_init(session):
         timeline.append("Function hook called")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
-    
+
     @session.hook_task_init()
     def mygenerhook(task):
         timeline.append("Generator hook called (pre)")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
-        yield 
+        yield
         assert hasattr(task, "session") # Should now have it
         timeline.append("Generator hook called (post)")
 
     class DummyTask(Task):
 
         def execute(self, *args, **kwargs):
-            return 
+            return
 
 
     assert session.hooks.task_init == [myhook, mygenerhook] # The func is in different namespace thus different
@@ -92,7 +91,7 @@ def test_scheduler_startup(session):
         timeline.append("ran hook (shutdown, generator first)")
         yield
         timeline.append("ran hook (shutdown, generator second)")
-    
+
 
     FuncTask(lambda: timeline.append("ran TASK (startup)"), name="start", on_startup=True, execution="main", session=session)
     task1 = FuncTask(lambda: timeline.append("ran TASK (normal 1)"), name="1", execution="main", start_cond=true, priority=1, session=session)
@@ -101,33 +100,33 @@ def test_scheduler_startup(session):
 
     session.config.shut_cond = SchedulerCycles() == 2
     session.start()
-    
+
     assert session.hooks.scheduler_startup == [my_startup_hook, my_startup_hook_generator]
     assert session.hooks.scheduler_cycle == [my_cycle_hook, my_cycle_hook_generator]
     assert session.hooks.scheduler_shutdown == [my_shutdown_hook, my_shutdown_hook_generator]
 
     assert timeline == [
-        "ran hook (startup)", 
-        "ran hook (startup, generator first)", 
-        "ran TASK (startup)", 
-        "ran hook (startup, generator second)", 
+        "ran hook (startup)",
+        "ran hook (startup, generator first)",
+        "ran TASK (startup)",
+        "ran hook (startup, generator second)",
 
-        "ran hook (cycle)", 
-        "ran hook (cycle, generator first)", 
+        "ran hook (cycle)",
+        "ran hook (cycle, generator first)",
         "ran TASK (normal 1)",
         "ran TASK (normal 2)",
-        "ran hook (cycle, generator second)", 
+        "ran hook (cycle, generator second)",
 
-        "ran hook (cycle)", 
-        "ran hook (cycle, generator first)", 
+        "ran hook (cycle)",
+        "ran hook (cycle, generator first)",
         "ran TASK (normal 1)",
         "ran TASK (normal 2)",
-        "ran hook (cycle, generator second)", 
+        "ran hook (cycle, generator second)",
 
-        "ran hook (shutdown)", 
-        "ran hook (shutdown, generator first)", 
-        "ran TASK (shutdown)", 
-        "ran hook (shutdown, generator second)", 
+        "ran hook (shutdown)",
+        "ran hook (shutdown, generator first)",
+        "ran TASK (shutdown)",
+        "ran hook (shutdown, generator second)",
     ]
 
 # Hooks

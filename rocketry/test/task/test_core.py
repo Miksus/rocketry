@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 import pickle
@@ -6,7 +5,7 @@ from textwrap import dedent
 import pytest
 from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
-from rocketry.core.condition.base import AlwaysFalse, AlwaysTrue, BaseCondition
+from rocketry.core.condition.base import AlwaysFalse
 from rocketry.args import Arg, Session, Task
 from rocketry.exc import TaskLoggingError
 from rocketry.log import MinimalRecord
@@ -16,7 +15,7 @@ from rocketry.testing.log import create_task_record
 class DummyTask(BaseTask):
 
     def execute(self, *args, **kwargs):
-        return 
+        return
 
 def test_defaults(session):
     task = DummyTask(name="mytest", session=session)
@@ -100,8 +99,8 @@ def test_json(session):
     repo.add(MinimalRecord(task_name="mytest", action="success", created=1640988060))
 
     task = DummyTask(name="mytest", parameters={
-        "arg_2": Arg("x"), 
-        "arg_2": Return("another"), 
+        "arg_2": Arg("x"),
+        "arg_2": Return("another"),
         "session": Session(),
         "task": Task(),
         "another_task": Task('another')

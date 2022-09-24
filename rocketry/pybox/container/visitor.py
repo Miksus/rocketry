@@ -1,4 +1,3 @@
-
 from collections.abc import Iterable
 
 class Visitor:
@@ -21,7 +20,7 @@ class Visitor:
     def __init__(self, use_attr=None, use_func=None,
                  visit_types=None, visit_func=None, visit_with_attr=None, visit_iterables=None,
                  iter_attr=None, iter_item=None, iter_func=None):
-        
+
         # Iteration:
         #   iter([1, 2, 3])
         #   myobj.things
@@ -29,7 +28,7 @@ class Visitor:
         #   myobj["things"]
 
         # Iteration check
-        #   
+        #
         self.use_attr = use_attr
         self.use_func = use_func
         self.iter_func = iter_func
@@ -40,7 +39,7 @@ class Visitor:
 
     def flatten(self, cont):
         """Turn nested container to flat container
-        
+
         Example:
         --------
             v = Visitor(visit_types=(list,))
@@ -68,13 +67,13 @@ class Visitor:
         #       cont[0] = func(1)
         #   iter 1:
         #       subcont = [21, 22, 23]
-        #       ....    
+        #       ....
         # cont: {"a": 1, "b": {"ba": 1, "bb": 2, "bc": 3}, "c": 2}
         #   iter 0:
         #       cont["a"] = func(1)
         #   iter 1:
         #       subcont = {"ba": 1, "bb": 2, "bc": 3}
-        #       ....    
+        #       ....
         if not self.is_visitable(cont):
             # End up here only if first level of recursion
             raise TypeError(f"Values of {cont} cannot be set anywhere. The object must be a visitable")
@@ -100,7 +99,7 @@ class Visitor:
             cont[key] = value
 
     def reduce(self, cont, func):
-        args = []   
+        args = []
         for key, subobj in self.iter(cont):
             if not self.is_visitable(subobj):
                 # subobj = 5
@@ -153,15 +152,13 @@ class Visitor:
         # Try to figure it out
         if isinstance(cont, dict):
             return cont.items()
-        else:
-            # Includes lists, tuples, sets etc
-            return enumerate(cont)
-            
+        # Includes lists, tuples, sets etc
+        return enumerate(cont)
+
     def _get_container(self, obj):
         if self.use_attr:
             return getattr(obj, self.use_attr)
-        else:
-            return obj
+        return obj
 
     def is_visitable(self, obj):
         if len(self.visit_funcs) == 0:

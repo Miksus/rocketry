@@ -1,11 +1,9 @@
-
 import pytest
 from rocketry.args.builtin import SimpleArg
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
 from rocketry.conditions import SchedulerCycles, AlwaysFalse
-from rocketry.args import Private, TerminationFlag
 
 def run_succeeding():
     pass
@@ -16,8 +14,8 @@ def run_parametrized(arg=SimpleArg("incorrect")):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_set_running(execution, session):
     task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
+        run_succeeding,
+        start_cond=AlwaysFalse(),
         name="task",
         execution=execution,
         session=session
@@ -39,8 +37,8 @@ def test_set_running(execution, session):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_set_running_with_params(execution, session):
     task = FuncTask(
-        run_parametrized, 
-        start_cond=AlwaysFalse(), 
+        run_parametrized,
+        start_cond=AlwaysFalse(),
         name="task",
         execution=execution,
         session=session
@@ -65,13 +63,13 @@ def test_set_running_with_params(execution, session):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_set_running_disabled(execution, session):
     # NOTE: force_run overrides disabled
-    # as it is more practical to keep 
+    # as it is more practical to keep
     # a task disabled and force it running
     # manually than prevent force run with
     # disabling
     task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
+        run_succeeding,
+        start_cond=AlwaysFalse(),
         name="task",
         execution=execution,
         session=session
@@ -95,8 +93,8 @@ def test_set_running_disabled(execution, session):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_run(execution, session):
     task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
+        run_succeeding,
+        start_cond=AlwaysFalse(),
         name="task",
         execution=execution,
         session=session
@@ -116,13 +114,13 @@ def test_task_force_run(execution, session):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_force_disabled(execution, session):
     # NOTE: force_run overrides disabled
-    # as it is more practical to keep 
+    # as it is more practical to keep
     # a task disabled and force it running
     # manually than prevent force run with
     # disabling
     task = FuncTask(
-        run_succeeding, 
-        start_cond=AlwaysFalse(), 
+        run_succeeding,
+        start_cond=AlwaysFalse(),
         name="task",
         execution=execution,
         session=session

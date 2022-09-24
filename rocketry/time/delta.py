@@ -3,12 +3,12 @@ import datetime
 from dataclasses import dataclass, field
 
 from rocketry.core.time import TimeDelta
-from rocketry.pybox.time import to_datetime, to_timedelta, Interval
+from rocketry.pybox.time import to_timedelta, Interval
 
 @dataclass(frozen=True, init=False)
 class TimeSpanDelta(TimeDelta):
 
-    near: int 
+    near: int
     far: int
     reference: datetime.datetime = field(default=None)
 
@@ -32,23 +32,22 @@ class TimeSpanDelta(TimeDelta):
 
     def rollback(self, dt):
         "Get previous interval (including currently ongoing)"
-        start = dt - self.far if self.far is not None else self.min 
+        start = dt - self.far if self.far is not None else self.min
         end = dt - self.near
-        return Interval(start, end) 
+        return Interval(start, end)
 
     def rollforward(self, dt):
         "Get next interval (including currently ongoing)"
         start = dt + self.near
         end = dt + self.far if self.far is not None else self.max
-        return Interval(start, end) 
+        return Interval(start, end)
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
         is_same_class = type(self) == type(other)
         if is_same_class:
             return (self.near == other.near) and (self.far == other.far)
-        else:
-            return False
+        return False
 
     def __str__(self):
         return repr(self)

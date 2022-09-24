@@ -9,6 +9,6 @@ def get_session_param():
     return 'Hello Python'
 
 @app.task()
-def do_with_param(arg1=Arg('my_param'), arg2=FuncArg(get_value), 
+def do_with_param(arg1=Arg('my_param'), arg2=FuncArg(get_value),
                   arg3=EnvArg('ENV_VARIABLE'), arg4=CliArg('--cli_arg')):
     ...

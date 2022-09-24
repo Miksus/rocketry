@@ -1,9 +1,4 @@
-
-import pytest
-
-from rocketry.args import Private, Return
-from rocketry import Scheduler
-from rocketry.core import parameters
+from rocketry.args import Private
 from rocketry.tasks import FuncTask
 from rocketry.conditions import TaskStarted
 from rocketry.args import FuncArg
@@ -29,10 +24,10 @@ def test_parametrization_private(session):
     session.parameters.update({"secret": Private("psst"), "public": "hello", "secret_list": Private([1,2,3])})
 
     task = FuncTask(
-        run_task, 
-        name="a task", 
-        execution="main", 
-        parameters={"task_secret": Private("hsss"), "task_public": "world"},  
+        run_task,
+        name="a task",
+        execution="main",
+        parameters={"task_secret": Private("hsss"), "task_public": "world"},
         session=session
     )
     task.run()

@@ -9,7 +9,7 @@ from rocketry.exc import TaskTerminationException
 
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
+from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysTrue
 
 from rocketry.args import Arg, Return, Session, Task, FuncArg, TerminationFlag #, Param, Session
 
@@ -26,14 +26,14 @@ def get_some_value_with_arg(pass_yes):
 # ----------------------
 
 def run_with_output():
-    return 'some value' 
+    return 'some value'
 
 def run_with_func_arg(arg=FuncArg(get_some_value), arg2=FuncArg(get_some_value_with_arg, pass_yes='yes')):
     assert arg == 'some func value'
     assert arg2 == 'some func value 2'
 
 def run_with_session_arg(arg=Arg('my_arg')):
-    assert arg == 'some session value' 
+    assert arg == 'some session value'
 
 def run_with_return(arg=Return('task_with_output')):
     assert arg == 'some value'
@@ -147,7 +147,7 @@ def test_task_as_arg(execution, session):
 def test_termination_flag_as_arg(execution, session):
     if execution == "process":
         pytest.skip("For some reason CI fails on process. Termination flag should not be used with process tasks anyways.")
-    
+
     task = FuncTask(func=run_with_termination_flag, name="my_task", start_cond=AlwaysTrue(), execution=execution, session=session)
     task.terminate()
 

@@ -1,4 +1,3 @@
-
 import logging
 from pathlib import Path
 import platform
@@ -6,13 +5,15 @@ import sys
 
 import pytest
 
+from task_helpers import wait_till_task_finish
+
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import CommandTask
 
-from task_helpers import wait_till_task_finish
+
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize("cmd,params,systems,shell", [
@@ -33,7 +34,7 @@ def test_success_command(tmpdir, session, cmd, params, systems,shell, execution)
         assert not Path("test.txt").is_file()
 
         task = CommandTask(
-            command=cmd, 
+            command=cmd,
             name="a task",
             shell=shell,
             execution="main",
@@ -59,7 +60,7 @@ def test_fail_command(tmpdir, execution, session):
         ]
 
         task = CommandTask(
-            command=["python", "--not_an_arg"], 
+            command=["python", "--not_an_arg"],
             name="a task",
             shell=False,
             execution=execution,
@@ -94,10 +95,10 @@ def test_success_bat_file(tmpdir, execution, session):
         file.write('python -c "{code}"'.format(code="open('test.txt', 'w');"))
 
         task = CommandTask(
-            command=["my_command.bat"], 
+            command=["my_command.bat"],
             name="a task",
             shell=False,
-            execution="main", 
+            execution="main",
             session=session
         )
         assert task.status is None
@@ -112,7 +113,7 @@ def test_success_bat_file(tmpdir, execution, session):
 def test_success_bash_file(tmpdir, session):
     if platform.system() == "Windows":
         pytest.skip("Bash files not runnable on Windows.")
-        
+
     with tmpdir.as_cwd() as old_dir:
         assert not Path("test.txt").is_file()
 
@@ -120,7 +121,7 @@ def test_success_bash_file(tmpdir, session):
         file.write('python3 -c "{code}"'.format(code="open('test.txt', 'w');"))
 
         task = CommandTask(
-            command=["/bin/bash", "my_command.sh"], 
+            command=["/bin/bash", "my_command.sh"],
             name="a task",
             shell=False,
             execution="main",
@@ -133,3 +134,4 @@ def test_success_bash_file(tmpdir, session):
 
         assert Path("test.txt").is_file()
         assert "success" == task.status
+    

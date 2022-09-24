@@ -1,11 +1,6 @@
-
-import logging
 import warnings
 
 import pytest
-from rocketry.core.log.adapter import TaskAdapter
-from rocketry.tasks import FuncTask
-from rocketry.core import Parameters, Scheduler
 from rocketry import Session
 
 def test_shutdown(session):

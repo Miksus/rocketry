@@ -1,28 +1,26 @@
-
-
 """
-Utilities for getting information 
+Utilities for getting information
 about the scehuler/task/parameters etc.
 """
 
 import datetime
 import logging
 from multiprocessing import cpu_count
-from pathlib import Path
 import warnings
 
-from pydantic import BaseModel, PrivateAttr, validator
+from itertools import chain
+from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
+from pydantic import BaseModel, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
-from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union, Any
-from itertools import chain
+from rocketry._base import RedBase
+
+
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from redbird.logging import RepoHandler
-from rocketry._base import RedBase
 
 if TYPE_CHECKING:
     from rocketry.core.log import TaskAdapter
@@ -36,6 +34,8 @@ if TYPE_CHECKING:
         TimePeriod
     )
 
+
+
 class Config(BaseModel):
     class Config:
         validate_assignment = True
@@ -47,7 +47,7 @@ class Config(BaseModel):
     task_execution: Optional[str] = None
     task_pre_exist: str = 'raise'
     force_status_from_logs: bool = False # Force to check status from logs every time (slow but robust)
-    
+
     task_logger_basename: str = "rocketry.task"
     scheduler_logger_basename: str = "rocketry.scheduler"
 
@@ -73,7 +73,7 @@ class Config(BaseModel):
             warnings.warn(
                 "Default execution will be changed to 'async'. "
                 "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(task_execution='async')", 
+                "ie. Rocketry(task_execution='async')",
                 FutureWarning
             )
             return 'process'
@@ -99,7 +99,7 @@ class Config(BaseModel):
 class Hooks(BaseModel):
     task_init: List[Callable] = []
     task_execute: List[Callable] = []
-    
+
     scheduler_startup: List[Callable] = []
     scheduler_cycle: List[Callable] = []
     scheduler_shutdown: List[Callable] = []
@@ -118,14 +118,14 @@ class Session(RedBase):
     parameters : parameter-like, optional
         Session level parameters.
     scheme : str or list, optional
-        Premade scheme(s) to use to set up logging, 
+        Premade scheme(s) to use to set up logging,
         parameters, setup tasks etc.
     as_default : bool, default=True
         Whether to set the session as default for next
         tasks etc. that don't have session
         specified.
     kwds_scheduler : dict, optional
-        Keyword arguments passed to 
+        Keyword arguments passed to
         :py:class:`rocketry.core.Scheduler`.
     delete_existing_loggers : bool, default=False
         If True, deletes the loggers that already existed
@@ -139,9 +139,9 @@ class Session(RedBase):
     scheduler : Scheduler
         Scheduler of the session.
     delete_existing_loggers : bool
-        If True, all loggers that match the 
-        session.config.basename are deleted (by 
-        default, deletes loggers starting with 
+        If True, all loggers that match the
+        session.config.basename are deleted (by
+        default, deletes loggers starting with
         'rocketry.task').
 
     """
@@ -224,7 +224,7 @@ class Session(RedBase):
     def start(self):
         """Start the scheduling session.
 
-        Will block and wait till the scheduler finishes 
+        Will block and wait till the scheduler finishes
         if there is a shut condition."""
         self._check_readable_logger()
         self.scheduler()
@@ -232,7 +232,7 @@ class Session(RedBase):
     async def serve(self):
         """Start the scheduling session using async.
 
-        Will block and wait till the scheduler finishes 
+        Will block and wait till the scheduler finishes
         if there is a shut condition."""
         self._check_readable_logger()
         await self.scheduler.serve()
@@ -242,7 +242,7 @@ class Session(RedBase):
 
         This method starts up the scheduler but only the given
         task is run. Useful to manually run a task while using
-        the setup/teardown and parameters of the session and 
+        the setup/teardown and parameters of the session and
         scheduler.
 
         Parameters
@@ -253,7 +253,7 @@ class Session(RedBase):
             Execution method for all of the tasks.
             By default, whatever set to each task
         obey_cond : bool
-            Whether to obey the ``start_cond`` or 
+            Whether to obey the ``start_cond`` or
             force a run regardless. By default, False
 
         .. warning::
@@ -280,7 +280,7 @@ class Session(RedBase):
                     task.execution = execution
             else:
                 task.disabled = True
-        
+
         orig_shut_cond = self.config.shut_cond
         try:
             self.config.shut_cond = SchedulerCycles() >= 1
@@ -293,20 +293,20 @@ class Session(RedBase):
 
     def restart(self):
         """Restart the scheduler
-        
-        The restart is not instantenous and 
+
+        The restart is not instantenous and
         will occur after the scheduler finishes
         checking one cycle of tasks."""
         self.scheduler._flag_restart.set()
 
     def shutdown(self):
         """Shut down the scheduler
-        
-        The shut down is not instantenous and 
+
+        The shut down is not instantenous and
         will occur after the scheduler finishes
         checking one cycle of tasks."""
         warnings.warn((
-            "Session.shutdown is deprecated. " 
+            "Session.shutdown is deprecated. "
             "Please use Session.shut_down instead"
         ), DeprecationWarning)
         self.scheduler._flag_shutdown.set()
@@ -324,10 +324,10 @@ class Session(RedBase):
         task_logger = logging.getLogger(task_logger_basename)
         logger = TaskAdapter(task_logger, None, ignore_warnings=True)
         if logger.is_readable_unset:
-            # Setting memory logger 
+            # Setting memory logger
             warnings.warn(
-                f"Logger {task_logger_basename} cannot be read. " 
-                "Logging is set to memory. " 
+                f"Logger {task_logger_basename} cannot be read. "
+                "Logging is set to memory. "
                 "To supress this warning, "
                 "please set a handler that can be read (redbird.logging.RepoHandler)", UserWarning)
 
@@ -337,7 +337,7 @@ class Session(RedBase):
         if not is_info_logged:
             level_name = logging.getLevelName(task_logger.getEffectiveLevel())
             warnings.warn(
-                f"Logger {task_logger_basename} has too low level ({level_name}). " 
+                f"Logger {task_logger_basename} has too low level ({level_name}). "
                 "Level is set to INFO to make sure the task logs get logged. ", UserWarning)
             task_logger.setLevel(logging.INFO)
 
@@ -353,7 +353,7 @@ class Session(RedBase):
 
     def get_task(self, task):
         warnings.warn((
-            "Method get_task will be removed in the future version." 
+            "Method get_task will be removed in the future version."
             "Please use instead: session['task name']"
         ), DeprecationWarning)
         return self[task]
@@ -364,7 +364,7 @@ class Session(RedBase):
 
     def create_task(self, *, command=None, path=None, **kwargs):
         "Create a task and put it to the session"
-        
+
         # To avoid circular imports
         from rocketry.tasks import CommandTask, FuncTask
 
@@ -392,7 +392,7 @@ class Session(RedBase):
                 raise KeyError(f"Task '{task.name}' already exists")
         else:
             self.tasks.add(task)
-        
+
         # Adding the session to the task
         task.session = self
 
@@ -403,7 +403,7 @@ class Session(RedBase):
 
     def task_exists(self, task: 'Task'):
         warnings.warn((
-            "Method task_exists will be removed in the future version." 
+            "Method task_exists will be removed in the future version."
             "Please use instead: 'task name' in session"
         ), DeprecationWarning)
 
@@ -427,7 +427,7 @@ class Session(RedBase):
         Parameters
         ----------
         with_adapters : bool, optional
-            Whether get the loggers wrapped to 
+            Whether get the loggers wrapped to
             rocketry.core.log.TaskAdapter, by default True
 
         Returns
@@ -443,22 +443,22 @@ class Session(RedBase):
         basename = self.config.task_logger_basename
         return {
             # The adapter should not be used to log (but to read) thus task_name = None
-            name: TaskAdapter(logger, None) if with_adapters else logger 
-            for name, logger in logging.root.manager.loggerDict.items() 
-            if name.startswith(basename) 
+            name: TaskAdapter(logger, None) if with_adapters else logger
+            for name, logger in logging.root.manager.loggerDict.items()
+            if name.startswith(basename)
             and not isinstance(logger, logging.PlaceHolder)
             and not name.endswith("_process") # No private
         }
 
 # Log data
     def get_task_log(self, *args, **kwargs) -> Iterable[Dict]:
-        """Get task log records from all of the 
+        """Get task log records from all of the
         readable handlers in the session.
 
         Parameters
         ----------
         **kwargs : dict
-            Query parameters passed to 
+            Query parameters passed to
             rocketry.core.log.TaskAdapter.get_records
 
         Returns
@@ -471,7 +471,7 @@ class Session(RedBase):
         for logger in loggers.values():
             data = chain(data, logger.get_records(*args, **kwargs))
         return data
-        
+
     def delete_task_loggers(self):
         """Delete the previous loggers from task logger"""
         loggers = logging.Logger.manager.loggerDict
@@ -510,7 +510,7 @@ class Session(RedBase):
         self.parameters["env"] = value
 
     def set_as_default(self):
-        """Set this session as the default session for 
+        """Set this session as the default session for
         next tasks, conditions and schedulers that
         are created.
         """

@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 import pytest
 from rocketry.pybox.time import Interval, to_datetime
 
@@ -50,7 +50,7 @@ def test_overlaps(l, r):
             id=f"right edge ({l_closed}, {r_closed})"
         )
         for l_closed, r_closed in [
-            ("left", 'left'), ('left', 'both'), ('left', 'neither'), 
+            ("left", 'left'), ('left', 'both'), ('left', 'neither'),
             ("left", 'right'), ('both', 'right'), ('neither', 'right'),
             ("neither", 'both'), ('neither', 'neither'),
         ]

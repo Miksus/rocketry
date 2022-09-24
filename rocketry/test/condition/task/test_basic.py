@@ -1,9 +1,8 @@
-
 import pytest
 
 from rocketry.conditions import (
-    TaskFinished, 
-    TaskFailed, 
+    TaskFinished,
+    TaskFailed,
     TaskSucceeded,
 
     DependFinish,
@@ -12,7 +11,6 @@ from rocketry.conditions import (
     TaskStarted,
     TaskTerminated,
 )
-from rocketry.core.task import Task
 from rocketry.tasks import FuncTask
 
 
@@ -35,7 +33,7 @@ def test_task_status_race(tmpdir, session, execution_number):
 
     condition = TaskFinished(task="runned task")
     task = FuncTask(
-        run_task, 
+        run_task,
         name="runned task",
         execution="main"
     )
@@ -48,29 +46,29 @@ def test_task_status_race(tmpdir, session, execution_number):
     "cls,succeeding,expected",
     [
         pytest.param(
-            TaskFinished, True, 
+            TaskFinished, True,
             True,
             id="TaskFinished Success"),
         pytest.param(
-            TaskFinished, False, 
+            TaskFinished, False,
             True,
             id="TaskFinished Failure"),
 
         pytest.param(
-            TaskSucceeded, True, 
+            TaskSucceeded, True,
             True,
             id="TaskSucceeded Success"),
         pytest.param(
-            TaskSucceeded, False, 
+            TaskSucceeded, False,
             False,
             id="TaskSucceeded Failure"),
 
         pytest.param(
-            TaskFailed, True, 
+            TaskFailed, True,
             False,
             id="TaskFailed Success"),
         pytest.param(
-            TaskFailed, False, 
+            TaskFailed, False,
             True,
             id="TaskFailed Failure"),
     ],
@@ -82,7 +80,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         condition = cls(task="runned task")
 
         task = FuncTask(
-            run_task, 
+            run_task,
             name="runned task",
             execution="main"
         )
@@ -93,17 +91,17 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         # Now has
         try:
             task(params={"fail": not succeeding})
-        except: 
+        except:
             pass
 
-        # we sleep 20ms to 
+        # we sleep 20ms to
         # There is a very small inaccuracy in time.time() that is used by
-        # logging library to create LogRecord.created. On Windows this 
+        # logging library to create LogRecord.created. On Windows this
         # inaccuracy can be 16ms (https://stackoverflow.com/questions/1938048/high-precision-clock-in-python)
-        # and in some cases the task is not registered to have run as 
+        # and in some cases the task is not registered to have run as
         # in memory logging is way too fast. Therefore we just wait
         # 20ms to fix the issue
-        # time.sleep(0.02) 
+        # time.sleep(0.02)
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
@@ -111,17 +109,17 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
     "cls,expected",
     [
         pytest.param(
-            DependFinish, 
+            DependFinish,
             True,
             id="DependFinish"),
 
         pytest.param(
-            DependSuccess, 
+            DependSuccess,
             False,
             id="DependSuccess"),
 
         pytest.param(
-            DependFailure, 
+            DependFailure,
             True,
             id="DependFailure"),
     ],
@@ -132,14 +130,14 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
-            run_task, 
+            run_task,
             name="prerequisite task",
             execution="main",
             session=session
         )
 
         task = FuncTask(
-            run_task, 
+            run_task,
             name="runned task",
             execution="main",
             session=session
@@ -151,8 +149,10 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
 
         # depend_task
         # -----|------------------- t0
-        try: depend_task(params={"fail": True})
-        except: pass
+        try:
+            depend_task(params={"fail": True})
+        except:
+            pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
@@ -164,8 +164,10 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
 
         # depend_task     task     depend_task
         # -----|-----------|-----------|----------- t0
-        try: depend_task(params={"fail": True})
-        except: pass
+        try:
+            depend_task(params={"fail": True})
+        except:
+            pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
 
@@ -179,17 +181,17 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
     "cls,expected",
     [
         pytest.param(
-            DependFinish, 
+            DependFinish,
             True,
             id="DependFinish"),
 
         pytest.param(
-            DependSuccess, 
+            DependSuccess,
             True,
             id="DependSuccess"),
 
         pytest.param(
-            DependFailure, 
+            DependFailure,
             False,
             id="DependFailure"),
     ],
@@ -200,14 +202,14 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
-            run_task, 
+            run_task,
             name="prerequisite task",
             execution="main",
             session=session
         )
 
         task = FuncTask(
-            run_task, 
+            run_task,
             name="runned task",
             execution="main",
             session=session
@@ -244,8 +246,8 @@ def test_task_depend_success(tmpdir, session, cls, expected):
 @pytest.mark.parametrize(
     "cls,string",
     [
-        pytest.param(TaskFinished, "task 'mytask' finished", id="TaskFinished"), 
-        pytest.param(TaskFailed, "task 'mytask' failed", id="TaskFailed"), 
+        pytest.param(TaskFinished, "task 'mytask' finished", id="TaskFinished"),
+        pytest.param(TaskFailed, "task 'mytask' failed", id="TaskFailed"),
         pytest.param(TaskSucceeded, "task 'mytask' succeeded", id="TaskSucceeded"),
         pytest.param(TaskStarted, "task 'mytask' started", id="TaskStarted"),
         pytest.param(TaskTerminated, "task 'mytask' terminated", id="TaskStarted"),

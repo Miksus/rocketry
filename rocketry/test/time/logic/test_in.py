@@ -1,11 +1,11 @@
+import datetime
 
 import pytest
-import datetime
 
 from rocketry.core.time.base import (
     All, Any
 )
-from rocketry.time.interval import TimeOfDay, TimeOfMinute
+from rocketry.time.interval import TimeOfDay
 
 from_iso = datetime.datetime.fromisoformat
 
