@@ -16,8 +16,16 @@ def do_between():
 def do_at():
     ...
 
+@app.task(daily.at("08:00", "12:00", "18:00"))
+def do_at_multiple():
+    ...
+
 @app.task(weekly.on("Monday"))
 def do_on():
+    ...
+
+@app.task(weekly.on("Monday", "Friday", "Sunday"))
+def do_on_multiple():
     ...
 
 @app.task(monthly.starting("3rd"))

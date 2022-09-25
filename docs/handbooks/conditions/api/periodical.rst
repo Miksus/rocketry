@@ -88,6 +88,13 @@ and *starting Friday* means the week is set to start on Friday.
     ``between Monday and Friday`` means Monday at 00:00
     (0 am) to Friday 24:00 (12 pm).
 
+.. note::
+
+    Passing multiple values to *at/on* is a convenient way to schedule
+    a task to run at multiple times. For example, ``weekly.on("Mon", "Fri")`` 
+    is the same as ``weekly.on("Mon") | weekly.on("Fri")`` and it can be used
+    to run a task on Mondays and Fridays.
+
 There are also **time of ...** conditions check if the current time
 is within the given period.
 

@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import Callable, Union
 from rocketry.conditions import (
     DependFailure, DependFinish, DependSuccess, TaskFailed, 
@@ -45,14 +46,24 @@ class TimeCondWrapper(BaseCondition):
         period = self._cls_period(start, None)
         return self._get_cond(period)
 
-    def on(self, span):
+    def on(self, *spans):
         # Alias for "at"
-        return self.at(span)
+        return self.at(*spans)
 
-    def at(self, span):
+    def at(self, span, *spans):
         # Alias for "on"
-        period = self._cls_period(span, time_point=True)
-        return self._get_cond(period)
+        n_spans = len(spans)
+        if n_spans == 0:
+            # Called like: daily.at("10:00")
+            period = self._cls_period(span, time_point=True)
+            return self._get_cond(period)
+        else:
+            # Called like: daily.at("10:00", "12:00")
+            conds = []
+            for span in (span, *spans):
+                cond = self.at(span)
+                conds.append(cond)
+            return reduce(lambda a, b: a | b, conds)
 
     def starting(self, start):
         period = self._cls_period.starting(start)

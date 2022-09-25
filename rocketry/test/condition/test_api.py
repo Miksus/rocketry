@@ -82,6 +82,8 @@ params_task_exec = [
 
     pytest.param(daily.at("23:00:00"), TaskExecutable(period=TimeOfDay("23:00:00", "00:00:00")), id="daily at end"),
     pytest.param(daily.at("23:00:01"), TaskExecutable(period=TimeOfDay("23:00:01", "00:00:01")), id="daily at specific"),
+
+    pytest.param(weekly.at("Mon", "Wed", "Fri"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)) | TaskExecutable(period=TimeOfWeek("Wednesday", time_point=True)) | TaskExecutable(period=TimeOfWeek("Friday", time_point=True)), id="weekly at (multiple)"),
 ]
 
 params_pipeline = [
@@ -165,3 +167,5 @@ def test_observe(cond, session):
 def test_fail():
     with pytest.raises(ValueError):
         every("5 seconds", based="oops")
+    with pytest.raises(TypeError):
+        daily.at()
