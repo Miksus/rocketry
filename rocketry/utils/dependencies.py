@@ -1,21 +1,19 @@
-
-from typing import TYPE_CHECKING, DefaultDict, List, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
-from rocketry._base import RedBase
+
 from rocketry.conditions import Any, All, DependFinish, DependSuccess
 from rocketry.conditions.task import DependFailure
 from rocketry.core import Task
-from rocketry.core.condition.base import BaseCondition
 
 from rocketry import Session
 
 class Link:
 
-    def __init__(self, 
-                 parent: Task, 
-                 child: Task, 
-                 relation: Optional[Union[DependSuccess, DependFailure, DependFinish]]=None, 
+    def __init__(self,
+                 parent: Task,
+                 child: Task,
+                 relation: Optional[Union[DependSuccess, DependFailure, DependFinish]]=None,
                  type: Optional[Union[Any, All]]=None):
         self.parent = parent
         self.child = child
@@ -33,8 +31,7 @@ class Link:
                 and self.relation == other.relation
                 and self.type == other.type
             )
-        else:
-            return False
+        return False
 
     def __str__(self):
         s = f'{self.parent.name!r} -> {self.child.name!r}'

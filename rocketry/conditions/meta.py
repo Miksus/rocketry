@@ -1,6 +1,5 @@
 
 import copy
-from functools import partial
 from typing import Callable, Optional, Pattern, Union
 
 from pydantic import Field
@@ -8,7 +7,6 @@ from rocketry.args import Session
 from rocketry import Session as _Session
 
 from rocketry.core.condition import BaseCondition #, Task
-from rocketry.core.parameters.arguments import BaseArgument
 from rocketry.tasks.func import FuncTask
 
 
@@ -26,15 +24,15 @@ class TaskCond(BaseCondition):
     """Condition which state is defined by a task
 
     TaskCond is a similar condition as ``FuncCond``
-    except the a task is formed from the function. This 
-    condition is useful for checks that may be slow 
+    except the a task is formed from the function. This
+    condition is useful for checks that may be slow
     in terms of IO or by other system resources or could
-    get stuck. 
+    get stuck.
 
     The produced task will run depending on its ``start_cond``
-    and the last check is considered to be valid given 
-    the ``active_time``. For example, you can set the 
-    task to run every 10 minutes to reduce the amount of 
+    and the last check is considered to be valid given
+    the ``active_time``. For example, you can set the
+    task to run every 10 minutes to reduce the amount of
     time the condition needs to be checked.
 
     .. note::
@@ -49,10 +47,10 @@ class TaskCond(BaseCondition):
         Can also be passed as via decorator.
     active_time : str
         Time how long the previous time check is valid
-        until the condition is considered ``False``, 
+        until the condition is considered ``False``,
         defaults 'never'
     syntax : str, re.compile
-        Syntax for the condition to be used in 
+        Syntax for the condition to be used in
         condition creation (ie. Task's start_cond)
     **kwargs : dict
         Passed to ``FuncTask`` as arguments.
@@ -84,7 +82,7 @@ class TaskCond(BaseCondition):
                  session,
                  func: Callable[..., bool]=None,
                  active_time:str ="always",
-                 syntax:Union[str, Pattern]=None, 
+                 syntax:Union[str, Pattern]=None,
                  **kwargs):
         from rocketry.parse import parse_time
 

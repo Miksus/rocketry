@@ -1,4 +1,3 @@
-
 #from rocketry.core.time.base import CLS
 from ._time import parse_time_string
 
@@ -12,4 +11,4 @@ parse_time = ParserPicker(
     {
         str: _parse_time_string,
     }
-) 
+)

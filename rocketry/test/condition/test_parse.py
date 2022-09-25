@@ -9,11 +9,11 @@ from rocketry.conditions.scheduler import SchedulerCycles, SchedulerStarted
 from rocketry.parse.condition import parse_condition
 from rocketry.conditions import ParamExists
 from rocketry.conditions import (
-    AlwaysTrue, AlwaysFalse, 
+    AlwaysTrue, AlwaysFalse,
     All, Any, Not,
 
-    TaskRunning, TaskStarted, 
-    TaskFailed, TaskSucceeded, TaskFinished,
+    TaskRunning, TaskStarted,
+    TaskFailed, TaskSucceeded,
     TaskInacted, TaskTerminated,
     DependFailure, DependSuccess, DependFinish,
     TaskExecutable,
@@ -127,12 +127,12 @@ cases_scheduler = [
 
 for (cls, action), (str_time, period) in itertools.product(
     [
-        (TaskSucceeded, "succeeded"), 
-        (TaskFailed, "failed"), 
-        (TaskTerminated, "terminated"), 
-        (TaskInacted, "inacted"), 
+        (TaskSucceeded, "succeeded"),
+        (TaskFailed, "failed"),
+        (TaskTerminated, "terminated"),
+        (TaskInacted, "inacted"),
         (TaskStarted, "started")
-    ], 
+    ],
     [
         ("today between 10:00 and 12:00", TimeOfDay("10:00", "12:00")),
         ("this week between Mon and Fri", TimeOfWeek("Mon", "Fri")),
@@ -147,7 +147,7 @@ for (cls, action), (str_time, period) in itertools.product(
 ):
     # This is cryptic but just generates bunch of test cases quickly
     # for different condition classes with different time objects.
-    # See ids of genereted tests for what the strings are that are 
+    # See ids of genereted tests for what the strings are that are
     # tested.
     if str_time:
         str_command = f"task 'mytask' has {action} {str_time}"

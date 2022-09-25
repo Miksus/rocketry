@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 import uvicorn
 
@@ -9,7 +8,7 @@ from scheduler import app as app_rocketry
 
 class Server(uvicorn.Server):
     """Customized uvicorn.Server
-    
+
     Uvicorn server overrides signals and we need to include
     Rocketry to the signals."""
     def handle_exit(self, sig: int, frame) -> None:

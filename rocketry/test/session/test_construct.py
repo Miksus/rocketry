@@ -1,16 +1,12 @@
 
 import datetime
 import logging
-import os
-from textwrap import dedent
 import warnings
 
 import pytest
 
 from rocketry import Session
-from rocketry.parse import parse_condition, parse_time
 from rocketry.session import Config
-from rocketry.tasks import FuncTask
 from rocketry.core import Task, Scheduler, BaseCondition, BaseArgument, Parameters
 from rocketry.conds import true
 
@@ -85,7 +81,7 @@ def test_logging_level():
         s = Session(config={'task_execution': 'async'})
         s.config.shut_cond = true
         s.start()
-    
+
     task_logger.setLevel(logging.DEBUG)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -100,6 +96,6 @@ def test_logging_level():
         s = Session(config={'task_execution': 'async'})
         s.config.shut_cond = true
         s.start()
-    
+
     # Level is changed to INFO
     assert task_logger.getEffectiveLevel() == logging.INFO

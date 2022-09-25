@@ -1,14 +1,10 @@
-
-import logging
-from typing import List, Tuple
-
 import pytest
 
 from rocketry.conditions import (
-    TaskStarted, 
+    TaskStarted,
 
-    TaskFinished, 
-    TaskFailed, 
+    TaskFinished,
+    TaskFailed,
     TaskSucceeded,
 
     TaskRunning
@@ -16,7 +12,6 @@ from rocketry.conditions import (
 from rocketry.conditions.task import TaskInacted, TaskTerminated
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
-    TimeDelta, 
     TimeOfDay
 )
 from rocketry.tasks import FuncTask
@@ -31,9 +26,9 @@ from .test_time import setup_task_state
 )
 def test_logs_not_used_false(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -53,9 +48,9 @@ def test_logs_not_used_false(session, cls, mock_datetime_now):
 )
 def test_logs_not_used_true(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -74,9 +69,9 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
 )
 def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -98,9 +93,9 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
 )
 def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -120,9 +115,9 @@ def test_logs_not_used_false_outside_period(session, cls, mock_datetime_now):
 )
 def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -142,9 +137,9 @@ def test_logs_not_used_equal_zero(session, cls, mock_datetime_now):
 )
 def test_logs_used(session, cls, mock_datetime_now):
     session.config.force_status_from_logs = False
-    
+
     task = FuncTask(
-        lambda:None, 
+        lambda:None,
         name="the task",
         execution="main",
         session=session
@@ -161,5 +156,5 @@ def test_logs_used(session, cls, mock_datetime_now):
     if cls is TaskFinished:
         cond = cls(task=task) == 3
     else:
-        cond = cls(task=task) == 1 
+        cond = cls(task=task) == 1
     assert cond.observe(session=session)

@@ -1,10 +1,8 @@
-
 from rocketry.time import (
     TimeOfWeek,
     TimeOfDay,
     TimeOfHour,
     TimeOfMinute,
-    TimeDelta,
     TimeOfMonth
 )
 
@@ -53,5 +51,3 @@ def get_full_cycle(type_, start=None):
     type_ = type_.lower()
     cls = TIME_CLASSES[type_]
     return cls(start, start)
-
-

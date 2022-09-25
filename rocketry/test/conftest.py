@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 import os
@@ -31,8 +30,7 @@ def get_node_id(request):
     filename = filename.replace(".py", "").replace("/", "-")
     if test_class:
         return f'{filename}-{test_class}-{test_func_with_params}'
-    else:
-        return f'{filename}-{test_func_with_params}'
+    return f'{filename}-{test_func_with_params}'
 
 def pytest_sessionstart(session):
     """
@@ -55,7 +53,7 @@ def copy_file_to_tmpdir(tmpdir, source_file, target_path):
 def sys_paths():
     orig_sys_paths = sys.path.copy()
     yield
-    # Setting back the original sys paths so they are not 
+    # Setting back the original sys paths so they are not
     # carried over different tasks.
     sys.path = orig_sys_paths
 
@@ -63,7 +61,7 @@ def sys_paths():
 def script_files(tmpdir):
     for folder in Path("scripts").parts:
         tmpdir = tmpdir.mkdir(folder)
-    
+
     copy_file_to_tmpdir(tmpdir, source_file="succeeding_script.py", target_path="scripts/succeeding_script.py")
     copy_file_to_tmpdir(tmpdir, source_file="failing_script.py", target_path="scripts/failing_script.py")
     copy_file_to_tmpdir(tmpdir, source_file="parameterized_script.py", target_path="scripts/parameterized_script.py")
@@ -160,7 +158,7 @@ def mock_pydatetime(mock_time, mock_datetime_now):
     """Monkey patch time.time & datetime.datetime.now
     Returns a function that takes datetime as string as input
     and sets that to time.time() and datetime.datetime.now()"""
-    
+
     def wrapper(dt):
         mock_time(dt)
         mock_datetime_now(dt)
@@ -186,7 +184,7 @@ def mongo_client(mongo_conn_str):
 
 @pytest.fixture(scope="function")
 def collection(request, mongo_client):
-    
+
     db_name = "pytest"
     col_name = get_node_id(request)
 

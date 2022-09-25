@@ -1,24 +1,18 @@
-
-
-
 import logging
-from pathlib import Path
-import tempfile
 from typing import List, Optional, Pattern, Union
 import warnings
 
 from redbird import BaseRepo
 from redbird.logging import RepoHandler
-from redbird.repos import MemoryRepo, CSVFileRepo
+from redbird.repos import MemoryRepo
 from rocketry.log.log_record import LogRecord
 
-from rocketry.tasks import FuncTask, CommandTask
 from rocketry.conditions import FuncCond
 from rocketry.parameters import FuncParam
 from rocketry import Session
 
 class _AppMixin:
-    
+
     session: Session
 
     def task(self, start_cond=None, name=None, **kwargs):
@@ -77,7 +71,7 @@ class Rocketry(_AppMixin):
 
     def set_logger(self):
         warnings.warn((
-            "set_logger is deprecated and will be removed in the future. " 
+            "set_logger is deprecated and will be removed in the future. "
             "Please set the logger using logging.getLogger"
         ), DeprecationWarning)
         def wrapper(func):

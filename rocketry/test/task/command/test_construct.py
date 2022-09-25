@@ -1,4 +1,3 @@
-
 from rocketry.tasks import CommandTask
 
 def test_construct():

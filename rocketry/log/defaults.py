@@ -1,4 +1,3 @@
-
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 from .log_record import MinimalRecord

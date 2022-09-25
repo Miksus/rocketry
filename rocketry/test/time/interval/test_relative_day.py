@@ -3,7 +3,7 @@ import pytest
 from rocketry.time import RelativeDay
 
 @pytest.mark.parametrize("day,left,right", [
-    pytest.param('today', datetime.datetime(2022, 5, 15), datetime.datetime(2022, 5, 15, 23, 59, 59, 999999)),  
+    pytest.param('today', datetime.datetime(2022, 5, 15), datetime.datetime(2022, 5, 15, 23, 59, 59, 999999)),
 ])
 def test_rollback(day, left, right):
     rel_day = RelativeDay(day)

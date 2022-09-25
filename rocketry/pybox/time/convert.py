@@ -60,7 +60,7 @@ def to_timedelta(s, **kwargs):
         raise TypeError(f"Cannot convert to timedelta: {type(s)}")
 
 def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
-    
+
     total_seconds = dt.total_seconds()
 
     microsec_in_day = 8.64e+10
@@ -73,15 +73,15 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     components = {}
     if units == "all":
         allowed_units = (
-            "years", "months", "weeks", 
-            "days", "hours", "minutes", 
-            "seconds", "milliseconds", 
+            "years", "months", "weeks",
+            "days", "hours", "minutes",
+            "seconds", "milliseconds",
             "microseconds")
     elif units == "fixed" or units is None:
         # Only fixed length units
         allowed_units = (
-            "days", "hours", "minutes", 
-            "seconds", "milliseconds", 
+            "days", "hours", "minutes",
+            "seconds", "milliseconds",
             "microseconds")
     else:
         allowed_units = units
@@ -90,33 +90,33 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     if "years" in allowed_units:
         components["years"] = int(microsec // (microsec_in_day * days_in_year))
         microsec = microsec - (components["years"] * microsec_in_day * days_in_year)
-    
+
     if "months" in allowed_units:
         components["months"] = int(microsec // (microsec_in_day * days_in_month))
         microsec = microsec - (components["months"] * microsec_in_day * days_in_month)
-    
+
     # Alternating units
     if "weeks" in allowed_units:
         components["weeks"] = int(microsec // (microsec_in_day * 7))
         microsec = microsec - components["weeks"] * microsec_in_day * 7
-    
+
     # Fixed units
     if "days" in allowed_units:
         components["days"] = int(microsec // microsec_in_day)
         microsec = microsec - components["days"] * microsec_in_day
-    
+
     if "hours" in allowed_units:
         components["hours"] = int(microsec // microsec_in_hour)
         microsec = microsec - components["hours"] * microsec_in_hour
-    
+
     if "minutes" in allowed_units:
         components["minutes"] = int(microsec // microsec_in_min)
         microsec = microsec - components["minutes"] * microsec_in_min
-    
+
     if "seconds" in allowed_units:
         components["seconds"] = int(microsec // microsec_in_sec)
         microsec = microsec - components["seconds"] * microsec_in_sec
-    
+
     if "milliseconds" in allowed_units:
         components["milliseconds"] = int(microsec // 1_000)
         microsec = microsec - components["milliseconds"] * 1_000
@@ -124,30 +124,30 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     if "microseconds" in allowed_units:
         components["microseconds"] = int(microsec)
         microsec = microsec - components["microseconds"]
-    
+
     return components
 
-def timedelta_to_str(dt, 
-                     days_in_year=365, days_in_month=30, 
+def timedelta_to_str(dt,
+                     days_in_year=365, days_in_month=30,
                      sep=", ", format=None, include=None,
                      default_scope="microseconds"):
 
-    
+
     components = timedelta_to_dict(dt, days_in_year=days_in_year, days_in_month=days_in_month, units=include)
-    
+
     # Min and max units (components must be ordered from biggest to smallest units)
     min_unit = default_scope
     for unit, value in components.items():
         if value != 0:
             min_unit = unit
-            
+
     max_unit = default_scope
     for unit, value in components.items():
         if value != 0:
             # Max currently found non zero
             max_unit = unit
             break
-            
+
     # Determine units
     if format is None:
         format = {
@@ -199,7 +199,7 @@ def timedelta_to_str(dt,
             s = s + f"{value}{unit_name}"
         elif is_max_reached:
             s = s + f"{sep}{value}{unit_name}"
-            
+
         if is_min_reached:
             break
     return s
@@ -209,7 +209,7 @@ def string_to_datetime(s):
 
 
 def numb_to_timedelta(n: Union[float, int], unit="μs"):
-    
+
     if unit == "ns":
         unit = 'μs'
         n = n / 1000
@@ -301,7 +301,7 @@ def string_to_timedelta(s:str):
         s = s[pos:]
 
         # Example: "-  2.5  days ..."
-        # Pos:         ^ 
+        # Pos:         ^
 
         numb, pos = get_number(s)
         s = s[pos:]
@@ -312,19 +312,19 @@ def string_to_timedelta(s:str):
             break
 
         # Example: "-  2.5  days ..."
-        # Pos:            ^ 
+        # Pos:            ^
 
         pos = skip_wordbreak(s)
         s = s[pos:]
 
         # Example: "-  2.5  days ..."
-        # Pos:              ^ 
+        # Pos:              ^
 
         abbr, pos = get_unit(s)
         s = s[pos:]
 
         ms += to_microseconds(**{abbr: float(numb)})
-    
+
     if is_negative:
         ms = -ms
     return datetime.timedelta(microseconds=ms)

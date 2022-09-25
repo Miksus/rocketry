@@ -1,7 +1,4 @@
-
-import re
 from rocketry.args.builtin import Session
-
 from rocketry.core.condition.base import BaseComparable, BaseCondition
 from rocketry.core.time.utils import get_period_span
 
@@ -20,10 +17,10 @@ class SchedulerCycles(BaseComparable):
         if hasattr(self, "_str"):
             return self._str
         comps = {
-            "__eq__": "has", 
-            "__gt__": "has more than", 
+            "__eq__": "has",
+            "__gt__": "has more than",
             "__lt__": "has less than",
-            "__ge__": "has more or equal than", 
+            "__ge__": "has more or equal than",
             "__le__": "has less or equal than",
         }
         s = "scheduler"

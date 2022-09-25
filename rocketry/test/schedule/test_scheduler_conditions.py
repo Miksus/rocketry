@@ -1,5 +1,3 @@
-
-from rocketry.core import Scheduler
 from rocketry.time import TimeDelta
 from rocketry.conditions import SchedulerCycles, SchedulerStarted
 

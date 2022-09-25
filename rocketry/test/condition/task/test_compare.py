@@ -1,5 +1,5 @@
 from rocketry.conditions import (
-    TaskFinished, 
+    TaskFinished,
 )
 from rocketry.tasks import FuncTask
 
@@ -16,7 +16,7 @@ def test_task_finish_compare(tmpdir, session):
         less = TaskFinished(task="runned task") < 2
 
         task = FuncTask(
-            run_task, 
+            run_task,
             name="runned task",
             execution="main",
             session=session
@@ -38,3 +38,4 @@ def test_task_finish_compare(tmpdir, session):
         assert not bool(equals.observe(session=session))
         assert bool(greater.observe(session=session))
         assert not bool(less.observe(session=session))
+    

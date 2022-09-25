@@ -51,5 +51,4 @@ def test_rollback(dt, past, future, roll_start, roll_end):
     interval = time.rollback(dt)
     assert roll_start == interval.left
     assert roll_end == interval.right
-
-
+    

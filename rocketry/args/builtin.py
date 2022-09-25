@@ -1,15 +1,14 @@
 
 import os
 import sys
-from typing import Any, Callable, Optional
 import warnings
+from typing import Any, Callable, Optional
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from rocketry.core.parameters import BaseArgument, Parameters
-from rocketry.core.utils import filter_keyword_args
 
 class NotSet:
     def __repr__(self):
@@ -103,7 +102,7 @@ class Return(BaseArgument):
     Parameters
     ----------
     name : str
-        Name of the task which return value the argument 
+        Name of the task which return value the argument
         represents.
 
     Examples
@@ -150,7 +149,7 @@ class Return(BaseArgument):
         return f'Return of {self.task_name!r}'
 
 class FuncArg(BaseArgument):
-    """An argument which value is defined by the 
+    """An argument which value is defined by the
     return value of given function.
 
     Parameters

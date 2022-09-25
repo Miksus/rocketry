@@ -1,14 +1,13 @@
-
-
 from collections.abc import Mapping
 from typing import Callable, Type, Union, TYPE_CHECKING
 from functools import partial
 import inspect
 
 from rocketry._base import RedBase
-from .arguments import BaseArgument
 from rocketry.core.utils import is_pickleable
 from rocketry.core.utils import filter_keyword_args
+
+from .arguments import BaseArgument
 
 if TYPE_CHECKING:
     import rocketry
@@ -36,18 +35,18 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def __init__(self, _param:Union[dict, 'Parameters']=None, type_:Type[BaseArgument]=None, **params):
         if _param is not None:
-            # We get original values if _param has Private or other arguments that are 
+            # We get original values if _param has Private or other arguments that are
             # hidden
             _param = _param._params if isinstance(_param, Parameters) else _param
             params.update(_param)
 
         if type_ is not None:
             params = {
-                name: type_(value) 
+                name: type_(value)
                 for name, value in params.items()
             }
         self._params = params
-    
+
     @classmethod
     def _from_signature(cls, __func:Callable, **kwargs) -> 'Parameters':
         # Get parameters from a function signature
@@ -87,11 +86,11 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
 
     def pre_materialize(self, *args, **kwargs):
         """Turn arguments to their values before passed
-        to child processes/threads. 
+        to child processes/threads.
         """
         self._params = {
-            key: 
-                value 
+            key:
+                value
                 if not isinstance(value, BaseArgument)
                 else value.stage(*args, **kwargs)
             for key, value in self._params.items()
@@ -103,11 +102,11 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         to child processes/threads). These should be their
         final values.
         """
-        
+
         return {
-            key: 
-                value 
-                if not isinstance(value, BaseArgument) 
+            key:
+                value
+                if not isinstance(value, BaseArgument)
                 else value.get_value(*args, **kwargs)
             for key, value in self._params.items()
         }
@@ -128,7 +127,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         _func : Callable
             Function to form the argument from.
         key : str, optional
-            Key or the name of the argument, 
+            Key or the name of the argument,
             by default the name of the function
         """
         from rocketry.args import FuncArg
@@ -156,7 +155,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         "| operator is union"
         left = self._params
         right = other._params if isinstance(other, Parameters) else other
-        
+
         params = {**left, **right}
         return type(self)(**params)
 
@@ -164,15 +163,13 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         "Whether parameters are equal"
         if isinstance(other, Parameters):
             return self._params == other._params
-        else:
-            return False
+        return False
 
     def __ne__(self, other):
         "Whether parameters are equal"
         if isinstance(other, Parameters):
             return self._params != other._params
-        else:
-            return True
+        return True
 
 # Pickling
     def __getstate__(self):

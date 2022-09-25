@@ -1,5 +1,5 @@
 from typing import List, Literal, Optional
-from redbird.oper import in_, between, greater_equal, less_equal
+from redbird.oper import in_, between
 from fastapi import APIRouter, FastAPI, Query
 
 from scheduler import app as app_rocketry
@@ -67,7 +67,7 @@ async def get_tasks():
 @router_task.get("/tasks/{task_name}")
 async def get_task(task_name:str):
     return session[task_name]
-    
+
 @router_task.patch("/tasks/{task_name}")
 async def patch_task(task_name:str, values:dict):
     task = session[task_name]

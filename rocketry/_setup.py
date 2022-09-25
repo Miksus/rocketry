@@ -5,14 +5,13 @@ from rocketry.parse import add_condition_parser
 from rocketry.conds import true, false
 from rocketry.tasks import CommandTask, FuncTask, CodeTask
 from rocketry.tasks.maintain import ShutDown, Restart
-from rocketry.tasks.maintain import Restart
 
 from rocketry.conditions.meta import _FuncTaskCondWrapper
 
 def _setup_defaults():
     "Set up the task classes and conditions Rocketry provides out-of-the-box"
-    
-    # Add some extra parsers from core 
+
+    # Add some extra parsers from core
     add_condition_parser({
         "true": true,
         "false": false,

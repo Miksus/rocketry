@@ -1,16 +1,12 @@
-
 import datetime
-import logging
 
 import pytest
-from dateutil.tz import tzlocal
 
 from rocketry.conditions import (
     TaskRunnable,
 )
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
-    TimeDelta, 
     TimeOfDay
 )
 from rocketry.tasks import FuncTask
@@ -21,7 +17,7 @@ from rocketry.testing.log import create_task_record
     "get_condition,logs,time_after,outcome",
     [
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -31,7 +27,7 @@ from rocketry.testing.log import create_task_record
             id="Don't run (already ran)"),
 
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -41,21 +37,21 @@ from rocketry.testing.log import create_task_record
             id="Don't run (already ran, out of the period)"),
 
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [],
             "2020-01-01 08:30",
             False,
             id="Don't run (out of the period)"),
 
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [],
             "2020-01-02 07:30",
             True,
             id="Do run (has not run)"),
 
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 07:10", "run"),
                 ("2020-01-01 07:20", "inaction"),
@@ -65,7 +61,7 @@ from rocketry.testing.log import create_task_record
             id="Do run (ran yesterday)"),
 
         pytest.param(
-            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")), 
+            lambda:TaskRunnable(task="the task", period=TimeOfDay("07:00", "08:00")),
             [
                 ("2020-01-01 06:50", "run"),
                 ("2020-01-01 07:20", "success"),
@@ -86,9 +82,9 @@ def test_runnable(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
 
     with tmpdir.as_cwd() as old_dir:
 
-        
+
         task = FuncTask(
-            lambda:None, 
+            lambda:None,
             name="the task",
             execution="main",
             session=session
@@ -100,7 +96,7 @@ def test_runnable(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
             log_time, log_action = log[0], log[1]
             record = create_task_record(
                 # The content here should not matter for task status
-                name='rocketry.core.task', lineno=1, 
+                name='rocketry.core.task', lineno=1,
                 pathname='d:\\Projects\\rocketry\\rocketry\\core\\task\\base.py',
                 msg="Logging of 'task'", args=(), exc_info=None,
                 created=log_time, action=log_action, task_name="the task"

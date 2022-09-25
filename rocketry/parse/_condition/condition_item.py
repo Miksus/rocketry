@@ -1,14 +1,15 @@
-
 from typing import Callable, Dict, Pattern, Union
-
-from ..utils import ParserError, CondParser
-from rocketry.core.condition.base import PARSERS, BaseCondition
+from rocketry.core.condition.base import BaseCondition
+from rocketry.core.condition.base import BaseCondition
 from rocketry.session import Session
+from ..utils import ParserError, CondParser
+
+
 
 CONDITION_PARSERS = []
 
 def add_condition_parser(d: Dict[Union[str, Pattern], Union[Callable, 'BaseCondition']]):
-    """Add a parsing instruction to be used for parsing a 
+    """Add a parsing instruction to be used for parsing a
     string to condition.
 
     Parameters

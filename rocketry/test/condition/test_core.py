@@ -55,7 +55,7 @@ def test_false():
     ]
 )
 def test_params(session, params, make_cond, expected):
-    
+
     session.parameters.update(params)
     cond = make_cond()
     if expected:
@@ -86,27 +86,27 @@ def test_fail(get_cond,exc):
     with pytest.raises(exc):
         get_cond()
 
-@pytest.mark.parametrize("obj,string,represent", 
+@pytest.mark.parametrize("obj,string,represent",
     [
         pytest.param(
-            All(true, false), 
-            "(true & false)", 
-            "All(true, false)", 
+            All(true, false),
+            "(true & false)",
+            "All(true, false)",
             id="All"),
         pytest.param(
-            Any(true, false), 
-            "(true | false)", 
-            "Any(true, false)", 
+            Any(true, false),
+            "(true | false)",
+            "Any(true, false)",
             id="Any"),
         pytest.param(
-            IsPeriod(always), 
-            "currently always", 
-            "IsPeriod(period=always)", 
+            IsPeriod(always),
+            "currently always",
+            "IsPeriod(period=always)",
             id="IsPeriod"),
         pytest.param(
-            Not(true), 
-            "~true", 
-            "Not(true)", 
+            Not(true),
+            "~true",
+            "Not(true)",
             id="Not"),
     ]
 )
@@ -126,5 +126,5 @@ def test_logic():
 
     assert Not(false) == true
     assert Not(false) != false
-    
+
     assert Not(false) != "invalid"

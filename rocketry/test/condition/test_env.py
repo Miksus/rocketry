@@ -5,7 +5,7 @@ from rocketry.conditions import (
 )
 
 def test_env(session):
-    
+
     cond = IsEnv("test")
     assert not cond.observe(session=session)
 

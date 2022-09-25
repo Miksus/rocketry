@@ -1,4 +1,3 @@
-
 from typing import Dict, List, Callable, Tuple
 import inspect
 
@@ -9,7 +8,7 @@ class _Hooker:
         self.args = () if args is None else args
         self.kwargs = {} if kwargs is None else kwargs
         self.hooks = hooks
-    
+
     def prerun(self, *args, **kwargs):
         self._post_hooks = []
         for hook in self.hooks:

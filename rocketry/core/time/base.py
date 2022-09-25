@@ -2,13 +2,12 @@ import datetime
 from functools import reduce
 import time
 from abc import abstractmethod
-from typing import Callable, ClassVar, Dict, FrozenSet, List, Optional, Pattern, Set, Union
+from typing import Callable, ClassVar, Dict, FrozenSet, List, Optional, Pattern, Union
 import itertools
 from dataclasses import dataclass, field
 
 from rocketry._base import RedBase
 from rocketry.pybox.time import to_datetime, to_timedelta, Interval
-from rocketry.session import Session
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 
@@ -17,8 +16,8 @@ class TimePeriod(RedBase):
     """Base for all classes that represent a time period.
 
     Time period is a period in time with a start and an end.
-    These are useful to determine whether an event took 
-    place in a specific time span or whether current time 
+    These are useful to determine whether an event took
+    place in a specific time span or whether current time
     is in a given time span.
     """
 
@@ -75,7 +74,7 @@ class TimePeriod(RedBase):
 class TimeInterval(TimePeriod):
     """Base for all time intervals
 
-    Time interval is a period between two fixed but repeating 
+    Time interval is a period between two fixed but repeating
     times. Fixed repeated times are defined as time elements
     that repeats constantly but are fixed in a sense that
     if the datetime of an event is known, the question
@@ -150,9 +149,9 @@ class TimeInterval(TimePeriod):
 
         start = to_datetime(start)
         end = to_datetime(end)
-        
+
         return Interval(start, end, closed=closed)
-    
+
     def rollback(self, dt) -> Interval:
         "Get previous time interval of the period"
 
@@ -207,7 +206,7 @@ class TimeDelta(TimePeriod):
 
         kws_past = {} if kws_past is None else kws_past
         kws_future = {} if kws_future is None else kws_future
-        
+
         object.__setattr__(self, "past", abs(to_timedelta(past, **kws_past)))
         object.__setattr__(self, "future", abs(to_timedelta(future, **kws_future)))
         object.__setattr__(self, "reference", reference)
@@ -228,7 +227,7 @@ class TimeDelta(TimePeriod):
         start = dt - abs(self.past)
         start = to_datetime(start)
         end = to_datetime(dt)
-        return Interval(start, end) 
+        return Interval(start, end)
 
     def rollforward(self, dt):
         "Get next interval (including currently ongoing)"
@@ -294,7 +293,7 @@ class All(TimePeriod):
                 continue
             else:
                 periods.append(arg)
-        
+
         object.__setattr__(self, "periods", frozenset(periods))
 
     def rollback(self, dt):
@@ -327,7 +326,7 @@ class All(TimePeriod):
                 for interv in intervals
                 if interv.right == next_dt
             )
-            # TODO: If 
+            # TODO: If
             if dt == next_dt:
                 next_dt -= self.resolution
             return self.rollback(next_dt)
@@ -420,14 +419,14 @@ class Any(TimePeriod):
 
         # Example:
         # Current time           |
-        # A:    <-->   
+        # A:    <-->
         # B:     <--->     <--->
         # C:     <------>
         # Out:             <--->
 
         # Example:
         # Current time           |
-        # A:    <-->   
+        # A:    <-->
         # B:    <--->     <--->
         # C:        <----->
         # Out:  <------------->

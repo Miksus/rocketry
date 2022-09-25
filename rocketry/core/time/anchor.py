@@ -1,16 +1,14 @@
-
-
 from datetime import datetime
 from typing import ClassVar, Dict, List, Tuple, Union
 from abc import abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from rocketry.pybox.time import to_microseconds, timedelta_to_str, datetime_to_dict, to_timedelta
 from .base import Any, TimeInterval
 
 @dataclass(frozen=True, repr=False)
 class AnchoredInterval(TimeInterval):
-    """Base class for interval for those that have 
+    """Base class for interval for those that have
     fixed time unit (that can be converted to microseconds).
 
     Converts start and end to microseconds where
@@ -18,12 +16,12 @@ class AnchoredInterval(TimeInterval):
     (ie. for a week: monday 00:00 AM) and max
     is number of microseconds from start to the
     end of the interval.
-    
+
     Examples for start=0 microseconds
         - for a week: Monday
         - for a day: 00:00
         - for a month: 1st day
-    
+
 
     Methods:
     --------
@@ -33,11 +31,11 @@ class AnchoredInterval(TimeInterval):
 
     Properties:
         start --> int : microseconds on the interval till the start
-        end   --> int : microseconds on the interval till the end 
+        end   --> int : microseconds on the interval till the end
 
     Class attributes:
     -----------------
-        _scope [str] : 
+        _scope [str] :
     """
     _start: int
     _end: int
@@ -48,7 +46,7 @@ class AnchoredInterval(TimeInterval):
     _fixed_components: ClassVar[Tuple[str]] = ("week", "day", "hour", "minute", "second", "microsecond")
 
     _scope: ClassVar[str] = None # Scope of the full period. Ie. day, hour, second, microsecond
-    _scope_max: ClassVar[int] = None # Max in microseconds of the 
+    _scope_max: ClassVar[int] = None # Max in microseconds of the
 
     _unit_resolution: ClassVar[int] = None # Microseconds of one unit (if start/end is int)
     _unit_names: ClassVar[List] = None
@@ -138,13 +136,13 @@ class AnchoredInterval(TimeInterval):
         elif starting and val is None:
             ms = self._start
         elif val is None:
-            ms = self._scope_max            
+            ms = self._scope_max
         else:
             ms = self.anchor(val, side="end", time_point=time_point)
 
         if right_closed:
             # We use left closed in intervals so we add one unit to make it closed
-            # given the end argument, ie. if "09:00 to 10:00" excludes 10:00 
+            # given the end argument, ie. if "09:00 to 10:00" excludes 10:00
             # we can include it by adding one nanosecond to 10:00
             ms += 1
         self._validate(ms, orig=val)
@@ -197,7 +195,7 @@ class AnchoredInterval(TimeInterval):
         ms_end = self._end
 
         if self.is_full():
-            # As there is no time in between, 
+            # As there is no time in between,
             # the interval is considered full
             # cycle (ie. from 10:00 to 10:00)
             return True
@@ -251,10 +249,10 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # not in period, earlier than start
-            #          dt                              
+            #          dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            
+
             # in period, over night, earlier than start
             #            dt
             #  -->----------<----------->--------------<-
@@ -262,7 +260,7 @@ class AnchoredInterval(TimeInterval):
             offset = to_timedelta(int(ms_start) - int(ms), unit="microsecond")
         else:
             # not in period, later than start
-            #      dt             
+            #      dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
 
@@ -272,7 +270,7 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # in period
-            #                    dt             
+            #                    dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             ms_scope = self.get_scope_forward(dt)
@@ -287,17 +285,17 @@ class AnchoredInterval(TimeInterval):
 
         if ms < ms_end:
             # in period
-            #                    dt             
+            #                    dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            
+
             # in period, over night, earlier than end
             #            dt
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
 
             # not in period, earlier than end
-            #          dt                              
+            #          dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             offset = to_timedelta(int(ms_end) - int(ms), unit="microsecond")
@@ -308,7 +306,7 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # not in period, later than end
-            #      dt             
+            #      dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
 
@@ -332,10 +330,10 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # not in period, earlier than start
-            #          dt                              
+            #          dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            
+
             # in period, over night, earlier than start
             #            dt
             #  -->----------<----------->--------------<-
@@ -344,7 +342,7 @@ class AnchoredInterval(TimeInterval):
             offset = to_timedelta(int(ms_start) - int(ms) - ms_scope, unit="microsecond")
         else:
             # not in period, later than start
-            #      dt             
+            #      dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
 
@@ -354,7 +352,7 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # in period
-            #                    dt             
+            #                    dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             offset = to_timedelta(int(ms_start) - int(ms), unit="microsecond")
@@ -367,17 +365,17 @@ class AnchoredInterval(TimeInterval):
 
         if ms < ms_end:
             # in period
-            #                    dt             
+            #                    dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
-            
+
             # in period, over night, earlier than end
             #            dt
             #  -->----------<----------->--------------<-
             #  start   |   end        start     |     end
 
             # not in period, earlier than end
-            #          dt                              
+            #          dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
             ms_scope = self.get_scope_back(dt)
@@ -389,7 +387,7 @@ class AnchoredInterval(TimeInterval):
             #  start   |   end        start     |     end
 
             # not in period, later than end
-            #      dt             
+            #      dt
             # --<---------->-----------<-------------->--
             #  end   |   start        end    |      start
 

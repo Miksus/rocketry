@@ -1,15 +1,13 @@
-
 import logging
 
 from rocketry import Rocketry
 from rocketry.args.builtin import Return, Task
 from rocketry.conditions import TaskStarted
-from rocketry.conditions.api import after_success
 
 from rocketry.conds import (
     false, true,
     daily, time_of_hour,
-    after_fail, after_success, after_finish
+    after_fail, after_success
 )
 
 def set_logging_defaults():
@@ -31,7 +29,7 @@ def test_app_run():
     @app.task(daily)
     def do_daily():
         ...
-    
+
     @app.task(after_success(do_daily))
     def do_after():
         ...

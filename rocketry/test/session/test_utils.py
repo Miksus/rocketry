@@ -1,11 +1,6 @@
-
-import pytest
-from textwrap import dedent
-
-from rocketry.conditions.task import DependFailure, DependFinish, DependSuccess
+from rocketry.conditions.task import DependFailure, DependSuccess
 from rocketry.core.condition.base import All, Any
 from rocketry.tasks import FuncTask
-from rocketry import Session
 from rocketry.utils.dependencies import Dependencies, Link, get_dependencies
 
 def test_dependency(session):

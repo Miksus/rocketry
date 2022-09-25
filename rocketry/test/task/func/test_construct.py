@@ -1,11 +1,10 @@
-
 from pathlib import Path
 import types
 
 import pytest
 
 from rocketry.tasks import FuncTask
-from rocketry.conditions import AlwaysFalse, AlwaysTrue, DependSuccess
+from rocketry.conditions import AlwaysTrue
 from rocketry.parse.utils import ParserError
 
 def myfunc(): ...
@@ -21,7 +20,7 @@ def test_construct(tmpdir, session, execution):
                 task = FuncTask(lambda : None, execution=execution)
         else:
             task = FuncTask(lambda : None, execution=execution)
-            
+
         # This should always be picklable
         task = FuncTask(myfunc, execution=execution)
         assert not task.is_delayed()
@@ -94,7 +93,7 @@ def test_construct_decorate(session):
     @FuncTask(start_cond=AlwaysTrue(), name="mytask", execution="main", session=session)
     def do_stuff():
         pass
-    
+
     assert isinstance(do_stuff, types.FunctionType)
 
     do_stuff_task = session["mytask"]
@@ -103,10 +102,10 @@ def test_construct_decorate(session):
     assert do_stuff_task.start_cond == AlwaysTrue()
     assert do_stuff_task.name == "mytask"
 
-    assert {do_stuff_task} == session.tasks 
+    assert {do_stuff_task} == session.tasks
 
 def test_construct_decorate_minimal(session):
-    """This is an exception when FuncTask returns itself 
+    """This is an exception when FuncTask returns itself
     (__init__ cannot return anything else)"""
     # Going to tempdir to dump the log files there
     orig_default_exec = session.config.task_execution
@@ -126,7 +125,7 @@ def test_construct_decorate_default_name(session):
     @FuncTask(start_cond=AlwaysTrue(), execution="main", session=session)
     def do_stuff():
         pass
-    
+
     assert isinstance(do_stuff, types.FunctionType)
     do_stuff_task = list(session.tasks)[-1]
     assert isinstance(do_stuff_task, FuncTask)
@@ -149,7 +148,7 @@ def test_construct_decorate_default_name(session):
 def test_set_start_condition(start_cond, depend, expected, session):
 
     task = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task",
         start_cond=start_cond,
         execution="main",
@@ -168,7 +167,7 @@ def test_set_start_condition(start_cond, depend, expected, session):
 def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
 
     task = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task",
         start_cond=start_cond_str,
         execution="main",
@@ -181,13 +180,13 @@ def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
     "get_task,exc",
     [
         pytest.param(
-            lambda s: FuncTask(lambda : None, name="task", start_cond="this is not valid", execution="main", session=s), 
-            ParserError, 
+            lambda s: FuncTask(lambda : None, name="task", start_cond="this is not valid", execution="main", session=s),
+            ParserError,
             id="invalid start_cond"
         ),
         pytest.param(
-            lambda s: FuncTask(lambda : None, name="task", execution="not valid", session=s), 
-            ValueError, 
+            lambda s: FuncTask(lambda : None, name="task", execution="not valid", session=s),
+            ValueError,
             id="invalid execution"
         ),
     ],

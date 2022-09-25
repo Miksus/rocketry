@@ -3,12 +3,9 @@ from pathlib import Path
 from textwrap import dedent
 import pytest
 from rocketry.args.builtin import SimpleArg
-from rocketry.conditions.task.task import TaskStarted
 from rocketry.core.condition.base import AlwaysTrue
-from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
-from rocketry.conditions import SchedulerCycles, AlwaysFalse
-from rocketry.args import Private, TerminationFlag
+from rocketry.conditions import SchedulerCycles
 
 def run_parametrized(arg):
     assert arg == "correct"
@@ -25,8 +22,8 @@ def test_batch_favored(execution, session):
     session.parameters['arg'] = 'incorrect'
 
     task = FuncTask(
-        run_parametrized_incorrect, 
-        start_cond=AlwaysTrue(), 
+        run_parametrized_incorrect,
+        start_cond=AlwaysTrue(),
         name="task",
         execution=execution,
         session=session,
@@ -54,8 +51,8 @@ def test_task_favored(execution, session, tmpdir, delayed):
                 assert arg == "correct"
         """))
         task = FuncTask(
-            path=Path(funcfile), func_name="run_parametrized_incorrect", 
-            start_cond=AlwaysTrue(), 
+            path=Path(funcfile), func_name="run_parametrized_incorrect",
+            start_cond=AlwaysTrue(),
             name="task",
             execution=execution,
             session=session,
@@ -63,8 +60,8 @@ def test_task_favored(execution, session, tmpdir, delayed):
         )
     else:
         task = FuncTask(
-            run_parametrized_incorrect, 
-            start_cond=AlwaysTrue(), 
+            run_parametrized_incorrect,
+            start_cond=AlwaysTrue(),
             name="task",
             execution=execution,
             session=session,
@@ -83,8 +80,8 @@ def test_func_favored(execution, session):
     session.parameters['arg'] = 'incorrect'
 
     task = FuncTask(
-        run_parametrized_correct, 
-        start_cond=AlwaysTrue(), 
+        run_parametrized_correct,
+        start_cond=AlwaysTrue(),
         name="task",
         execution=execution,
         session=session,
@@ -102,8 +99,8 @@ def test_session_favored(execution, session):
     session.parameters['arg'] = 'correct'
 
     task = FuncTask(
-        run_parametrized, 
-        start_cond=AlwaysTrue(), 
+        run_parametrized,
+        start_cond=AlwaysTrue(),
         name="task",
         execution=execution,
         session=session,

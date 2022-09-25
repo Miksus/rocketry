@@ -1,4 +1,3 @@
-
 from typing import Any, TYPE_CHECKING
 from abc import abstractmethod
 
@@ -9,8 +8,8 @@ if TYPE_CHECKING:
 
 class BaseArgument(RedBase):
     """Base class for Arguments.
-    
-    Argument is a wrapper for value that can be 
+
+    Argument is a wrapper for value that can be
     passed to a task. The value can be formulated
     on the fly or it can be a constant variable.
 
@@ -35,7 +34,7 @@ class BaseArgument(RedBase):
 
     """
     session: 'rocketry.Session'
-    
+
     @abstractmethod
     def get_value(self, **kwargs) -> Any:
         """Get the actual value of the argument.
@@ -48,13 +47,13 @@ class BaseArgument(RedBase):
         """
 
     def stage(self, **kwargs) -> 'BaseArgument':
-        """Get (a copy of) the argument with a 
+        """Get (a copy of) the argument with a
         value that can be passed to child threads
         or processes. Override for custom behaviour.
 
         Example use cases:
 
-            - Save a complex object to disk and read 
+            - Save a complex object to disk and read
               it again later with ``get_value``.
             - Shut a file buffer and reopen it when
               in the child process/thread.
@@ -82,8 +81,7 @@ class BaseArgument(RedBase):
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.get_value() == other.get_value()
-        else:
-            return False
+        return False
 
     def __repr__(self):
         cls_name = type(self).__name__

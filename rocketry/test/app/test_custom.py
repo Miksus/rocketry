@@ -1,5 +1,3 @@
-
-import asyncio
 import logging
 
 from rocketry import Rocketry
@@ -19,10 +17,9 @@ def test_init_args_in_cond(session, tmpdir):
     def file_exists(file):
         if file == "exists.txt":
             return True
-        elif file == "non_existent.txt":
+        if file == "non_existent.txt":
             return False
-        else:
-            raise
+        raise
 
     # Creating some tasks
     @app.task(file_exists("exists.txt"))

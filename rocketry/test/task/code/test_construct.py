@@ -1,4 +1,3 @@
-
 import logging
 from textwrap import dedent
 import pytest
@@ -8,7 +7,6 @@ from redbird.repos import MemoryRepo
 
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import CodeTask
-from rocketry.core import Scheduler
 from rocketry.conditions import TaskStarted
 
 def test_construct(session):
@@ -30,7 +28,7 @@ def test_construct_missing_name(session):
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success(session, execution):
-    
+
     task = CodeTask(code=dedent("""
         def main():
             return 'myvalue'
@@ -46,7 +44,7 @@ def test_run_success(session, execution):
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_success_parametrize(session, execution):
-    
+
     task = CodeTask(code=dedent("""
         def main(param):
             return 'myvalue' + param
@@ -63,7 +61,7 @@ def test_run_success_parametrize(session, execution):
 
 @pytest.mark.parametrize('execution', ['main', 'thread', 'process'])
 def test_run_fail(session, execution):
-    
+
     task_logger = logging.getLogger(session.config.task_logger_basename)
     task_logger.handlers = [
         RepoHandler(repo=MemoryRepo(model=LogRecord))
@@ -79,7 +77,7 @@ def test_run_fail(session, execution):
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
     session.start()
-    
+
     assert task.status == 'fail'
 
     records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))

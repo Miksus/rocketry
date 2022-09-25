@@ -7,7 +7,6 @@ from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.core.time.base import TimeDelta
 
 from rocketry.tasks import FuncTask
-from rocketry.core import Scheduler
 from rocketry.conditions import TaskStarted, DependSuccess
 
 def run_failing():
@@ -32,22 +31,22 @@ def test_dependent(tmpdir, execution, session):
         task_b = FuncTask(run_succeeding, name="B", start_cond=~TaskStarted(), execution=execution, session=session)
 
         task_after_a = FuncTask(
-            run_succeeding, 
-            name="After A", 
+            run_succeeding,
+            name="After A",
             start_cond=DependSuccess(depend_task="A"),
             execution=execution,
             session=session
         )
         task_after_b = FuncTask(
-            run_succeeding, 
-            name="After B", 
+            run_succeeding,
+            name="After B",
             start_cond=DependSuccess(depend_task="B"),
             execution=execution,
             session=session
         )
         task_after_all = FuncTask(
-            run_succeeding, 
-            name="After all", 
+            run_succeeding,
+            name="After all",
             start_cond=DependSuccess(depend_task="After A") & DependSuccess(depend_task="After B"),
             execution=execution,
             session=session

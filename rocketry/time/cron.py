@@ -1,9 +1,9 @@
 from typing import Callable
 from dataclasses import dataclass
-from datetime import timedelta
+
+from rocketry.core.time.base import TimePeriod, always
 
 from .interval import TimeOfHour, TimeOfDay, TimeOfMinute, TimeOfWeek, TimeOfMonth, TimeOfYear
-from rocketry.core.time.base import TimePeriod, always
 
 @dataclass(frozen=True)
 class Cron(TimePeriod):
@@ -48,7 +48,7 @@ class Cron(TimePeriod):
                 step_period = cls.create_range(step=int(step))
             else:
                 step = None
-            
+
             if "-" in expr:
                 # From to
                 start, end = expr.split("-")
@@ -60,7 +60,7 @@ class Cron(TimePeriod):
                 if step is not None:
                     # Unlike in traditional Python ranges,
                     # cron includes also the endpoint thus
-                    # we convert to int (if needed) and add 
+                    # we convert to int (if needed) and add
                     # one
                     if isinstance(end, str):
                         end = cls._unit_mapping[end.lower()]
@@ -76,7 +76,7 @@ class Cron(TimePeriod):
                     period = always & step_period
                 else:
                     period = cls.at(value) & step_period
-            
+
             if full_period is None:
                 full_period = period
             else:
@@ -95,7 +95,7 @@ class Cron(TimePeriod):
 
         day_of_month = self._get_period_from_expr(TimeOfMonth, self.day_of_month)
         day_of_week = self._get_period_from_expr(TimeOfWeek, self.day_of_week, conv=self._convert_day_of_week)
-        
+
         if day_of_month is not always and day_of_week is not always:
             # Both specified: OR
             day_of_week_month = day_of_month | day_of_week

@@ -39,7 +39,7 @@ def pytest_generate_tests(metafunc):
             params = cls.scen_value_error
         else:
             return
-        
+
         argnames = [arg for arg in metafunc.fixturenames if arg in ('start', 'end', "expected_start", "expected_end", "time_point")]
 
         idlist = []
@@ -524,7 +524,7 @@ class TestTimeOfMonth(ConstructTester):
     scen_open_right = [
         {
             "start": "2.",
-            "expected_start": 1 * MS_IN_DAY 
+            "expected_start": 1 * MS_IN_DAY
         }
     ]
     scen_time_point = [
@@ -590,7 +590,7 @@ class TestTimeOfYear(ConstructTester):
     scen_open_left = [
         {
             "end": "Apr",
-            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1 
+            "expected_end": (31 + 29 + 31 + 30) * MS_IN_DAY - 1
         },
         {
             "end": "Jan",
@@ -600,11 +600,11 @@ class TestTimeOfYear(ConstructTester):
     scen_open_right = [
         {
             "start": "Apr",
-            "expected_start": (31 + 29 + 31) * MS_IN_DAY 
+            "expected_start": (31 + 29 + 31) * MS_IN_DAY
         },
         {
             "start": "Dec",
-            "expected_start": (366 - 31) * MS_IN_DAY 
+            "expected_start": (366 - 31) * MS_IN_DAY
         },
     ]
     scen_time_point = [

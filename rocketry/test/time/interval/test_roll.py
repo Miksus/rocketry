@@ -1,6 +1,6 @@
+from datetime import datetime
 
 import pytest
-from datetime import datetime
 
 from rocketry.time.interval import (
     TimeOfDay
@@ -146,5 +146,3 @@ def test_rollback_time_of_day(start, end, dt, roll_start, roll_end):
     assert interval.closed == 'left' if roll_start != roll_end else interval.closed == "both"
     assert roll_start == interval.left
     assert roll_end == interval.right
-
-

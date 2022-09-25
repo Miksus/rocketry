@@ -4,24 +4,24 @@ import logging
 import pytest
 from rocketry.core.log.adapter import TaskAdapter
 from rocketry.tasks import FuncTask
-from rocketry.core import Parameters, Scheduler
+from rocketry.core import Parameters
 
 
 def test_tasks_attr(session):
 
     task1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 1",
         execution="main",
         session=session
     )
     task2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 2",
         execution="main",
         session=session
     )
-        
+
     assert session.tasks == {task1, task2}
 
 def test_get_repo(session):
@@ -38,13 +38,13 @@ def test_get_repo(session):
 def test_getitem(session):
 
     task_1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 1",
         execution="main",
         session=session
     )
     task_2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 2",
         execution="main",
         session=session
@@ -53,7 +53,7 @@ def test_getitem(session):
     @FuncTask(execution="main", session=session)
     def do_things():
         pass
-        
+
     @FuncTask(name="task 3", execution="main", session=session)
     def do_things_2():
         pass
@@ -70,7 +70,7 @@ def test_getitem(session):
 
 def test_add(session):
     task = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 1",
         execution="main",
         session=None
@@ -93,19 +93,19 @@ def test_create(session):
 
 def test_remove(session):
     task_1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 1",
         execution="main",
         session=session
     )
     task_2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 2",
         execution="main",
         session=session
     )
     task_3 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 3",
         execution="main",
         session=session
@@ -121,7 +121,7 @@ def test_remove(session):
 
 def test_task_exists(session):
     task_1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="task 1",
         execution="main",
         session=session
@@ -134,12 +134,12 @@ def test_task_exists(session):
 def test_get_task(session):
 
     task = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example",
         execution="main",
         session=session
     )
-    
+
     with pytest.warns(DeprecationWarning):
         # By string
         t = session.get_task(task.name)
@@ -157,19 +157,19 @@ def test_clear(session):
     # assert session.scheduler is None
 
     task1 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 1",
         execution="main",
         session=session
     )
     task2 = FuncTask(
-        lambda : None, 
+        lambda : None,
         name="example 2",
         execution="main",
         session=session
     )
     session.parameters["x"] = 1
-    
+
     assert Parameters(x=1) == session.parameters
     assert session.tasks == {task1, task2}
 

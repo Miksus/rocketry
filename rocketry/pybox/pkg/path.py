@@ -1,10 +1,9 @@
-
 from pathlib import Path
 from typing import Union
 
 def find_package_root(path) -> Union[Path, None]:
     """Find package root from the path's parents.
-    
+
     In other words, find first dir that don't contain
     __init__.py"""
 

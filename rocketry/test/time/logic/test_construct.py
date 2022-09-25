@@ -1,5 +1,3 @@
-
-import pytest
 import datetime
 
 from rocketry.core.time.base import (
@@ -11,19 +9,19 @@ from_iso = datetime.datetime.fromisoformat
 
 def test_compress_any():
     assert Any(
-        TimeOfDay(), 
-        TimeOfDay(), 
+        TimeOfDay(),
+        TimeOfDay(),
         Any(TimeOfMinute(), TimeOfMinute()), # This is unnested
         All(TimeOfDay(), TimeOfMinute()),
     ) == Any(
-        TimeOfDay(), 
-        TimeOfDay(), 
+        TimeOfDay(),
+        TimeOfDay(),
         TimeOfMinute(), TimeOfMinute(), # This was unnested
         All(TimeOfDay(), TimeOfMinute()),
     )
 
     assert Any(
-        TimeOfDay(), 
+        TimeOfDay(),
         All(TimeOfDay(), TimeOfMinute()),
         always, # The other periods does not matter
         Any(TimeOfMinute(), TimeOfMinute()),
@@ -32,24 +30,24 @@ def test_compress_any():
 
 def test_compress_all():
     assert All(
-        TimeOfDay(), 
-        TimeOfDay(), 
+        TimeOfDay(),
+        TimeOfDay(),
         All(TimeOfMinute(), TimeOfMinute()), # This is unnested
         Any(TimeOfDay(), TimeOfMinute()),
     ) == All(
-        TimeOfDay(), 
-        TimeOfDay(), 
+        TimeOfDay(),
+        TimeOfDay(),
         TimeOfMinute(), TimeOfMinute(), # This was unnested
         Any(TimeOfDay(), TimeOfMinute()),
     )
 
     assert All(
-        TimeOfDay(), 
+        TimeOfDay(),
         All(TimeOfDay(), TimeOfMinute()),
         always, # This has no effect
         Any(TimeOfMinute(), TimeOfMinute()),
     ) == All(
-        TimeOfDay(), 
+        TimeOfDay(),
         All(TimeOfDay(), TimeOfMinute()),
         Any(TimeOfMinute(), TimeOfMinute()),
     )

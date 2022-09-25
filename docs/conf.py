@@ -10,7 +10,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import sphinx_book_theme
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
@@ -30,8 +29,8 @@ author = 'Mikael Koli'
 # ones.
 extensions = [
     'sphinx.ext.doctest',
-    'sphinx.ext.autodoc', 
-    'sphinx.ext.coverage', 
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
     'sphinx.ext.napoleon',
     'sphinx_copybutton',
 ]
@@ -86,9 +85,9 @@ html_css_files = [
 
 html_sidebars = {
     "**": [
-        "logo-text.html", 
-        "globaltoc.html", 
-        "localtoc.html", 
+        "logo-text.html",
+        "globaltoc.html",
+        "localtoc.html",
         "searchbox.html"
     ]
 }

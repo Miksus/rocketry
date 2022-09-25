@@ -3,7 +3,7 @@ from itertools import chain
 import datetime
 import logging
 from typing import Optional
-from pydantic import Field, root_validator
+from pydantic import root_validator
 
 import pytest
 
@@ -13,7 +13,7 @@ from redbird.repos import MemoryRepo
 from rocketry.conditions import TaskFinished
 from rocketry.conditions.scheduler import SchedulerCycles
 
-from rocketry.log.log_record import LogRecord, TaskLogRecord, MinimalRecord
+from rocketry.log.log_record import MinimalRecord
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskLoggingError
@@ -103,7 +103,7 @@ def test_failed_logging_finish(execution, status, on, session):
     "query,expected",
     [
         pytest.param(
-            {"action": "run"}, 
+            {"action": "run"},
             [
                 {'task_name': 'task1', 'timestamp': datetime.datetime(2021, 1, 1, 0, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': "Task 'task1' status: 'run'"},
                 {'task_name': 'task2', 'timestamp': datetime.datetime(2021, 1, 1, 1, 0, 0), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': "Task 'task2' status: 'run'"},
@@ -112,21 +112,21 @@ def test_failed_logging_finish(execution, status, on, session):
             ],
             id="Get running"),
         pytest.param(
-            {"action": in_(["success", "fail"])}, 
+            {"action": in_(["success", "fail"])},
             [
                 {'task_name': 'task1', 'created': datetime.datetime(2021, 1, 1, 4, 0, 0).timestamp(), 'action': 'success', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'end': datetime.datetime(2021, 1, 1, 4, 0, 0), 'runtime': datetime.timedelta(hours=4), 'message': "Task 'task1' status: 'success'"},
                 {'task_name': 'task2', 'created': datetime.datetime(2021, 1, 1, 5, 0, 0).timestamp(), 'action': 'fail',    'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'end': datetime.datetime(2021, 1, 1, 5, 0, 0), 'runtime': datetime.timedelta(hours=4), 'message': "Task 'task2' status: 'fail'"},
             ],
             id="get succees & failure"),
         pytest.param(
-            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), to_datetime("2021-01-01 03:00:00"))}, 
+            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), to_datetime("2021-01-01 03:00:00"))},
             [
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
             ],
             id="get time span (datetime)"),
         pytest.param(
-            {"timestamp": between(None, to_datetime("2021-01-01 03:00:00"), none_as_open=True), "action": "run"}, 
+            {"timestamp": between(None, to_datetime("2021-01-01 03:00:00"), none_as_open=True), "action": "run"},
             [
                 {'task_name': 'task1', 'created': datetime.datetime(2021, 1, 1, 0, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': "Task 'task1' status: 'run'"},
                 {'task_name': 'task2', 'created': datetime.datetime(2021, 1, 1, 1, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': "Task 'task2' status: 'run'"},
@@ -135,14 +135,14 @@ def test_failed_logging_finish(execution, status, on, session):
             ],
             id="get time span (datetime, open left)"),
         pytest.param(
-            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), None, none_as_open=True), "action": "run"}, 
+            {"timestamp": between(to_datetime("2021-01-01 02:00:00"), None, none_as_open=True), "action": "run"},
             [
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
             ],
             id="get time span (datetime, open right)"),
         pytest.param(
-            {"timestamp": between(None, None, none_as_open=True), "action": "run"}, 
+            {"timestamp": between(None, None, none_as_open=True), "action": "run"},
             [
                 {'task_name': 'task1', 'created': datetime.datetime(2021, 1, 1, 0, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 0, 0, 0), 'message': "Task 'task1' status: 'run'"},
                 {'task_name': 'task2', 'created': datetime.datetime(2021, 1, 1, 1, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 1, 0, 0), 'message': "Task 'task2' status: 'run'"},
@@ -151,7 +151,7 @@ def test_failed_logging_finish(execution, status, on, session):
             ],
             id="get time span (open left, open right)"),
         pytest.param(
-            {"timestamp": between(datetime.datetime(2021, 1, 1, 2, 0, 0), datetime.datetime(2021, 1, 1, 3, 0, 0))}, 
+            {"timestamp": between(datetime.datetime(2021, 1, 1, 2, 0, 0), datetime.datetime(2021, 1, 1, 3, 0, 0))},
             [
                 {'task_name': 'task3', 'created': datetime.datetime(2021, 1, 1, 2, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 2, 0, 0), 'message': "Task 'task3' status: 'run'"},
                 {'task_name': 'task4', 'created': datetime.datetime(2021, 1, 1, 3, 0, 0).timestamp(), 'action': 'run', 'start': datetime.datetime(2021, 1, 1, 3, 0, 0), 'message': "Task 'task4' status: 'run'"},
@@ -193,16 +193,16 @@ def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, se
         task2.log_failure()
 
         mock_pydatetime("2021-01-01 06:00:00")
-        task3.log_inaction()  
+        task3.log_inaction()
 
         mock_pydatetime("2021-01-01 07:00:00")
-        task4.log_termination()  
-    
+        task4.log_termination()
+
         #scheduler()
-        
+
         logs = session.get_task_log(**query)
         assert isinstance(logs, chain)
-        
+
         logs = list(logs)
         assert len(expected) == len(logs)
         logs = list(map(lambda e: e.dict(), logs))

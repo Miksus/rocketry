@@ -47,7 +47,7 @@ def test_anchor_equal(dt, string, ms):
         pytest.param(
             # From Tue 00:00 to Wed 23:59:59.000 ()
             "Tue",
-            "Wed", # 
+            "Wed", #
             MS_IN_DAY, MS_IN_DAY * 3,
             id="Strings: minimal"),
     ],

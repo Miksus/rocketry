@@ -1,7 +1,7 @@
 
 """
 Test whether a time is inside of an interval.
-Also tests conditions.IsPeriod that is essentially a 
+Also tests conditions.IsPeriod that is essentially a
 wrapper for periods.
 """
 
@@ -10,7 +10,7 @@ from rocketry.pybox.time.convert import to_datetime
 
 from rocketry.time.interval import (
     TimeOfHour,
-    TimeOfDay, 
+    TimeOfDay,
     TimeOfWeek,
     TimeOfMonth,
     TimeOfYear,
@@ -388,7 +388,7 @@ def test_in(dt, start, end, cls, time_point):
 def test_not(dt, start, end, cls, time_point):
     dt = to_datetime(dt)
     time = cls(start, end, time_point=time_point)
-    
+
     assert dt not in time
 
 # Test conditions

@@ -1,4 +1,4 @@
-from rocketry.conds import time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month
+from rocketry.conds import time_of_minute, time_of_hour, time_of_day, time_of_week
 
 @app.task(time_of_minute.before("45"))
 def do_constantly_minute_before():

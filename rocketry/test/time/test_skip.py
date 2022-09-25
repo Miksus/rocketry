@@ -1,7 +1,5 @@
-from datetime import timedelta
-
 import pytest
-from rocketry.core.time.base import TimeDelta
+
 from rocketry.time import Any
 from rocketry.time import TimeOfDay, TimeOfHour, TimeOfWeek
 from rocketry.time.interval import TimeOfMinute, TimeOfMonth, TimeOfYear

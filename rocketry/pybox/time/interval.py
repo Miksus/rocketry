@@ -1,5 +1,4 @@
-
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 try:
@@ -18,7 +17,7 @@ class Interval:
     def __post_init__(self):
         if self.left > self.right:
             raise ValueError("Left cannot be greater than right")
-        
+
         if self.closed not in ('left', 'right', 'both', 'neither'):
             raise ValueError(f"Invalid close: {self.closed}")
 
@@ -99,7 +98,7 @@ class Interval:
             right_closed = self.closed in ('right', 'both') and other.closed in ('right', 'both')
 
         closed = (
-            "both" if left_closed and right_closed 
+            "both" if left_closed and right_closed
             else 'left' if left_closed
             else 'right' if right_closed
             else 'neither'

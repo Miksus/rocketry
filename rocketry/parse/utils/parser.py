@@ -1,7 +1,4 @@
 
-from typing import Callable, Dict, Type, Union
-import inspect
-
 class ParserPicker:
     "Chooses parser depending of conf type"
     def __init__(self, type_parsers, subparsers=None, key_as=None):

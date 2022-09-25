@@ -1,15 +1,9 @@
-
-import re, time
-import datetime
-from typing import Tuple
-
 from redbird.oper import in_, between
 
 from rocketry.core.condition import All, Any
 from rocketry.args import Task, Session
 from rocketry.core.condition import BaseCondition
 from rocketry.core.condition.base import BaseComparable
-from rocketry.core.time import TimePeriod
 from rocketry.core.time.utils import get_period_span
 from rocketry.pybox.time import to_timestamp
 from rocketry.log.utils import get_field_value
@@ -53,7 +47,7 @@ class DependMixin(BaseCondition):
         elif not last_actual_start:
             # Depend has succeeded but the actual task has not
             return True
-            
+
         return get_field_value(last_depend_finish, "created") > get_field_value(last_actual_start, "created")
 
 class TaskStatusMixin(BaseComparable):
@@ -68,11 +62,11 @@ class TaskStatusMixin(BaseComparable):
     def get_measurement(self, task=Task(), session=Session()):
         task = session[self.task] if self.task is not None else task
         _start_, _end_ = get_period_span(self.period if self.period is not None else task.period)
-        
+
         allow_optimization = not self.session.config.force_status_from_logs
 
         if allow_optimization:
-            
+
             # Get features that could be used to bypass reading logs
             if isinstance(self._action, str):
                 last_occur = getattr(task, f'last_{self._action}')
@@ -91,7 +85,7 @@ class TaskStatusMixin(BaseComparable):
                         cannot_have_occurred = False
                 else:
                     occurred_on_period = False
-            
+
             # Check if can be determined without reading logs
             # NOTE: if the last_occurred > _end_, we cannot determine whether the cond is true or not
             if self._is_equal_zero():
@@ -106,13 +100,13 @@ class TaskStatusMixin(BaseComparable):
                 elif occurred_on_period:
                     return True
 
-        
+
         records = task.logger.get_records(
-            created=between(to_timestamp(_start_), to_timestamp(_end_)), 
+            created=between(to_timestamp(_start_), to_timestamp(_end_)),
             action=in_(self._action) if isinstance(self._action, list) else self._action
         )
         return [
-            get_field_value(record, "created") 
+            get_field_value(record, "created")
             for record in records
         ]
 

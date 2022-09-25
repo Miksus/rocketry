@@ -1,15 +1,12 @@
-
 import logging
 import pytest
+
+from task_helpers import wait_till_task_finish
 
 from rocketry.tasks import FuncTask
 from rocketry.core.task import Task
 from rocketry.exc import TaskInactionException, TaskLoggingError
 from rocketry.conditions import AlwaysFalse, AlwaysTrue
-
-from task_helpers import wait_till_task_finish
-
-
 
 Task.use_instance_naming = True
 
@@ -40,25 +37,25 @@ def run_parametrized_kwargs(**kwargs):
     "task_func,expected_outcome,exc_cls",
     [
         pytest.param(
-            run_successful_func, 
+            run_successful_func,
             "success",
             None,
             id="Success"),
         pytest.param(
-            run_failing_func, 
-            "fail", 
+            run_failing_func,
+            "fail",
             RuntimeError,
             id="Failure"),
         pytest.param(
-            run_inaction, 
-            "inaction", 
+            run_inaction,
+            "inaction",
             None,
             id="Inaction"),
     ],
 )
 def test_run(task_func, expected_outcome, exc_cls, execution, session):
     task = FuncTask(
-        task_func, 
+        task_func,
         name="a task",
         execution=execution,
         session=session
@@ -104,7 +101,7 @@ async def run_async_inaction():
 def test_run_async(task_func, expected_outcome, execution, session):
 
     task = FuncTask(
-        task_func, 
+        task_func,
         name="a task",
         execution=execution,
         session=session
@@ -147,7 +144,7 @@ async def test_run_log_fail_at_start(task_func, expected_outcome, execution, ses
     logger.handlers.insert(0, MyHandler())
 
     task = FuncTask(
-        task_func, 
+        task_func,
         name="a task",
         execution=execution,
         session=session
@@ -162,7 +159,7 @@ async def test_run_log_fail_at_start(task_func, expected_outcome, execution, ses
     await session.scheduler.wait_task_alive()
     session.scheduler.handle_logs()
 
-    # At the moment the run log is not propagated to 
+    # At the moment the run log is not propagated to
     # finish
     assert task.status != "run"
 
@@ -185,7 +182,7 @@ async def test_run_log_fail_at_end(task_func, expected_outcome, execution, sessi
     logger.handlers.insert(0, MyHandler())
 
     task = FuncTask(
-        task_func, 
+        task_func,
         name="a task",
         execution=execution,
         session=session
@@ -204,9 +201,9 @@ async def test_run_log_fail_at_end(task_func, expected_outcome, execution, sessi
     assert task.status == "fail"
 
 def test_force_run(session):
-    
+
     task = FuncTask(
-        run_successful_func, 
+        run_successful_func,
         name="task",
         start_cond=AlwaysFalse(),
         execution="main",
@@ -224,22 +221,22 @@ def test_force_run(session):
 def test_dependency(tmpdir, session):
 
     task_a = FuncTask(
-        run_successful_func, 
-        name="task_a", 
+        run_successful_func,
+        name="task_a",
         start_cond=AlwaysTrue(),
         execution="main",
         session=session
     )
     task_b = FuncTask(
-        run_successful_func, 
-        name="task_b", 
+        run_successful_func,
+        name="task_b",
         start_cond=AlwaysTrue(),
         execution="main",
         session=session
     )
     task_dependent = FuncTask(
         run_successful_func,
-        name="task_dependent", 
+        name="task_dependent",
         start_cond="after task 'task_a' & after task 'task_b'",
         execution="main",
         session=session
@@ -255,7 +252,7 @@ def test_dependency(tmpdir, session):
 def test_parametrization_runtime(session):
 
     task = FuncTask(
-        run_parametrized, 
+        run_parametrized,
         name="a task",
         execution="main",
         session=session
@@ -272,7 +269,7 @@ def test_parametrization_runtime(session):
 def test_parametrization_local(session):
 
     task = FuncTask(
-        run_parametrized, 
+        run_parametrized,
         name="a task",
         parameters={"integer": 1, "string": "X", "optional_float": 1.1},
         execution="main",
@@ -290,7 +287,7 @@ def test_parametrization_local(session):
 def test_parametrization_kwargs(session):
 
     task = FuncTask(
-        run_parametrized_kwargs, 
+        run_parametrized_kwargs,
         name="a task",
         parameters={"integer": 1, "string": "X", "optional_float": 1.1},
         execution="main",

@@ -1,25 +1,22 @@
-
 from typing import List
 from collections import Counter
 
 from .base import (
-    Expression,
-    QueryBase,
     Key,
-    All, Any, Not,
-    Equal, NotEqual, Greater, GreaterEqual, Less, LessEqual,
-    true, false, Boolean
+    Any,
+    Equal, NotEqual, GreaterEqual, LessEqual,
+    true
 )
 from .string import Regex
 
 class Parser:
     """Parse various formats to a generic query language
-    
+
     The query language is used to translate filtering
     from conditions to loggers and APIs to the session
     in a uniform way.
     """
-    
+
     operators = {
         'min': GreaterEqual,
         'max': LessEqual,
@@ -31,12 +28,11 @@ class Parser:
             key, oper = key.split('$')
             cls_oper = self.operators[oper]
             return cls_oper(Key(key), val)
-        else:
-            return Equal(Key(key), val)
+        return Equal(Key(key), val)
 
     def from_dict(self, d:dict):
         """Parse query from dict
-        
+
         Examples
         --------
         >>> from rocketry.pybox.query import parser
@@ -54,7 +50,7 @@ class Parser:
 
         for key, val in d.items():
             substatement = self._get_operation(key, val)
-                
+
             if statement is None:
                 statement = substatement
             else:
@@ -66,7 +62,7 @@ class Parser:
 
     def from_tuples(self, l:List[tuple]):
         """Parse query from list of tuples
-        
+
         Examples
         --------
         >>> from rocketry.pybox.query import parser
@@ -135,7 +131,7 @@ class Parser:
                 substatement = Any(*(Key(key) == subval for subval in val))
             else:
                 substatement = Equal(Key(key), val)
-                
+
             if statement is None:
                 statement = substatement
             else:

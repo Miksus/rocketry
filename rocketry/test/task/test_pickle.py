@@ -1,14 +1,10 @@
-
 import pickle
 from inspect import isfunction
-from textwrap import dedent
-import os
 
 import pytest
 
 from rocketry.tasks import FuncTask
 from rocketry.conditions import TaskFailed
-from rocketry.args import Arg
 
 
 def func_on_main_level():
@@ -77,5 +73,5 @@ class TestFunc:
         session.parameters["picklable"] = "myval"
         task = FuncTask(func_on_main_level, execution="process", name="picklable", session=session)
         pick_task = pickle_dump_read(task)
-        
+
         assert pick_task.session is None

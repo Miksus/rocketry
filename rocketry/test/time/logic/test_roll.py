@@ -1,6 +1,6 @@
+import datetime
 
 import pytest
-import datetime
 
 from rocketry.core.time.base import (
     All, Any

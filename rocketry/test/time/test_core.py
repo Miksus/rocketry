@@ -1,16 +1,13 @@
-
 import pytest
+
 from rocketry.time.interval import (
     TimeOfHour,
-    TimeOfDay, 
-    TimeOfWeek,
-    TimeOfMonth,
-    TimeOfYear,
+    TimeOfDay,
 )
-from rocketry.time import All, Any, always, never
+from rocketry.time import All, Any, always
 
 def test_equal():
-    assert not (TimeOfHour("10:00") == TimeOfHour("11:00"))
+    assert not TimeOfHour("10:00") == TimeOfHour("11:00")
     assert TimeOfHour("10:00") == TimeOfHour("10:00")
     assert (TimeOfHour("10:00", "12:00") & TimeOfHour("11:00", "13:00")) == (TimeOfHour("10:00", "12:00") & TimeOfHour("11:00", "13:00"))
     assert (TimeOfHour("10:00", "12:00") | TimeOfHour("11:00", "13:00")) == (TimeOfHour("10:00", "12:00") | TimeOfHour("11:00", "13:00"))

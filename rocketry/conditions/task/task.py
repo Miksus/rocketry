@@ -1,22 +1,16 @@
+from typing import Optional
 
-import re, time
-import datetime
-from typing import Optional, Tuple
-from rocketry.core import task
+from redbird.oper import in_, greater_equal
+
 from rocketry.core.condition import BaseCondition
-
-from rocketry.core.time import TimePeriod
-from rocketry.core.time.utils import get_period_span
-from .utils import DependMixin, TaskStatusMixin
-
-from redbird.oper import between, in_, greater_equal
-
-from rocketry.core.condition import BaseComparable, All
-from rocketry.core.time import TimeDelta
-from ..time import IsPeriod
 from rocketry.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
 from rocketry.args import Task, Session
-from rocketry.log.utils import get_field_value
+from rocketry.core.time.utils import get_period_span
+from rocketry.core.time import TimeDelta
+from .utils import DependMixin, TaskStatusMixin
+
+from ..time import IsPeriod
+
 
 class TaskStarted(TaskStatusMixin):
 
@@ -77,7 +71,7 @@ class TaskTerminated(TaskStatusMixin):
 
     Examples
     --------
-    
+
     **Parsing example:**
 
     >>> from rocketry.parse import parse_condition
@@ -102,7 +96,7 @@ class TaskSucceeded(TaskStatusMixin):
 
     Examples
     --------
-    
+
     **Parsing example:**
 
     >>> from rocketry.parse import parse_condition
@@ -128,7 +122,7 @@ class TaskFinished(TaskStatusMixin):
 
     Examples
     --------
-    
+
     **Parsing example:**
 
     >>> from rocketry.parse import parse_condition
@@ -176,7 +170,7 @@ class TaskRunning(BaseCondition):
         elif is_running and self.period is None:
             # Is running (and no limit on when it stated)
             return True
-        else: 
+        else:
             # Is running but not yet sure if the period is fulfilled
             last_run = task.get_last_run()
             start, end = get_period_span(self.period)
@@ -216,7 +210,7 @@ class TaskInacted(TaskStatusMixin):
 class TaskExecutable(BaseCondition):
     """Condition for checking whether a given
     task has not finished (for given period).
-    Useful to set the given task to run once 
+    Useful to set the given task to run once
     in given period.
 
     Examples
@@ -258,8 +252,8 @@ class TaskExecutable(BaseCondition):
             # TimeDelta has no __contains__. One cannot say whether now is "past 2 hours".
             #   And please tell why this does not raise an exception then? - Future me
             #   Because the period is used in the sub statements and TimeDelta is still accepted - Senior me
-            True  
-            if isinstance(period, TimeDelta) 
+            True
+            if isinstance(period, TimeDelta)
             else IsPeriod(period=period).observe()
         )
 
@@ -296,7 +290,7 @@ class TaskExecutable(BaseCondition):
 class TaskRunnable(BaseCondition):
     """Condition for checking whether a given
     task has not run (for given period).
-    Useful to set the given task to run once 
+    Useful to set the given task to run once
     in given period.
     """
 
@@ -312,8 +306,8 @@ class TaskRunnable(BaseCondition):
         has_not_run = TaskStarted(period=period, task=task) == 0
 
         isin_period = (
-            True  
-            if isinstance(period, TimeDelta) 
+            True
+            if isinstance(period, TimeDelta)
             else IsPeriod(period=period).observe()
         )
 
@@ -325,7 +319,7 @@ class TaskRunnable(BaseCondition):
 
 class DependFinish(DependMixin):
     """Condition for checking whether a given
-    task has not finished after running a dependent 
+    task has not finished after running a dependent
     task. Useful to set the given task to run after
     another task has finished.
 
@@ -353,7 +347,7 @@ class DependFinish(DependMixin):
 
 class DependSuccess(DependMixin):
     """Condition for checking whether a given
-    task has not succeeded after running a dependent 
+    task has not succeeded after running a dependent
     task. Useful to set the given task to run after
     another task has succeeded.
 
@@ -382,7 +376,7 @@ class DependSuccess(DependMixin):
 
 class DependFailure(DependMixin):
     """Condition for checking whether a given
-    task has not failed after running a dependent 
+    task has not failed after running a dependent
     task. Useful to set the given task to run after
     another task has failed.
 
@@ -423,14 +417,14 @@ class Retry(BaseCondition):
             # Infinite retries
             return True
 
-        last_non_fail = task.logger.filter_by( 
+        last_non_fail = task.logger.filter_by(
             action=in_(['success', 'crash', 'inaction', 'terminate'])
         ).last()
 
         last_non_fail_created = 0 if last_non_fail is None else last_non_fail.created
 
         n_failed_in_row = task.logger.filter_by(
-            created=greater_equal(last_non_fail_created), 
+            created=greater_equal(last_non_fail_created),
             action='fail'
         ).count()
         return self.n >= n_failed_in_row

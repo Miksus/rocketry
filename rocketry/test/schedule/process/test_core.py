@@ -1,11 +1,9 @@
-
 import asyncio
 import multiprocessing
 import time
 from rocketry.args.builtin import TerminationFlag
 from rocketry.conditions.scheduler import SchedulerCycles
 
-from rocketry.core import Scheduler
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
 from rocketry.conds import true
@@ -50,7 +48,7 @@ def test_limited_processes(session):
         sched = session.scheduler
         assert sched.n_alive == 5 # 2 processes, 1 thread, 1 async and this
         assert not sched.has_free_processors()
-        
+
         assert task_threaded.is_alive()
         assert task_threaded.is_running
         assert task_async.is_alive()
@@ -80,4 +78,3 @@ def test_limited_processes(session):
 
     outcome = post_check.logger.filter_by().all()[-1]
     assert outcome.action == "success", outcome.exc_text
-

@@ -1,2 +1,1 @@
-
 from .closure import ClosureParser

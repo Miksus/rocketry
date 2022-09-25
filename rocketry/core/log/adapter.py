@@ -1,14 +1,11 @@
 
 import logging
 import warnings
-import datetime
-from typing import TYPE_CHECKING, Iterable, List, Dict, Union
+from typing import TYPE_CHECKING, Iterable, Dict, Union
 
-from dateutil.parser import parse as _parse_datetime
 from redbird import BaseRepo
 
 from rocketry.core.utils import is_main_subprocess
-from rocketry.pybox import query
 
 if TYPE_CHECKING:
     from rocketry.core import Task
@@ -16,7 +13,7 @@ if TYPE_CHECKING:
 class TaskAdapter(logging.LoggerAdapter):
     """Logging adapter for tasks.
 
-    The adapter includes the name of the given 
+    The adapter includes the name of the given
     task to the log records and allows reading
     the log records if a handler with reading
     capability is found.
@@ -50,10 +47,10 @@ class TaskAdapter(logging.LoggerAdapter):
         return repo.filter_by(*args, **kwargs)
 
     def get_records(self, *args, **kwargs) -> Iterable[Dict]:
-        r"""Get the log records of the task from the 
+        r"""Get the log records of the task from the
         handlers of the logger.
-        
-        One of the handlers in the logger must 
+
+        One of the handlers in the logger must
         have one of the methods:
 
         - read()
@@ -81,9 +78,9 @@ class TaskAdapter(logging.LoggerAdapter):
 
     def get_latest(self, action:str=None) -> dict:
         """Get latest log record. Note that this
-        is in the same order as in which the 
+        is in the same order as in which the
         handler(s) return the log records.
-        
+
         Parameters
         ----------
         action : str
