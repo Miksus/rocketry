@@ -145,7 +145,7 @@ class Session(RedBase):
         'rocketry.task').
 
     """
-    config: Config = Config()
+    config: Config
     class Config:
         arbitrary_types_allowed = True
 
