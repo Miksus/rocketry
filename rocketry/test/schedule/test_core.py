@@ -277,7 +277,8 @@ def test_task_disabled(tmpdir, execution, session):
             run_succeeding,
             start_cond=AlwaysFalse(),
             name="task",
-            execution=execution
+            execution=execution,
+            session=session
         )
         task.disabled = True
 

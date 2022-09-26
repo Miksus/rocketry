@@ -9,7 +9,7 @@ def test_dependency(session):
     tc = FuncTask(lambda: None, name="c", start_cond="after task 'a' & after task 'b' failed", execution="main", session=session)
     td = FuncTask(lambda: None, name="d", start_cond="after task 'a' | after task 'b'", execution="main", session=session)
 
-    te = FuncTask(lambda: None, name="no link", start_cond="daily", execution="main")
+    te = FuncTask(lambda: None, name="no link", start_cond="daily", execution="main", session=session)
 
     # Test Dependencies
     # -----------------
