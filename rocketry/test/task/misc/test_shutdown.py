@@ -23,7 +23,7 @@ def test_scheduler_shutdown(tmpdir, session):
 
         task = ShutDown(session=session)
 
-        task.force_run = True
+        task.run()
 
         session.config.shut_cond = AlwaysFalse()
 
