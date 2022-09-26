@@ -43,7 +43,7 @@ jobs:
         
     - name: Run test suite
       run: |
-        python -m pytest --pyargs rocketry
+        python -m pytest --pyargs rocketry -W error::UserWarning -W error::FutureWarning
     
     # Seems there is a possible problem with pytest-cov parallelization
     #- name: Run test suite
