@@ -212,8 +212,6 @@ class Scheduler(RedBase):
 
     async def run_task(self, task:Task, *args, **kwargs):
         """Run a given task"""
-        start_time = datetime.datetime.fromtimestamp(time.time())
-
         try:
             await task.start_async(log_queue=self._log_queue)
         except (SchedulerRestart, SchedulerExit) as exc:
