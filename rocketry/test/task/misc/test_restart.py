@@ -25,7 +25,7 @@ def test_scheduler_restart(tmpdir, session):
 
         task = Restart(session=session)
 
-        task.force_run = True
+        task.run()
 
         session.config.shut_cond = TaskStarted(task=task) == 1
         session.config.restarting = "recall"

@@ -209,7 +209,8 @@ def test_force_run(session):
         execution="main",
         session=session
     )
-    task.force_run = True
+    with pytest.deprecated_call():
+        task.force_run = True
 
     assert bool(task)
     assert bool(task)

@@ -275,7 +275,7 @@ class Session(RedBase):
             }
             if name in task_names:
                 if not obey_cond:
-                    task.force_run = True
+                    task.run()
                 if execution is not None:
                     task.execution = execution
             else:
