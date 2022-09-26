@@ -167,10 +167,10 @@ def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, se
             RepoHandler(repo=MemoryRepo(model=CustomRecord))
         ]
 
-        task1 = FuncTask(lambda: None, name="task1", execution="main", force_run=True)
-        task2 = FuncTask(lambda: None, name="task2", execution="main", force_run=True)
-        task3 = FuncTask(lambda: None, name="task3", execution="main", force_run=True)
-        task4 = FuncTask(lambda: None, name="task4", execution="main", force_run=True)
+        task1 = FuncTask(lambda: None, name="task1", execution="main", force_run=True, session=session)
+        task2 = FuncTask(lambda: None, name="task2", execution="main", force_run=True, session=session)
+        task3 = FuncTask(lambda: None, name="task3", execution="main", force_run=True, session=session)
+        task4 = FuncTask(lambda: None, name="task4", execution="main", force_run=True, session=session)
 
         # Start
         mock_pydatetime("2021-01-01 00:00:00")

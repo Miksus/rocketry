@@ -131,7 +131,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
-    session = Session(config={"debug": True, "silence_task_logging": False})
+    session = Session(config={"debug": True, "silence_task_logging": False, "task_execution": "process"})
     rocketry.session = session
     session.set_as_default()
 
@@ -277,7 +277,8 @@ def test_task_disabled(tmpdir, execution, session):
             run_succeeding,
             start_cond=AlwaysFalse(),
             name="task",
-            execution=execution
+            execution=execution,
+            session=session
         )
         task.disabled = True
 

@@ -17,12 +17,12 @@ def test_construct(tmpdir, session, execution):
         if execution == "process":
             with pytest.raises(AttributeError):
                 # Unpicklable function (cannot use process)
-                task = FuncTask(lambda : None, execution=execution)
+                task = FuncTask(lambda : None, execution=execution, session=session)
         else:
-            task = FuncTask(lambda : None, execution=execution)
+            task = FuncTask(lambda : None, execution=execution, session=session)
 
         # This should always be picklable
-        task = FuncTask(myfunc, execution=execution)
+        task = FuncTask(myfunc, execution=execution, session=session)
         assert not task.is_delayed()
         assert task.status is None
 
@@ -44,7 +44,7 @@ def test_description(session):
     "Test Task.description is correctly set (uses the func if missing)"
 
     # Test no description
-    task = FuncTask(name="no desc 1")
+    task = FuncTask(name="no desc 1", session=session)
     @task
     def myfunc():
         ...
@@ -80,14 +80,17 @@ def test_description(session):
     assert task.description == "This is func"
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_construct_delayed(session, execution):
-
-    task = FuncTask(func_name="myfunc", path="myfile.py", execution=execution, session=session)
-    assert task.status is None
-    assert task.is_delayed()
-    assert task.func_name == "myfunc"
-    assert task.path == Path("myfile.py")
-    assert task.func is None
+def test_construct_delayed(session, execution, tmpdir):
+    tmpdir.join("myfile.py").write("")
+    with tmpdir.as_cwd():
+        with pytest.warns(UserWarning):
+            task = FuncTask(func_name="myfunc", path="missing.py", execution=execution, session=session)
+        task = FuncTask(func_name="myfunc", path="myfile.py", execution=execution, session=session)
+        assert task.status is None
+        assert task.is_delayed()
+        assert task.func_name == "myfunc"
+        assert task.path == Path("myfile.py")
+        assert task.func is None
 
 def test_construct_decorate(session):
     @FuncTask(start_cond=AlwaysTrue(), name="mytask", execution="main", session=session)
@@ -164,13 +167,14 @@ def test_set_start_condition(start_cond, depend, expected, session):
         pytest.param("always true & always true", lambda: AlwaysTrue() & AlwaysTrue(), id="always true & always true"),
     ],
 )
-def test_set_start_condition_str(tmpdir, start_cond_str, start_cond, session):
+def test_set_start_condition_str(start_cond_str, start_cond, session):
 
     task = FuncTask(
         lambda : None,
         name="task",
         start_cond=start_cond_str,
         execution="main",
+        session=session
     )
     assert start_cond() == task.start_cond
 

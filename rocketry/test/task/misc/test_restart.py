@@ -12,7 +12,7 @@ def write_file(text):
         f.write(text)
 
 def test_restart_raises(session):
-    task = Restart()
+    task = Restart(session=session)
     with pytest.raises(SchedulerRestart):
         task()
 
