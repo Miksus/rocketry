@@ -73,7 +73,7 @@ class Config(BaseModel):
             warnings.warn(
                 "Default execution will be changed to 'async'. "
                 "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(task_execution='async')",
+                "ie. Rocketry(execution='async')",
                 FutureWarning
             )
             return 'process'
