@@ -1015,34 +1015,34 @@ class Task(RedBase, BaseModel):
 
     def get_last_success(self) -> datetime.datetime:
         """Get the lastest timestamp when the task succeeded."""
-        return self._get_last_action("success")
+        return self._format_timestamp(self._get_last_action("success"))
 
     def get_last_fail(self) -> datetime.datetime:
         """Get the lastest timestamp when the task failed."""
-        return self._get_last_action("fail")
+        return self._format_timestamp(self._get_last_action("fail"))
 
     def get_last_run(self) -> datetime.datetime:
         """Get the lastest timestamp when the task ran."""
-        return self._get_last_action("run")
+        return self._format_timestamp(self._get_last_action("run"))
 
     def get_last_terminate(self) -> datetime.datetime:
         """Get the lastest timestamp when the task terminated."""
-        return self._get_last_action("terminate")
+        return self._format_timestamp(self._get_last_action("terminate"))
 
     def get_last_inaction(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
-        return self._get_last_action("inaction")
+        return self._format_timestamp(self._get_last_action("inaction"))
 
     def get_last_crash(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
-        return self._get_last_action("crash")
+        return self._format_timestamp(self._get_last_action("crash"))
 
     def get_execution(self) -> str:
         if self.execution is None:
             return self.session.config.task_execution
         return self.execution
 
-    def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
+    def _get_last_action(self, action:str, from_logs=None, logger=None) -> float:
         cache_attr = f"last_{action}"
         if from_logs is not None:
             allow_cache = not from_logs
@@ -1057,8 +1057,6 @@ class Task(RedBase, BaseModel):
             value = getattr(self, cache_attr)
         else:
             value = self._get_last_action_from_log(action, logger)
-            if isinstance(value, float):
-                value = datetime.datetime.fromtimestamp(value)
             setattr(self, cache_attr, value)
         return value
 

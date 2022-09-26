@@ -6,11 +6,13 @@ about the scehuler/task/parameters etc.
 import datetime
 import logging
 from multiprocessing import cpu_count
+import time
 import warnings
 
 from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
 from pydantic import BaseModel, validator
+import pytz
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -66,6 +68,8 @@ class Config(BaseModel):
     shut_cond: Optional['BaseCondition'] = None
 
     param_materialize:Literal['pre', 'post'] = 'post'
+
+    timezone: pytz.timezone
 
     @validator('task_execution', pre=True, always=True)
     def parse_task_execution(cls, value):
@@ -549,3 +553,14 @@ class Session(RedBase):
             self.hooks.task_execute.append(func)
             return func
         return wrapper
+
+    def get_current_time(self) -> datetime.datetime:
+        """Get measurement of time as datetime
+        
+        This method is used internally thoroughout
+        the package.
+        """
+        return self._format_timestamp(time.time())
+
+    def _format_timestamp(self, dt:float):
+        return datetime.datetime.fromtimestamp(dt, tz=self.config.timezone)
