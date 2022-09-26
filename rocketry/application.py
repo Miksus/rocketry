@@ -97,4 +97,5 @@ class Grouper(_AppMixin):
         self.start_cond = start_cond
         self.execution = execution
 
-        self.session = Session()
+        # task_execution here should not matter
+        self.session = Session(config={'task_execution': 'process'})
