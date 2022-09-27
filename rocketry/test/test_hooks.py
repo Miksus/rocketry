@@ -43,7 +43,7 @@ def test_task_init(session):
     assert session.hooks.task_init == [myhook, mygenerhook] # The func is in different namespace thus different
 
     timeline.append("Main")
-    mytask = DummyTask(name="dummy")
+    mytask = DummyTask(name="dummy", session=session)
     assert timeline == [
         "Main",
         "Function hook called",

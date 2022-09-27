@@ -223,7 +223,8 @@ def test_without_handlers_status_warnings(session):
     # to test without handlers
     logger.handlers = []
 
-    task()
+    with pytest.warns(UserWarning) as warns:
+        task()
     # Cannot know the task.status as there is no log about it
     assert task.status == 'success'
     with pytest.warns(UserWarning) as warns:

@@ -392,7 +392,7 @@ class Scheduler(RedBase):
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set
-                    task.force_run = True
+                    task.run()
 
                 if self.is_task_runnable(task):
                     await self.run_task(task)
@@ -420,7 +420,7 @@ class Scheduler(RedBase):
 
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set
-                    task.force_run = True
+                    task.run()
 
                 if self.is_task_runnable(task):
                     await self.run_task(task)

@@ -35,7 +35,8 @@ def test_task_status_race(tmpdir, session, execution_number):
     task = FuncTask(
         run_task,
         name="runned task",
-        execution="main"
+        execution="main",
+        session=session
     )
     task(params={"fail": False})
 
@@ -82,7 +83,8 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         task = FuncTask(
             run_task,
             name="runned task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         # Has not yet ran
@@ -257,9 +259,9 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         pytest.param(DependSuccess, "task 'mydep' succeeded before 'mytask' started", id="DependSuccess"),
     ],
 )
-def test_display(cls, string):
-    task = FuncTask(func=lambda: None, name="mytask")
-    depend_task = FuncTask(func=lambda: None, name="mydep")
+def test_display(cls, string, session):
+    task = FuncTask(func=lambda: None, name="mytask", session=session)
+    depend_task = FuncTask(func=lambda: None, name="mydep", session=session)
     if cls in (DependFinish, DependSuccess, DependFailure):
         s = str(cls(task=task, depend_task=depend_task))
     else:

@@ -73,7 +73,7 @@ class Config(BaseModel):
             warnings.warn(
                 "Default execution will be changed to 'async'. "
                 "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(task_execution='async')",
+                "ie. Rocketry(execution='async')",
                 FutureWarning
             )
             return 'process'
@@ -144,7 +144,7 @@ class Session(RedBase):
         'rocketry.task').
 
     """
-    config: Config = Config()
+    config: Config
     class Config:
         arbitrary_types_allowed = True
 
@@ -272,7 +272,7 @@ class Session(RedBase):
             }
             if name in task_names:
                 if not obey_cond:
-                    task.force_run = True
+                    task.run()
                 if execution is not None:
                     task.execution = execution
             else:

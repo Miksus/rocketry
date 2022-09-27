@@ -611,8 +611,13 @@ class Task(RedBase, BaseModel):
         except TaskLoggingError as exc:
             # Logging failed
             self._thread_error = exc
-            self.log_failure()
-            raise
+            try:
+                self.log_failure()
+            except:
+                pass
+            # Note that we don't raise the error as there is nothing 
+            # to catch it
+            return
         finally:
             event.set()
 

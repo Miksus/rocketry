@@ -35,7 +35,7 @@ def test_run_success(session, execution):
 
         return_value = main()
         """), execution=execution, name="mytask", session=session)
-    task.force_run = True
+    task.run()
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
     session.start()
@@ -51,7 +51,7 @@ def test_run_success_parametrize(session, execution):
 
         return_value = main(myparam)
         """), name="mytask", execution=execution, parameters={'myparam': ' + myparam'}, session=session)
-    task.force_run = True
+    task.run()
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
     session.start()
@@ -73,7 +73,7 @@ def test_run_fail(session, execution):
 
         return_value = main()
         """), execution=execution, name="mytask", session=session)
-    task.force_run = True
+    task.run()
 
     session.config.shut_cond = TaskStarted(task='mytask') >= 1
     session.start()

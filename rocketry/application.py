@@ -47,13 +47,15 @@ class Rocketry(_AppMixin):
 
     def __init__(self, session:Session=None, logger_repo:Optional[BaseRepo]=None, execution=None, **kwargs):
 
-        self.session = session if session is not None else Session(**kwargs)
+        config = {}
+        config.update(kwargs.pop('config', {}))
+        if execution is not None:
+            config['task_execution'] = execution
+
+        self.session = session if session is not None else Session(**kwargs, config=config)
 
         logger = logging.getLogger(self.session.config.task_logger_basename)
         logger.setLevel(logging.INFO)
-
-        if execution is not None:
-            self.session.config.task_execution = execution
 
         self._set_logger_with_repo(logger_repo)
 
@@ -95,4 +97,5 @@ class Grouper(_AppMixin):
         self.start_cond = start_cond
         self.execution = execution
 
-        self.session = Session()
+        # task_execution here should not matter
+        self.session = Session(config={'task_execution': 'process'})

@@ -162,7 +162,8 @@ def test_import_relative_with_params(tmpdir, session):
             func_name="main",
             path="mytasks/myfile.py",
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
         task(params={"val_5":5})
 

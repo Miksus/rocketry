@@ -25,9 +25,9 @@ def test_normal(session, execution):
         name="return task",
         start_cond="~has started",
         execution=execution,
-        force_run=True,
         session=session
     )
+    task_return.run()
     task = FuncTask(
         func_x_with_arg,
         name="a task",
@@ -54,9 +54,9 @@ def test_normal_pass_task(session, execution):
         name="return task",
         start_cond="~has started",
         execution=execution,
-        force_run=True,
         session=session
     )
+    task_return.run()
     task = FuncTask(
         func_x_with_arg,
         name="a task",

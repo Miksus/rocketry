@@ -2,6 +2,12 @@
 Version history
 ===============
 
+- ``2.4.1``
+
+    - Fix: Warnings about ``task_execution`` in import
+    - Docs: Fixed typos
+    - Clean: Cleaned code base according to Pylint
+
 - ``2.4.0``
 
     - Add: New condition, ``Retry``
