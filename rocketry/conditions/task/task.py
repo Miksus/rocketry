@@ -167,14 +167,13 @@ class TaskRunning(BaseCondition):
         if not is_running:
             # Not running so always false
             return False
-        elif is_running and self.period is None:
+        if is_running and self.period is None:
             # Is running (and no limit on when it stated)
             return True
-        else:
-            # Is running but not yet sure if the period is fulfilled
-            last_run = task.get_last_run()
-            start, end = get_period_span(self.period)
-            return start <= last_run <= end
+        # Is running but not yet sure if the period is fulfilled
+        last_run = task.get_last_run()
+        start, end = get_period_span(self.period)
+        return start <= last_run <= end
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -410,10 +409,10 @@ class Retry(BaseCondition):
     def get_state(self, task=Task(), session=Session()):
         if self.n == 0:
             return False
-        elif task.get_status() != "fail":
+        if task.get_status() != "fail":
             # Previously did not fail, no need to retry
             return False
-        elif self.n == -1:
+        if self.n == -1:
             # Infinite retries
             return True
 

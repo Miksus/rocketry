@@ -89,7 +89,7 @@ def test_task_execution(tmpdir, execution, func, session):
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside rocketry
-        FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution, session=session),
+        FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second"))
 
@@ -187,7 +187,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
 @pytest.mark.parametrize("func_type", ["sync", "async"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_status(session, execution, func_type, mode):
-    session.config.force_status_from_logs = True if mode == "use logs" else False
+    session.config.force_status_from_logs = mode == "use logs"
 
     task_success = FuncTask(
         run_succeeding if func_type == "sync" else run_succeeding_async,
@@ -413,7 +413,7 @@ def test_startup_shutdown(tmpdir, execution, session):
         assert os.path.exists("start.txt")
         assert os.path.exists("shut.txt")
 
-        assert list(session.get_task_log()) != []
+        assert list(session.get_task_log())
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_logging_repo(tmpdir, execution):

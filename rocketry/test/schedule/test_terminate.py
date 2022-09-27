@@ -22,9 +22,8 @@ def run_slow_threaded(_thread_terminate_):
     time.sleep(0.2)
     if _thread_terminate_.is_set():
         raise TaskTerminationException
-    else:
-        with open("work.txt", "a") as file:
-            file.write("line created\n")
+    with open("work.txt", "a") as file:
+        file.write("line created\n")
 
 async def run_slow_async():
     await asyncio.sleep(0.2)

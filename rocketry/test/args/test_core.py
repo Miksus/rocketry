@@ -3,7 +3,7 @@ from rocketry.args import SimpleArg, Arg, EnvArg, CliArg
 
 def test_equal():
     assert SimpleArg("A") != SimpleArg("B")
-    assert not SimpleArg("A") == SimpleArg("B")
+    assert SimpleArg("A") != SimpleArg("B")
     assert SimpleArg("A") == SimpleArg("A")
 
 def test_pipeline(session):

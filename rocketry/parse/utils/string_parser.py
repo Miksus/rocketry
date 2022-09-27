@@ -52,13 +52,11 @@ class InstructionParser:
             s = s.strip()
             if s in ("&", "|", "~"):
                 return s
-            else:
-                return self.item_parser(s, **kwargs)
+            return self.item_parser(s, **kwargs)
 
         if isinstance(s, str):
             return parse_string(s)
-        else:
-            return tuple(parse_string(e) for e in s)
+        return tuple(parse_string(e) for e in s)
 
     def _assemble(self, *s:tuple):
 
@@ -136,8 +134,7 @@ class InstructionParser:
                 return l[0]
 
             return tuple(l)
-        else:
-            return s
+        return s
 
 
 def _flatten_tuples(cont):

@@ -7,7 +7,8 @@ from rocketry.tasks import FuncTask
 from rocketry.conditions import AlwaysTrue
 from rocketry.parse.utils import ParserError
 
-def myfunc(): ...
+def myfunc():
+    ...
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_construct(tmpdir, session, execution):

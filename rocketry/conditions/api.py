@@ -156,14 +156,13 @@ def every(past:str, based="run"):
     kws_past = {} # 'unit': 's'
     if based == "run":
         return TaskStarted(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "success":
+    if based == "success":
         return TaskSucceeded(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "fail":
+    if based == "fail":
         return TaskFailed(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "finish":
+    if based == "finish":
         return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
-    else:
-        raise ValueError(f"Invalid status: {based}")
+    raise ValueError(f"Invalid status: {based}")
 
 def cron(__expr=None, **kwargs):
     if __expr:

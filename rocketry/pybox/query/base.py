@@ -4,7 +4,7 @@ import datetime
 from rocketry.pybox.time.convert import to_datetime, to_timedelta
 
 class QueryBase:
-    
+
     def _get_value(self, item:dict, oper):
         return item[oper.name] if isinstance(oper, Key) else oper
 
@@ -22,12 +22,11 @@ class QueryBase:
             is_right_key = isinstance(right, Key)
             if is_left_key and is_right_key:
                 raise ValueError("Both cannot be keys")
-            elif is_left_key:
+            if is_left_key:
                 return left.name, right
-            elif is_right_key:
+            if is_right_key:
                 return right.name, left
-            else:
-                raise ValueError("Neither are keys")
+            raise ValueError("Neither are keys")
         py_query = {}
         qry = self
         if self == true:
@@ -110,8 +109,7 @@ class Expression(QueryBase):
         is_datetime = isinstance(left, dt_cls) or isinstance(right, dt_cls)
         if is_datetime:
             return to_datetime(left), to_datetime(right)
-        else:
-            return left, right
+        return left, right
 
 class All(Expression):
 
