@@ -5,7 +5,7 @@ import os
 
 import pytest
 from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.conditions.task import TaskTerminated, TaskRunning
+from rocketry.conditions.task import TaskRunning
 
 from rocketry.core.time.base import TimeDelta
 from rocketry.tasks import FuncTask
@@ -142,7 +142,7 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution, session=session)
 
-        session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
 
         logger = task.logger
