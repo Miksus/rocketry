@@ -979,7 +979,7 @@ class Task(RedBase, BaseModel):
             self._run_stack = [
                 run
                 for run in self._run_stack
-                if run.is_alive() and run.exception is None
+                if run.is_alive() or run.exception is not None
             ]
 
     def _check_exceptions(self):
