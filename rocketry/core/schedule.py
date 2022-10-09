@@ -235,29 +235,6 @@ class Scheduler(RedBase):
         self.logger.debug(f"Terminating task '{task.name}'")
         await task._terminate_all(reason=reason)
 
-    def is_timeouted(self, task):
-        """Check if the task is timeouted."""
-        #! TODO: Can this be put to the Task?
-        if task.permanent_task:
-            # Task is meant to be on all the time thus no reason to terminate due to timeout
-            return False
-        elif not hasattr(task, "_thread") and not hasattr(task, "_process"):
-            # Task running on the main process
-            # cannot be left running
-            return False
-        elif not task.is_alive():
-            return False
-
-        timeout = (
-            task.timeout if task.timeout is not None
-            else self.session.config.timeout
-        )
-
-        if timeout is None:
-            return False
-        run_duration = datetime.datetime.fromtimestamp(time.time()) - task.get_last_run()
-        return run_duration > timeout
-
     def is_task_runnable(self, task:Task):
         """Inspect whether the task should be run."""
         #! TODO: Can this be put to the Task?
@@ -275,31 +252,6 @@ class Scheduler(RedBase):
                 return False
         is_condition = self.check_task_cond(task)
         return is_condition
-
-    def is_out_of_condition(self, task:Task):
-        """Inspect whether the task should be terminated."""
-        #! TODO: Can this be put to the Task?
-        if not task.is_alive():
-            # NOTE:
-            # Task running on the main process
-            # cannot be left running
-            return False
-
-        elif task.force_termination:
-            return True
-
-        else:
-            try:
-                return task.is_terminable()
-            except:
-                self.logger.exception(f"Condition crashed for task '{task.name}'")
-                if not self.session.config.silence_cond_check:
-                    raise
-
-                # We operate the same way as people often do:
-                # If we don't know if the process should be killed,
-                # we panic and shut it down
-                return True
 
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
