@@ -1,9 +1,15 @@
 import asyncio
 import multiprocessing
 import time
+import logging
+
+from redbird.repos import MemoryRepo
+from redbird.logging import RepoHandler
+
 from rocketry.args.builtin import TerminationFlag
 from rocketry.conditions.scheduler import SchedulerCycles
 
+from rocketry.log import LogRecord
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
 from rocketry.conds import true
@@ -35,6 +41,10 @@ def test_creating_child(session):
     assert 0 == logger.filter_by(action="fail").count()
 
 def test_limited_processes(session):
+    task_logger = logging.getLogger(session.config.task_logger_basename)
+    task_logger.handlers = [
+        RepoHandler(repo=MemoryRepo(model=LogRecord)),
+    ]
 
     def run_thread(flag=TerminationFlag()):
         while not flag.is_set():
@@ -46,8 +56,6 @@ def test_limited_processes(session):
 
     def do_post_check():
         sched = session.scheduler
-        assert sched.n_alive == 5 # 2 processes, 1 thread, 1 async and this
-        assert not sched.has_free_processors()
 
         assert task_threaded.is_alive()
         assert task_threaded.is_running
@@ -61,6 +69,9 @@ def test_limited_processes(session):
         assert task1.is_running
         assert task2.is_running
         assert not task3.is_running
+
+        assert sched.n_alive == 5 # 2 processes, 1 thread, 1 async and this
+        assert not sched.has_free_processors()
 
     task_threaded = FuncTask(run_thread, name="threaded", priority=4, start_cond=true, execution="thread", permanent=True, session=session)
     task_async = FuncTask(run_async, name="async", priority=4, start_cond=true, execution="async", permanent=True, session=session)
