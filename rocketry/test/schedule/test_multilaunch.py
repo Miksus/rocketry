@@ -43,14 +43,25 @@ def get_slow_func(execution):
         "thread": run_slow_threaded_fail,
     }[execution]
 
+@pytest.mark.parametrize("how", ["config", "task"])
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
-def test_multilaunch_terminate(tmpdir, execution, session):
+def test_multilaunch_terminate(execution, how, session):
     # Start 5 time
     session.config.instant_shutdown = True
     session.config.max_process_count = 3
 
+    if how == "config":
+        session.config.multilaunch = True
+    else:
+        session.config.multilaunch = False
+
     func_run_slow = get_slow_func(execution)
-    task = FuncTask(func_run_slow, name="slow task", start_cond=TaskStarted() <= 3, multilaunch=True, execution=execution, session=session)
+    task = FuncTask(
+        func_run_slow, name="slow task", 
+        start_cond=TaskStarted() <= 3,
+        multilaunch=True if how == "task" else None,
+        execution=execution, session=session
+    )
     session.config.shut_cond = (TaskStarted(task="slow task") >= 3)
     session.start()
 

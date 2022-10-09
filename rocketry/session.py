@@ -57,6 +57,7 @@ class Config(BaseModel):
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
 
+    multilaunch: bool = False
     max_process_count = cpu_count()
     tasks_as_daemon: bool = True
     restarting: str = 'replace'

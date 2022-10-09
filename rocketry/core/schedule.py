@@ -267,7 +267,10 @@ class Scheduler(RedBase):
             if not has_free_processors:
                 return False
         if execution in ("thread", "async", "process"):
-            allow_multilaunch = task.multilaunch
+            if task.multilaunch is None:
+                allow_multilaunch = self.session.config.multilaunch
+            else:
+                allow_multilaunch = task.multilaunch
             if not allow_multilaunch and task.is_alive():
                 return False
         is_condition = self.check_task_cond(task)

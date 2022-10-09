@@ -234,7 +234,7 @@ class Task(RedBase, BaseModel):
     start_cond: Optional[BaseCondition] = AlwaysFalse() #! TODO: Create get_start_cond so that this could also be as string (lazily parsed)
     end_cond: Optional[BaseCondition] = AlwaysFalse()
 
-    multilaunch: bool = False
+    multilaunch: Optional[bool] = None
     on_startup: bool = False
     on_shutdown: bool = False
 
