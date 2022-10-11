@@ -24,7 +24,7 @@ class Link:
         return iter((self.parent, self.child))
 
     def __eq__(self, other):
-        if type(self) == type(other):
+        if isinstance(self, type(other)):
             return (
                 self.parent == other.parent
                 and self.child == other.child

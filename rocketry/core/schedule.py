@@ -122,7 +122,7 @@ class Scheduler(RedBase):
                 await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
-                elif self._flag_restart.is_set():
+                if self._flag_restart.is_set():
                     raise SchedulerRestart()
 
                 await self.run_cycle()

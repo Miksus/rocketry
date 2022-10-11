@@ -16,15 +16,13 @@ class Private(BaseArgument):
     def get_value(self, task=None, **kwargs):
         if task is None:
             return self.string_hidden
-        else:
-            # Called for task --> must pass the actual value
-            return self.__value
+        # Called for task --> must pass the actual value
+        return self.__value
 
     def __eq__(self, other):
         if isinstance(other, Private):
             return self.__value == other._Private__value
-        else:
-            return self.__value == other
+        return self.__value == other
 
     def __repr__(self):
         cls_name = type(self).__name__

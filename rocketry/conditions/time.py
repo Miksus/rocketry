@@ -38,10 +38,9 @@ class IsPeriod(BaseCondition):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        elif hasattr(self, "period"):
+        if hasattr(self, "period"):
             return f'currently {str(self.period)}'
-        else:
-            return type(self).__name__
+        return type(self).__name__
 
     def __repr__(self):
         cls_name = type(self).__name__

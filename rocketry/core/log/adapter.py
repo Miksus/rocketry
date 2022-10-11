@@ -73,8 +73,7 @@ class TaskAdapter(logging.LoggerAdapter):
             repo = getattr(handler, 'repo', None)
             if repo is not None:
                 return repo
-        else:
-            raise AttributeError(f"Logger '{self.logger.name}' has no handlers with repository. Cannot be read.")
+        raise AttributeError(f"Logger '{self.logger.name}' has no handlers with repository. Cannot be read.")
 
     def get_latest(self, action:str=None) -> dict:
         """Get latest log record. Note that this
@@ -105,7 +104,7 @@ class TaskAdapter(logging.LoggerAdapter):
         return self.logger.handlers
 
     def __eq__(self, o: object) -> bool:
-        is_same_type = type(self) == type(o)
+        is_same_type = isinstance(self, type(o))
         has_same_logger = self.logger == o.logger
         has_same_task_name = self.extra['task_name'] == o.extra['task_name']
         return is_same_type and has_same_logger and has_same_task_name
@@ -121,8 +120,7 @@ class TaskAdapter(logging.LoggerAdapter):
         for handler in handlers:
             if hasattr(handler, 'repo'):
                 return True
-        else:
-            return False
+        return False
 
     @property
     def is_readable_unset(self):

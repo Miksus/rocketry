@@ -7,7 +7,7 @@ from rocketry.time.interval import (
 from rocketry.time import All, Any, always
 
 def test_equal():
-    assert not TimeOfHour("10:00") == TimeOfHour("11:00")
+    assert TimeOfHour("10:00") != TimeOfHour("11:00")
     assert TimeOfHour("10:00") == TimeOfHour("10:00")
     assert (TimeOfHour("10:00", "12:00") & TimeOfHour("11:00", "13:00")) == (TimeOfHour("10:00", "12:00") & TimeOfHour("11:00", "13:00"))
     assert (TimeOfHour("10:00", "12:00") | TimeOfHour("11:00", "13:00")) == (TimeOfHour("10:00", "12:00") | TimeOfHour("11:00", "13:00"))

@@ -291,12 +291,11 @@ class Task(RedBase, BaseModel):
     def parse_timeout(cls, value, values):
         if value == "never":
             return datetime.timedelta.max
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             return to_timedelta(value, unit="s")
-        elif value is not None:
+        if value is not None:
             return to_timedelta(value)
-        else:
-            return value
+        return value
 
     @property
     def logger(self):
@@ -342,9 +341,9 @@ class Task(RedBase, BaseModel):
         if name_exists:
             if on_exists == 'ignore':
                 return value
-            elif on_exists == 'raise':
+            if on_exists == 'raise':
                 raise ValueError(f"Task name '{value}' already exists.")
-            elif on_exists == 'rename':
+            if on_exists == 'rename':
                 basename = value
                 name = value
                 num = 0
@@ -370,8 +369,7 @@ class Task(RedBase, BaseModel):
     def parse_parameters(cls, value):
         if isinstance(value, Parameters):
             return value
-        else:
-            return Parameters(value)
+        return Parameters(value)
 
     @validator('force_run', pre=False)
     def parse_force_run(cls, value, values):
@@ -554,7 +552,7 @@ class Task(RedBase, BaseModel):
         forced_run = bool(self.batches)
         if forced_run:
             return True
-        elif self.disabled:
+        if self.disabled:
             return False
 
         cond = self.start_cond.observe(task=self)
@@ -1116,9 +1114,8 @@ class Task(RedBase, BaseModel):
             status = record["action"] if isinstance(record, dict) else record.action
             self.status = status
             return status
-        else:
-            # This is way faster
-            return self.status
+        # This is way faster
+        return self.status
 
     def _set_status(self, action, message=None, return_value=None):
         if message is None:
@@ -1278,9 +1275,8 @@ class Task(RedBase, BaseModel):
                 self.log_running()
                 self.logger.critical(f"Task '{self.name}' crashed in pickling. Cannot pickle: {unpicklable}", extra={"action": "fail", "task_name": self.name})
                 raise PicklingError(f"Task {self.name} could not be pickled. Cannot pickle: {unpicklable}")
-            else:
-                # Is pickled by something else than task execution
-                return state
+            # Is pickled by something else than task execution
+            return state
 
         # what we return here will be stored in the pickle
         return state

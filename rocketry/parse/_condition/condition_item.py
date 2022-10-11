@@ -43,8 +43,7 @@ def parse_condition_item(s:str, session=None) -> BaseCondition:
 
     if isinstance(parser, BaseCondition):
         return parser
-    else:
-        if isinstance(parser, CondParser):
-            return parser(s, **kwargs)
-        cond = parser(**kwargs)
-        return cond
+    if isinstance(parser, CondParser):
+        return parser(s, **kwargs)
+    cond = parser(**kwargs)
+    return cond

@@ -64,8 +64,7 @@ class Arg(BaseArgument):
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.key == other.key
-        else:
-            return False
+        return False
 
 class Session(BaseArgument):
     "An argument that represents the session"
@@ -73,8 +72,7 @@ class Session(BaseArgument):
     def get_value(self, task=None, session=None, **kwargs) -> Any:
         if session is not None:
             return session
-        else:
-            return task.session
+        return task.session
 
     def __repr__(self):
         return f'session'
@@ -88,8 +86,7 @@ class Task(BaseArgument):
     def get_value(self, task=None, **kwargs) -> Any:
         if self.name is None:
             return task
-        else:
-            return task.session[self.name]
+        return task.session[self.name]
 
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
@@ -214,8 +211,7 @@ class FuncArg(BaseArgument):
 
         if materialize == "pre":
             return self.get_value(**kwargs)
-        else:
-            return self
+        return self
 
     def __repr__(self):
         cls_name = type(self).__name__
@@ -271,6 +267,5 @@ class CliArg(BaseArgument):
         else:
             if self.default is NOTSET:
                 raise KeyError("CLI argument not found")
-            else:
-                return self.default
+            return self.default
         return args[i+1]
