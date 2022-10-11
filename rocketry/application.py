@@ -9,6 +9,7 @@ from rocketry.log.log_record import LogRecord
 
 from rocketry.conditions import FuncCond
 from rocketry.parameters import FuncParam
+from rocketry.event import EventStream
 from rocketry import Session
 
 class _AppMixin:
@@ -26,6 +27,10 @@ class _AppMixin:
     def cond(self, syntax: Union[str, Pattern, List[Union[str, Pattern]]]=None):
         "Create a condition (decorator)"
         return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)
+
+    def event(self):
+        "Create an event stream (decorator)"
+        return EventStream()
 
     def params(self, **kwargs):
         "Set session parameters"
