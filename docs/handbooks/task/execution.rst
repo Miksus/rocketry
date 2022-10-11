@@ -214,3 +214,46 @@ This execution method runs the task on a separate process using
     serialization of the function fails in initiating the process.
 
 Useful for CPU bound problems or for problems in which the code has tendency to get stuck.
+
+Multilaunch
+-----------
+
+By default, each task can be set running only once. In other words, if a task is 
+already running it cannot be started even if its starting condition was still true
+or it was set running using ``task.run()``. This limitation is in place to make 
+sure the task logs are consistent. 
+
+To illustrate this, your task must finish before it could be started again:
+
+======= ========= =======
+created task_name action
+======= ========= =======
+1       do_things run
+2       do_things success
+3       do_things run
+4       do_things success
+======= ========= =======
+
+
+However, in some cases is not preferable and you might want to allow same task to 
+start multiple times. This can be done by setting ``multilaunch`` true either on session 
+configuration or to an individual task:
+
+.. code-block:: python
+
+    app = Rocketry(config={'multilaunch': True})
+
+    @app.task(multilaunch=True)
+    def do_things():
+        ...
+
+This task can produce logs similar to the following:
+
+======= ========= =======
+created task_name action
+======= ========= =======
+1       do_things run
+2       do_things run
+3       do_things success
+4       do_things success
+======= ========= =======
