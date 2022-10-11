@@ -533,9 +533,6 @@ class Task(RedBase, BaseModel):
     def __bool__(self):
         return self.is_runnable()
 
-    def is_terminable(self):
-        return self.end_cond.observe(task=self)
-
     def is_runnable(self):
         """Check whether the task can be run or not.
 
