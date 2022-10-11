@@ -116,8 +116,7 @@ class BaseCondition(RedBase):
     def __str__(self):
         if hasattr(self, "_str"):
             return self._str
-        else:
-            raise AttributeError(f"Condition {type(self)} is missing __str__.")
+        raise AttributeError(f"Condition {type(self)} is missing __str__.")
 
 
 class _ConditionContainer:
@@ -134,8 +133,7 @@ class _ConditionContainer:
         is_same_class = isinstance(other, type(self))
         if is_same_class:
             return self.subconditions == other.subconditions
-        else:
-            return False
+        return False
 
     def __repr__(self):
         string = ', '.join(map(str, self.subconditions))
@@ -223,14 +221,13 @@ class Not(_ConditionContainer, BaseCondition):
         "Equal operation"
         if isinstance(other, AlwaysTrue):
             return isinstance(self.condition, AlwaysFalse)
-        elif isinstance(other, AlwaysFalse):
+        if isinstance(other, AlwaysFalse):
             return isinstance(self.condition, AlwaysTrue)
 
         is_same_class = isinstance(other, type(self))
         if is_same_class:
             return self.condition == other.condition
-        else:
-            return False
+        return False
 
 
 class AlwaysTrue(BaseCondition):

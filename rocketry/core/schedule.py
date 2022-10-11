@@ -122,7 +122,7 @@ class Scheduler(RedBase):
                 await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
-                elif self._flag_restart.is_set():
+                if self._flag_restart.is_set():
                     raise SchedulerRestart()
 
                 await self.run_cycle()
@@ -271,11 +271,11 @@ class Scheduler(RedBase):
         if task.permanent_task:
             # Task is meant to be on all the time thus no reason to terminate due to timeout
             return False
-        elif not hasattr(task, "_thread") and not hasattr(task, "_process"):
+        if not hasattr(task, "_thread") and not hasattr(task, "_process"):
             # Task running on the main process
             # cannot be left running
             return False
-        elif not task.is_alive():
+        if not task.is_alive():
             return False
 
         timeout = (
@@ -297,16 +297,15 @@ class Scheduler(RedBase):
             is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
             return is_not_running and has_free_processors and is_condition
-        elif execution == "main":
+        if execution == "main":
             return is_condition
-        elif execution == "thread":
+        if execution == "thread":
             is_not_running = not task.is_alive()
             return is_not_running and is_condition
-        elif execution == "async":
+        if execution == "async":
             is_not_running = not task.is_alive()
             return is_not_running and is_condition
-        else:
-            raise NotImplementedError(task.execution)
+        raise NotImplementedError(task.execution)
 
     def is_out_of_condition(self, task:Task):
         """Inspect whether the task should be terminated."""
@@ -317,21 +316,20 @@ class Scheduler(RedBase):
             # cannot be left running
             return False
 
-        elif task.force_termination:
+        if task.force_termination:
             return True
 
-        else:
-            try:
-                return task.is_terminable()
-            except:
-                self.logger.exception(f"Condition crashed for task '{task.name}'")
-                if not self.session.config.silence_cond_check:
-                    raise
+        try:
+            return task.is_terminable()
+        except:
+            self.logger.exception(f"Condition crashed for task '{task.name}'")
+            if not self.session.config.silence_cond_check:
+                raise
 
-                # We operate the same way as people often do:
-                # If we don't know if the process should be killed,
-                # we panic and shut it down
-                return True
+            # We operate the same way as people often do:
+            # If we don't know if the process should be killed,
+            # we panic and shut it down
+            return True
 
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""

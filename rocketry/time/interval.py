@@ -362,7 +362,7 @@ class TimeOfYear(AnchoredInterval):
             # May and June', the sentence includes
             # time between 1st of May to 30th of June.
             return self._month_start_mapping[nth_month+1] - 1
-        elif day_of_month_str:
+        if day_of_month_str:
             microseconds = TimeOfMonth().anchor_str(day_of_month_str)
         else:
             microseconds = 0

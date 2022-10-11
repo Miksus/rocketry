@@ -86,15 +86,13 @@ class FuncCond(BaseCondition):
     def __call__(self, *args, **kwargs):
         if self.func is None and (len(args) != 1 or kwargs):
             raise ValueError("Expected decorated function.")
-        elif self.func is None:
+        if self.func is None:
             func = args[0]
             self.func = func
             if self.decor_return_func:
                 return func # To prevent problems with pickling
-            else:
-                return self
-        else:
-            return self._recreate(*args, **kwargs)
+            return self
+        return self._recreate(*args, **kwargs)
 
 
     def __bool__(self):

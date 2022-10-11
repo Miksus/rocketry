@@ -36,8 +36,7 @@ def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
     cls_kwargs = {"task": task} if task is not None else {}
     if inverse:
         return Not(cls(period=period, **cls_kwargs))
-    else:
-        return cls(period=period, **cls_kwargs)
+    return cls(period=period, **cls_kwargs)
 
 
 def _set_is_period_parsing():

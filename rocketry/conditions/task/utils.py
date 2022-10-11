@@ -44,7 +44,7 @@ class DependMixin(BaseCondition):
         if not last_depend_finish:
             # Depend has not run at all
             return False
-        elif not last_actual_start:
+        if not last_actual_start:
             # Depend has succeeded but the actual task has not
             return True
 
@@ -81,7 +81,7 @@ class TaskStatusMixin(BaseComparable):
                         occurred_on_period = True
                         cannot_have_occurred = False
                         break
-                    elif last_occur is not None and last_occur >= _start_:
+                    if last_occur is not None and last_occur >= _start_:
                         cannot_have_occurred = False
                 else:
                     occurred_on_period = False
@@ -91,13 +91,13 @@ class TaskStatusMixin(BaseComparable):
             if self._is_equal_zero():
                 if cannot_have_occurred:
                     return True
-                elif occurred_on_period:
+                if occurred_on_period:
                     return False
-            elif self._is_any_over_zero():
+            if self._is_any_over_zero():
                 if cannot_have_occurred:
                     # If never occurred, it hasn't occurred on the period either
                     return False
-                elif occurred_on_period:
+                if occurred_on_period:
                     return True
 
 

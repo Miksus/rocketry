@@ -15,5 +15,4 @@ def find_package_root(path) -> Union[Path, None]:
                 # There is no package (no __init__.py file at all)
                 return None
             return path
-    else:
-        raise FileExistsError("No package root found.")
+    raise FileExistsError("No package root found.")

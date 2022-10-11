@@ -21,10 +21,9 @@ def _parse_all(*args):
 def _parse_not(arg):
     if hasattr(arg, "__invert__"):
         return ~arg
-    elif isinstance(arg, Not):
+    if isinstance(arg, Not):
         return ~arg
-    else:
-        return Not(arg)
+    return Not(arg)
 
 parse_condition_string = InstructionParser(
     parse_condition_item,
