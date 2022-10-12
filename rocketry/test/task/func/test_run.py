@@ -63,7 +63,7 @@ def test_run(task_func, expected_outcome, exc_cls, execution, session):
 
     try:
         task()
-    except:
+    except Exception:
         # failing execution="main"
         if expected_outcome != "fail":
             raise
@@ -109,7 +109,7 @@ def test_run_async(task_func, expected_outcome, execution, session):
 
     try:
         task()
-    except:
+    except Exception:
         # failing execution="main"
         if expected_outcome != "fail":
             raise

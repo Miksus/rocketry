@@ -45,7 +45,7 @@ def copy_file_to_tmpdir(tmpdir, source_file, target_path):
     source_path = Path(os.path.dirname(__file__)) / "test_files" / source_file
 
     fh = tmpdir.join(target_path.name)
-    with open(source_path) as f:
+    with open(source_path, encoding="utf-8") as f:
         fh.write(f.read())
     return fh
 
@@ -122,7 +122,6 @@ def mock_datetime_now(monkeypatch):
     """Monkey patch datetime.datetime.now
     Returns a function that takes datetime as string as input
     and sets that to datetime.datetime.now()"""
-    import datetime
     class mockdatetime(datetime.datetime):
         _freezed_datetime = None
         @classmethod
@@ -174,7 +173,7 @@ def mongo_conn_str():
         pytest.skip("Missing Mongo connection")
     import yaml
 
-    with open(conf_path, 'r') as f:
+    with open(conf_path, 'r', encoding="utf-8") as f:
         conf = yaml.safe_load(f)
     return conf["mongodb"]["conn_str"]
 

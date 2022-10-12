@@ -294,7 +294,7 @@ class BaseComparable(BaseCondition):
             for comp in self._comp_attrs
             if comp in self._comps
         }
-        if comps == {"__gt__": 0} or comps == {"__ge__": 1} or comps == {"__gt__": 0, "__ge__": 1}:
+        if comps in ({'__gt__': 0}, {'__ge__': 1}, {'__gt__': 0, '__ge__': 1}):
             return True
         return not comps
 

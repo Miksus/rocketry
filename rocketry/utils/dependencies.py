@@ -36,7 +36,7 @@ class Link:
     def __str__(self):
         s = f'{self.parent.name!r} -> {self.child.name!r}'
         if self.type is All:
-            s = s + ' (multi)'
+            s += ' (multi)'
         return s
 
     def __repr__(self):
