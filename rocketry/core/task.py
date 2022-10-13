@@ -653,7 +653,7 @@ class Task(RedBase, BaseModel):
     def run_as_thread(self, params:Parameters, direct_params, task_run:TaskRun, **kwargs):
         """Create a new thread and run the task on that."""
 
-        terminate_event = params.get('_thread_terminate_', threading.Thread())
+        terminate_event = params.get('_thread_terminate_', threading.Event())
 
         params = params.pre_materialize(task=self, session=self.session, terminate_event=terminate_event)
         direct_params = direct_params.pre_materialize(task=self, session=self.session, terminate_event=terminate_event)
