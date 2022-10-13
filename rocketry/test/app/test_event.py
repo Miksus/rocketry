@@ -4,7 +4,7 @@ import logging
 from rocketry import Rocketry
 from rocketry.conditions import TaskStarted
 from rocketry.args import Arg
-from rocketry.event import Event
+from rocketry.events import Event
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")
