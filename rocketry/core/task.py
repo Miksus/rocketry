@@ -260,7 +260,7 @@ class Task(RedBase, BaseModel):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
-        return copy(value)
+        return value
 
     @validator('end_cond', pre=True)
     def parse_end_cond(cls, value, values):
@@ -270,7 +270,7 @@ class Task(RedBase, BaseModel):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
-        return copy(value)
+        return value
 
     @validator('logger_name', pre=True, always=True)
     def parse_logger_name(cls, value, values):
