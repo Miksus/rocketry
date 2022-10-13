@@ -130,36 +130,6 @@ def test_multilaunch(execution, status, session):
         {"task_name": "task", "action": status, "run_id": "3"},
     ]
 
-@pytest.mark.parametrize("status", ["success", "fail"])
-@pytest.mark.parametrize("execution", ["async", "thread", "process"])
-def test_multilaunch_logging(execution, status, session):
-    if execution == "process":
-        pytest.skip(reason="Process too unreliable to test")
-    # Start 5 time
-    session.config.max_process_count = 3
-
-    task = FuncTask(
-        run_success if status == "success" else run_fail, 
-        name="task", 
-        start_cond=TaskStarted() <= 5,
-        multilaunch=True,
-        execution=execution, session=session
-    )
-    session.config.shut_cond = (TaskStarted(task="task") >= 3)
-    session.start()
-
-    logger = task.logger
-    logs = [{"action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
-    assert logs == [
-        {"action": "run"},
-        {"action": "run"},
-        {"action": "run"},
-        {"action": status},
-        {"action": status},
-        {"action": status},
-    ]
-
-
 def test_limited_processes(session):
 
     def run_thread(flag=TerminationFlag()):
