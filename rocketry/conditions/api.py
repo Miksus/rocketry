@@ -4,6 +4,7 @@ from rocketry.conditions import (
     TaskStarted, TaskSucceeded,
     Retry,
     SchedulerStarted, SchedulerCycles,
+    NewSchedulerCycle,
 )
 from rocketry.core import (
     BaseCondition
@@ -245,3 +246,6 @@ def scheduler_cycles(more_than:int=None, less_than:int=None):
     if less_than is not None:
         kwds['__lt__'] = less_than
     return SchedulerCycles.from_magic(**kwds)
+
+def new_scheduler_cycle():
+    return NewSchedulerCycle()

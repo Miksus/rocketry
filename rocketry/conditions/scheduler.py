@@ -1,4 +1,4 @@
-from rocketry.args.builtin import Session
+from rocketry.args.builtin import ReferenceTime, Session
 from rocketry.core.condition.base import BaseComparable, BaseCondition
 from rocketry.core.time.utils import get_period_span
 
@@ -63,3 +63,12 @@ class SchedulerStarted(BaseCondition):
         if hasattr(self, "_str"):
             return self._str
         return f"scheduler {self.period}"
+
+class NewSchedulerCycle(BaseCondition):
+    """Condition for whether the scheduler have had
+    new cycle after given datetime. 
+    """
+
+    def get_state(self, reference=ReferenceTime(), session=Session()) -> bool:
+        cycle_start = session.scheduler._cycle_start
+        return reference < cycle_start

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from rocketry.args import Task
 from rocketry.conditions import BaseCondition
 from rocketry.core import BaseArgument
-from rocketry.conds import true
+from rocketry.conds import new_scheduler_cycle
 
 class Event(BaseModel):
     datetime: datetime.datetime
@@ -15,7 +15,7 @@ class EventStream(BaseCondition, BaseArgument):
 
     def __init__(self, check_cond=None):
         if check_cond is None:
-            check_cond = true
+            check_cond = new_scheduler_cycle()
         self.check_cond = check_cond
         self._last_event = None
         self._last_check = None

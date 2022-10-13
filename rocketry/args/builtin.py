@@ -274,3 +274,11 @@ class CliArg(BaseArgument):
             else:
                 return self.default
         return args[i+1]
+
+class ReferenceTime(BaseArgument):
+
+    def get_value(self, reference=None, task=None, **kwargs) -> Any:
+        if reference is not None:
+            return reference
+        if task is not None:
+            return task.get_last_run()

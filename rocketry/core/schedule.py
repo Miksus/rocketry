@@ -116,6 +116,7 @@ class Scheduler(RedBase):
         self.is_alive = True
         exception = None
         try:
+            self._cycle_start = time.time()
             await self.startup()
 
             while not self.check_shut_cond(self.session.config.shut_cond):
@@ -125,6 +126,7 @@ class Scheduler(RedBase):
                 elif self._flag_restart.is_set():
                     raise SchedulerRestart()
 
+                self._cycle_start = time.time()
                 await self.run_cycle()
 
                 # self.maintain()
@@ -151,6 +153,7 @@ class Scheduler(RedBase):
         else:
             self.logger.info('Purpose completed. Shutting down...', extra={"action": "shutdown"})
         finally:
+            self._cycle_start = time.time()
             await self.shut_down(exception=exception)
 
     async def run_cycle(self):

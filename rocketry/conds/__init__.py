@@ -13,7 +13,7 @@ from rocketry.conditions.api import (
     started, succeeded, failed, finished,
     retry,
 
-    scheduler_running, scheduler_cycles,
+    scheduler_running, scheduler_cycles, new_scheduler_cycle,
     running,
     cron,
     crontime,
