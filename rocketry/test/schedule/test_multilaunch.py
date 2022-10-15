@@ -1,9 +1,10 @@
 import asyncio
 import datetime
-import logging
+import json
 import time
 
 import pytest
+from rocketry.args import FuncArg
 
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
@@ -228,3 +229,43 @@ def test_set_run_id(where, func, session):
     # Check they are unique
     ids = [rec.run_id for rec in logger.filter_by()]
     assert len(set(ids)) == 3
+
+def test_set_run_id_custom(session):
+    session.get_repo().model = RunRecord
+    
+    def generate_run_id(task, params):
+        return json.dumps(dict(params), default=str)
+
+    async def run_task(report_date):
+        assert isinstance(report_date, datetime.date)
+        await asyncio.sleep(0.2)
+
+    # Start 5 time
+    session.config.max_process_count = 3
+
+    task = FuncTask(
+        func=run_task, 
+        name="task", 
+        start_cond=TaskStarted() <= 5,
+        multilaunch=True,
+        execution="async", 
+        session=session,
+        parameters={"report_date": FuncArg(lambda: datetime.date(2022, 1, 3))},
+        func_run_id=generate_run_id
+    )
+    task.run(report_date=datetime.date(2022, 1, 1))
+    task.run(report_date=datetime.date(2022, 1, 2))
+
+    session.config.shut_cond = (TaskStarted(task="task") >= 3)
+    session.start()
+
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-01"}'},
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-02"}'},
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-03"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-01"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-02"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-03"}'},
+    ]
