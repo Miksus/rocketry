@@ -14,7 +14,7 @@ from abc import abstractmethod
 import multiprocessing
 import threading
 from queue import Empty
-from typing import TYPE_CHECKING, Any, ClassVar, List, Dict, Type, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
@@ -238,6 +238,7 @@ class Task(RedBase, BaseModel):
     multilaunch: Optional[bool] = None
     on_startup: bool = False
     on_shutdown: bool = False
+    func_run_id: Callable = None
 
     last_run: Optional[datetime.datetime]
     last_success: Optional[datetime.datetime]
@@ -477,7 +478,7 @@ class Task(RedBase, BaseModel):
             params = self.get_extra_params(params, execution=execution)
             direct_params = self._get_direct_params()
 
-            task_run.run_id = self.session.get_run_id(self, params | direct_params)
+            task_run.run_id = self.get_run_id(task_run, params=params | direct_params)
 
             # Run the actual task
             if execution in ("main", "async"):
@@ -525,7 +526,7 @@ class Task(RedBase, BaseModel):
             # Something went wrong in the initiation
             # and it did not reach to log_running
             if task_run.run_id is None:
-                task_run.run_id = self.session.get_run_id(self)
+                task_run.run_id = self.get_run_id(task_run)
             if self.status != "run":
                 self.log_running(task_run)
             self.log_failure(task_run)
@@ -930,6 +931,12 @@ class Task(RedBase, BaseModel):
         """Create a name for the task when name was not passed to initiation of
         the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
+
+    def get_run_id(self, run, params=None):
+        if self.func_run_id is not None:
+            return self.func_run_id(self, params)
+        else:
+            return self.session.config.func_run_id(self, params)
 
     def is_alive_as_main(self) -> bool:
         return any(run.is_main and run.is_alive() for run in self._run_stack)

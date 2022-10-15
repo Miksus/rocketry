@@ -14,7 +14,7 @@ from pydantic import BaseModel, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
-
+from rocketry.tasks.run_id import uuid
 
 try:
     from typing import Literal
@@ -58,6 +58,7 @@ class Config(BaseModel):
     debug: bool = False
 
     multilaunch: bool = False
+    func_run_id: Callable = uuid
     max_process_count = cpu_count()
     tasks_as_daemon: bool = True
     restarting: str = 'replace'

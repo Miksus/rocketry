@@ -1,2 +1,5 @@
 from .handlers import QueueHandler
-from .log_record import MinimalRecord, LogRecord, TaskLogRecord, RunLogRecord
+from .log_record import (
+    MinimalRecord, LogRecord, TaskLogRecord,
+    MinimalRunRecord, RunRecord, TaskRunRecord
+)
