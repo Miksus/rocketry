@@ -1,4 +1,4 @@
-from pyparsing import warnings
+import warnings
 from rocketry.conditions import (
     DependFailure, DependFinish, DependSuccess, TaskFailed,
     TaskFinished, TaskRunnable,
