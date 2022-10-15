@@ -1,8 +1,10 @@
+from time import time
 import pytest
 from rocketry.conditions import (
     TaskFinished, TaskRunning
 )
 from rocketry.core.task import TaskRun
+from rocketry.core.time.base import TimeDelta
 from rocketry.tasks import FuncTask
 from rocketry.log import MinimalRunRecord
 
@@ -56,6 +58,9 @@ def test_running(tmpdir, session, how):
     greater = TaskRunning(task="runned task") > 2
     less = TaskRunning(task="runned task") < 2
 
+    equals_inside = TaskRunning(task="runned task", period=TimeDelta("2 hours")) == 2
+    equals_outside = TaskRunning(task="runned task", period=TimeDelta("0 seconds")) == 2
+
     task = FuncTask(
         run_task,
         name="runned task",
@@ -68,22 +73,45 @@ def test_running(tmpdir, session, how):
     assert not bool(greater.observe(session=session))
     assert bool(less.observe(session=session))
 
+    assert not bool(equals_inside.observe(session=session))
+    assert not bool(equals_outside.observe(session=session))
+
     if how == "stack":
-        task._run_stack.append(TaskRun(start=16000000, task=None))
-        task._run_stack.append(TaskRun(start=16000000, task=None))
+        task._run_stack.append(TaskRun(start=time(), task=None))
     else:
         task.log_running()
+
+    # Has run once
+    assert not bool(equals.observe(session=session))
+    assert not bool(greater.observe(session=session))
+    assert bool(less.observe(session=session))
+
+    assert not bool(equals_inside.observe(session=session))
+    assert not bool(equals_outside.observe(session=session))
+
+
+    if how == "stack":
+        task._run_stack.append(TaskRun(start=time(), task=None))
+    else:
         task.log_running()
 
+    # Has run two times
     assert bool(equals.observe(session=session))
     assert not bool(greater.observe(session=session))
     assert not bool(less.observe(session=session))
 
+    assert bool(equals_inside.observe(session=session))
+    assert not bool(equals_outside.observe(session=session))
+
     if how == "stack":
-        task._run_stack.append(TaskRun(start=16000000, task=None))
+        task._run_stack.append(TaskRun(start=time(), task=None))
     else:
         task.log_running()
 
+    # Has run three times
     assert not bool(equals.observe(session=session))
     assert bool(greater.observe(session=session))
     assert not bool(less.observe(session=session))
+
+    assert not bool(equals_inside.observe(session=session))
+    assert not bool(equals_outside.observe(session=session))
