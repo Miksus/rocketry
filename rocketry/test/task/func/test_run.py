@@ -27,7 +27,7 @@ def run_parametrized(integer, string, optional_float=None):
     assert isinstance(optional_float, float)
 
 def run_parametrized_kwargs(**kwargs):
-    assert {} != kwargs
+    assert kwargs
     assert isinstance(kwargs["integer"], int)
     assert isinstance(kwargs["string"], str)
     assert isinstance(kwargs["optional_float"], float)
@@ -63,7 +63,7 @@ def test_run(task_func, expected_outcome, exc_cls, execution, session):
 
     try:
         task()
-    except:
+    except Exception:
         # failing execution="main"
         if expected_outcome != "fail":
             raise
@@ -109,7 +109,7 @@ def test_run_async(task_func, expected_outcome, execution, session):
 
     try:
         task()
-    except:
+    except Exception:
         # failing execution="main"
         if expected_outcome != "fail":
             raise

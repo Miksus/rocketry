@@ -30,7 +30,7 @@ from rocketry.tasks import CommandTask
 def test_success_command(tmpdir, session, cmd, params, systems,shell, execution):
     if systems is not None and sys.platform not in systems:
         pytest.skip("Command not supported by OS")
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         assert not Path("test.txt").is_file()
 
         task = CommandTask(
@@ -52,7 +52,7 @@ def test_success_command(tmpdir, session, cmd, params, systems,shell, execution)
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_fail_command(tmpdir, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
@@ -88,7 +88,7 @@ def test_success_bat_file(tmpdir, execution, session):
     if platform.system() != "Windows":
         pytest.skip("Bat files only runnable on Windows.")
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         assert not Path("test.txt").is_file()
 
         file = tmpdir.join("my_command.bat")
@@ -114,7 +114,7 @@ def test_success_bash_file(tmpdir, session):
     if platform.system() == "Windows":
         pytest.skip("Bash files not runnable on Windows.")
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         assert not Path("test.txt").is_file()
 
         file = tmpdir.join("my_command.sh")

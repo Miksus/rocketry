@@ -10,7 +10,8 @@ from rocketry.conditions import (
     TaskRunning
 )
 from rocketry.conditions.task import TaskInacted, TaskTerminated
-from rocketry.pybox.time.convert import to_datetime
+from rocketry.core.task import TaskRun
+from rocketry.pybox.time.convert import to_datetime, to_timestamp
 from rocketry.time import (
     TimeOfDay
 )
@@ -59,6 +60,9 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
         setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
     if cls == TaskRunning:
         task.status = "run"
+        run = TaskRun(start=1600000000, task=None)
+        assert run.is_alive()
+        task._run_stack.append(run)
     cond = cls(task=task)
     assert cond.observe(session=session)
 
@@ -83,6 +87,9 @@ def test_logs_not_used_true_inside_period(session, cls, mock_datetime_now):
     cond = cls(task=task, period=TimeOfDay("07:00", "13:00"))
     if cls == TaskRunning:
         task.status = "run"
+        run = TaskRun(start=to_timestamp(to_datetime("2000-01-01 12:00:00")), task=None)
+        assert run.is_alive()
+        task._run_stack.append(run)
     mock_datetime_now("2000-01-01 14:00")
     assert cond.observe(session=session)
 

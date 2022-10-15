@@ -123,7 +123,7 @@ class Scheduler(RedBase):
                 await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
-                elif self._flag_restart.is_set():
+                if self._flag_restart.is_set():
                     raise SchedulerRestart()
 
                 self._cycle_start = time.time()
@@ -201,7 +201,7 @@ class Scheduler(RedBase):
     def check_task_cond(self, task:Task):
         try:
             return task.is_runnable()
-        except:
+        except Exception:
             self.logger.exception(f"Condition crashed for task '{task.name}'")
             if not self.session.config.silence_cond_check:
                 raise
@@ -213,7 +213,7 @@ class Scheduler(RedBase):
 
         try:
             await task.start_async(log_queue=self._log_queue)
-        except (SchedulerRestart, SchedulerExit) as exc:
+        except (SchedulerRestart, SchedulerExit):
             raise
         except TaskLoggingError:
             self.logger.exception(f"Logging failed for task '{task.name}'")
@@ -508,7 +508,7 @@ class Scheduler(RedBase):
         func = getattr(task, log_method)
         try:
             func(*args)
-        except:
+        except Exception:
             self.logger.exception(f"Logging failed for task '{task.name}'")
             if not self.session.config.silence_task_logging:
                 raise

@@ -71,5 +71,5 @@ def test_update(a, b, union):
 
 def test_equal():
     assert Parameters({"a": 0, "b": 1}) == Parameters({"a": 0, "b": 1})
-    assert not Parameters({"a": 0, "b": 1}) == 1
+    assert Parameters({"a": 0, "b": 1}) != 1
     assert Parameters({"a": 0, "b": 1}) != 1

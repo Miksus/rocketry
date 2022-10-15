@@ -27,7 +27,7 @@ from rocketry.tasks import FuncTask
     ],
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=LogRecord))

@@ -137,6 +137,7 @@ def test_json(session):
         "multilaunch": null,
         "on_startup": false,
         "on_shutdown": false,
+        "func_run_id": null,
         "last_run": "<RUN>",
         "last_success": "<SUCCESS>",
         "last_fail": null,

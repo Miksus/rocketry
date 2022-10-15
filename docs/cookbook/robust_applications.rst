@@ -68,9 +68,9 @@ for simple projects:
 .. code-block:: python
 
     from redbird.repos import SQLRepo
-    from rocketry.log import LogRecord
+    from rocketry.log import RunRecord
 
-    repo = CSVFileRepo(model=LogRecord, filename="tasks.csv")
+    repo = CSVFileRepo(model=RunRecord, filename="tasks.csv")
     repo.create()
 
     app.session.set_repo(repo, delete_existing=True)
@@ -84,7 +84,7 @@ option for larger projects that:
 .. code-block:: python
 
     from redbird.repos import SQLRepo
-    from rocketry.log import LogRecord
+    from rocketry.log import RunRecord
     from sqlalchemy import create_engine
 
     engine = create_engine('sqlite://')
@@ -92,10 +92,11 @@ option for larger projects that:
         id INTEGER PRIMARY KEY,
         created FLOAT,
         task_name TEXT,
+        run_id TEXT,
         action TEXT
     )""")
 
-    repo = SQLRepo(model=LogRecord, table="log", engine=engine, id_field="id")
+    repo = SQLRepo(model=RunRecord, table="log", engine=engine, id_field="id")
 
     app.session.set_repo(repo, delete_existing=True)
 

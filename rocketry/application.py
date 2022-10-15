@@ -41,7 +41,7 @@ class _AppMixin:
             if group.prefix:
                 task.name = group.prefix + task.name
             if group.start_cond is not None:
-                task.start_cond = task.start_cond & group.start_cond
+                task.start_cond &= group.start_cond
             task.execution = group.execution if task.execution is None else task.execution
 
             self.session.add_task(task)

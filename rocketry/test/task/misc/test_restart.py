@@ -8,7 +8,7 @@ from rocketry.conditions import TaskStarted
 
 
 def write_file(text):
-    with open("test.txt", "a") as f:
+    with open("test.txt", "a", encoding="utf-8") as f:
         f.write(text)
 
 def test_restart_raises(session):
@@ -18,7 +18,7 @@ def test_restart_raises(session):
 
 def test_scheduler_restart(tmpdir, session):
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         FuncTask(write_file, parameters={"text": "Started"}, on_startup=True, name="startup", execution="main", session=session)
         FuncTask(write_file, parameters={"text": "Shut"}, on_shutdown=True, name="shutdown", execution="main", session=session)
@@ -32,7 +32,7 @@ def test_scheduler_restart(tmpdir, session):
 
         session.start()
 
-        with open("test.txt") as f:
+        with open("test.txt", encoding="utf-8") as f:
             cont = f.read()
         assert "StartedShutStartedShut" == cont
 

@@ -1,12 +1,17 @@
 import asyncio
+import datetime
+import json
 import time
 
 import pytest
+from rocketry.args import FuncArg
 
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
 from rocketry.conditions import SchedulerCycles, TaskStarted
 from rocketry.args import TerminationFlag
+from rocketry.log import RunRecord
+from rocketry.tasks.run_id import increment, uuid
 
 from rocketry.conds import true
 
@@ -78,6 +83,8 @@ def test_multilaunch_terminate(execution, how, session):
 
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_multilaunch_terminate_end_cond(execution, session):
+    session.config.func_run_id = increment
+    session.get_repo().model = RunRecord
     # Start 5 time
     session.config.max_process_count = 3
 
@@ -87,19 +94,21 @@ def test_multilaunch_terminate_end_cond(execution, session):
     session.start()
 
     logger = task.logger
-    logs = [{"action": rec.action} for rec in logger.filter_by()]
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
     assert logs == [
-        {"action": "run"},
-        {"action": "run"},
-        {"action": "run"},
-        {"action": "terminate"},
-        {"action": "terminate"},
-        {"action": "terminate"},
+        {"task_name": "slow task", "action": "run", "run_id": "1"},
+        {"task_name": "slow task", "action": "run", "run_id": "2"},
+        {"task_name": "slow task", "action": "run", "run_id": "3"},
+        {"task_name": "slow task", "action": "terminate", "run_id": "1"},
+        {"task_name": "slow task", "action": "terminate", "run_id": "2"},
+        {"task_name": "slow task", "action": "terminate", "run_id": "3"},
     ]
 
 @pytest.mark.parametrize("status", ["success", "fail"])
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_multilaunch(execution, status, session):
+    session.config.func_run_id = increment
+    session.get_repo().model = RunRecord
     if execution == "process":
         pytest.skip(reason="Process too unreliable to test")
     # Start 5 time
@@ -110,22 +119,37 @@ def test_multilaunch(execution, status, session):
         name="task", 
         start_cond=TaskStarted() <= 5,
         multilaunch=True,
-        execution=execution, session=session
+        execution=execution, session=session,
     )
     session.config.shut_cond = (TaskStarted(task="task") >= 3)
     session.start()
 
     logger = task.logger
-    logs = [{"action": rec.action} for rec in logger.filter_by()]
-    assert logs == [
-        {"action": "run"},
-        {"action": "run"},
-        {"action": "run"},
-        {"action": status},
-        {"action": status},
-        {"action": status},
-    ]
-
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    if execution == 'async':
+        assert logs == [
+            {"task_name": "task", "action": "run", "run_id": "1"},
+            {"task_name": "task", "action": "run", "run_id": "2"},
+            {"task_name": "task", "action": "run", "run_id": "3"},
+            {"task_name": "task", "action": status, "run_id": "1"},
+            {"task_name": "task", "action": status, "run_id": "2"},
+            {"task_name": "task", "action": status, "run_id": "3"},
+        ]
+    else:
+        # In thread the runs can finish in different order 
+        assert logs[:3] == [
+            {"task_name": "task", "action": "run", "run_id": "1"},
+            {"task_name": "task", "action": "run", "run_id": "2"},
+            {"task_name": "task", "action": "run", "run_id": "3"},
+        ]
+        assert {log['run_id'] for log in logs[3:]} == {"1", "2", "3"}
+        for log in logs[3:]:
+            log.pop("run_id")
+        assert logs[3:] == [
+            {"task_name": "task", "action": status},
+            {"task_name": "task", "action": status},
+            {"task_name": "task", "action": status},
+        ]
 
 def test_limited_processes(session):
 
@@ -173,3 +197,91 @@ def test_limited_processes(session):
 
     outcome = post_check.logger.filter_by().all()[-1]
     assert outcome.action == "success", outcome.exc_text
+
+@pytest.mark.parametrize("func", [increment, uuid])
+@pytest.mark.parametrize("where", ["task", "session"])
+def test_set_run_id(where, func, session):
+    if where == "session":
+        session.config.func_run_id = func
+    session.get_repo().model = RunRecord
+    
+    async def run_task(report_date):
+        assert isinstance(report_date, datetime.datetime)
+        await asyncio.sleep(0.2)
+
+    # Start 5 time
+    session.config.max_process_count = 3
+
+    kwds = dict(
+        func=run_task, 
+        name="task", 
+        start_cond=TaskStarted() <= 5,
+        multilaunch=True,
+        execution="async", 
+        session=session,
+        parameters={"report_date": datetime.datetime(2022, 1, 3)},
+    )
+    if where == 'task':
+        kwds['func_run_id'] = func
+    task = FuncTask(
+        **kwds
+    )
+    task.run(report_date=datetime.datetime(2022, 1, 1))
+    task.run(report_date=datetime.datetime(2022, 1, 2))
+
+    session.config.shut_cond = (TaskStarted(task="task") >= 3)
+    session.start()
+
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run"},
+        {"task_name": "task", "action": "run"},
+        {"task_name": "task", "action": "run"},
+        {"task_name": "task", "action": "success"},
+        {"task_name": "task", "action": "success"},
+        {"task_name": "task", "action": "success"},
+    ]
+    # Check they are unique
+    ids = [rec.run_id for rec in logger.filter_by()]
+    assert len(set(ids)) == 3
+
+def test_set_run_id_custom(session):
+    session.get_repo().model = RunRecord
+    
+    def generate_run_id(task, params):
+        return json.dumps(dict(params), default=str)
+
+    async def run_task(report_date):
+        assert isinstance(report_date, datetime.date)
+        await asyncio.sleep(0.2)
+
+    # Start 5 time
+    session.config.max_process_count = 3
+
+    task = FuncTask(
+        func=run_task, 
+        name="task", 
+        start_cond=TaskStarted() <= 5,
+        multilaunch=True,
+        execution="async", 
+        session=session,
+        parameters={"report_date": FuncArg(lambda: datetime.date(2022, 1, 3))},
+        func_run_id=generate_run_id
+    )
+    task.run(report_date=datetime.date(2022, 1, 1))
+    task.run(report_date=datetime.date(2022, 1, 2))
+
+    session.config.shut_cond = (TaskStarted(task="task") >= 3)
+    session.start()
+
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-01"}'},
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-02"}'},
+        {"task_name": "task", "action": "run", "run_id": '{"report_date": "2022-01-03"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-01"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-02"}'},
+        {"task_name": "task", "action": "success", "run_id": '{"report_date": "2022-01-03"}'},
+    ]

@@ -19,7 +19,7 @@ def test_task_fail_traceback(tmpdir, execution, session):
     # See: https://bugs.python.org/issue34334
 
     # TODO: Delete. This has been handled now in test_core.py
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=LogRecord))

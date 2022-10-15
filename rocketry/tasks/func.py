@@ -175,7 +175,7 @@ class FuncTask(Task):
             # in next __call__ (which should occur immediately)
             self._delayed_kwargs = kwargs
             return
-        elif only_func_set:
+        if only_func_set:
             # Most likely called as:
             # @FuncTask
             # def myfunc(...): ...
@@ -205,8 +205,7 @@ class FuncTask(Task):
             func.__rocketry__ = {'name': self.name}
 
             return func
-        else:
-            return super().__call__(*args, **kwargs)
+        return super().__call__(*args, **kwargs)
 
     def _set_descr(self, is_delayed:bool):
         "Set description from func doc if desc missing"
@@ -245,8 +244,7 @@ class FuncTask(Task):
             if cache:
                 self.func = task_func
             return task_func
-        else:
-            return self.func
+        return self.func
 
     def get_default_name(self, func=None, path=None, func_name=None, _name_template=None, **kwargs):
         if func is None:
@@ -260,8 +258,7 @@ class FuncTask(Task):
                 return func_name
         if _name_template is not None:
             return _name_template.format(module_name=module_name, func_name=func_name)
-        else:
-            return f'{module_name}:{func_name}'
+        return f'{module_name}:{func_name}'
 
     def process_finish(self, *args, **kwargs):
         if self._is_delayed:
@@ -278,7 +275,7 @@ class FuncTask(Task):
 
         if self._is_delayed:
             # Get params from the typehints
-            cache = False if self.path is not None else True
+            cache = self.path is None
             func = self.get_func(cache=cache)
             func_params = Parameters._from_signature(func, task=self, session=self.session)
             params = func_params | task_params
@@ -297,8 +294,7 @@ class FuncTask(Task):
                 key: val for key, val in params.items()
                 if key in self.kw_args
             }
-        else:
-            return params
+        return params
 
     def postfilter_params(self, params:Parameters):
         if self._is_delayed:
@@ -307,8 +303,7 @@ class FuncTask(Task):
                 key: val for key, val in params.items()
                 if key in self.kw_args
             }
-        else:
-            return params
+        return params
 
     @property
     def pos_args(self):
