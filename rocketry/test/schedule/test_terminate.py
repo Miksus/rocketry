@@ -5,7 +5,7 @@ import os
 
 import pytest
 from rocketry.conditions.scheduler import SchedulerStarted
-from rocketry.conditions.task import TaskTerminated
+from rocketry.conditions.task import TaskRunning
 
 from rocketry.core.time.base import TimeDelta
 from rocketry.tasks import FuncTask
@@ -115,7 +115,7 @@ def test_task_terminate(tmpdir, execution, session):
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
 
-        FuncTask(terminate_task, name="terminator", start_cond=TaskStarted(task="slow task"), execution="main", session=session)
+        FuncTask(terminate_task, name="terminator", start_cond=TaskRunning(task=task), execution="main", session=session)
         session.config.shut_cond = (TaskStarted(task="slow task") >= 2) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
 
@@ -141,12 +141,12 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), end_cond=TaskStarted(task='slow task'), execution=execution, session=session)
 
-        session.config.shut_cond = (TaskTerminated(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
+        session.config.shut_cond = (TaskStarted(task="slow task") >= 1) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.start()
 
         logger = task.logger
-        assert 1 <= logger.filter_by(action="run").count()
-        assert 1 <=logger.filter_by(action="terminate").count()
+        assert 1 == logger.filter_by(action="run").count()
+        assert 1 == logger.filter_by(action="terminate").count()
         assert 0 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
 
@@ -169,7 +169,7 @@ def test_permanent_task(tmpdir, execution, session):
         # but there still should not be any terminations
         assert 3 <= logger.filter_by(action="run").count()
         assert 1 == logger.filter_by(action="terminate").count() # The last run is terminated
-        assert 2 <= logger.filter_by(action="success").count()
+        assert 2 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
 
         assert logger.filter_by(action="terminate").last().created >= logger.filter_by(action="success").last().created

@@ -1,8 +1,11 @@
 from typing import Optional
+import datetime
 
-from redbird.oper import in_, greater_equal
+from redbird.oper import in_, greater_equal, between
 
-from rocketry.core.condition import BaseCondition
+from rocketry.core.condition import BaseCondition, BaseComparable
+from rocketry.log.utils import get_field_value
+from rocketry.pybox.time import to_timestamp
 from rocketry.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
 from rocketry.args import Task, Session
 from rocketry.core.time.utils import get_period_span
@@ -141,7 +144,7 @@ class TaskFinished(TaskStatusMixin):
         return f"task '{task_name}' finished" + period
 
 
-class TaskRunning(BaseCondition):
+class TaskRunning(BaseComparable):
 
     """Condition for whether a task is currently
     running.
@@ -161,19 +164,62 @@ class TaskRunning(BaseCondition):
         self.period = period
         super().__init__()
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_measurement(self, task=Task(), session=Session()):
         task = session[self.task] if self.task is not None else task
-        is_running = task.is_running
-        if not is_running:
-            # Not running so always false
-            return False
-        if is_running and self.period is None:
-            # Is running (and no limit on when it stated)
-            return True
-        # Is running but not yet sure if the period is fulfilled
-        last_run = task.get_last_run()
+
+        allow_optimization = not self.session.config.force_status_from_logs
         start, end = get_period_span(self.period)
-        return start <= last_run <= end
+        if allow_optimization:
+            task = session[self.task] if self.task is not None else task
+            runs = [
+                run.start 
+                for run in task._run_stack
+                if run.is_alive() and start <= datetime.datetime.fromtimestamp(run.start) <= end
+            ]
+            return runs
+        else:
+            records = task.logger.get_records(
+                created=between(to_timestamp(start), to_timestamp(end)),
+            )
+            records = sorted(records, key=lambda x: get_field_value(x, "created"))
+            runs = []
+            has_run_id = True
+            try:
+                finishes = [
+                    get_field_value(record, "run_id")
+                    for record in records
+                    if get_field_value(record, "run_id") and get_field_value(record, "action") != "run"
+                ]
+            except (KeyError, AttributeError):
+                # Logs have no run_id
+                finishes = [
+                    get_field_value(record, "created")
+                    for record in records
+                    if get_field_value(record, "action") != "run"
+                ]
+                has_run_id = False
+
+            for record in records:
+                action = get_field_value(record, "action")
+                is_run = action == "run"
+                if not is_run:
+                    continue
+                if has_run_id:
+                    run_id = get_field_value(record, "run_id")
+                    if run_id not in finishes:
+                        runs.append(run_id)
+                else:
+                    # Less optimized, tries to guess which is the finish
+                    created = get_field_value(record, "created")
+                    for finish in finishes.copy():
+                        if finish >= created:
+                            # match
+                            finishes.remove(finish)
+                            break
+                    else:
+                        # No finishes
+                        runs.append(created)
+            return runs
 
     def __str__(self):
         if hasattr(self, "_str"):
