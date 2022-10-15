@@ -45,9 +45,15 @@ Task Running
 
 There is also the condition ``rocketry.conds.running``. This 
 condition is true if the given task (or the task itself if not
-given) is running. There are also options ``more_than`` and 
-``less_than`` to specify timespan how long the task should be 
+set) is running. There are also methods ``more_than``, ``less_than`` 
+and ``between`` to specify timespan how long the task should be 
 running for the condition to be true:
 
 .. literalinclude:: /code/conds/api/task_running.py
+    :language: py
+
+This condition can also be used to set how many parallel runs
+can happen (if multilaunch is set):
+
+.. literalinclude:: /code/conds/api/task_running_multi.py
     :language: py
