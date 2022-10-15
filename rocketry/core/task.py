@@ -1021,7 +1021,6 @@ class Task(RedBase, BaseModel):
             if run.is_process:
                 # Threaded tasks handle their termination themselves
                 self.log_termination(reason=reason, task_run=run)
-        #self._log_task(task, "log_termination", reason=reason)
 
 # Logging
     def _lock_to_run_log(self, log_queue):
