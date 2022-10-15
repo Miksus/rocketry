@@ -268,7 +268,6 @@ class TaskExecutable(BaseCondition):
         if hasattr(self, "_str"):
             return self._str
         task = self.task
-        period = self.period
         return f"task '{task}' {self.period}"
 
     @classmethod

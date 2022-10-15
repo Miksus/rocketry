@@ -80,7 +80,7 @@ def test_runnable(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
             dt = dt.tz_convert("utc").tz_localize(None)
         return (dt - datetime.datetime(1970,  1, 1)) // datetime.timedelta(seconds=1)
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
 
         task = FuncTask(

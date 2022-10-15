@@ -1,7 +1,7 @@
 from typing import Iterable, Iterator
 import datetime
 
-from rocketry.pybox.time.convert import to_datetime, to_timedelta
+from rocketry.pybox.time.convert import to_datetime
 
 class QueryBase:
 

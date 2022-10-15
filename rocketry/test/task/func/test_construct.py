@@ -14,7 +14,7 @@ def myfunc():
 def test_construct(tmpdir, session, execution):
 
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         if execution == "process":
             with pytest.raises(AttributeError):
                 # Unpicklable function (cannot use process)
@@ -34,7 +34,7 @@ def test_construct_callable_class(tmpdir, session, execution):
             pass
 
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         # This should always be picklable
         task = FuncTask(MyClass(), execution=execution, session=session)
         assert not task.is_delayed()

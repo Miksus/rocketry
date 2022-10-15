@@ -157,7 +157,7 @@ class AnchoredInterval(TimeInterval):
         end_ms = ms + self._unit_resolution
         if end_ms >= self._scope_max:
             # Over period
-            end_ms = end_ms - self._scope_max
+            end_ms -= self._scope_max
         return end_ms
 
     def _validate(self, n:int, orig):
@@ -411,7 +411,6 @@ class AnchoredInterval(TimeInterval):
         start_ms = self._start
         end_ms = self._end
 
-        scope = self._scope
         repr_scope = self.components[self.components.index(self._scope) + 1]
 
         to_start = to_timedelta(start_ms, unit="microsecond")

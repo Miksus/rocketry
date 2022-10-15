@@ -19,12 +19,12 @@ def run_slow():
     time.sleep(30)
 
 def create_line_to_file():
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_dependent(tmpdir, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         # Running the master tasks only once
         task_a = FuncTask(run_succeeding, name="A", start_cond=~TaskStarted(), execution=execution, session=session)

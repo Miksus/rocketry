@@ -15,19 +15,19 @@ from rocketry.args import Session
 
 def run_slow():
     time.sleep(1)
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 def run_slow_threaded(_thread_terminate_):
     time.sleep(0.2)
     if _thread_terminate_.is_set():
         raise TaskTerminationException
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 async def run_slow_async():
     await asyncio.sleep(0.2)
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 def get_slow_func(execution):
@@ -41,7 +41,7 @@ def get_slow_func(execution):
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_without_timeout(tmpdir, execution, session):
     """Test the task.timeout is respected overt scheduler.timeout"""
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="never", execution=execution, session=session)
@@ -63,7 +63,7 @@ def test_without_timeout(tmpdir, execution, session):
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_task_timeout_set_in_session(tmpdir, execution, session):
     """Test task termination due to the task ran too long"""
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
 
@@ -85,7 +85,7 @@ def test_task_timeout_set_in_session(tmpdir, execution, session):
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_task_timeout_set_in_task(tmpdir, execution, session):
     """Test task termination due to the task ran too long"""
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
 
@@ -110,7 +110,7 @@ def test_task_terminate(tmpdir, execution, session):
     def terminate_task(session=Session()):
         session["slow task"].force_termination = True
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task", start_cond=AlwaysTrue(), execution=execution, session=session)
@@ -135,7 +135,7 @@ def test_task_terminate(tmpdir, execution, session):
 def test_task_terminate_end_cond(tmpdir, execution, session):
     """Test task termination due to the task ran too long"""
     #! NOTE: CI observed to get stuck in this for some times
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
 
@@ -155,7 +155,7 @@ def test_task_terminate_end_cond(tmpdir, execution, session):
 @pytest.mark.parametrize("execution", ["async", "thread", "process"])
 def test_permanent_task(tmpdir, execution, session):
     """Test the task.timeout is respected overt scheduler.timeout"""
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
         task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="1 ms", permanent_task=True, execution=execution, session=session)
