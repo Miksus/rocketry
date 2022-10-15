@@ -126,14 +126,30 @@ def test_multilaunch(execution, status, session):
 
     logger = task.logger
     logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
-    assert logs == [
-        {"task_name": "task", "action": "run", "run_id": "1"},
-        {"task_name": "task", "action": "run", "run_id": "2"},
-        {"task_name": "task", "action": "run", "run_id": "3"},
-        {"task_name": "task", "action": status, "run_id": "1"},
-        {"task_name": "task", "action": status, "run_id": "2"},
-        {"task_name": "task", "action": status, "run_id": "3"},
-    ]
+    if execution == 'async':
+        assert logs == [
+            {"task_name": "task", "action": "run", "run_id": "1"},
+            {"task_name": "task", "action": "run", "run_id": "2"},
+            {"task_name": "task", "action": "run", "run_id": "3"},
+            {"task_name": "task", "action": status, "run_id": "1"},
+            {"task_name": "task", "action": status, "run_id": "2"},
+            {"task_name": "task", "action": status, "run_id": "3"},
+        ]
+    else:
+        # In thread the runs can finish in different order 
+        assert logs[:3] == [
+            {"task_name": "task", "action": "run", "run_id": "1"},
+            {"task_name": "task", "action": "run", "run_id": "2"},
+            {"task_name": "task", "action": "run", "run_id": "3"},
+        ]
+        assert {log['run_id'] for log in logs[3:]} == {"1", "2", "3"}
+        for log in logs[3:]:
+            log.pop("run_id")
+        assert logs[3:] == [
+            {"task_name": "task", "action": status},
+            {"task_name": "task", "action": status},
+            {"task_name": "task", "action": status},
+        ]
 
 def test_limited_processes(session):
 
