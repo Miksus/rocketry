@@ -546,10 +546,3 @@ class Session(RedBase):
             self.hooks.task_execute.append(func)
             return func
         return wrapper
-
-    def get_run_id(self, task:'Task', params:'Parameters'=None) -> str:
-        ids = [run.run_id for run in task._run_stack]
-        for i in count(1):
-            i = str(i)
-            if i not in ids:
-                return i
