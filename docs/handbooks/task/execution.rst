@@ -257,3 +257,62 @@ created task_name action
 3       do_things success
 4       do_things success
 ======= ========= =======
+
+There is also a ``run_id`` passed to logs which you can 
+use to identify individual runs and track their finish.
+
+.. code-block:: python
+
+    from rocketry.log import MinimalRunRecord
+
+    app = Rocketry(config={'multilaunch': True})
+
+    # Setting the log record model
+    repo = app.session.get_repo()
+    repo.model = MinimalRunRecord
+
+    @app.task(multilaunch=True)
+    def do_things():
+        ...
+
+By default, this will produce log similar to this:
+
+======= ========= ========= =======
+created task_name run_id    action
+======= ========= ========= =======
+1       do_things fe5018... run
+2       do_things fab4db... run
+3       do_things fe5018... success
+4       do_things fab4db... success
+======= ========= ========= =======
+
+By default, ``run_id`` is a Universal Unique Identifier (UUID).
+You can also create custom run IDs based on, for example,
+the arguments:
+
+.. code-block:: python
+
+    import json
+    def generate_run_id(task, params=None):
+        return json.dumps(dict(params), default=str)
+    
+    @app.task(multilaunch=True, func_run_id=generate_run_id)
+    def do_things(report_date):
+        ...
+
+You can also set the generator function as the session default:
+
+.. code-block:: python
+
+    app = Rocketry(config={'multilaunch': True, 'func_run_id': generate_run_id})
+
+When the task is run (with a date parameter), the logs could look like:
+
+======= ========= ============================= =======
+created task_name run_id                        action
+======= ========= ============================= =======
+1       do_things {"report_date": "2022-01-01"} run
+2       do_things {"report_date": "2022-01-02"} run
+3       do_things {"report_date": "2022-01-01"} success
+4       do_things {"report_date": "2022-01-02"} success
+======= ========= ============================= =======
