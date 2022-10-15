@@ -126,11 +126,13 @@ params_running = [
     pytest.param(running("mytask").more_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="10 mins")), id="is running more than"),
     pytest.param(running("mytask").less_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(far="10 mins")), id="is running more than"),
     pytest.param(running("mytask").between("15 mins", "20 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="15 mins", far="20 mins")), id="is running between"),
-
-    # Old way
-    pytest.param(running().get_cond(), TaskRunning(task=None), id="is running (call)"),
-    pytest.param(running(more_than="10 mins"), TaskRunning(task=None, period=TimeSpanDelta(near="10 mins")), id="is running 10 mins"),
-    pytest.param(running(more_than="10 mins", task="a_task"), TaskRunning(task="a_task", period=TimeSpanDelta(near="10 mins")), id="is running 10 mins (passed task)"),
+    
+    pytest.param(running("mytask") < 2, TaskRunning(task="mytask") < 2, id="is running less than twice"),
+    pytest.param(running("mytask") > 2, TaskRunning(task="mytask") > 2, id="is running more than twice"),
+    pytest.param(running("mytask") <= 2, TaskRunning(task="mytask") <= 2, id="is running less equal than twice"),
+    pytest.param(running("mytask") >= 2, TaskRunning(task="mytask") >= 2, id="is running more equal than twice"),
+    pytest.param(running("mytask") == 1, TaskRunning(task="mytask") == 1, id="is running once"),
+    pytest.param(running("mytask") != 1, TaskRunning(task="mytask") != 1, id="is running not once"),
 ]
 
 params_schedule = [
@@ -168,6 +170,20 @@ def test_observe(cond, session):
     task = FuncTask(func=lambda: None, name="mytask", session=session)
 
     cond.observe(task=task, session=session)
+
+@pytest.mark.parametrize(
+    "get_cond,expected",
+    [
+        pytest.param(lambda:running(), TaskRunning(task=None), id="is running (call)"),
+        pytest.param(lambda:running(more_than="10 mins"), TaskRunning(task=None, period=TimeSpanDelta(near="10 mins")), id="is running 10 mins"),
+        pytest.param(lambda:running(more_than="10 mins", task="a_task"), TaskRunning(task="a_task", period=TimeSpanDelta(near="10 mins")), id="is running 10 mins (passed task)"),
+    ]
+)
+def test_deprecated(get_cond, expected, session):
+    # NOTE: We test that observe does not crash (not the output)
+    with pytest.warns(DeprecationWarning):
+        cond = get_cond()
+    assert cond == expected
 
 def test_fail():
     with pytest.raises(ValueError):
