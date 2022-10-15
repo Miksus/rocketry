@@ -120,9 +120,17 @@ params_action = [
 ]
 
 params_running = [
-    pytest.param(running(task="mytask"), TaskRunning(task="mytask"), id="is running"),
-    pytest.param(running("10 mins"), TaskRunning(task=None, period=TimeSpanDelta(near="10 mins")), id="is running 10 mins"),
-    pytest.param(running("10 mins", task="a_task"), TaskRunning(task="a_task", period=TimeSpanDelta(near="10 mins")), id="is running 10 mins (passed task)"),
+    pytest.param(running.get_cond(), TaskRunning(task=None), id="is running"),
+    pytest.param(running(task="mytask").get_cond(), TaskRunning(task="mytask"), id="is running (task)"),
+    pytest.param(running("mytask").get_cond(), TaskRunning(task="mytask"), id="is running (task posarg)"),
+    pytest.param(running("mytask").more_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="10 mins")), id="is running more than"),
+    pytest.param(running("mytask").less_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(far="10 mins")), id="is running more than"),
+    pytest.param(running("mytask").between("15 mins", "20 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="15 mins", far="20 mins")), id="is running between"),
+
+    # Old way
+    pytest.param(running().get_cond(), TaskRunning(task=None), id="is running (call)"),
+    pytest.param(running(more_than="10 mins"), TaskRunning(task=None, period=TimeSpanDelta(near="10 mins")), id="is running 10 mins"),
+    pytest.param(running(more_than="10 mins", task="a_task"), TaskRunning(task="a_task", period=TimeSpanDelta(near="10 mins")), id="is running 10 mins (passed task)"),
 ]
 
 params_schedule = [

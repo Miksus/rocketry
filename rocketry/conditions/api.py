@@ -126,6 +126,40 @@ class RetryWrapper(BaseCondition):
         "Get condition the wrapper represents"
         return Retry(-1)
 
+class RunningWrapper(BaseCondition):
+
+    def __init__(self, task=None):
+        self.task = task
+
+    def observe(self, **kwargs):
+        return self.get_cond().observe(**kwargs)
+
+    def __call__(self, task=None, more_than=None, less_than=None):
+        if more_than is not None or less_than is not None:
+            period = TimeSpanDelta(near=more_than, far=less_than)
+            return TaskRunning(task=task, period=period)
+        else:
+            return RunningWrapper(task)
+
+    def more_than(self, delta):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=delta, far=None)
+        return TaskRunning(task=self.task, period=period)
+
+    def less_than(self, delta):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=None, far=delta)
+        return TaskRunning(task=self.task, period=period)
+
+    def between(self, more_than, less_than):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=more_than, far=less_than)
+        return TaskRunning(task=self.task, period=period)
+
+    def get_cond(self):
+        "Get condition the wrapper represents"
+        return TaskRunning(task=self.task)
+
 # Basics
 # ------
 
@@ -217,12 +251,7 @@ def after_any_finish(*tasks):
 # Task Status
 # -----------
 
-def running(more_than:str=None, less_than=None, task=None):
-    if more_than is not None or less_than is not None:
-        period = TimeSpanDelta(near=more_than, far=less_than)
-    else:
-        period = None
-    return TaskRunning(task=task, period=period)
+running = RunningWrapper()
 
 retry = RetryWrapper()
 
