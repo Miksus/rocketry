@@ -15,7 +15,7 @@ def run_task(fail=False):
 
 def test_task_finish_compare(tmpdir, session):
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         equals = TaskFinished(task="runned task") == 2
         greater = TaskFinished(task="runned task") > 2
         less = TaskFinished(task="runned task") < 2

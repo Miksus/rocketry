@@ -621,11 +621,11 @@ class Task(RedBase, BaseModel):
             status = "termination"
             exc_info = sys.exc_info()
 
-        except Exception as exception:
+        except Exception:
             # All the other exceptions (failures)
             try:
                 self.process_failure(*sys.exc_info())
-            except:
+            except Exception:
                 # Failure of failure processing
                 self.log_failure(task_run)
             else:
@@ -680,9 +680,9 @@ class Task(RedBase, BaseModel):
             task_run.exception = exc
             try:
                 self.log_failure()
-            except:
+            except Exception:
                 pass
-            # Note that we don't raise the error as there is nothing 
+            # Note that we don't raise the error as there is nothing
             # to catch it
             return
         finally:
@@ -690,7 +690,7 @@ class Task(RedBase, BaseModel):
 
         try:
             output = self._run_as_main(params=params, direct_params=direct_params, task_run=task_run, execution="thread")
-        except:
+        except Exception:
             # Task crashed before actually running the execute.
             try:
                 self.log_failure()

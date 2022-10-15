@@ -13,7 +13,7 @@ class InstructionParser:
         self.item_parser = item_parser
 
         self.operators = operators
-        self.symbols = set([oper["symbol"] for oper in operators])
+        self.symbols = set(oper["symbol"] for oper in operators)
 
     def __call__(self, s:str, **kwargs):
         """Parse a string to condition. Allows logical operators.
