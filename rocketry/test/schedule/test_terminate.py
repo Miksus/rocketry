@@ -169,7 +169,7 @@ def test_permanent_task(tmpdir, execution, session):
         # but there still should not be any terminations
         assert 3 <= logger.filter_by(action="run").count()
         assert 1 == logger.filter_by(action="terminate").count() # The last run is terminated
-        assert 2 <= logger.filter_by(action="success").count()
+        assert 2 == logger.filter_by(action="success").count()
         assert 0 == logger.filter_by(action="fail").count()
 
         assert logger.filter_by(action="terminate").last().created >= logger.filter_by(action="success").last().created
