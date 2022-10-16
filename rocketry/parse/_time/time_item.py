@@ -28,5 +28,4 @@ def parse_time_item(s:str, session=None):
 
     if isinstance(parser, TimePeriod):
         return parser
-    else:
-        return parser(**kwargs)
+    return parser(**kwargs)

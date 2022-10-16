@@ -24,7 +24,7 @@ class Link:
         return iter((self.parent, self.child))
 
     def __eq__(self, other):
-        if type(self) == type(other):
+        if isinstance(self, type(other)):
             return (
                 self.parent == other.parent
                 and self.child == other.child
@@ -36,7 +36,7 @@ class Link:
     def __str__(self):
         s = f'{self.parent.name!r} -> {self.child.name!r}'
         if self.type is All:
-            s = s + ' (multi)'
+            s += ' (multi)'
         return s
 
     def __repr__(self):

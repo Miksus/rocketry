@@ -61,9 +61,9 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         return params
 
 # For mapping interface
-    def get(self, item, default=None):
+    def get(self, key, default=None):
         try:
-            return self[item]
+            return self[key]
         except KeyError:
             return default
 

@@ -77,7 +77,7 @@ class CommandTask(Task):
                 param = self.argform + param
 
             if isinstance(command, str):
-                command = command + f" {param} \"{val}\""
+                command += f" {param} \"{val}\""
             else:
                 command += [param] + [val]
 

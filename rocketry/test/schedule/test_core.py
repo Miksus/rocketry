@@ -59,11 +59,11 @@ async def run_slow_async():
 
 
 def create_line_to_file():
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 async def create_line_to_file_async():
-    with open("work.txt", "a") as file:
+    with open("work.txt", "a", encoding="utf-8") as file:
         file.write("line created\n")
 
 def run_with_param(int_5):
@@ -85,17 +85,17 @@ def test_scheduler_shut_cond(session):
 @pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
 @pytest.mark.parametrize("func", [pytest.param(create_line_to_file, id="sync"), pytest.param(create_line_to_file_async, id="async")])
 def test_task_execution(tmpdir, execution, func, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
         # actual measurable impact outside rocketry
-        FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution, session=session),
+        FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second"))
 
         session.start()
         # Sometimes in CI the task may end up to be started only twice thus we tolerate slightly
-        with open("work.txt", "r") as file:
+        with open("work.txt", "r", encoding="utf-8") as file:
             assert 2 <= len(list(file))
 
 @pytest.mark.parametrize("get_handler", [
@@ -187,7 +187,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
 @pytest.mark.parametrize("func_type", ["sync", "async"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_status(session, execution, func_type, mode):
-    session.config.force_status_from_logs = True if mode == "use logs" else False
+    session.config.force_status_from_logs = mode == "use logs"
 
     task_success = FuncTask(
         run_succeeding if func_type == "sync" else run_succeeding_async,
@@ -271,7 +271,7 @@ def test_task_status(session, execution, func_type, mode):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_disabled(tmpdir, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             run_succeeding,
@@ -286,7 +286,7 @@ def test_task_disabled(tmpdir, execution, session):
         session.start()
 
         history = task.logger.get_records()
-        assert 0 == sum([record for record in history if record["action"] == "run"])
+        assert 0 == sum(record for record in history if record["action"] == "run")
 
         assert task.disabled
 
@@ -383,16 +383,16 @@ def test_pass_params_as_local_and_global(execution, session):
 
 # Only needed for testing start up and shutdown
 def create_line_to_startup_file():
-    with open("start.txt", "w") as file:
+    with open("start.txt", "w", encoding="utf-8") as file:
         file.write("line created\n")
 
 def create_line_to_shutdown():
-    with open("shut.txt", "w") as file:
+    with open("shut.txt", "w", encoding="utf-8") as file:
         file.write("line created\n")
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_startup_shutdown(tmpdir, execution, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         FuncTask(create_line_to_startup_file, name="startup", on_startup=True, execution=execution, session=session)
         FuncTask(create_line_to_shutdown, name="shutdown", on_shutdown=True, execution=execution, session=session)
@@ -414,7 +414,7 @@ def test_startup_shutdown(tmpdir, execution, session):
         assert os.path.exists("start.txt")
         assert os.path.exists("shut.txt")
 
-        assert list(session.get_task_log()) != []
+        assert list(session.get_task_log())
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_logging_repo(tmpdir, execution):
@@ -429,7 +429,7 @@ def test_logging_repo(tmpdir, execution):
     logger.addHandler(handler)
 
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task_1 = FuncTask(run_succeeding, name="1", priority=100, start_cond=AlwaysTrue(), execution=execution, session=session)
         task_3 = FuncTask(run_failing, name="3", priority=10, start_cond=AlwaysTrue(), execution=execution, session=session)

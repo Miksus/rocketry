@@ -137,6 +137,5 @@ class TaskCond(BaseCondition):
         if func_module == "__main__":
             # Showing as 'myfunc'
             return func_name
-        else:
-            # Showing as 'path.to.module:myfunc'
-            return f"{func_module}:{func_name}"
+        # Showing as 'path.to.module:myfunc'
+        return f"{func_module}:{func_name}"

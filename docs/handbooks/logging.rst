@@ -41,6 +41,10 @@ least the following fields or attributes:
 - ``task_name``: Name of the task.
 - ``action``: What the log was about. Either *run*, *success*, *fail*, *terminate* or *inaction*. 
 
+It is also recommended to have fields/attributes: 
+
+- ``run_id``: Identifier of the run. Relevant if multilaunch used.
+
 You may add any other field or attribute from what the Logging 
 library creates or create attributes your own.
 
@@ -65,6 +69,12 @@ Here are some premade log record models you may use:
 - ``rocketry.log.LogRecord``: Has the typical elements of `logging.LogRecord <https://docs.python.org/3/library/logging.html#logging.LogRecord>`_ and extras required by rocketry.
 - ``rocketry.log.TaskLogRecord``: Has the same as ``LogRecord`` but also includes start, end and runtimes.
 
+
+There are also variants that include field ``run_id``:
+
+- ``rocketry.log.MinimalRunRecord``
+- ``rocketry.log.RunRecord``
+- ``rocketry.log.TaskRunRecord``
 
 Setting Up Repo to a Logger
 ---------------------------

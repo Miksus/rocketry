@@ -44,7 +44,7 @@ class TimeSpanDelta(TimeDelta):
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
-        is_same_class = type(self) == type(other)
+        is_same_class = isinstance(self, type(other))
         if is_same_class:
             return (self.near == other.near) and (self.far == other.far)
         return False

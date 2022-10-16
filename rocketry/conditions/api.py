@@ -1,3 +1,4 @@
+import warnings
 from rocketry.conditions import (
     DependFailure, DependFinish, DependSuccess, TaskFailed,
     TaskFinished, TaskRunnable,
@@ -126,6 +127,65 @@ class RetryWrapper(BaseCondition):
         "Get condition the wrapper represents"
         return Retry(-1)
 
+class RunningWrapper(BaseCondition):
+
+    def __init__(self, task=None):
+        self.task = task
+
+    def observe(self, **kwargs):
+        return self.get_cond().observe(**kwargs)
+
+    def __call__(self, task=None, more_than=None, less_than=None):
+        if more_than is not None or less_than is not None or task is None:
+            warnings.warn(
+                "running(more_than=..., less_than=...) and running() are derpecated. " 
+                "Please use running.more_than, running.less_than, running.between or just running instead.",
+                DeprecationWarning
+            )
+            period = None
+            if more_than is not None or less_than is not None:
+                period = TimeSpanDelta(near=more_than, far=less_than)
+            return TaskRunning(task=task, period=period)
+        else:
+            return RunningWrapper(task)
+
+    def more_than(self, delta):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=delta, far=None)
+        return TaskRunning(task=self.task, period=period)
+
+    def less_than(self, delta):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=None, far=delta)
+        return TaskRunning(task=self.task, period=period)
+
+    def between(self, more_than, less_than):
+        "Get condition the wrapper represents"
+        period = TimeSpanDelta(near=more_than, far=less_than)
+        return TaskRunning(task=self.task, period=period)
+
+    def get_cond(self):
+        "Get condition the wrapper represents"
+        return TaskRunning(task=self.task)
+
+    def __ge__(self, other):
+        return self.get_cond() >= other
+
+    def __le__(self, other):
+        return self.get_cond() <= other
+
+    def __gt__(self, other):
+        return self.get_cond() > other
+
+    def __lt__(self, other):
+        return self.get_cond() < other
+
+    def __eq__(self, other):
+        return self.get_cond() == other
+
+    def __ne__(self, other):
+        return self.get_cond() != other
+
 # Basics
 # ------
 
@@ -156,14 +216,13 @@ def every(past:str, based="run"):
     kws_past = {} # 'unit': 's'
     if based == "run":
         return TaskStarted(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "success":
+    if based == "success":
         return TaskSucceeded(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "fail":
+    if based == "fail":
         return TaskFailed(period=TimeDelta(past, kws_past=kws_past)) == 0
-    elif based == "finish":
+    if based == "finish":
         return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
-    else:
-        raise ValueError(f"Invalid status: {based}")
+    raise ValueError(f"Invalid status: {based}")
 
 def cron(__expr=None, **kwargs):
     if __expr:
@@ -218,12 +277,7 @@ def after_any_finish(*tasks):
 # Task Status
 # -----------
 
-def running(more_than:str=None, less_than=None, task=None):
-    if more_than is not None or less_than is not None:
-        period = TimeSpanDelta(near=more_than, far=less_than)
-    else:
-        period = None
-    return TaskRunning(task=task, period=period)
+running = RunningWrapper()
 
 retry = RetryWrapper()
 

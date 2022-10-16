@@ -122,7 +122,7 @@ class Scheduler(RedBase):
                 await self._hibernate()
                 if self._flag_shutdown.is_set():
                     break
-                elif self._flag_restart.is_set():
+                if self._flag_restart.is_set():
                     raise SchedulerRestart()
 
                 await self.run_cycle()
@@ -181,13 +181,7 @@ class Scheduler(RedBase):
                     await self.run_task(task)
                     # Reset force_run as a run has forced
                     task.force_run = False
-                elif self.is_timeouted(task):
-                    # Terminate the task
-                    await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
-                elif self.is_out_of_condition(task):
-                    # Terminate the task
-                    await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
-
+                await task._check_termination()
         self.handle_logs()
         self.check_thread_errors()
         # Running hooks
@@ -204,7 +198,7 @@ class Scheduler(RedBase):
     def check_task_cond(self, task:Task):
         try:
             return task.is_runnable()
-        except:
+        except Exception:
             self.logger.exception(f"Condition crashed for task '{task.name}'")
             if not self.session.config.silence_cond_check:
                 raise
@@ -216,7 +210,7 @@ class Scheduler(RedBase):
 
         try:
             await task.start_async(log_queue=self._log_queue)
-        except (SchedulerRestart, SchedulerExit) as exc:
+        except (SchedulerRestart, SchedulerExit):
             raise
         except TaskLoggingError:
             self.logger.exception(f"Logging failed for task '{task.name}'")
@@ -239,99 +233,25 @@ class Scheduler(RedBase):
     async def terminate_task(self, task, reason=None):
         """Terminate a given task."""
         self.logger.debug(f"Terminating task '{task.name}'")
-        is_threaded = hasattr(task, "_thread")
-        is_multiprocessed = hasattr(task, "_process")
-        if task.is_alive_as_thread():
-            # We can only kindly ask the thread to...
-            # get the fuck out please.
-            task._thread_terminate.set()
-
-        elif task.is_alive_as_process():
-            task._process.terminate()
-            # Waiting till the termination is finished.
-            # Otherwise may try to terminate it many times as the process is alive for a brief moment
-            task._process.join()
-            self._log_task(task, "log_termination", reason=reason)
-
-            # Resetting attr force_termination
-            task.force_termination = False
-        elif task.is_alive_as_async():
-            task._async_task.cancel()
-            try:
-                await task._async_task
-            except asyncio.CancelledError:
-                self._log_task(task, "log_termination", reason=reason)
-        else:
-            # The process/thread probably just died after the check
-            pass
-
-    def is_timeouted(self, task):
-        """Check if the task is timeouted."""
-        #! TODO: Can this be put to the Task?
-        if task.permanent_task:
-            # Task is meant to be on all the time thus no reason to terminate due to timeout
-            return False
-        elif not hasattr(task, "_thread") and not hasattr(task, "_process"):
-            # Task running on the main process
-            # cannot be left running
-            return False
-        elif not task.is_alive():
-            return False
-
-        timeout = (
-            task.timeout if task.timeout is not None
-            else self.session.config.timeout
-        )
-
-        if timeout is None:
-            return False
-        run_duration = datetime.datetime.fromtimestamp(time.time()) - task.get_last_run()
-        return run_duration > timeout
+        await task._terminate_all(reason=reason)
 
     def is_task_runnable(self, task:Task):
         """Inspect whether the task should be run."""
         #! TODO: Can this be put to the Task?
         execution = task.get_execution()
-        is_condition = self.check_task_cond(task)
         if execution == "process":
-            is_not_running = not task.is_alive()
             has_free_processors = self.has_free_processors()
-            return is_not_running and has_free_processors and is_condition
-        elif execution == "main":
-            return is_condition
-        elif execution == "thread":
-            is_not_running = not task.is_alive()
-            return is_not_running and is_condition
-        elif execution == "async":
-            is_not_running = not task.is_alive()
-            return is_not_running and is_condition
-        else:
-            raise NotImplementedError(task.execution)
-
-    def is_out_of_condition(self, task:Task):
-        """Inspect whether the task should be terminated."""
-        #! TODO: Can this be put to the Task?
-        if not task.is_alive():
-            # NOTE:
-            # Task running on the main process
-            # cannot be left running
-            return False
-
-        elif task.force_termination:
-            return True
-
-        else:
-            try:
-                return task.is_terminable()
-            except:
-                self.logger.exception(f"Condition crashed for task '{task.name}'")
-                if not self.session.config.silence_cond_check:
-                    raise
-
-                # We operate the same way as people often do:
-                # If we don't know if the process should be killed,
-                # we panic and shut it down
-                return True
+            if not has_free_processors:
+                return False
+        if execution in ("thread", "async", "process"):
+            if task.multilaunch is None:
+                allow_multilaunch = self.session.config.multilaunch
+            else:
+                allow_multilaunch = task.multilaunch
+            if not allow_multilaunch and task.is_alive():
+                return False
+        is_condition = self.check_task_cond(task)
+        return is_condition
 
     def handle_logs(self):
         """Handle the status queue and carries the logging on their behalf."""
@@ -408,12 +328,12 @@ class Scheduler(RedBase):
         return self.count_process_tasks_alive() < self.session.config.max_process_count
 
     def count_process_tasks_alive(self):
-        return sum(task.is_alive_as_process() for task in self.tasks)
+        return sum(task.count_processes_taken() for task in self.tasks)
 
     @property
     def n_alive(self) -> int:
-        """Count of tasks that are alive."""
-        return sum(task.is_alive() for task in self.tasks)
+        """Count of task runs that are alive."""
+        return sum(task.n_alive for task in self.tasks)
 
     async def run_shutdown_tasks(self):
         # Make sure the tasks run if start_cond not set
@@ -446,12 +366,8 @@ class Scheduler(RedBase):
                         if task.permanent_task:
                             # Would never "finish" anyways
                             await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
-                        elif self.is_timeouted(task):
-                            # Terminate the task
-                            await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
-                        elif self.is_out_of_condition(task):
-                            # Terminate the task
-                            await self.terminate_task(task, reason=f"Task '{task.name}' end condition is true")
+                        else:
+                            await task._check_termination()
             except Exception as exception:
                 # Fuck it, terminate all
                 await self._shut_down_tasks(exception=exception)
@@ -589,7 +505,7 @@ class Scheduler(RedBase):
         func = getattr(task, log_method)
         try:
             func(*args)
-        except:
+        except Exception:
             self.logger.exception(f"Logging failed for task '{task.name}'")
             if not self.session.config.silence_task_logging:
                 raise
@@ -598,5 +514,4 @@ class Scheduler(RedBase):
         silence_logging = self.session.config.silence_task_logging
         if not silence_logging:
             for task in self.tasks:
-                if task._thread_error:
-                    raise task._thread_error
+                task._check_exceptions()
