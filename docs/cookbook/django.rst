@@ -82,6 +82,9 @@ if that's something you would want. Let's add this view in our `views.py` file:
 .. code-block:: python
 
     from api.commands import inittasks as tasklist
+    import asyncio
+
+    ...
 
     class TaskView(APIView):
         def get(self, request):
