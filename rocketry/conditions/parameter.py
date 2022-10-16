@@ -90,7 +90,7 @@ class ParamExists(BaseCondition):
         for key, val in self.param_values.items():
             if key not in params:
                 return False
-            elif params[key] != val:
+            if params[key] != val:
                 return False
         # Passed all test
         return True

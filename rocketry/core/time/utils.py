@@ -12,7 +12,7 @@ def get_period_span(period:'TimePeriod') -> Tuple[datetime.datetime, datetime.da
 
     if period is None:
         return TimePeriod.min, TimePeriod.max
-    elif isinstance(period, str):
+    if isinstance(period, str):
         period = parse_time(period)
     dt = datetime.datetime.fromtimestamp(time.time())
 

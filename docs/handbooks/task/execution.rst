@@ -214,3 +214,105 @@ This execution method runs the task on a separate process using
     serialization of the function fails in initiating the process.
 
 Useful for CPU bound problems or for problems in which the code has tendency to get stuck.
+
+Multilaunch
+-----------
+
+By default, each task can be set running only once. In other words, if a task is 
+already running it cannot be started even if its starting condition was still true
+or it was set running using ``task.run()``. This limitation is in place to make 
+sure the task logs are consistent. 
+
+To illustrate this, your task must finish before it could be started again:
+
+======= ========= =======
+created task_name action
+======= ========= =======
+1       do_things run
+2       do_things success
+3       do_things run
+4       do_things success
+======= ========= =======
+
+
+However, in some cases is not preferable and you might want to allow same task to 
+start multiple times. This can be done by setting ``multilaunch`` true either on session 
+configuration or to an individual task:
+
+.. code-block:: python
+
+    app = Rocketry(config={'multilaunch': True})
+
+    @app.task(multilaunch=True)
+    def do_things():
+        ...
+
+This task can produce logs similar to the following:
+
+======= ========= =======
+created task_name action
+======= ========= =======
+1       do_things run
+2       do_things run
+3       do_things success
+4       do_things success
+======= ========= =======
+
+There is also a ``run_id`` passed to logs which you can 
+use to identify individual runs and track their finish.
+
+.. code-block:: python
+
+    from rocketry.log import MinimalRunRecord
+
+    app = Rocketry(config={'multilaunch': True})
+
+    # Setting the log record model
+    repo = app.session.get_repo()
+    repo.model = MinimalRunRecord
+
+    @app.task(multilaunch=True)
+    def do_things():
+        ...
+
+By default, this will produce log similar to this:
+
+======= ========= ========= =======
+created task_name run_id    action
+======= ========= ========= =======
+1       do_things fe5018... run
+2       do_things fab4db... run
+3       do_things fe5018... success
+4       do_things fab4db... success
+======= ========= ========= =======
+
+By default, ``run_id`` is a Universal Unique Identifier (UUID).
+You can also create custom run IDs based on, for example,
+the arguments:
+
+.. code-block:: python
+
+    import json
+    def generate_run_id(task, params=None):
+        return json.dumps(dict(params), default=str)
+    
+    @app.task(multilaunch=True, func_run_id=generate_run_id)
+    def do_things(report_date):
+        ...
+
+You can also set the generator function as the session default:
+
+.. code-block:: python
+
+    app = Rocketry(config={'multilaunch': True, 'func_run_id': generate_run_id})
+
+When the task is run (with a date parameter), the logs could look like:
+
+======= ========= ============================= =======
+created task_name run_id                        action
+======= ========= ============================= =======
+1       do_things {"report_date": "2022-01-01"} run
+2       do_things {"report_date": "2022-01-02"} run
+3       do_things {"report_date": "2022-01-01"} success
+4       do_things {"report_date": "2022-01-02"} success
+======= ========= ============================= =======

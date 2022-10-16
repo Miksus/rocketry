@@ -77,7 +77,7 @@ def test_task_status_race(tmpdir, session, execution_number):
 def test_task_status(tmpdir, session, cls, succeeding, expected):
     # RACE CONDITION 2021-08-16: 'TaskFailed Failure' failed due to assert bool(condition) if expected else not bool(condition)
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task")
 
         task = FuncTask(
@@ -93,7 +93,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         # Now has
         try:
             task(params={"fail": not succeeding})
-        except:
+        except Exception:
             pass
 
         # we sleep 20ms to
@@ -128,7 +128,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
 )
 def test_task_depend_fail(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
@@ -153,7 +153,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         # -----|------------------- t0
         try:
             depend_task(params={"fail": True})
-        except:
+        except Exception:
             pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
@@ -168,7 +168,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         # -----|-----------|-----------|----------- t0
         try:
             depend_task(params={"fail": True})
-        except:
+        except Exception:
             pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
@@ -200,7 +200,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
 )
 def test_task_depend_success(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(

@@ -362,19 +362,19 @@ class TimeOfYear(AnchoredInterval):
             # May and June', the sentence includes
             # time between 1st of May to 30th of June.
             return self._month_start_mapping[nth_month+1] - 1
-        elif day_of_month_str:
+        if day_of_month_str:
             microseconds = TimeOfMonth().anchor_str(day_of_month_str)
         else:
             microseconds = 0
 
         return self._month_start_mapping[nth_month] + microseconds
 
-    def to_timepoint(self, ns:int):
+    def to_timepoint(self, ms:int):
         "Turn microseconds to the period's timepoint"
         # Ie. Monday --> Monday 00:00 to Monday 24:00
         # By default assumes linear scale (like week)
         # but can be overridden for non linear such as year
-        month_num = self._year_start_mapping[ns]
+        month_num = self._year_start_mapping[ms]
         return self._month_start_mapping[month_num + 1] - 1
 
     def anchor_int(self, i, side=None, **kwargs):
@@ -430,7 +430,7 @@ class RelativeDay(TimeInterval):
 
     def rollback(self, dt):
         offset = self.offsets[self.day]
-        dt = dt - offset
+        dt -= offset
         return Interval(
             datetime.datetime.combine(dt, self.start_time),
             datetime.datetime.combine(dt, self.end_time)

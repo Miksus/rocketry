@@ -115,5 +115,4 @@ class PipeArg(BaseArgument):
                 return arg.get_value(**kwargs)
             except KeyError:
                 continue
-        else:
-            raise KeyError("No value found")
+        raise KeyError("No value found")

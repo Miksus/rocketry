@@ -42,11 +42,10 @@ class TimePeriod(RedBase):
         if self is always:
             # Reducing the operation
             return other
-        elif other is always:
+        if other is always:
             # Reducing the operation
             return self
-        else:
-            return All(self, other)
+        return All(self, other)
 
     def __or__(self, other):
         # self | other
@@ -58,8 +57,7 @@ class TimePeriod(RedBase):
         if self is always or other is always:
             # Reducing the operation
             return always
-        else:
-            return Any(self, other)
+        return Any(self, other)
 
     @abstractmethod
     def rollforward(self, dt):
@@ -179,11 +177,10 @@ class TimeInterval(TimePeriod):
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
-        is_same_class = type(self) == type(other)
+        is_same_class = isinstance(self, type(other))
         if is_same_class:
             return (self._start == other._start) and (self._end == other._end)
-        else:
-            return False
+        return False
 
 @dataclass(frozen=True)
 class TimeDelta(TimePeriod):
@@ -238,19 +235,17 @@ class TimeDelta(TimePeriod):
 
     def __eq__(self, other):
         "Test whether self and other are essentially the same periods"
-        is_same_class = type(self) == type(other)
+        is_same_class = isinstance(self, type(other))
         if is_same_class:
             return (self.past == other.past) and (self.future == other.future)
-        else:
-            return False
+        return False
 
     def __str__(self):
         if not self.future:
             return f"past {str(self.past)}"
-        elif not self.past:
+        if not self.past:
             return f"next {str(self.future)}"
-        else:
-            return f"past {str(self.past)} to next {str(self.future)}"
+        return f"past {str(self.past)} to next {str(self.future)}"
 
     def __repr__(self):
         return f"TimeDelta(past={repr(self.past)}, future={repr(self.future)})"
@@ -279,7 +274,7 @@ class All(TimePeriod):
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("Only TimePeriods supported")
-        elif not args:
+        if not args:
             raise ValueError("No TimePeriods to wrap")
 
         # Compress the time periods
@@ -311,25 +306,24 @@ class All(TimePeriod):
         all_overlaps = all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2))
         if all_overlaps:
             return reduce(lambda a, b: a & b, intervals)
-        else:
-            # Not found, trying again with next period
-            # Example:
-            # Current:                     |
-            # A:         <-------------->
-            # B:         <---> <--->
-            # C:         <------>
-            # Next try:         |
-            next_dt = min(intervals, key=lambda x: x.right).right
+        # Not found, trying again with next period
+        # Example:
+        # Current:                     |
+        # A:         <-------------->
+        # B:         <---> <--->
+        # C:         <------>
+        # Next try:         |
+        next_dt = min(intervals, key=lambda x: x.right).right
 
-            opened = any(
-                interv.closed not in ('right', 'both')
-                for interv in intervals
-                if interv.right == next_dt
-            )
-            # TODO: If
-            if dt == next_dt:
-                next_dt -= self.resolution
-            return self.rollback(next_dt)
+        opened = any(
+            interv.closed not in ('right', 'both')
+            for interv in intervals
+            if interv.right == next_dt
+        )
+        # TODO: If
+        if dt == next_dt:
+            next_dt -= self.resolution
+        return self.rollback(next_dt)
 
     def rollforward(self, dt):
         # We solve this iteratively
@@ -345,31 +339,29 @@ class All(TimePeriod):
         all_overlaps = all(a.overlaps(b) for a, b in itertools.combinations(intervals, 2))
         if all_overlaps:
             return reduce(lambda a, b: a & b, intervals)
-        else:
-            # Not found, trying again with next period
-            # Example:
-            # Current: |
-            # A:         <-------------->
-            # B:         <---> <--->
-            # C:                 <------>
-            # Next try:          |
-            next_dt = max(intervals, key=lambda x: x.left).left
-            opened = any(
-                interv.closed not in ('left', 'both')
-                for interv in intervals
-                if interv.left == next_dt
-            )
-            if opened:
-                next_dt -= self.resolution
-            return self.rollforward(next_dt)
+        # Not found, trying again with next period
+        # Example:
+        # Current: |
+        # A:         <-------------->
+        # B:         <---> <--->
+        # C:                 <------>
+        # Next try:          |
+        next_dt = max(intervals, key=lambda x: x.left).left
+        opened = any(
+            interv.closed not in ('left', 'both')
+            for interv in intervals
+            if interv.left == next_dt
+        )
+        if opened:
+            next_dt -= self.resolution
+        return self.rollforward(next_dt)
 
     def __eq__(self, other):
         # self | other
         # bitwise or
-        if type(self) == type(other):
+        if isinstance(self, type(other)):
             return self.periods == other.periods
-        else:
-            return False
+        return False
 
     def __repr__(self):
         sub = ', '.join(repr(p) for p in self.periods)
@@ -386,7 +378,7 @@ class Any(TimePeriod):
     def __init__(self, *args):
         if any(not isinstance(arg, TimePeriod) for arg in args):
             raise TypeError("Only TimePeriods supported")
-        elif not args:
+        if not args:
             raise ValueError("No TimePeriods to wrap")
 
         # Compress the time periods
@@ -486,10 +478,9 @@ class Any(TimePeriod):
     def __eq__(self, other):
         # self | other
         # bitwise or
-        if type(self) == type(other):
+        if isinstance(self, type(other)):
             return self.periods == other.periods
-        else:
-            return False
+        return False
 
     def __repr__(self):
         sub = ', '.join(repr(p) for p in self.periods)
@@ -500,7 +491,7 @@ class Any(TimePeriod):
 
 @dataclass(frozen=True)
 class StaticInterval(TimePeriod):
-    """Inverval that is fixed in specific datetimes."""
+    """Interval that is fixed in specific datetimes."""
 
     start: datetime.datetime
     end: datetime.datetime
@@ -534,18 +525,16 @@ class StaticInterval(TimePeriod):
     def __str__(self):
         if self.is_max_interval:
             return 'always'
-        elif self.start == self.max:
+        if self.start == self.max:
             return 'never'
-        else:
-            return f'between {self.start} and {self.end}'
+        return f'between {self.start} and {self.end}'
 
     def __repr__(self):
         if self.is_max_interval:
             return 'always'
-        elif self.start == self.max:
+        if self.start == self.max:
             return 'never'
-        else:
-            return f"StaticInterval(start={self.start!r}, end={self.end!r})"
+        return f"StaticInterval(start={self.start!r}, end={self.end!r})"
 
 always = StaticInterval()
 never = StaticInterval(StaticInterval.max, StaticInterval.max)

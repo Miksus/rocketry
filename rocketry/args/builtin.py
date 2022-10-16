@@ -1,6 +1,7 @@
 
 import os
 import sys
+import threading
 import warnings
 from typing import Any, Callable, Optional
 try:
@@ -63,8 +64,7 @@ class Arg(BaseArgument):
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.key == other.key
-        else:
-            return False
+        return False
 
 class Session(BaseArgument):
     "An argument that represents the session"
@@ -72,8 +72,7 @@ class Session(BaseArgument):
     def get_value(self, task=None, session=None, **kwargs) -> Any:
         if session is not None:
             return session
-        else:
-            return task.session
+        return task.session
 
     def __repr__(self):
         return f'session'
@@ -87,8 +86,7 @@ class Task(BaseArgument):
     def get_value(self, task=None, **kwargs) -> Any:
         if self.name is None:
             return task
-        else:
-            return task.session[self.name]
+        return task.session[self.name]
 
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
@@ -213,8 +211,7 @@ class FuncArg(BaseArgument):
 
         if materialize == "pre":
             return self.get_value(**kwargs)
-        else:
-            return self
+        return self
 
     def __repr__(self):
         cls_name = type(self).__name__
@@ -222,11 +219,12 @@ class FuncArg(BaseArgument):
 
 class TerminationFlag(BaseArgument):
 
-    def get_value(self, task=None, session=None, **kwargs) -> Any:
+    def get_value(self, task=None, session=None, terminate_event=None, **kwargs) -> Any:
         execution = task.execution
         if execution in ("process", "main"):
-            warnings.warn(f"Passing termination flag to task with 'execution_type={execution}''. Flag cannot be used.")
-        return task._thread_terminate
+            warnings.warn(f"Termination flag passed to non-threaded task. Task with 'execution_type={execution}' cannot use termination flag.")
+            return threading.Event()
+        return terminate_event
 
     def __repr__(self):
         return 'TerminationFlag()'
@@ -269,6 +267,5 @@ class CliArg(BaseArgument):
         else:
             if self.default is NOTSET:
                 raise KeyError("CLI argument not found")
-            else:
-                return self.default
+            return self.default
         return args[i+1]

@@ -5,7 +5,7 @@ def create_file(file, content):
     path.parent.mkdir(exist_ok=True)
     #with open(path, "w") as f:
     #    f.write(content)
-    path.write_text(content)
+    path.write_text(content, encoding="utf-8")
 
 def delete_file(file):
     Path(file).unlink()

@@ -69,15 +69,15 @@ class AnchoredInterval(TimeInterval):
             # {"hour": 10, "minute": 20}
             return self.anchor_dict(value, **kwargs)
 
-        elif isinstance(value, int):
+        if isinstance(value, int):
             # start is considered as unit of the second behind scope
             return self.anchor_int(value, **kwargs)
 
-        elif isinstance(value, float):
+        if isinstance(value, float):
             # start is considered as unit of the second behind scope
             return self.anchor_float(value, **kwargs)
 
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return self.anchor_str(value, **kwargs)
         raise TypeError(value)
 
@@ -157,7 +157,7 @@ class AnchoredInterval(TimeInterval):
         end_ms = ms + self._unit_resolution
         if end_ms >= self._scope_max:
             # Over period
-            end_ms = end_ms - self._scope_max
+            end_ms -= self._scope_max
         return end_ms
 
     def _validate(self, n:int, orig):
@@ -206,9 +206,8 @@ class AnchoredInterval(TimeInterval):
         if not is_over_period:
             # Note that the period is right opened (end point excluded)
             return ms_start <= ms < ms_end
-        else:
-            # Note that the period is right opened (end point excluded)
-            return ms >= ms_start or ms < ms_end
+        # Note that the period is right opened (end point excluded)
+        return ms >= ms_start or ms < ms_end
 
     def is_full(self):
         "Whether every time belongs to the period (but there is still distinct intervals)"
@@ -226,15 +225,13 @@ class AnchoredInterval(TimeInterval):
         "Roll forward to next point in time that on the period"
         if dt in self:
             return dt
-        else:
-            return self.next_start(dt)
+        return self.next_start(dt)
 
     def rollend(self, dt):
         "Roll back to previous point in time that is on the period"
         if dt in self:
             return dt
-        else:
-            return self.prev_end(dt)
+        return self.prev_end(dt)
 
     def next_start(self, dt):
         "Get next start point of the period"
@@ -414,7 +411,6 @@ class AnchoredInterval(TimeInterval):
         start_ms = self._start
         end_ms = self._end
 
-        scope = self._scope
         repr_scope = self.components[self.components.index(self._scope) + 1]
 
         to_start = to_timedelta(start_ms, unit="microsecond")
