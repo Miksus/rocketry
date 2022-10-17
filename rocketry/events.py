@@ -32,8 +32,14 @@ class EventStream(BaseCondition, BaseArgument):
         # Check if the event occurred after 
         # previous run of the task
         last_run = task.get_last_run()
-        if last_run:
-            return last_run < event_time
+        in_future = event_time > datetime.datetime.now()
+        if in_future:
+            # Future events won't trigger task
+            return False
+        if not last_run:
+            # Haven't run previously
+            return True
+        return last_run < event_time
         else:
             return True
 
@@ -42,7 +48,7 @@ class EventStream(BaseCondition, BaseArgument):
         return event.value
 
     def _get_last_event(self, **kwargs) -> Event:
-        check_event = self.check_cond.observe(reference=0 if self._last_check is None else self._last_check, **kwargs)
+        check_event = self.check_cond.observe(reference=0 if self._last_check is None else self._last_check)
         if check_event:
             event = self.func()
             if event is None:
