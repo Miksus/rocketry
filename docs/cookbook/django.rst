@@ -5,7 +5,7 @@ Integrate Django (or Django Rest Framework)
 This cookbook will use DRF (Django REST Framework) as an example, but the syntax is exaclty
 the same for Django.
 
-First, let's create a new command for setting up our jobs (we will call it `inittasks.py`):
+First, let's create a new command for setting up our jobs (we will call it ``inittasks.py``):
 
 .. code-block:: python
 
@@ -26,10 +26,8 @@ First, let's create a new command for setting up our jobs (we will call it `init
     def handle(self, *args, **options):
         app.run()
 
-You can also update your `wsgi` file, but this is not the recommended way, as it will not work
-if you use Gunicorn or Uvicorn, or any other HTTP server.
 
-Next, you can just run in your `entrypoint` script (or in your shell) the following command:
+Next, you can just run in your ``entrypoint`` script (or in your shell) the following command:
 
 .. code-block:: bash
 
@@ -42,16 +40,22 @@ Next, you can just run in your `entrypoint` script (or in your shell) the follow
 
 And you're set ! It's really as simple as that!
 
+Using the Asynchronous ORM
+--------------------------
+
 Now, you might have the following error if you use Querysets, or try to use the ORM in your task:
 
-.. code-block:: python
+.. code-block:: bash
 
    Django: SynchronousOnlyOperation: You cannot call this from an async context - use a thread or sync_to_async
 
-Some guides might recommend to set `DJANGO_ALLOW_ASYNC_UNSAFE` to True in your shell before running the tasks.
-This is not the recommended way.
+.. warning::
 
-For our example, we will use the same file for simplicity, but you can move it to another file, of course.
+    Some guides might suggest setting the ``DJANGO_ALLOW_ASYNC_UNSAFE`` environment value to ``True``.
+    This is **not** the recommended way. The UNSAFE keyword is here for a reason.
+
+For our example, we will use the same file for simplicity, but it's fine to move your tasks to another file
+(as long as you don't forget to import them !).
 
 .. code-block:: python
 
@@ -76,8 +80,8 @@ For our example, we will use the same file for simplicity, but you can move it t
     def handle(self, *args, **options):
         app.run()
 
-You can even manually run the `do_things_with_users` function from a view now,
-if that's something you would want. Let's add this view in our `views.py` file:
+You can even manually run the ``do_things_with_users`` function from a view now,
+if that's something you would want. Let's add this view in our ``views.py`` file:
 
 .. code-block:: python
 
@@ -121,4 +125,6 @@ if that's something you would want. Let's add this view in our `views.py` file:
                 }, status=HTTP_200_OK)
 
 
-Note that you will only need to use `sync_to_async` if you use the asynchronous ORM.
+.. note ::
+    You will only need to use ``sync_to_async`` if you use the asynchronous ORM. The usage is well documented in
+    `Django's documentation <https://docs.djangoproject.com/en/4.1/topics/async/>`_.
