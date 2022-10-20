@@ -14,6 +14,6 @@ def do_if_runs_less_than():
 
 @app.task(running(do_things).between("2 mins", "5 mins"))
 def do_if_runs_between():
-    ... 
-    # Starts if do_things is running 
+    ...
+    # Starts if do_things is running
     # less than 2 mins but no more than 5 minutes

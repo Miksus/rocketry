@@ -8,7 +8,7 @@ import logging
 from multiprocessing import cpu_count
 import warnings
 
-from itertools import chain, count
+from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
 from pydantic import BaseModel, validator
 from rocketry.pybox.time import to_timedelta
