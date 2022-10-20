@@ -92,6 +92,11 @@ Options
     - ``True``: The scheduler does not crash on errors occurred on checking conditions
     - ``False``: The scheduler crashes. Useful for debug but not for production. (default)
 
+**multilaunch**: Whether to allow parallel runs of the same task.
+
+    In other words, whether to allow a task that is already running to start again.
+    By default, ``False``. Session-level option not used if specified to a task.
+
 **max_process_count**: Maximum number of processes allowed to be started.
 
     By default, the number of CPUs.

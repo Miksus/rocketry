@@ -1,6 +1,7 @@
 
 import os
 import sys
+import threading
 import warnings
 from typing import Any, Callable, Optional
 try:
@@ -218,11 +219,12 @@ class FuncArg(BaseArgument):
 
 class TerminationFlag(BaseArgument):
 
-    def get_value(self, task=None, session=None, **kwargs) -> Any:
+    def get_value(self, task=None, session=None, terminate_event=None, **kwargs) -> Any:
         execution = task.execution
         if execution in ("process", "main"):
-            warnings.warn(f"Passing termination flag to task with 'execution_type={execution}''. Flag cannot be used.")
-        return task._thread_terminate
+            warnings.warn(f"Termination flag passed to non-threaded task. Task with 'execution_type={execution}' cannot use termination flag.")
+            return threading.Event()
+        return terminate_event
 
     def __repr__(self):
         return 'TerminationFlag()'

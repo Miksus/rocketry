@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 import inspect
 from pickle import PicklingError
 import sys
@@ -13,7 +14,7 @@ from abc import abstractmethod
 import multiprocessing
 import threading
 from queue import Empty
-from typing import TYPE_CHECKING, Any, ClassVar, List, Dict, Type, Union, Tuple, Optional
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
@@ -42,6 +43,57 @@ def _create_session():
     # To avoid circular imports
     from rocketry import Session
     return Session()
+
+@dataclass
+class TaskRun:
+
+    start: float
+    task: Union[asyncio.Task, threading.Thread, multiprocessing.Process, None]
+    run_id: str = None
+
+    # Thread related
+    event_terminate: Optional[threading.Event] = None
+    event_running: Optional[threading.Event] = None
+    exception: Exception = None
+
+    def is_alive(self) -> bool:
+        if self.is_main:
+            return True
+        elif self.is_async:
+            return not self.task.done()
+        else:
+            return self.task.is_alive()
+
+    async def terminate(self):
+        task = self.task
+        if self.is_async:
+            task.cancel()
+            await task
+        elif self.is_process:
+            task.terminate()
+            # Waiting till the termination is finished.
+            # Otherwise may try to terminate it many times as the process is alive for a brief moment
+            task.join()
+        elif self.is_thread:
+            self.event_terminate.set()
+        else:
+            raise TypeError(f"Cannot terminate task: {task!r}")
+
+    @property
+    def is_main(self) -> bool:
+        return self.task is None
+
+    @property
+    def is_process(self) -> bool:
+        return isinstance(self.task, multiprocessing.Process)
+
+    @property
+    def is_async(self) -> bool:
+        return isinstance(self.task, asyncio.Future)
+
+    @property
+    def is_thread(self) -> bool:
+        return isinstance(self.task, threading.Thread)
 
 class Task(RedBase, BaseModel):
     """Base class for Tasks.
@@ -183,8 +235,10 @@ class Task(RedBase, BaseModel):
     start_cond: Optional[BaseCondition] = AlwaysFalse() #! TODO: Create get_start_cond so that this could also be as string (lazily parsed)
     end_cond: Optional[BaseCondition] = AlwaysFalse()
 
+    multilaunch: Optional[bool] = None
     on_startup: bool = False
     on_shutdown: bool = False
+    func_run_id: Callable = None
 
     last_run: Optional[datetime.datetime]
     last_success: Optional[datetime.datetime]
@@ -193,12 +247,8 @@ class Task(RedBase, BaseModel):
     last_inaction: Optional[datetime.datetime]
     last_crash: Optional[datetime.datetime]
 
-    _process: multiprocessing.Process = None
-    _thread: threading.Thread = None
-    _thread_terminate: threading.Event = PrivateAttr(default_factory=threading.Event)
-    _thread_error: Exception = PrivateAttr(default=None)
+    _run_stack: List[TaskRun] = PrivateAttr(default_factory=list)
     _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
-    _async_task: Optional[asyncio.Task] = PrivateAttr(default=None)
     _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
@@ -374,7 +424,19 @@ class Task(RedBase, BaseModel):
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
         #! TODO: Use property
-        return self.is_alive_as_main() or self.is_alive_as_async() or self.is_alive_as_thread() or self.is_alive_as_process()
+        self._clean_run_stack()
+        return any(
+            run.is_alive()
+            for run in self._run_stack
+        )
+
+    @property
+    def n_alive(self) -> int:
+        """int: Number of parallel runs alive."""
+        return sum(
+            run.is_alive()
+            for run in self._run_stack
+        )
 
 # Task Execution
 
@@ -400,13 +462,6 @@ class Task(RedBase, BaseModel):
             and extra parameters are acquired, by default None
         """
 
-        # Remove old threads/processes
-        # (using _process and _threads are most robust way to check if running as process or thread)
-        if self._process is not None:
-            self._process = None
-        if self._thread:
-            self._thread = None
-
         # The parameters are handled in the following way:
         #   - First extra parameters are fetched. This includes:
         #       - session.parameters
@@ -417,23 +472,30 @@ class Task(RedBase, BaseModel):
         #   - Then the params are post filtered
         #   - Then params and direct_params are fed to the execute method
         execution = self.get_execution()
+        task_run = TaskRun(start=time.time(), task=None)
         try:
-            params = self.get_extra_params(params)
-            direct_params = self.get_task_params()
-            if self.batches:
-                direct_params.update(self.batches.pop(0))
-
             self.force_run = False
+            params = self.get_extra_params(params, execution=execution)
+            direct_params = self._get_direct_params()
+
+            task_run.run_id = self.get_run_id(task_run, params=params | direct_params)
 
             # Run the actual task
             if execution in ("main", "async"):
-                self.log_running()
-                async_task = asyncio.create_task(self._run_as_async(params=params, direct_params=direct_params, execution=execution, **kwargs))
+                async_task = asyncio.create_task(
+                    self._run_as_async(
+                        params=params,
+                        direct_params=direct_params,
+                        task_run=task_run,
+                        execution=execution, **kwargs
+                    )
+                )
+                if execution == "async":
+                    task_run.task = async_task
+                self._run_stack.append(task_run)
+                self.log_running(task_run)
                 if execution == "main":
-                    self._main_alive = True
                     await async_task
-                else:
-                    self._async_task = async_task
                 if _IS_WINDOWS:
                     #! TODO: This probably is now solved
                     # There is an annoying bug (?) in Windows:
@@ -445,9 +507,9 @@ class Task(RedBase, BaseModel):
                     # in tests will succeed.
                     time.sleep(1e-6)
             elif execution == "process":
-                self.run_as_process(params=params, direct_params=direct_params, **kwargs)
+                self.run_as_process(params=params, direct_params=direct_params, task_run=task_run, **kwargs)
             elif execution == "thread":
-                self.run_as_thread(params=params, direct_params=direct_params, **kwargs)
+                self.run_as_thread(params=params, direct_params=direct_params, task_run=task_run, **kwargs)
         except (SchedulerRestart, SchedulerExit):
             raise
         except TaskLoggingError:
@@ -458,24 +520,25 @@ class Task(RedBase, BaseModel):
                 # NOTE: processes and threads log independently
                 # and it is not aware the logging failed
                 # (there is a log record still coming about the finish)
-                self.log_failure()
+                self.log_failure(task_run)
             raise
         except Exception as exc:
             # Something went wrong in the initiation
             # and it did not reach to log_running
+            if task_run.run_id is None:
+                task_run.run_id = self.get_run_id(task_run)
             if self.status != "run":
-                self.log_running()
-            self.log_failure()
+                self.log_running(task_run)
+            self.log_failure(task_run)
             raise TaskSetupError("Task failed before logging") from exc
         finally:
             # Clean up
             self._main_alive = False
+            # Delete the "main" runs from run stack
+            self._run_stack = [run for run in self._run_stack if run.task is not None]
 
     def __bool__(self):
         return self.is_runnable()
-
-    def is_terminable(self):
-        return self.end_cond.observe(task=self)
 
     def is_runnable(self):
         """Check whether the task can be run or not.
@@ -507,7 +570,7 @@ class Task(RedBase, BaseModel):
     def _run_as_main(self, **kwargs):
         return asyncio.run(self._run_as_async(**kwargs))
 
-    async def _run_as_async(self, params:Parameters, direct_params:Parameters, execution=None, **kwargs):
+    async def _run_as_async(self, params:Parameters, direct_params:Parameters, task_run:TaskRun, execution=None, **kwargs):
         """Run the task on the current thread and process"""
         # NOTE: Assumed that self.log_running() has been already called.
         # (If SystemExit is raised, it won't be catched in except Exception)
@@ -536,7 +599,7 @@ class Task(RedBase, BaseModel):
             self.process_success(output)
         except (SchedulerRestart, SchedulerExit):
             # SchedulerRestart is considered as successful task
-            self.log_success()
+            self.log_success(task_run)
             status = "succeeded"
             self.process_success(None)
             exc_info = sys.exc_info()
@@ -547,14 +610,14 @@ class Task(RedBase, BaseModel):
             # Task did not fail, it did not succeed:
             #   The task started but quickly determined was not needed to be run
             #   and therefore the purpose of the task was not executed.
-            self.log_inaction()
+            self.log_inaction(task_run)
             status = "inaction"
             exc_info = sys.exc_info()
 
         except (TaskTerminationException, asyncio.CancelledError):
             # Task was terminated and the task's function
             # did listen to that.
-            self.log_termination()
+            self.log_termination(reason="task terminated", task_run=task_run)
             status = "termination"
             exc_info = sys.exc_info()
 
@@ -564,9 +627,9 @@ class Task(RedBase, BaseModel):
                 self.process_failure(*sys.exc_info())
             except Exception:
                 # Failure of failure processing
-                self.log_failure()
+                self.log_failure(task_run)
             else:
-                self.log_failure()
+                self.log_failure(task_run)
             status = "failed"
             #self.logger.error(f'Task {self.name} failed', exc_info=True, extra={"action": "fail"})
 
@@ -578,7 +641,7 @@ class Task(RedBase, BaseModel):
             # Store the output
             if execution != 'process':
                 self._handle_return(output)
-            self.log_success(output)
+            self.log_success(output, task_run=task_run)
             #self.logger.info(f'Task {self.name} succeeded', extra={"action": "success"})
             status = "succeeded"
 
@@ -588,29 +651,33 @@ class Task(RedBase, BaseModel):
             self.process_finish(status=status)
             hooker.postrun(*exc_info)
 
-    def run_as_thread(self, params:Parameters, direct_params:Parameters, **kwargs):
+    def run_as_thread(self, params:Parameters, direct_params, task_run:TaskRun, **kwargs):
         """Create a new thread and run the task on that."""
 
-        params = params.pre_materialize(task=self, session=self.session)
-        direct_params = direct_params.pre_materialize(task=self, session=self.session)
+        terminate_event = params.get('_thread_terminate_', threading.Event())
 
-        self._thread_terminate.clear()
-        self._thread_error = None
+        params = params.pre_materialize(task=self, session=self.session, terminate_event=terminate_event)
+        direct_params = direct_params.pre_materialize(task=self, session=self.session, terminate_event=terminate_event)
 
-        event_is_running = threading.Event()
-        self._thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, event_is_running))
+        thread = threading.Thread(target=self._run_as_thread, args=(params, direct_params, task_run))
+        task_run.task = thread
+        task_run.event_terminate = terminate_event
+        task_run.event_running = threading.Event()
+
+        self._run_stack.append(task_run)
+
         self.last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
-        self._thread.start()
-        event_is_running.wait() # Wait until the task is confirmed to run
+        thread.start()
+        task_run.event_running.wait() # Wait until the task is confirmed to run
 
-    def _run_as_thread(self, params:Parameters, direct_params:Parameters, event=None):
+    def _run_as_thread(self, params:Parameters, direct_params:Parameters, task_run:TaskRun=None):
         """Running the task in a new thread. This method should only
         be run by the new thread."""
         try:
-            self.log_running()
+            self.log_running(task_run)
         except TaskLoggingError as exc:
             # Logging failed
-            self._thread_error = exc
+            task_run.exception = exc
             try:
                 self.log_failure()
             except Exception:
@@ -619,22 +686,23 @@ class Task(RedBase, BaseModel):
             # to catch it
             return
         finally:
-            event.set()
+            task_run.event_running.set()
 
         try:
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="thread")
+            output = self._run_as_main(params=params, direct_params=direct_params, task_run=task_run, execution="thread")
         except Exception:
             # Task crashed before actually running the execute.
             try:
                 self.log_failure()
             except TaskLoggingError as exc:
-                self._thread_error = exc
+                task_run.exception = exc
 
             # We cannot rely the exception to main thread here
             # thus we supress to prevent unnecessary warnings.
 
-    def run_as_process(self, params:Parameters, direct_params:Parameters, daemon=None, log_queue: multiprocessing.Queue=None):
+    def run_as_process(self, params:Parameters, direct_params:Parameters, task_run:TaskRun, daemon=None, log_queue: multiprocessing.Queue=None):
         """Create a new process and run the task on that."""
+
         session = self.session
 
         params = params.pre_materialize(task=self, session=session)
@@ -644,21 +712,29 @@ class Task(RedBase, BaseModel):
         log_queue = session.scheduler._log_queue if log_queue is None else log_queue
 
         daemon = self.daemon if self.daemon is not None else session.config.tasks_as_daemon
-        self._process = multiprocessing.Process(
+        process = multiprocessing.Process(
             target=self._run_as_process,
-            args=(params, direct_params, log_queue, session.config, self._get_hooks("task_execute")),
+            kwargs=dict(
+                params=params, direct_params=direct_params, 
+                task_run=task_run, 
+                queue=log_queue, 
+                config=session.config,
+                exec_hooks=self._get_hooks("task_execute")
+            ),
             daemon=daemon
         )
-        #self._last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
+        task_run.task = process
+
+        self._run_stack.append(task_run)
         self._mark_running = True # needed in pickling
 
-        self._process.start()
+        process.start()
         self._mark_running = False
 
         self._lock_to_run_log(log_queue)
         return log_queue
 
-    def _run_as_process(self, params:Parameters, direct_params:Parameters, queue, config, exec_hooks):
+    def _run_as_process(self, params:Parameters, direct_params:Parameters, task_run, queue, config, exec_hooks):
         """Running the task in a new process. This method should only
         be run by the new process."""
 
@@ -687,11 +763,11 @@ class Task(RedBase, BaseModel):
         except:
             logger.critical(f"Task '{self.name}' crashed in setting up logger.", exc_info=True, extra={"action": "fail", "task_name": self.name})
             raise
-        self.log_running()
+        self.log_running(task_run)
         try:
             # NOTE: The parameters are "materialized"
             # here in the actual process that runs the task
-            output = self._run_as_main(params=params, direct_params=direct_params, execution="process", hooks=exec_hooks)
+            output = self._run_as_main(params=params, direct_params=direct_params, task_run=task_run, execution="process", hooks=exec_hooks)
         except Exception as exc:
             # Task crashed before running execute (silence=True)
             self.log_failure()
@@ -700,7 +776,7 @@ class Task(RedBase, BaseModel):
             # to :(
             pass
 
-    def get_extra_params(self, params:Parameters) -> Parameters:
+    def get_extra_params(self, params:Parameters, execution:str, **kwargs) -> Parameters:
         """Get additional parameters
 
         Returns
@@ -710,11 +786,19 @@ class Task(RedBase, BaseModel):
         """
         passed_params = Parameters(params)
         session_params = self.session.parameters
-        extra_params = Parameters(_session_=self.session, _task_=self, _thread_terminate_=self._thread_terminate)
+        extra_params = Parameters(_session_=self.session, _task_=self, **kwargs)
+        if execution == "thread":
+            extra_params['_thread_terminate_'] = threading.Event()
 
         params = Parameters(self.prefilter_params(session_params | passed_params | extra_params))
 
         return params
+
+    def _get_direct_params(self):
+        direct_params = self.get_task_params()
+        if self.batches:
+            direct_params.update(self.batches.pop(0))
+        return direct_params
 
     def get_task_params(self):
         "Get parameters passed to the task"
@@ -848,19 +932,95 @@ class Task(RedBase, BaseModel):
         the task. Override this method."""
         raise NotImplementedError(f"Method 'get_default_name' not implemented to {type(self)}")
 
+    def get_run_id(self, run, params=None):
+        if self.func_run_id is not None:
+            return self.func_run_id(self, params)
+        else:
+            return self.session.config.func_run_id(self, params)
+
     def is_alive_as_main(self) -> bool:
-        return self._main_alive
+        return any(run.is_main and run.is_alive() for run in self._run_stack)
 
     def is_alive_as_async(self) -> bool:
-        return self._async_task is not None and not self._async_task.done()
+        return any(run.is_async and run.is_alive() for run in self._run_stack)
 
     def is_alive_as_thread(self) -> bool:
         """Whether the task has a live thread."""
-        return self._thread is not None and self._thread.is_alive()
+        return any(run.is_thread and run.is_alive() for run in self._run_stack)
 
     def is_alive_as_process(self) -> bool:
         """Whether the task has a live process."""
-        return self._process is not None and self._process.is_alive()
+        return any(run.is_process and run.is_alive() for run in self._run_stack)
+
+    def count_processes_taken(self) -> int:
+        """Count number of processes the task takes"""
+        return sum(run.is_process and run.is_alive() for run in self._run_stack)
+
+    async def _check_termination(self):
+        "Terminate task if can"
+        try:
+            is_end_cond = self.end_cond.observe(task=self, session=self.session)
+        except:
+            if not self.session.config.silence_cond_check:
+                raise
+            is_end_cond = True
+        
+        if self.force_termination:
+            await self._terminate_all(reason="forced termination")
+        elif is_end_cond:
+            await self._terminate_all(reason="end condition is true")
+        else:
+            now = time.time()
+            if self.permanent_task:
+                return
+            timeout = self.timeout if self.timeout else self.session.config.timeout
+            timeout_sec = timeout.total_seconds()
+            for run in self._run_stack:
+                start = run.start
+                run_duration = now - start
+                if run_duration > timeout_sec:
+                    await self._terminate_run(run, reason="timeouted")
+
+    def _clean_run_stack(self):
+        "Remove dead runs from run stack"
+        if self.session.config.silence_task_logging:
+            self._run_stack = [
+                run
+                for run in self._run_stack
+                if run.is_alive()
+            ]
+        else:
+            self._run_stack = [
+                run
+                for run in self._run_stack
+                if run.is_alive() or run.exception is not None
+            ]
+
+    def _check_exceptions(self):
+        for run in self._run_stack.copy():
+            if run.exception:
+                self._run_stack.remove(run)
+                raise run.exception
+
+    async def _terminate_all(self, reason=None):
+        "Terminate the whole run stack"
+        for run in self._run_stack:
+            await self._terminate_run(run, reason=reason)
+        self._clean_run_stack()
+        self.force_termination = False
+        #self._run_stack = [] # Does not work with threads
+
+    async def _terminate_run(self, run:TaskRun, reason=None):
+        "Terminate the whole run stack"
+        try:
+            await run.terminate()
+        except asyncio.CancelledError:
+            # Async tasks raise CancelledError if terminated
+            self.log_termination(reason=reason, task_run=run)
+        else:
+            if run.is_process:
+                # Threaded tasks handle their termination themselves
+                self.log_termination(reason=reason, task_run=run)
 
 # Logging
     def _lock_to_run_log(self, log_queue):
@@ -898,35 +1058,35 @@ class Task(RedBase, BaseModel):
         if err is not None:
             raise err
 
-    def log_running(self):
+    def log_running(self, task_run:TaskRun=None):
         """Make a log that the task is currently running."""
-        self._set_status("run")
+        self._set_status("run", task_run)
 
-    def log_failure(self):
+    def log_failure(self, task_run:TaskRun=None):
         """Log that the task failed."""
-        self._set_status("fail")
+        self._set_status("fail", task_run)
 
-    def log_success(self, return_value=None):
+    def log_success(self, return_value=None, task_run:TaskRun=None):
         """Make a log that the task succeeded."""
-        self._set_status("success", return_value=return_value)
+        self._set_status("success", task_run, return_value=return_value)
         #self.status = "success"
 
-    def log_termination(self, reason=None):
+    def log_termination(self, reason=None, task_run:TaskRun=None):
         """Make a log that the task was terminated."""
         reason = reason or "unknown reason"
-        self._set_status("terminate", message=reason)
+        msg = self.fmt_log_message.format(action="terminate", task=self.name)
+        self._set_status("terminate", task_run, message=msg + f" ({reason})")
 
         # Reset event and force_termination (for threads)
-        self._thread_terminate.clear()
         self.force_termination = False
 
-    def log_inaction(self):
+    def log_inaction(self, task_run:TaskRun=None):
         """Make a log that the task did nothing."""
-        self._set_status("inaction")
+        self._set_status("inaction", task_run)
 
-    def log_crash(self):
+    def log_crash(self, task_run:TaskRun=None):
         """Make a log that the task had previously crashed"""
-        self._set_status("crash")
+        self._set_status("crash", task_run)
 
     def log_record(self, record:logging.LogRecord):
         """Log the record with the logger of the task.
@@ -972,7 +1132,7 @@ class Task(RedBase, BaseModel):
         # This is way faster
         return self.status
 
-    def _set_status(self, action, message=None, return_value=None):
+    def _set_status(self, action, task_run:TaskRun=None, message=None, return_value=None):
         if message is None:
             message = self.fmt_log_message.format(action=action, task=self.name)
 
@@ -981,12 +1141,17 @@ class Task(RedBase, BaseModel):
 
         now = datetime.datetime.fromtimestamp(time.time())
         if action == "run":
-            extra = {"action": "run", "start": now}
+            extra = {
+                "action": "run", 
+                "start": datetime.datetime.fromtimestamp(task_run.start) if task_run is not None else now
+            }
             # self._last_run = now
         else:
             start_time = self.get_last_run()
             runtime = now - start_time if start_time is not None else None
             extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
+
+        extra['run_id'] = task_run.run_id if task_run is not None else None
 
         is_running_as_child = self.logger.name.endswith("._process")
         if is_running_as_child and action == "success":
@@ -1092,8 +1257,6 @@ class Task(RedBase, BaseModel):
         # #state["_process"] = None # If If execution == "process"
         # #state["_thread"] = None # If execution == "thread"
         #
-        # state["_thread_terminate"] = None # Event only for threads
-        #
         # state["_lock"] = None # Process task cannot lock anything anyways
 
         # capture what is normally pickled
@@ -1106,7 +1269,7 @@ class Task(RedBase, BaseModel):
         priv_attrs['_lock'] = None
         priv_attrs['_process'] = None
         priv_attrs['_thread'] = None
-        priv_attrs['_thread_terminate'] = None
+        priv_attrs['_run_stack'] = None
 
         # We also get rid of the conditions as if there is a task
         # containing an attr that cannot be pickled (like FuncTask

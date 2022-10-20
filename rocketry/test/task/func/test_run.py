@@ -154,7 +154,7 @@ async def test_run_log_fail_at_start(task_func, expected_outcome, execution, ses
             await task.start_async()
     else:
         await task.start_async()
-        assert task._thread_error
+        assert task._run_stack[0].exception
     # Wait for finish
     await session.scheduler.wait_task_alive()
     session.scheduler.handle_logs()
