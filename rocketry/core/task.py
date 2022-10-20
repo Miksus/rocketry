@@ -958,7 +958,7 @@ class Task(RedBase, BaseModel):
         "Terminate task if can"
         try:
             is_end_cond = self.end_cond.observe(task=self, session=self.session)
-        except Except:
+        except Exception:
             if not self.session.config.silence_cond_check:
                 raise
             is_end_cond = True
