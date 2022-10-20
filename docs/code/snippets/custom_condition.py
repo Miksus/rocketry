@@ -12,7 +12,7 @@ def file_exists(file):
 @app.task(daily & file_exists("data.csv"))
 def do_things():
     "Task that runs once a day when data.csv exists"
-    ...
+
 
 if __name__ == "__main__":
     app.run()

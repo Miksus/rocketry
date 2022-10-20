@@ -7,20 +7,18 @@ app = Rocketry()
 @app.cond()
 def is_foo():
     "This is a custom condition"
-    ...
     return True
 
 @app.task(daily & is_foo)
 def do_daily():
     "This task runs once a day when foo is true"
-    ...
     return ...
 
 @app.task((daily.at("10:00") | daily.at("19:00")) & time_of_week.between("Mon", "Fri"),
           execution="process")
 def do_complex():
     "This task runs on complex interval and on separate process"
-    ...
+
     return ...
 
 
@@ -28,12 +26,12 @@ def do_complex():
 def do_after_another(arg=Return(do_daily)):
     """This task runs after 'do_daily' and it has its the
     return argument as an input"""
-    ...
+
 
 @app.task(daily)
 def do_with_params(arg1=FuncArg(lambda: ...), arg2=Arg("myparam")):
     """This task runs with variety of arguments"""
-    ...
+
 
 @app.task(daily, execution="thread")
 def do_on_session(session=Session()):

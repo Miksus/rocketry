@@ -29,12 +29,12 @@ from rocketry.pybox.time import Interval, to_datetime
         pytest.param(
             Interval(to_datetime("2022-07-01"), to_datetime("2022-07-12"), closed="both"),
             Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15"), closed="both"),
-            id=f"left edges right (right)"
+            id="left edges right (right)"
         ),
         pytest.param(
             Interval(to_datetime("2022-07-12"), to_datetime("2022-07-15"), closed="both"),
             Interval(to_datetime("2022-07-01"), to_datetime("2022-07-12"), closed="both"),
-            id=f"left edges right (left)"
+            id="left edges right (left)"
         ),
     ]
 )

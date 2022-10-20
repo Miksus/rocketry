@@ -65,7 +65,7 @@ def test_app_tasks():
 
     @app.task('daily')
     def do_func():
-        ...
+
         return 'return value'
 
     app.task('daily', name="do_command", command="echo 'hello world'")
@@ -104,7 +104,7 @@ def test_nested_args():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg=Arg('arg_3')):
-        ...
+
         assert arg == "arg 3"
 
     app.session.config.shut_cond = TaskStarted(task='do_daily')
@@ -134,7 +134,7 @@ def test_nested_args_from_func_arg():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg=FuncArg(my_func_3)):
-        ...
+
         assert arg == "arg 3"
 
     app.session.config.shut_cond = TaskStarted(task='do_daily')
@@ -159,7 +159,6 @@ def test_arg_ref():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg_1=Arg(my_arg_1), arg_2=Arg(my_arg_2)):
-        ...
         assert arg_1 == "arg 1"
         assert arg_2 == "arg 2"
 
@@ -180,7 +179,7 @@ def test_app_async():
 
     @app.task('daily')
     def do_func():
-        ...
+
         return 'return value'
 
     app.session.config.shut_cond = TaskStarted(task='do_func')
@@ -207,7 +206,7 @@ def test_app_run():
     # Creating some tasks
     @app.task('daily & is foo')
     def do_daily():
-        ...
+
         return 'return value'
 
     @app.task("after task 'do_daily'")
@@ -254,7 +253,7 @@ def test_task_name():
 
     @app.task()
     def do_func():
-        ...
+
         return 'return value'
 
     assert app.session[do_func].name == "do_func"
