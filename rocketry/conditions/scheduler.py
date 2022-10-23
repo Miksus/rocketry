@@ -1,4 +1,4 @@
-from rocketry.args.builtin import ReferenceTime, Session
+from rocketry.args import ReferenceTime, Session as SessionArg
 from rocketry.core.condition.base import BaseComparable, BaseCondition
 from rocketry.core.time.utils import get_period_span
 
@@ -9,7 +9,7 @@ class SchedulerCycles(BaseComparable):
     tasks.
     """
 
-    def get_measurement(self, session=Session()) -> int:
+    def get_measurement(self, session=SessionArg()) -> int:
         n_cycles = session.scheduler.n_cycles
         return n_cycles
 
@@ -54,7 +54,7 @@ class SchedulerStarted(BaseCondition):
         self.period = period
         super().__init__()
 
-    def get_state(self, session=Session()) -> bool:
+    def get_state(self, session=SessionArg()) -> bool:
         start, end = get_period_span(self.period)
         dt = session.scheduler.startup_time
         return start <= dt <= end
@@ -69,6 +69,6 @@ class NewSchedulerCycle(BaseCondition):
     new cycle after given datetime. 
     """
 
-    def get_state(self, reference=ReferenceTime(), session=Session()) -> bool:
+    def get_state(self, reference:datetime.datetime=ReferenceTime(), session=SessionArg()) -> bool:
         cycle_start = session.scheduler._cycle_start
         return reference < cycle_start
