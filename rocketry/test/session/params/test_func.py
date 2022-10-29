@@ -26,8 +26,11 @@ def get_with_nested_args(arg = FuncArg(get_y), arg_2 = Arg('session_arg')):
     assert arg_2 == "z"
     return 'x'
 
+@pytest.mark.parametrize("where", ["pre", "post", None])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_simple(session, execution):
+def test_simple(session, execution, where):
+    if where is not None:
+        session.config.param_materialize = where
 
     task = FuncTask(
         func_x_with_arg,
@@ -44,8 +47,11 @@ def test_simple(session, execution):
 
     assert "success" == task.status
 
+@pytest.mark.parametrize("where", ["pre", "post", None])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
-def test_embedded(session, execution):
+def test_embedded(session, execution, where):
+    if where is not None:
+        session.config.param_materialize = where
 
     task = FuncTask(
         func_with_embed_arg,
@@ -95,7 +101,7 @@ def test_embedded_script(session, execution, tmpdir):
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_session(session, execution):
 
-    session.parameters["myparam"] = FuncArg(get_x)
+    session.parameters["myparam"] = "x"
 
     task = FuncTask(
         func_x_with_arg,
