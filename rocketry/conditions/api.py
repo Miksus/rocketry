@@ -6,6 +6,7 @@ from rocketry.conditions import (
     Retry,
     SchedulerStarted, SchedulerCycles,
     NewSchedulerCycle,
+    Executable,
 )
 from rocketry.core import (
     BaseCondition
@@ -21,8 +22,9 @@ from rocketry.time import (
     TimeOfDay, TimeOfWeek, TimeOfMonth,
     TimeDelta, TimeSpanDelta
 )
+from rocketry.args import ReferenceTime, Task as TaskArg, Session as SessionArg
 
-from .time import IsPeriod
+from .time import InPeriod, IsPeriod
 from .task import TaskExecutable, TaskRunning
 
 # Utility classes
@@ -196,12 +198,12 @@ false = AlwaysFalse()
 # Execution related
 # -----------------
 
-secondly = TimeCondWrapper(TaskExecutable, TimeOfSecond)
-minutely = TimeCondWrapper(TaskExecutable, TimeOfMinute)
-hourly = TimeCondWrapper(TaskExecutable, TimeOfHour)
-daily = TimeCondWrapper(TaskExecutable, TimeOfDay)
-weekly = TimeCondWrapper(TaskExecutable, TimeOfWeek)
-monthly = TimeCondWrapper(TaskExecutable, TimeOfMonth)
+secondly = TimeCondWrapper(Executable, TimeOfSecond)
+minutely = TimeCondWrapper(Executable, TimeOfMinute)
+hourly = TimeCondWrapper(Executable, TimeOfHour)
+daily = TimeCondWrapper(Executable, TimeOfDay)
+weekly = TimeCondWrapper(Executable, TimeOfWeek)
+monthly = TimeCondWrapper(Executable, TimeOfMonth)
 
 # Time related
 # ------------
@@ -213,16 +215,19 @@ time_of_day = TimeCondWrapper(IsPeriod, TimeOfDay)
 time_of_week = TimeCondWrapper(IsPeriod, TimeOfWeek)
 time_of_month = TimeCondWrapper(IsPeriod, TimeOfMonth)
 
-def every(past:str, based="run"):
+def every(past:str, based=None):
     kws_past = {} # 'unit': 's'
+    period = TimeDelta(past, kws_past=kws_past)
+    if based is None:
+        return Executable(period=period, runnable=True)
     if based == "run":
-        return TaskStarted(period=TimeDelta(past, kws_past=kws_past)) == 0
+        return TaskStarted(period=period) == 0
     if based == "success":
-        return TaskSucceeded(period=TimeDelta(past, kws_past=kws_past)) == 0
+        return TaskSucceeded(period=period) == 0
     if based == "fail":
-        return TaskFailed(period=TimeDelta(past, kws_past=kws_past)) == 0
+        return TaskFailed(period=period) == 0
     if based == "finish":
-        return TaskExecutable(period=TimeDelta(past, kws_past=kws_past))
+        return TaskExecutable(period=period)
     raise ValueError(f"Invalid status: {based}")
 
 def cron(__expr=None, **kwargs):

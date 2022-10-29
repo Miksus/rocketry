@@ -2,6 +2,7 @@ from typing import Optional
 import datetime
 
 from redbird.oper import in_, greater_equal, between
+from rocketry.args.builtin import ReferenceTime
 
 from rocketry.core.condition import BaseCondition, BaseComparable
 from rocketry.log.utils import get_field_value
@@ -12,7 +13,7 @@ from rocketry.core.time.utils import get_period_span
 from rocketry.core.time import TimeDelta
 from .utils import DependMixin, TaskStatusMixin
 
-from ..time import IsPeriod
+from ..time import IsPeriod, InPeriod
 
 
 class TaskStarted(TaskStatusMixin):
@@ -472,3 +473,31 @@ class Retry(BaseCondition):
             action='fail'
         ).count()
         return self.n >= n_failed_in_row
+
+
+class Executable(BaseCondition):
+    """Similar to TaskExecutable but 
+    more generic supporting arbitrary 
+    reference.
+    
+    Useful for 'daily', 'weekly' etc. conditions that
+    could be for tasks but also for arbitrary datetime."""
+
+    def __init__(self, task=None, period=None, runnable=False):
+        self.period = period
+        self.task = task
+        self.runnable = runnable
+        super().__init__()
+
+    def observe(self, **kwargs):
+        is_task_set = 'task' in kwargs or self.task is not None
+        is_ref_set = 'reference' in kwargs
+        if is_task_set and is_ref_set:
+            raise ValueError("Either task or reference must be set but not both")
+        if is_task_set:
+            if self.runnable:
+                return TaskRunnable(task=self.task, period=self.period).observe(**kwargs)
+            return TaskExecutable(task=self.task, period=self.period).observe(**kwargs)
+        if is_ref_set:
+            return (~InPeriod(self.period)).observe(**kwargs)
+        raise ValueError("Missing reference")

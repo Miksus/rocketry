@@ -1,11 +1,14 @@
 import datetime
 import logging
+import time
 
 import pytest
 
 from rocketry.conditions import (
     TaskExecutable,
+    Executable
 )
+from rocketry.core.time.base import TimeDelta
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.time import (
     TimeOfDay
@@ -171,9 +174,28 @@ from rocketry.testing.log import create_task_record
             True,
             id="Do run (inacted yesterday)"),
 
+        # Test Executable that should return same results
+        pytest.param(
+            lambda:Executable(task="the task", period=TimeOfDay("07:00", "08:00")),
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "success"),
+            ],
+            "2020-01-02 07:30",
+            True,
+            id="Executable, Do run (succeeded yesterday)"),
+        pytest.param(
+            lambda:Executable(task="the task", period=TimeOfDay("07:00", "08:00")),
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:20", "success"),
+            ],
+            "2020-01-01 07:30",
+            False,
+            id="Executable, Don't run (already succeeded)"),
     ],
 )
-def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session, from_logs):
+def test_task_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, outcome, session, from_logs):
     session.config.force_status_from_logs = from_logs
     def to_epoch(dt):
         # Hack as time.tzlocal() does not work for 1970-01-01
@@ -283,3 +305,55 @@ def test_periods(mock_datetime_now, logs, time_after, get_condition, outcome, se
     else:
         assert not condition.observe(session=session)
         assert not condition.observe(task=task)
+
+def test_executable_hybrid(session):
+    cond = Executable(period=TimeDelta(past="5 minutes"))
+
+    # Reference occurred outside the period --> True (run)
+    assert cond.observe(reference=datetime.datetime.now() - datetime.timedelta(minutes=6))
+
+    # Reference occurred inside the period --> False (don't run)
+    assert not cond.observe(reference=datetime.datetime.now() - datetime.timedelta(minutes=3))
+
+    assert cond.observe(reference=time.time() - 60*6)
+    assert not cond.observe(reference=time.time() - 60*3)
+
+    task = FuncTask(
+        lambda:None,
+        name="the task",
+        execution="main",
+        session=session
+    )
+    # Task not run
+    assert Executable(period=TimeDelta(past="5 minutes")).observe(task=task)
+    assert Executable(period=TimeDelta(past="5 minutes")).observe(task=task, session=session)
+    assert Executable(period=TimeDelta(past="5 minutes"), task="the task").observe(session=session)
+    assert Executable(period=TimeDelta(past="5 minutes"), task=task).observe(session=session)
+
+    # Task run
+    task()
+    assert not Executable(period=TimeDelta(past="5 minutes")).observe(task=task)
+    assert not Executable(period=TimeDelta(past="5 minutes")).observe(task=task, session=session)
+    assert not Executable(period=TimeDelta(past="5 minutes"), task="the task").observe(session=session)
+    assert not Executable(period=TimeDelta(past="5 minutes"), task=task).observe(session=session)
+
+    # Both set
+    cond = Executable(period=TimeDelta(past="5 minutes"))
+    with pytest.raises(ValueError):
+        cond.observe(
+            reference=datetime.datetime(2022, 1, 1, 11, 00),
+            task=task
+        )
+
+    # Both set
+    cond = Executable(period=TimeDelta(past="5 minutes"), task=task)
+    with pytest.raises(ValueError):
+        # Both set
+        cond.observe(
+            reference=datetime.datetime(2022, 1, 1, 11, 00)
+        )
+    
+    # Neither set
+    cond = Executable(period=TimeDelta(past="5 minutes"), task=task)
+    with pytest.raises(ValueError):
+        cond.observe()

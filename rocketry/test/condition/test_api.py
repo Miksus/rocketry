@@ -21,7 +21,7 @@ from rocketry.conds import (
     crontime,
 )
 
-from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
+from rocketry.conditions import TaskExecutable, Executable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
 from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
 from rocketry.time import TimeDelta
 from rocketry.time import Cron
@@ -48,39 +48,40 @@ params_time = [
 ]
 
 params_task_exec = [
-    pytest.param(every("10 mins"), TaskStarted(period=TimeDelta("10 mins")) == 0, id="every"),
+    pytest.param(every("10 mins"), Executable(period=TimeDelta("10 mins"), runnable=True), id="every"),
+    pytest.param(every("10 mins", based="run"), TaskStarted(period=TimeDelta("10 mins")) == 0, id="every (run)"),
     pytest.param(every("10 mins", based="finish"), TaskExecutable(period=TimeDelta("10 mins")), id="every (finish)"),
     pytest.param(every("10 mins", based="success"), TaskSucceeded(period=TimeDelta("10 mins")) == 0, id="every (success)"),
     pytest.param(every("10 mins", based="fail"), TaskFailed(period=TimeDelta("10 mins")) == 0, id="every (fail)"),
 
-    pytest.param(secondly.get_cond(), TaskExecutable(period=TimeOfSecond(None, None)), id="secondly"),
-    pytest.param(minutely.get_cond(), TaskExecutable(period=TimeOfMinute(None, None)), id="minutely"),
-    pytest.param(hourly.get_cond(), TaskExecutable(period=TimeOfHour(None, None)), id="hourly"),
-    pytest.param(daily.get_cond(), TaskExecutable(period=TimeOfDay(None, None)), id="daily"),
-    pytest.param(weekly.get_cond(), TaskExecutable(period=TimeOfWeek(None, None)), id="weekly"),
+    pytest.param(secondly.get_cond(), Executable(period=TimeOfSecond(None, None)), id="secondly"),
+    pytest.param(minutely.get_cond(), Executable(period=TimeOfMinute(None, None)), id="minutely"),
+    pytest.param(hourly.get_cond(), Executable(period=TimeOfHour(None, None)), id="hourly"),
+    pytest.param(daily.get_cond(), Executable(period=TimeOfDay(None, None)), id="daily"),
+    pytest.param(weekly.get_cond(), Executable(period=TimeOfWeek(None, None)), id="weekly"),
 
-    pytest.param(minutely.after("45:00"), TaskExecutable(period=TimeOfMinute("45:00", None)), id="minutely after"),
-    pytest.param(minutely.before("45:00"), TaskExecutable(period=TimeOfMinute(None, "45:00")), id="minutely before"),
+    pytest.param(minutely.after("45:00"), Executable(period=TimeOfMinute("45:00", None)), id="minutely after"),
+    pytest.param(minutely.before("45:00"), Executable(period=TimeOfMinute(None, "45:00")), id="minutely before"),
 
-    pytest.param(hourly.after("10:00"), TaskExecutable(period=TimeOfHour("10:00", None)), id="hourly after"),
-    pytest.param(hourly.before("10:00"), TaskExecutable(period=TimeOfHour(None, "10:00")), id="hourly before"),
-    pytest.param(hourly.between("10:00", "12:00"), TaskExecutable(period=TimeOfHour("10:00", "12:00")), id="hourly between"),
-    pytest.param(hourly.starting("10:00"), TaskExecutable(period=TimeOfHour("10:00", "10:00")), id="hourly starting"),
+    pytest.param(hourly.after("10:00"), Executable(period=TimeOfHour("10:00", None)), id="hourly after"),
+    pytest.param(hourly.before("10:00"), Executable(period=TimeOfHour(None, "10:00")), id="hourly before"),
+    pytest.param(hourly.between("10:00", "12:00"), Executable(period=TimeOfHour("10:00", "12:00")), id="hourly between"),
+    pytest.param(hourly.starting("10:00"), Executable(period=TimeOfHour("10:00", "10:00")), id="hourly starting"),
 
-    pytest.param(daily.between("10:00", "12:00"), TaskExecutable(period=TimeOfDay("10:00", "12:00")), id="daily between"),
+    pytest.param(daily.between("10:00", "12:00"), Executable(period=TimeOfDay("10:00", "12:00")), id="daily between"),
 
-    pytest.param(secondly.at("45"), TaskExecutable(period=TimeOfSecond("45", "46")), id="minutely at"),
-    pytest.param(minutely.at("45"), TaskExecutable(period=TimeOfMinute("45", "46")), id="minutely at"),
-    pytest.param(hourly.at("30:00.0000"), TaskExecutable(period=TimeOfHour("30:00", "31:00")), id="hourly at"),
-    pytest.param(daily.at("10:00:00"), TaskExecutable(period=TimeOfDay("10:00", "11:00")), id="daily at"),
-    pytest.param(weekly.at("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly at"),
-    pytest.param(monthly.at("1st"), TaskExecutable(period=TimeOfMonth("1st", time_point=True)), id="monthly at"),
+    pytest.param(secondly.at("45"), Executable(period=TimeOfSecond("45", "46")), id="minutely at"),
+    pytest.param(minutely.at("45"), Executable(period=TimeOfMinute("45", "46")), id="minutely at"),
+    pytest.param(hourly.at("30:00.0000"), Executable(period=TimeOfHour("30:00", "31:00")), id="hourly at"),
+    pytest.param(daily.at("10:00:00"), Executable(period=TimeOfDay("10:00", "11:00")), id="daily at"),
+    pytest.param(weekly.at("Monday"), Executable(period=TimeOfWeek("Monday", time_point=True)), id="weekly at"),
+    pytest.param(monthly.at("1st"), Executable(period=TimeOfMonth("1st", time_point=True)), id="monthly at"),
 
-    pytest.param(weekly.on("Monday"), TaskExecutable(period=TimeOfWeek("Monday", time_point=True)), id="weekly on"),
-    pytest.param(monthly.on("1st"), TaskExecutable(period=TimeOfMonth("1st", time_point=True)), id="monthly on"),
+    pytest.param(weekly.on("Monday"), Executable(period=TimeOfWeek("Monday", time_point=True)), id="weekly on"),
+    pytest.param(monthly.on("1st"), Executable(period=TimeOfMonth("1st", time_point=True)), id="monthly on"),
 
-    pytest.param(daily.at("23:00:00"), TaskExecutable(period=TimeOfDay("23:00:00", "00:00:00")), id="daily at end"),
-    pytest.param(daily.at("23:00:01"), TaskExecutable(period=TimeOfDay("23:00:01", "00:00:01")), id="daily at specific"),
+    pytest.param(daily.at("23:00:00"), Executable(period=TimeOfDay("23:00:00", "00:00:00")), id="daily at end"),
+    pytest.param(daily.at("23:00:01"), Executable(period=TimeOfDay("23:00:01", "00:00:01")), id="daily at specific"),
 ]
 
 params_pipeline = [
