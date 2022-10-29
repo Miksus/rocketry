@@ -28,9 +28,9 @@ class _AppMixin:
         "Create a condition (decorator)"
         return FuncCond(syntax=syntax, session=self.session, decor_return_func=False)
 
-    def event(self):
+    def event(self, *args, **kwargs):
         "Create an event stream (decorator)"
-        return EventStream().decorate
+        return EventStream(*args, **kwargs).decorate
 
     def params(self, **kwargs):
         "Set session parameters"
