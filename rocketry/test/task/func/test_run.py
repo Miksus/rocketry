@@ -161,7 +161,21 @@ async def test_run_log_fail_at_start(task_func, expected_outcome, execution, ses
 
     # At the moment the run log is not propagated to
     # finish
+    logs = [{"action": log.action} for log in task.logger.filter_by().all()]
     assert task.status != "run"
+
+    if execution == 'process':
+        # Log for process will look odd: 
+        # the child does not know the main process
+        # failed to log it being running
+        assert logs == [
+            {'action': 'fail'},
+            {'action': expected_outcome}
+        ]
+    else:
+        assert logs == [
+            {'action': 'fail'}
+        ]
 
 @pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
 @pytest.mark.parametrize(
@@ -199,6 +213,11 @@ async def test_run_log_fail_at_end(task_func, expected_outcome, execution, sessi
         with pytest.raises(TaskLoggingError):
             session.scheduler.handle_logs()
     assert task.status == "fail"
+
+    logs = [{"action": log.action} for log in task.logger.filter_by().all()]
+    assert logs == [
+        {'action': 'run'}
+    ]
 
 def test_force_run(session):
 
