@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 import warnings
+import datetime
 from typing import Any, Callable, Optional
 try:
     from typing import Literal
@@ -278,9 +279,10 @@ class CliArg(BaseArgument):
         return args[i+1]
 
 class ReferenceTime(BaseArgument):
-
+    """Internal reference date"""
     def get_value(self, reference=None, task=None, **kwargs) -> Any:
         if reference is not None:
+            if isinstance(reference, (float, int)):
+                reference = datetime.datetime.fromtimestamp(reference)
             return reference
-        if task is not None:
-            return task.get_last_run()
+        
