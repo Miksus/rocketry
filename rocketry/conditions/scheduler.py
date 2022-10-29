@@ -1,3 +1,4 @@
+import datetime
 from rocketry.args import ReferenceTime, Session as SessionArg
 from rocketry.core.condition.base import BaseComparable, BaseCondition
 from rocketry.core.time.utils import get_period_span
@@ -71,4 +72,4 @@ class NewSchedulerCycle(BaseCondition):
 
     def get_state(self, reference:datetime.datetime=ReferenceTime(), session=SessionArg()) -> bool:
         cycle_start = session.scheduler._cycle_start
-        return reference < cycle_start
+        return reference < datetime.datetime.fromtimestamp(cycle_start)
