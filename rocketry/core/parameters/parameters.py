@@ -72,7 +72,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         if callable(item) and hasattr(item, "__rocketry__") and "param_name" in item.__rocketry__:
             item = item.__rocketry__['param_name']
         value = self._params[item]
-        return value if not isinstance(value, BaseArgument) else value.get_value(**kwargs)
+        return value if not isinstance(value, BaseArgument) else value.get_value(**self._from_signature(value.get_value, **kwargs))
 
     def __iter__(self):
         return iter(self._params)
