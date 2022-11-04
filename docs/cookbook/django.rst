@@ -5,7 +5,7 @@ Integrate Django (or Django Rest Framework)
 This cookbook will use DRF (Django REST Framework) as an example, but the syntax is exaclty
 the same for Django.
 
-First, let's create a new command for setting up our jobs (we will call it ``inittasks.py``):
+First, let's `create a new command <https://docs.djangoproject.com/en/4.1/howto/custom-management-commands>`_ for setting up our jobs (we will call it ``inittasks.py``):
 
 .. code-block:: python
 
@@ -13,6 +13,8 @@ First, let's create a new command for setting up our jobs (we will call it ``ini
     from rocketry import Rocketry
     app = Rocketry(config={"task_execution": "async"})
 
+    # import BaseCommand
+    from django.core.management.base import BaseCommand
 
     # Create some tasks
 
@@ -21,10 +23,10 @@ First, let's create a new command for setting up our jobs (we will call it ``ini
         ...
 
     class Command(BaseCommand):
-    help = "Setup the periodic tasks runner"
+        help = "Setup the periodic tasks runner"
 
-    def handle(self, *args, **options):
-        app.run()
+        def handle(self, *args, **options):
+            app.run()
 
 
 Next, you can just run in your ``entrypoint`` script (or in your shell) the following command:
@@ -63,6 +65,8 @@ For our example, we will use the same file for simplicity, but it's fine to move
     from rocketry import Rocketry
     app = Rocketry(config={"task_execution": "async"})
 
+    # import BaseCommand
+    from django.core.management.base import BaseCommand
 
     # this is a synchronous operation that will work in an async context!
     def do_things_with_users(name):
@@ -75,17 +79,18 @@ For our example, we will use the same file for simplicity, but it's fine to move
         ...
 
     class Command(BaseCommand):
-    help = "Setup the periodic tasks runner"
+        help = "Setup the periodic tasks runner"
 
-    def handle(self, *args, **options):
-        app.run()
+        def handle(self, *args, **options):
+            app.run()
 
 You can even manually run the ``do_things_with_users`` function from a view now,
 if that's something you would want. Let's add this view in our ``views.py`` file:
 
 .. code-block:: python
 
-    from api.commands import inittasks as tasklist
+    # this could be any path where the code you want to run is stored
+    from api.commands import tasks as tasklist
     import asyncio
 
     ...
@@ -100,9 +105,10 @@ if that's something you would want. Let's add this view in our ``views.py`` file
             name = request.GET.get('name')
             if not name :
                 return Response({
-                    'error': 'missing a parameter (expected something like '
-                             '?name=job_name )'
-                    }, status=HTTP_400_BAD_REQUEST)
+                        'error': 'missing a parameter (expected something like ?name=job_name )'
+                    },
+                    status=HTTP_400_BAD_REQUEST,
+                )
 
             try:
 
@@ -116,13 +122,17 @@ if that's something you would want. Let's add this view in our ``views.py`` file
             except Exception as err:
 
                 return Response({
-                    'error': 'task failure',
-                    'logs': f'Failed with: {str(err)}',
-                    }, status=HTTP_500_INTERNAL_SERVER_ERROR)
+                        'error': 'task failure',
+                        'logs': f'Failed with: {str(err)}',
+                    },
+                    status=HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
             return Response({
-                'message': 'successfully ran the task',
-                }, status=HTTP_200_OK)
+                    'message': 'successfully ran the task',
+                },
+                status=HTTP_200_OK,
+            )
 
 
 .. note ::
