@@ -9,6 +9,7 @@ try:
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
+from rocketry.core.task import Task as BaseTask
 from rocketry.core.parameters import BaseArgument, Parameters
 
 class NotSet:
