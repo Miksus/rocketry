@@ -129,8 +129,11 @@ def test_task(session):
 
     assert Task(default=None).get_value() is None
 
+    # Test materialization
+    assert Parameters(t=Task("task 1")).materialize(session=session)['t'] is task_1
+    assert Parameters(t=Task("task 1")).materialize(task=task_2)['t'] is task_1
+
 def test_task_logger(session):
-    # TODO: Test the dynamic arguments using Parameters
     task_1 = FuncTask(
         lambda : None,
         name="task 1",
@@ -141,6 +144,9 @@ def test_task_logger(session):
     assert isinstance(logger, TaskAdapter)
     assert logger.task_name == "task 1"
     assert logger.name == "rocketry.task"
+
+    p = Parameters(logger=TaskLogger())
+    assert isinstance(p.materialize(session=session)['logger'], TaskAdapter)
 
 # Magic
 # -----
