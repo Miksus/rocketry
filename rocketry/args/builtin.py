@@ -1,9 +1,11 @@
 
+import logging
 import os
 import sys
 import threading
 import warnings
 from typing import Any, Callable, Optional
+from rocketry.core.log.adapter import TaskAdapter
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
@@ -109,6 +111,14 @@ class Task(BaseArgument):
 
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
+
+class TaskLogger(BaseArgument):
+    "Argument that represents the repository where the log records are stored"
+
+    def get_value(self, session=Session(default=None), task=Task(default=None), **kwargs) -> Any:
+        logger_name = session.config.task_logger_basename if session is not None else 'rocketry.task'
+        task_logger = logging.getLogger(logger_name)
+        return TaskAdapter(task_logger, task=task)
 
 class Return(BaseArgument):
     """A return argument

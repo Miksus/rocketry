@@ -1,7 +1,8 @@
 import os
 import sys
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger
+from rocketry.core.log.adapter import TaskAdapter
 from rocketry.tasks import FuncTask
 
 def test_simple():
@@ -122,6 +123,19 @@ def test_task(session):
         Task().get_value(task="not valid")
 
     assert Task(default=None).get_value() is None
+
+def test_task_logger(session):
+    # TODO: Test the dynamic arguments using Parameters
+    task_1 = FuncTask(
+        lambda : None,
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    logger = TaskLogger().get_value(task=task_1, session=session)
+    assert isinstance(logger, TaskAdapter)
+    assert logger.task_name == "task 1"
+    assert logger.name == "rocketry.task"
 
 # Magic
 # -----
