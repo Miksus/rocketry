@@ -2,6 +2,8 @@ import logging
 
 from rocketry import Rocketry
 from rocketry.conditions.task.task import TaskStarted
+from rocketry.conds import condition, true
+from rocketry.args import argument, Task
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")
@@ -38,3 +40,30 @@ def test_init_args_in_cond(session, tmpdir):
 
     assert app.session[do_always].logger.filter_by().count() >= 2
     assert app.session[do_never].logger.filter_by().count() == 0
+
+
+def test_decors():
+    set_logging_defaults()
+
+    # Creating app
+    app = Rocketry(config={'task_execution': 'main'})
+
+    @argument()
+    def myarg(task=Task()):
+        assert task.name == "do_things"
+        return "a value"
+
+    @condition()
+    def is_bar(arg=myarg):
+        assert arg == "a value"
+        return True
+
+    @app.task(true & is_bar)
+    def do_things(arg=myarg):
+        assert arg == "a value"
+
+    app.session.config.shut_cond = TaskStarted(task=do_things)
+    app.run()
+
+    logger = app.session['do_things'].logger
+    assert logger.filter_by(action="success").count() == 1

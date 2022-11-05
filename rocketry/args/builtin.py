@@ -304,3 +304,8 @@ class CliArg(BaseArgument):
                 raise KeyError("CLI argument not found")
             return self.default
         return args[i+1]
+
+def argument(**kwargs):
+    def wrapper(func):
+        return FuncArg(func, **kwargs)
+    return wrapper

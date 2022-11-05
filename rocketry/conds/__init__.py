@@ -17,4 +17,5 @@ from rocketry.conditions.api import (
     running,
     cron,
     crontime,
+    condition
 )
