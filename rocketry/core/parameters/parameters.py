@@ -107,7 +107,7 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
             key:
                 value
                 if not isinstance(value, BaseArgument)
-                else value.get_value(*args, **kwargs)
+                else value.get_value(*args, **get_kwargs(value.get_value, **kwargs))
             for key, value in self._params.items()
         }
 
@@ -209,3 +209,8 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
             key: val if hasattr(val, "to_json") else repr(val)
             for key, val in self._params.items()
         }
+
+def get_kwargs(__func, **kwargs) -> dict:
+    "Get function arguments"
+    sig_kwargs = Parameters._from_signature(__func).materialize(**kwargs)
+    return {**sig_kwargs, **kwargs}
