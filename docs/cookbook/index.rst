@@ -10,6 +10,7 @@ do more specific things.
    :maxdepth: 3
    :caption: Contents:
 
+   settings
    conditions
    bigger_applications
    robust_applications

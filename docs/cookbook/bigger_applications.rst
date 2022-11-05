@@ -32,7 +32,7 @@ you could put in each:
 
 .. glossary::
 
-    ``__init__.py``
+    ``app/__init__.py``
 
         Marks the directory as a package. You can leave 
         these empty.
@@ -50,34 +50,35 @@ you could put in each:
 
             app = Rocketry()
 
-            # Set the task groups
+            # Set Task Groups
+            # ---------------
+
             app.include_group(morning.group)
             app.include_group(evening.group)
 
+            # Application Setup
+            # -----------------
+
+            @app.setup()
+            def set_repo(logger=TaskLogger()):
+                repo = SQLRepo(engine=create_engine("sqlite:///app.db"), table="tasks", model=MinimalRecord, id_field="created")
+                logger.set_repo(repo)
+
+            @app.setup()
+            def set_config(config=Config(), env=EnvArg("ENV", default="dev")):
+                if env == "prod":
+                    config.silence_task_prerun = True
+                    config.silence_task_logging = True
+                    config.silence_cond_check = True
+                else:
+                    config.silence_task_prerun = False
+                    config.silence_task_logging = False
+                    config.silence_cond_check = False
+            
             if __name__ == "__main__":
                 app.run()
 
-    ``app/tasks/...``
-
-        Put your tasks here. Use also groups and 
-        put the groups in the app in ``app/main.py``
-        to avoid problems in importing. 
-
-        For example, ``app/tasks/evening.py`` could look like this:
-
-        .. code-block::
-
-            from rocketry import Grouper
-            from rocketry.args import FuncArg
-
-            from app.conditions import my_cond
-            from app.parameters import get_value
-
-            group = Grouper()
-
-            @group.task(my_cond)
-            def do_things(arg=FuncArg(get_value)):
-                ...
+        Read more from :ref:`the app settings cookbook <app-settings-cookbook>`.
 
     ``app/conditions.py``
 
@@ -143,6 +144,14 @@ Then you can run this as a Python module:
 .. code-block::
 
     python -m app.main
+
+Or alternatively create a script that imports and launches the app:
+
+.. code-block:: python
+
+    from app.main import app
+
+    app.run()
 
 .. note::
 
