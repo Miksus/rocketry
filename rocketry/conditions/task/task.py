@@ -164,7 +164,7 @@ class TaskRunning(BaseComparable):
         self.period = period
         super().__init__()
 
-    def get_measurement(self, task=Task(), session=Session()):
+    def get_measurement(self, task=Task(default=None), session=Session()):
         task = session[self.task] if self.task is not None else task
 
         allow_optimization = not self.session.config.force_status_from_logs
@@ -282,7 +282,7 @@ class TaskExecutable(BaseCondition):
         # TODO: How to consider termination? Probably should be considered as failures without retries
         # NOTE: inaction is not considered at all
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         task = self.task if self.task is not None else task
         period = self.period
         retries = 0 if self.retries is None else self.retries
@@ -343,7 +343,7 @@ class TaskRunnable(BaseCondition):
         self.task = task
         super().__init__()
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         task = self.task if self.task is not None else task
         period = self.period
 
@@ -451,7 +451,7 @@ class Retry(BaseCondition):
         self.n = int(n) if n is not None else -1
         super().__init__()
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         if self.n == 0:
             return False
         if task.get_status() != "fail":
