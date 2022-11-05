@@ -80,13 +80,22 @@ class Session(BaseArgument):
 class Task(BaseArgument):
     "An argument that represents a task"
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, default=NOTSET):
         self.name = name
+        self.default = default
 
-    def get_value(self, task=None, **kwargs) -> Any:
+    def get_value(self, task=None, session=Session(default=None), **kwargs) -> Any:
         if self.name is None:
-            return task
-        return task.session[self.name]
+            # Assuming "task" is actual task
+            is_task_cls = isinstance(task, BaseTask)
+            if is_task_cls:
+                return task
+            elif self.default is not NOTSET:
+                return self.default
+            raise TypeError(f"Expected {BaseTask}, got {type(task)}")
+        if session is None:
+            session = task.session
+        return session[self.name]
 
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
