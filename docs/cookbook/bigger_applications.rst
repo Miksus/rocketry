@@ -81,36 +81,59 @@ you could put in each:
 
     ``app/conditions.py``
 
-        Put custom conditions here.
+        Put your custom conditions here.
 
         For example:
 
         .. code-block::
 
-            from rocketry import Grouper
+            from rocketry.conds import condition
 
-            group = Grouper()
-
-            @group.cond()
+            @condition()
             def my_cond():
                 return True or False
 
-        We created a group to conveniently declare 
-        the function to be a condition. We don't 
-        need to include this group to the app.
-
     ``app/arguments.py``
 
-        Put custom parameters here. For example:
+        Put your custom parameters here. For example:
 
         .. code-block::
 
-            def get_value():
+            from rocketry.args import argument
+
+            @argument()
+            def my_value():
                 return "Hello"
 
         You can also nest these and pass an argument as 
         to another argument with ``FuncArg`` similarly
         we set in the task.
+
+    ``app/tasks/...``
+
+        Put your tasks here. Use also groups and 
+        put the groups in the app in ``app/main.py``
+        to avoid problems in importing. 
+
+        For example, ``app/tasks/evening.py`` could look like this:
+
+        .. code-block::
+
+            from rocketry import Grouper
+
+            from app.conditions import my_cond
+            from app.parameters import my_value
+
+            group = Grouper()
+
+            @group.task(my_cond)
+            def do_things(arg=my_value):
+                ...
+
+.. note::
+
+    There are various ways to set the tasks.
+    You can use other patterns as well.
 
 Running
 -------
