@@ -1,7 +1,7 @@
 import os
 import sys
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session
 from rocketry.tasks import FuncTask
 
 def test_simple():
@@ -80,6 +80,21 @@ def test_private(session):
 
 # Component Args
 # --------------
+
+def test_session(session):
+    with pytest.raises(TypeError):
+        Session().get_value()
+    assert Session(default=None).get_value() is None
+    assert Session().get_value(session=session) is session
+
+    task_1 = FuncTask(
+        lambda : None,
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    assert Session().get_value(task=task_1) is session
+    assert Session().get_value(scheduler=session.scheduler) is session
 
 def test_task(session):
     task_1 = FuncTask(

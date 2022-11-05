@@ -70,10 +70,19 @@ class Arg(BaseArgument):
 class Session(BaseArgument):
     "An argument that represents the session"
 
-    def get_value(self, task=None, session=None, **kwargs) -> Any:
+    def __init__(self, default=NOTSET):
+        self.default = default
+
+    def get_value(self, task=None, session=None, scheduler=None, **kwargs) -> Any:
         if session is not None:
             return session
-        return task.session
+        if scheduler is not None:
+            return scheduler.session
+        if task is not None:
+            return task.session
+        if self.default is not NOTSET:
+            return self.default
+        raise TypeError("Missing session")
 
     def __repr__(self):
         return f'session'
