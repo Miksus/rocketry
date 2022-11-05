@@ -7,7 +7,7 @@ from redbird.repos import MemoryRepo, CSVFileRepo
 
 from rocketry import Rocketry
 from rocketry.conditions.task.task import TaskStarted
-from rocketry.args import Return, Arg, FuncArg, Session as SessionArg, TaskLogger
+from rocketry.args import Return, Arg, FuncArg, Session as SessionArg, TaskLogger, Config
 from rocketry.log.log_record import LogRecord, MinimalRecord
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
@@ -25,9 +25,10 @@ def test_setup():
     calls = []
 
     @app.setup()
-    def setup_func(logger=TaskLogger(), session=SessionArg()):
+    def setup_func(logger=TaskLogger(), session=SessionArg(), config=Config()):
         assert isinstance(logger, TaskAdapter)
         assert isinstance(session, Session)
+        assert config is session.config
 
         logger.set_repo(MemoryRepo(model=LogRecord))
 

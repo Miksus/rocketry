@@ -112,6 +112,12 @@ class Task(BaseArgument):
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
 
+class Config(BaseArgument):
+    "Argument that represents the session config"
+
+    def get_value(self, session=Session(), **kwargs):
+        return session.config
+
 class TaskLogger(BaseArgument):
     "Argument that represents the task logger (adapter)"
 

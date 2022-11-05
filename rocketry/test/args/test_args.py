@@ -1,8 +1,9 @@
 import os
 import sys
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, Config
 from rocketry.core.log.adapter import TaskAdapter
+from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
 
 def test_simple():
@@ -96,6 +97,10 @@ def test_session(session):
     )
     assert Session().get_value(task=task_1) is session
     assert Session().get_value(scheduler=session.scheduler) is session
+
+def test_config(session):
+    p = Parameters(config=Config())
+    assert p.materialize(session=session)['config'] is session.config
 
 def test_task(session):
     task_1 = FuncTask(
