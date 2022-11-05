@@ -32,7 +32,9 @@ def test_setup():
 
         logger.set_repo(MemoryRepo(model=LogRecord))
 
-        calls.append("setup")
+        calls.append("setup 1")
+
+    app.setup(lambda: calls.append("setup 2"))
 
     # Test the setup
 
@@ -49,6 +51,6 @@ def test_setup():
     app.session.config.shut_cond = true
     calls.append('starting')
     app.run()
-    assert calls == ['starting', 'setup', 'startup task']
+    assert calls == ['starting', 'setup 1', 'setup 2', 'startup task']
     assert len(task_logger.handlers) == 1
     assert task_logger.handlers[0].repo.model == LogRecord
