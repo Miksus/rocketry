@@ -113,7 +113,7 @@ class Task(BaseArgument):
         return f'Task({repr(self.name) if self.name is not None else ""})'
 
 class TaskLogger(BaseArgument):
-    "Argument that represents the repository where the log records are stored"
+    "Argument that represents the task logger (adapter)"
 
     def get_value(self, session=Session(default=None), task=Task(default=None), **kwargs) -> Any:
         logger_name = session.config.task_logger_basename if session is not None else 'rocketry.task'
