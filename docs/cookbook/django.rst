@@ -2,7 +2,7 @@
 Integrate Django (or Django Rest Framework)
 ===========================================
 
-This cookbook will use DRF (Django REST Framework) as an example, but the syntax is exaclty
+This cookbook will use DRF (Django REST Framework) as an example, but the syntax is exactly
 the same for Django.
 
 First, let's `create a new command <https://docs.djangoproject.com/en/4.1/howto/custom-management-commands>`_ for setting up our jobs (we will call it ``inittasks.py``):
