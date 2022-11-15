@@ -14,3 +14,4 @@ def do_complex():
         - On 1st, 2nd and 3rd day of month
         - From February to August every second month
     """
+    ...
