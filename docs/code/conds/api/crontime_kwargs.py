@@ -3,6 +3,7 @@ from rocketry.conds import crontime
 @app.task(crontime(minute="*/5"))
 def do_simple():
     "Run at every 5th minute"
+    ...
 
 
 @app.task(crontime(minute="*/2", hour="7-18", day_of_month="1,2,3", month="Feb-Aug/2"))
