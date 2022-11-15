@@ -46,6 +46,7 @@ def do_pipeline(arg1=Return('do_on_process'),
 def do_custom():
     """This task runs once a day and when is_foo returns True
     This task runs on separate thread"""
+    ...
     
 
 @app.task('(true & true) | (false & True & ~True)')
