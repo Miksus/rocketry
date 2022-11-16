@@ -257,25 +257,24 @@ def test_task_name():
         return 'return value'
 
     assert app.session[do_func].name == "do_func"
-    
+
 def test_delete_task():
     set_logging_defaults()
-    
+
     app = Rocketry(config={'task_execution': 'main'})
-    
+
     @app.task(name="task 1")
     def task_1():
-        return 1 
-    
+        return 1
+
     @app.task()
     def task_2():
         return 1
 
     assert len(app.session.tasks) == 2
-    
+
     app.session.remove_task("task 1")
     assert len(app.session.tasks) == 1
 
     app.session.remove_task(task_2)
     assert len(app.session.tasks) == 0
-    

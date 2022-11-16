@@ -47,12 +47,12 @@ def do_custom():
     """This task runs once a day and when is_foo returns True
     This task runs on separate thread"""
     ...
-    
+
 
 @app.task('(true & true) | (false & True & ~True)')
 def do_complex():
     """Notice the logical expression in the task start condition"""
-    
+
 
 if __name__ == "__main__":
     app.run()
