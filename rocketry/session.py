@@ -395,9 +395,10 @@ class Session(RedBase):
         task.session = self
 
     def remove_task(self, task: Union['Task', str]):
-        if isinstance(task, str):
+        from rocketry.core.task import Task
+        if not isinstance(task, Task):
             task = self[task]
-        self.session.tasks.remove(task)
+        self.tasks.remove(task)
 
     def task_exists(self, task: 'Task'):
         warnings.warn((
