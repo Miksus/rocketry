@@ -51,8 +51,8 @@ you could put in each:
             app = Rocketry()
 
             # Set the task groups
-            app.include_group(morning.group)
-            app.include_group(evening.group)
+            app.include_grouper(morning.group)
+            app.include_grouper(evening.group)
 
             if __name__ == "__main__":
                 app.run()
