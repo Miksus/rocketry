@@ -13,8 +13,7 @@ def is_foo(status):
     print(f"evaluating: {status}")
     if status == "true":
         return True
-    else:
-        return False
+    return False
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_taskcond_true(session, execution):

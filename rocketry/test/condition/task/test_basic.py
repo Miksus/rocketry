@@ -35,7 +35,8 @@ def test_task_status_race(tmpdir, session, execution_number):
     task = FuncTask(
         run_task,
         name="runned task",
-        execution="main"
+        execution="main",
+        session=session
     )
     task(params={"fail": False})
 
@@ -76,13 +77,14 @@ def test_task_status_race(tmpdir, session, execution_number):
 def test_task_status(tmpdir, session, cls, succeeding, expected):
     # RACE CONDITION 2021-08-16: 'TaskFailed Failure' failed due to assert bool(condition) if expected else not bool(condition)
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task")
 
         task = FuncTask(
             run_task,
             name="runned task",
-            execution="main"
+            execution="main",
+            session=session
         )
 
         # Has not yet ran
@@ -91,7 +93,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
         # Now has
         try:
             task(params={"fail": not succeeding})
-        except:
+        except Exception:
             pass
 
         # we sleep 20ms to
@@ -126,7 +128,7 @@ def test_task_status(tmpdir, session, cls, succeeding, expected):
 )
 def test_task_depend_fail(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
@@ -151,7 +153,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         # -----|------------------- t0
         try:
             depend_task(params={"fail": True})
-        except:
+        except Exception:
             pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
@@ -166,7 +168,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
         # -----|-----------|-----------|----------- t0
         try:
             depend_task(params={"fail": True})
-        except:
+        except Exception:
             pass
         assert condition.observe(task=task) if expected else not condition.observe(task=task)
 
@@ -198,7 +200,7 @@ def test_task_depend_fail(tmpdir, session, cls, expected):
 )
 def test_task_depend_success(tmpdir, session, cls, expected):
     # Going to tempdir to dump the log files there
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         condition = cls(task="runned task", depend_task="prerequisite task")
 
         depend_task = FuncTask(
@@ -257,9 +259,9 @@ def test_task_depend_success(tmpdir, session, cls, expected):
         pytest.param(DependSuccess, "task 'mydep' succeeded before 'mytask' started", id="DependSuccess"),
     ],
 )
-def test_display(cls, string):
-    task = FuncTask(func=lambda: None, name="mytask")
-    depend_task = FuncTask(func=lambda: None, name="mydep")
+def test_display(cls, string, session):
+    task = FuncTask(func=lambda: None, name="mytask", session=session)
+    depend_task = FuncTask(func=lambda: None, name="mydep", session=session)
     if cls in (DependFinish, DependSuccess, DependFailure):
         s = str(cls(task=task, depend_task=depend_task))
     else:

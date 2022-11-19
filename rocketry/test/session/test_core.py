@@ -2,9 +2,10 @@
 import logging
 
 import pytest
+from rocketry import Session
+from rocketry.core import Parameters
 from rocketry.core.log.adapter import TaskAdapter
 from rocketry.tasks import FuncTask
-from rocketry.core import Parameters
 
 
 def test_tasks_attr(session):
@@ -73,7 +74,7 @@ def test_add(session):
         lambda : None,
         name="task 1",
         execution="main",
-        session=None
+        session=Session(config=dict(task_execution="async")),
     )
 
     assert session.tasks == set()

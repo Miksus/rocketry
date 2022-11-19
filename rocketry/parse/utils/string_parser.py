@@ -13,7 +13,7 @@ class InstructionParser:
         self.item_parser = item_parser
 
         self.operators = operators
-        self.symbols = set([oper["symbol"] for oper in operators])
+        self.symbols = set(oper["symbol"] for oper in operators)
 
     def __call__(self, s:str, **kwargs):
         """Parse a string to condition. Allows logical operators.
@@ -52,13 +52,11 @@ class InstructionParser:
             s = s.strip()
             if s in ("&", "|", "~"):
                 return s
-            else:
-                return self.item_parser(s, **kwargs)
+            return self.item_parser(s, **kwargs)
 
         if isinstance(s, str):
             return parse_string(s)
-        else:
-            return tuple(parse_string(e) for e in s)
+        return tuple(parse_string(e) for e in s)
 
     def _assemble(self, *s:tuple):
 
@@ -136,8 +134,7 @@ class InstructionParser:
                 return l[0]
 
             return tuple(l)
-        else:
-            return s
+        return s
 
 
 def _flatten_tuples(cont):

@@ -223,7 +223,8 @@ def test_without_handlers_status_warnings(session):
     # to test without handlers
     logger.handlers = []
 
-    task()
+    with pytest.warns(UserWarning) as warns:
+        task()
     # Cannot know the task.status as there is no log about it
     assert task.status == 'success'
     with pytest.warns(UserWarning) as warns:
@@ -288,6 +289,7 @@ def test_process_no_double_logging(session):
     # while this is not occuring on Windows. This tests the bug.
     #!NOTE: This test requires there are two handlers in
     # rocketry.task logger (Memory and Stream in this order)
+    from rocketry.core.task import TaskRun
     task_logger = logging.getLogger("rocketry.task")
     task_logger.addHandler(logging.StreamHandler())
 
@@ -303,7 +305,9 @@ def test_process_no_double_logging(session):
     log_queue = multiprocessing.Queue(-1)
 
     # Start the process
-    proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, log_queue, session.config, []), daemon=None)
+    task_run = TaskRun(start=0, task=None)
+    proc = multiprocessing.Process(target=task._run_as_process, args=(None, None, task_run, log_queue, session.config, []), daemon=None)
+    task_run.task = proc
     proc.start()
 
     # Do the logging manually (copied from the method)

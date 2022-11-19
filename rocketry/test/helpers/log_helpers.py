@@ -8,7 +8,7 @@ def log_task_record(task, now, action, start_time=None):
     if action == "fail":
         try:
             raise RuntimeError("Deliberate failure")
-        except:
+        except Exception:
             exc_info = sys.exc_info()
     else:
         exc_info = None

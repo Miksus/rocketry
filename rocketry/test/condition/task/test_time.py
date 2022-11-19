@@ -13,7 +13,7 @@ from rocketry.conditions import (
 )
 from rocketry.testing.log import create_task_record
 from rocketry.time import (
-    TimeOfDay
+    TimeOfDay, TimeSpanDelta
 )
 from rocketry.tasks import FuncTask
 
@@ -136,6 +136,32 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             "2020-01-01 07:30",
             False,
             id="Is not running (but does in the future)", marks=pytest.mark.xfail(reason="Bug but not likely to encounter")),
+        
+        pytest.param(
+            lambda:TaskRunning(task="the task", period=TimeSpanDelta(far="2 hours")),
+            [
+                ("2020-01-01 07:10", "run"),
+            ],
+            "2020-01-01 07:30",
+            True,
+            id="Is running (with period)"),
+        pytest.param(
+            lambda:TaskRunning(task="the task", period=TimeSpanDelta(far="10 mins")),
+            [
+                ("2020-01-01 07:10", "run"),
+            ],
+            "2020-01-01 07:30",
+            False,
+            id="Is not running (with period, out of period)"),
+        pytest.param(
+            lambda:TaskRunning(task="the task", period=TimeSpanDelta(far="2 hours")),
+            [
+                ("2020-01-01 07:10", "run"),
+                ("2020-01-01 07:15", "success"),
+            ],
+            "2020-01-01 07:30",
+            False,
+            id="Is not running (with period, success)"),
     ],
 )
 def test_running(mock_datetime_now, logs, time_after, get_condition, outcome, session):

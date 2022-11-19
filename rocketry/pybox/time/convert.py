@@ -38,26 +38,24 @@ def to_timestamp(dt) -> float:
 def to_datetime(s):
     if isinstance(s, datetime.datetime):
         return s
-    elif isinstance(s, str):
+    if isinstance(s, str):
         return string_to_datetime(s)
-    elif hasattr(s, "timestamp"):
+    if hasattr(s, "timestamp"):
         # Is datetime-like. Tests' monkeypatching
         # overrides datetime.datetime thus we cannot
         # always rely on type
         return datetime.datetime.fromtimestamp(s.timestamp())
-    else:
-        raise TypeError(f"Cannot convert to datetime: {type(s)}")
+    raise TypeError(f"Cannot convert to datetime: {type(s)}")
 
 def to_timedelta(s, **kwargs):
     "Convert object to timedelta"
     if isinstance(s, datetime.timedelta):
         return s
-    elif isinstance(s, str):
+    if isinstance(s, str):
         return string_to_timedelta(s)
-    elif isinstance(s, (int, float)):
+    if isinstance(s, (int, float)):
         return numb_to_timedelta(s, **kwargs)
-    else:
-        raise TypeError(f"Cannot convert to timedelta: {type(s)}")
+    raise TypeError(f"Cannot convert to timedelta: {type(s)}")
 
 def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
 
@@ -89,41 +87,41 @@ def timedelta_to_dict(dt, days_in_year=365, days_in_month=30, units=None):
     # Non fixed units
     if "years" in allowed_units:
         components["years"] = int(microsec // (microsec_in_day * days_in_year))
-        microsec = microsec - (components["years"] * microsec_in_day * days_in_year)
+        microsec -= (components["years"] * microsec_in_day * days_in_year)
 
     if "months" in allowed_units:
         components["months"] = int(microsec // (microsec_in_day * days_in_month))
-        microsec = microsec - (components["months"] * microsec_in_day * days_in_month)
+        microsec -= (components["months"] * microsec_in_day * days_in_month)
 
     # Alternating units
     if "weeks" in allowed_units:
         components["weeks"] = int(microsec // (microsec_in_day * 7))
-        microsec = microsec - components["weeks"] * microsec_in_day * 7
+        microsec -= components["weeks"] * microsec_in_day * 7
 
     # Fixed units
     if "days" in allowed_units:
         components["days"] = int(microsec // microsec_in_day)
-        microsec = microsec - components["days"] * microsec_in_day
+        microsec -= components["days"] * microsec_in_day
 
     if "hours" in allowed_units:
         components["hours"] = int(microsec // microsec_in_hour)
-        microsec = microsec - components["hours"] * microsec_in_hour
+        microsec -= components["hours"] * microsec_in_hour
 
     if "minutes" in allowed_units:
         components["minutes"] = int(microsec // microsec_in_min)
-        microsec = microsec - components["minutes"] * microsec_in_min
+        microsec -= components["minutes"] * microsec_in_min
 
     if "seconds" in allowed_units:
         components["seconds"] = int(microsec // microsec_in_sec)
-        microsec = microsec - components["seconds"] * microsec_in_sec
+        microsec -= components["seconds"] * microsec_in_sec
 
     if "milliseconds" in allowed_units:
         components["milliseconds"] = int(microsec // 1_000)
-        microsec = microsec - components["milliseconds"] * 1_000
+        microsec -= components["milliseconds"] * 1_000
 
     if "microseconds" in allowed_units:
         components["microseconds"] = int(microsec)
-        microsec = microsec - components["microseconds"]
+        microsec -= components["microseconds"]
 
     return components
 
@@ -196,9 +194,9 @@ def timedelta_to_str(dt,
 
         unit_name = format[unit]
         if max_unit == unit:
-            s = s + f"{value}{unit_name}"
+            s += f"{value}{unit_name}"
         elif is_max_reached:
-            s = s + f"{sep}{value}{unit_name}"
+            s += f"{sep}{value}{unit_name}"
 
         if is_min_reached:
             break
@@ -212,7 +210,7 @@ def numb_to_timedelta(n: Union[float, int], unit="μs"):
 
     if unit == "ns":
         unit = 'μs'
-        n = n / 1000
+        n /= 1000
     units = ABBREVIATIONS[unit] + "s"
     return datetime.timedelta(**{units: n})
 
@@ -245,8 +243,7 @@ def string_to_timedelta(s:str):
         for pos, char in enumerate(s):
             if is_numeric_char(char) or is_wordbreak_char(char):
                 break
-            else:
-                abbr += char
+            abbr += char
         else:
             # String ended
             pos += 1

@@ -25,12 +25,11 @@ class Interval:
     def __contains__(self, dt):
         if self.closed == "right":
             return self.left < dt <= self.right
-        elif self.closed == "left":
+        if self.closed == "left":
             return self.left <= dt < self.right
-        elif self.closed == "both":
+        if self.closed == "both":
             return self.left <= dt <= self.right
-        else:
-            return self.left < dt < self.right
+        return self.left < dt < self.right
 
     def overlaps(self, other:'Interval'):
         # Simple case: No overlap if:

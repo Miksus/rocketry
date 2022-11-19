@@ -43,7 +43,7 @@ def test_task_init(session):
     assert session.hooks.task_init == [myhook, mygenerhook] # The func is in different namespace thus different
 
     timeline.append("Main")
-    mytask = DummyTask(name="dummy")
+    mytask = DummyTask(name="dummy", session=session)
     assert timeline == [
         "Main",
         "Function hook called",
@@ -132,15 +132,15 @@ def test_scheduler_startup(session):
 # Hooks
 def myhook_normal(task, file):
     assert isinstance(task, Task)
-    with open(file, "a") as f:
+    with open(file, "a", encoding="utf-8") as f:
         f.write("Function hook called\n")
 
 def myhook_gener(task, file):
     assert isinstance(task, Task)
-    with open(file, "a") as f:
+    with open(file, "a", encoding="utf-8") as f:
         f.write("Generator hook inited\n")
     exc_type, exc, tb = yield
-    with open(file, "a") as f:
+    with open(file, "a", encoding="utf-8") as f:
         f.write(f"Generator hook continued with {exc_type} {exc}\n")
 
 
@@ -154,13 +154,13 @@ def test_task_execute(session, execution, tmpdir, func, exc_type, exc):
     session.hook_task_execute()(partial(myhook_normal, file=file))
     session.hook_task_execute()(partial(myhook_gener, file=file))
 
-    with open(file, "w") as f:
+    with open(file, "w", encoding="utf-8") as f:
         f.write("\nStarting\n")
 
     task = FuncTask(func, execution=execution, parameters={"testfile": str(file)}, start_cond="true", name="mytask", session=session)
     session.config.shut_cond = TaskStarted(task="mytask") >= 1
     session.start()
-    with open(file) as f:
+    with open(file, encoding="utf-8") as f:
         cont = f.read()
 
     assert 1 == task.logger.filter_by(action="run").count()

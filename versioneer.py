@@ -335,7 +335,7 @@ def get_config_from_root(root):
     # the top of versioneer.py for instructions on writing your setup.cfg .
     setup_cfg = os.path.join(root, "setup.cfg")
     parser = configparser.ConfigParser()
-    with open(setup_cfg, "r") as cfg_file:
+    with open(setup_cfg, "r", encoding="utf-8") as cfg_file:
         parser.read_file(cfg_file)
     VCS = parser.get("versioneer", "VCS")  # mandatory
 
@@ -399,7 +399,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
             return None, None
     else:
         if verbose:
-            print("unable to find command, tried %s" % (commands,))
+            print(f"unable to find command, tried {commands}")
         return None, None
     stdout = process.communicate()[0].strip().decode()
     if process.returncode != 0:
@@ -1045,7 +1045,7 @@ def git_get_keywords(versionfile_abs):
     # _version.py.
     keywords = {}
     try:
-        with open(versionfile_abs, "r") as fobj:
+        with open(versionfile_abs, "r", encoding="utf-8") as fobj:
             for line in fobj:
                 if line.strip().startswith("git_refnames ="):
                     mo = re.search(r'=\s*"(.*)"', line)
@@ -1276,7 +1276,7 @@ def do_vcs_install(manifest_in, versionfile_source, ipy):
     files.append(versioneer_file)
     present = False
     try:
-        with open(".gitattributes", "r") as fobj:
+        with open(".gitattributes", "r", encoding="utf-8") as fobj:
             for line in fobj:
                 if line.strip().startswith(versionfile_source):
                     if "export-subst" in line.strip().split()[1:]:
@@ -1285,7 +1285,7 @@ def do_vcs_install(manifest_in, versionfile_source, ipy):
     except EnvironmentError:
         pass
     if not present:
-        with open(".gitattributes", "a+") as fobj:
+        with open(".gitattributes", "a+", encoding="utf-8") as fobj:
             fobj.write(f"{versionfile_source} export-subst\n")
         files.append(".gitattributes")
     run_command(GITS, ["add", "--"] + files)
@@ -1336,7 +1336,7 @@ def get_versions():
 def versions_from_file(filename):
     """Try to determine the version from _version.py if present."""
     try:
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             contents = f.read()
     except EnvironmentError:
         raise NotThisMethod("unable to read _version.py")
@@ -1355,7 +1355,7 @@ def write_to_version_file(filename, versions):
     os.unlink(filename)
     contents = json.dumps(versions, sort_keys=True,
                           indent=1, separators=(",", ": "))
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(SHORT_VERSION_PY % contents)
 
     print("set %s to '%s'" % (filename, versions["version"]))
@@ -1506,12 +1506,12 @@ def render_pep440_old(pieces):
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
         if pieces["distance"] or pieces["dirty"]:
-            rendered += ".post%d" % pieces["distance"]
+            rendered += f".post{pieces['distance']}"
             if pieces["dirty"]:
                 rendered += ".dev0"
     else:
         # exception #1
-        rendered = "0.post%d" % pieces["distance"]
+        rendered = f"0.post{pieces['distance']}"
         if pieces["dirty"]:
             rendered += ".dev0"
     return rendered
@@ -1792,6 +1792,7 @@ def get_cmdclass(cmdclass=None):
 
     if "cx_Freeze" in sys.modules:  # cx_freeze enabled?
         from cx_Freeze.dist import build_exe as _build_exe
+
         # nczeczulin reports that py2exe won't like the pep440-style string
         # as FILEVERSION, but it can be used for PRODUCTVERSION, e.g.
         # setup(console=[{
@@ -1810,7 +1811,7 @@ def get_cmdclass(cmdclass=None):
 
                 _build_exe.run(self)
                 os.unlink(target_versionfile)
-                with open(cfg.versionfile_source, "w") as f:
+                with open(cfg.versionfile_source, "w", encoding="utf-8") as f:
                     LONG = LONG_VERSION_PY[cfg.VCS]
                     f.write(LONG %
                             {"DOLLAR": "$",
@@ -1836,7 +1837,7 @@ def get_cmdclass(cmdclass=None):
 
                 _py2exe.run(self)
                 os.unlink(target_versionfile)
-                with open(cfg.versionfile_source, "w") as f:
+                with open(cfg.versionfile_source, "w", encoding="utf-8") as f:
                     LONG = LONG_VERSION_PY[cfg.VCS]
                     f.write(LONG %
                             {"DOLLAR": "$",
@@ -1940,13 +1941,13 @@ def do_setup():
         if isinstance(e, (EnvironmentError, configparser.NoSectionError)):
             print("Adding sample versioneer config to setup.cfg",
                   file=sys.stderr)
-            with open(os.path.join(root, "setup.cfg"), "a") as f:
+            with open(os.path.join(root, "setup.cfg"), "a", encoding="utf-8") as f:
                 f.write(SAMPLE_CONFIG)
         print(CONFIG_ERROR, file=sys.stderr)
         return 1
 
     print(" creating %s" % cfg.versionfile_source)
-    with open(cfg.versionfile_source, "w") as f:
+    with open(cfg.versionfile_source, "w", encoding="utf-8") as f:
         LONG = LONG_VERSION_PY[cfg.VCS]
         f.write(LONG % {"DOLLAR": "$",
                         "STYLE": cfg.style,
@@ -1959,7 +1960,7 @@ def do_setup():
                        "__init__.py")
     if os.path.exists(ipy):
         try:
-            with open(ipy, "r") as f:
+            with open(ipy, "r", encoding="utf-8") as f:
                 old = f.read()
         except EnvironmentError:
             old = ""
@@ -1967,11 +1968,11 @@ def do_setup():
         snippet = INIT_PY_SNIPPET.format(module)
         if OLD_SNIPPET in old:
             print(" replacing boilerplate in %s" % ipy)
-            with open(ipy, "w") as f:
+            with open(ipy, "w", encoding="utf-8") as f:
                 f.write(old.replace(OLD_SNIPPET, snippet))
         elif snippet not in old:
             print(" appending to %s" % ipy)
-            with open(ipy, "a") as f:
+            with open(ipy, "a", encoding="utf-8") as f:
                 f.write(snippet)
         else:
             print(" %s unmodified" % ipy)
@@ -1986,7 +1987,7 @@ def do_setup():
     manifest_in = os.path.join(root, "MANIFEST.in")
     simple_includes = set()
     try:
-        with open(manifest_in, "r") as f:
+        with open(manifest_in, "r", encoding="utf-8") as f:
             for line in f:
                 if line.startswith("include "):
                     for include in line.split()[1:]:
@@ -1999,14 +2000,14 @@ def do_setup():
     # lines is safe, though.
     if "versioneer.py" not in simple_includes:
         print(" appending 'versioneer.py' to MANIFEST.in")
-        with open(manifest_in, "a") as f:
+        with open(manifest_in, "a", encoding="utf-8") as f:
             f.write("include versioneer.py\n")
     else:
         print(" 'versioneer.py' already in MANIFEST.in")
     if cfg.versionfile_source not in simple_includes:
         print(" appending versionfile_source ('%s') to MANIFEST.in" %
               cfg.versionfile_source)
-        with open(manifest_in, "a") as f:
+        with open(manifest_in, "a", encoding="utf-8") as f:
             f.write("include %s\n" % cfg.versionfile_source)
     else:
         print(" versionfile_source already in MANIFEST.in")
@@ -2023,7 +2024,7 @@ def scan_setup_py():
     found = set()
     setters = False
     errors = 0
-    with open("setup.py", "r") as f:
+    with open("setup.py", "r", encoding="utf-8") as f:
         for line in f.readlines():
             if "import versioneer" in line:
                 found.add("import")

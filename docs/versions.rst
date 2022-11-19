@@ -2,6 +2,21 @@
 Version history
 ===============
 
+- ``2.5.0``
+
+    - Add: Multi-launch system. Same task can now be run several times parallel.
+
+        Run stacks were implemented to track the execution of each run. These
+        runs can be tracked in the logs using the field ``run_id``.
+
+    - Update: ``rocketry.conds.running`` refactored to support multi-launch.
+
+- ``2.4.1``
+
+    - Fix: Warnings about ``task_execution`` in import
+    - Docs: Fixed typos
+    - Clean: Cleaned code base according to Pylint
+
 - ``2.4.0``
 
     - Add: New condition, ``Retry``

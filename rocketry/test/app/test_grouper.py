@@ -12,7 +12,7 @@ def set_logging_defaults():
 def test_simple(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
 
     @app.task(daily)
     def do_things():
@@ -33,7 +33,7 @@ def test_simple(session):
 def test_prefix(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
 
     @app.task(daily)
     def do_things():
@@ -51,7 +51,7 @@ def test_prefix(session):
 def test_start_cond(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
     group = Grouper(start_cond=time_of_day.between("10:00", "18:00"))
 
     @group.task(daily)
@@ -83,7 +83,7 @@ def test_execution(session):
 def test_custom_condition(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
 
     @app.cond()
     def is_foo():
@@ -105,7 +105,7 @@ def test_custom_condition(session):
 def test_params(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
     app.params(x="hello", z="world")
 
     group = Grouper()
@@ -117,7 +117,7 @@ def test_params(session):
 def test_func_param(session):
     set_logging_defaults()
 
-    app = Rocketry()
+    app = Rocketry(execution="async")
     @app.param("x")
     def get_x():
         return "hello"

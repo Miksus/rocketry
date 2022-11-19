@@ -20,8 +20,8 @@ def test_construct(offset, expected):
 
 def test_equal():
     assert TimeDelta("2 days") == TimeDelta("2 days")
-    assert not TimeDelta("2 days") == TimeDelta("3 days")
-    assert not TimeDelta("2 days") == TimeOfDay("10:00", "12:00")
+    assert TimeDelta("2 days") != TimeDelta("3 days")
+    assert TimeDelta("2 days") != TimeOfDay("10:00", "12:00")
 
 def test_repr():
     assert str(TimeDelta("2 days")) == 'past 2 days, 0:00:00'

@@ -19,11 +19,11 @@ from rocketry.tasks import FuncTask
 from rocketry.exc import TaskLoggingError
 
 def create_line_to_startup_file():
-    with open("start.txt", "w") as file:
+    with open("start.txt", "w", encoding="utf-8") as file:
         file.write("line created\n")
 
 def create_line_to_shutdown():
-    with open("shut.txt", "w") as file:
+    with open("shut.txt", "w", encoding="utf-8") as file:
         file.write("line created\n")
 
 def do_success():
@@ -53,7 +53,8 @@ def test_failed_logging_run(execution, status, on, session):
             raise RuntimeError("Oops")
     logger = logging.getLogger("rocketry.task")
     logger.handlers.insert(0, MyHandler())
-    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, session=session)
+    task.run()
 
     if on == "startup":
         task.on_startup = True
@@ -85,7 +86,8 @@ def test_failed_logging_finish(execution, status, on, session):
 
     logger = logging.getLogger("rocketry.task")
     logger.handlers.insert(0, MyHandler())
-    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, force_run=True, session=session)
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="a task", execution=execution, session=session)
+    task.run()
     if on == "startup":
         task.on_startup = True
     elif on == "shutdown":
@@ -161,16 +163,21 @@ def test_failed_logging_finish(execution, status, on, session):
     ],
 )
 def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
         task_logger = logging.getLogger(session.config.task_logger_basename)
         task_logger.handlers = [
             RepoHandler(repo=MemoryRepo(model=CustomRecord))
         ]
 
-        task1 = FuncTask(lambda: None, name="task1", execution="main", force_run=True)
-        task2 = FuncTask(lambda: None, name="task2", execution="main", force_run=True)
-        task3 = FuncTask(lambda: None, name="task3", execution="main", force_run=True)
-        task4 = FuncTask(lambda: None, name="task4", execution="main", force_run=True)
+        task1 = FuncTask(lambda: None, name="task1", execution="main", session=session)
+        task2 = FuncTask(lambda: None, name="task2", execution="main", session=session)
+        task3 = FuncTask(lambda: None, name="task3", execution="main", session=session)
+        task4 = FuncTask(lambda: None, name="task4", execution="main", session=session)
+
+        task1.run()
+        task2.run()
+        task3.run()
+        task4.run()
 
         # Start
         mock_pydatetime("2021-01-01 00:00:00")

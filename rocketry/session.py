@@ -9,14 +9,14 @@ from multiprocessing import cpu_count
 import time
 import warnings
 
-from itertools import chain
+from itertools import chain, count
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
 from pydantic import BaseModel, validator
 import pytz
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
-
+from rocketry.tasks.run_id import uuid
 
 try:
     from typing import Literal
@@ -59,6 +59,8 @@ class Config(BaseModel):
     cycle_sleep: Optional[float] = 0.1
     debug: bool = False
 
+    multilaunch: bool = False
+    func_run_id: Callable = uuid
     max_process_count = cpu_count()
     tasks_as_daemon: bool = True
     restarting: str = 'replace'
@@ -77,7 +79,7 @@ class Config(BaseModel):
             warnings.warn(
                 "Default execution will be changed to 'async'. "
                 "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(task_execution='async')",
+                "ie. Rocketry(execution='async')",
                 FutureWarning
             )
             return 'process'
@@ -95,10 +97,9 @@ class Config(BaseModel):
     def parse_timeout(cls, value):
         if isinstance(value, str):
             return to_timedelta(value)
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             return datetime.timedelta(seconds=value)
-        else:
-            return value
+        return value
 
 class Hooks(BaseModel):
     task_init: List[Callable] = []
@@ -149,7 +150,7 @@ class Session(RedBase):
         'rocketry.task').
 
     """
-    config: Config = Config()
+    config: Config
     class Config:
         arbitrary_types_allowed = True
 
@@ -165,19 +166,18 @@ class Session(RedBase):
         from rocketry.core import Parameters
         if value is None:
             return Parameters()
-        elif not isinstance(value, Parameters):
+        if not isinstance(value, Parameters):
             value = Parameters(value)
         return value
 
     def _get_config(self, value):
         if value is None:
             return Config()
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             return Config(**value)
-        elif isinstance(value, Config):
+        if isinstance(value, Config):
             return value
-        else:
-            raise TypeError("Invalid config type")
+        raise TypeError("Invalid config type")
 
     @staticmethod
     def _get_task_name(task):
@@ -213,8 +213,7 @@ class Session(RedBase):
         for task in self.tasks:
             if task.name == task_name:
                 return task
-        else:
-            raise KeyError(f"Task '{task_name}' not found")
+        raise KeyError(f"Task '{task_name}' not found")
 
     def __contains__(self, task: Union['Task', str]):
         "Check if task is in session"
@@ -279,7 +278,7 @@ class Session(RedBase):
             }
             if name in task_names:
                 if not obey_cond:
-                    task.force_run = True
+                    task.run()
                 if execution is not None:
                     task.execution = execution
             else:
@@ -376,11 +375,10 @@ class Session(RedBase):
 
         if command is not None:
             return CommandTask(command=command, **kwargs)
-        elif path is not None:
+        if path is not None:
             # Non-wrapped FuncTask
             return FuncTask(path=path, **kwargs)
-        else:
-            return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
+        return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
 
     def add_task(self, task: 'Task'):
         "Add the task to the session"
@@ -389,7 +387,7 @@ class Session(RedBase):
         if exists:
             if if_exists == 'ignore':
                 return
-            elif if_exists == 'replace':
+            if if_exists == 'replace':
                 self.tasks.remove(task)
                 self.tasks.add(task)
             elif if_exists == 'raise':
@@ -415,8 +413,7 @@ class Session(RedBase):
         for task in self.tasks:
             if task.name == task_name:
                 return True
-        else:
-            return False
+        return False
 
     def get_repo(self):
         "Get log repo where the task logs are stored"

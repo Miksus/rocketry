@@ -4,7 +4,6 @@ import pytest
 from task_helpers import wait_till_task_finish
 
 from rocketry.tasks.func import FuncTask
-from rocketry.tasks import FuncTask
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 @pytest.mark.parametrize(
@@ -29,7 +28,7 @@ from rocketry.tasks import FuncTask
 )
 def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execution, session):
     session.config.silence_task_prerun = True
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -40,7 +39,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
         )
         try:
             task()
-        except:
+        except Exception:
             if not exc_cls:
                 raise
 
@@ -62,7 +61,7 @@ def test_run_specified_func(tmpdir, session):
         pass
     """))
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="myfunc",
@@ -92,7 +91,7 @@ def test_import_relative(tmpdir, session):
     value = 5
     """))
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -126,7 +125,7 @@ def test_import_package(tmpdir, session):
 
     util_dir.join("util_file.py").write("value = 5")
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -156,13 +155,14 @@ def test_import_relative_with_params(tmpdir, session):
     value = 5
     """))
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
             path="mytasks/myfile.py",
             name="a task",
-            execution="main"
+            execution="main",
+            session=session
         )
         task(params={"val_5":5})
 
@@ -187,7 +187,7 @@ def test_additional_sys_paths(tmpdir, session):
     value = 5
     """))
 
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -207,7 +207,7 @@ def test_additional_sys_paths(tmpdir, session):
 
 # Parametrization
 def test_parametrization_runtime(tmpdir, script_files, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -226,7 +226,7 @@ def test_parametrization_runtime(tmpdir, script_files, session):
         ] == records
 
 def test_parametrization_local(tmpdir, script_files, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",
@@ -246,7 +246,7 @@ def test_parametrization_local(tmpdir, script_files, session):
         ] == records
 
 def test_parametrization_kwargs(tmpdir, script_files, session):
-    with tmpdir.as_cwd() as old_dir:
+    with tmpdir.as_cwd():
 
         task = FuncTask(
             func_name="main",

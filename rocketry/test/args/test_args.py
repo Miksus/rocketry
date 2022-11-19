@@ -69,8 +69,8 @@ def test_return(session):
     with pytest.raises(KeyError):
         Return("unrunned").get_value(session=session)
 
-def test_private():
-    task = FuncTask(lambda x: x)
+def test_private(session):
+    task = FuncTask(lambda x: x, session=session)
 
     value = Private("my secret")
     assert value.get_value() == "*****"

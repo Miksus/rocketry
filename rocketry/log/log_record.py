@@ -42,3 +42,12 @@ class TaskLogRecord(MinimalRecord):
 
     message: str
     exc_text: Optional[str]
+
+class MinimalRunRecord(MinimalRecord):
+    run_id: Optional[str]
+
+class RunRecord(LogRecord):
+    run_id: Optional[str]
+
+class TaskRunRecord(TaskLogRecord):
+    run_id: Optional[str]

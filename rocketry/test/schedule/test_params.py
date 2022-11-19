@@ -149,9 +149,8 @@ def test_termination_flag_as_arg(execution, session):
         pytest.skip("For some reason CI fails on process. Termination flag should not be used with process tasks anyways.")
 
     task = FuncTask(func=run_with_termination_flag, name="my_task", start_cond=AlwaysTrue(), execution=execution, session=session)
-    task.terminate()
 
-    @FuncTask(name="terminator", execution="main", start_cond="task 'my_task' has started")
+    @FuncTask(name="terminator", execution="main", start_cond="task 'my_task' has started", session=session)
     def task_terminate(session=Session()):
         session["my_task"].terminate()
 
