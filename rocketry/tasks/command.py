@@ -1,6 +1,9 @@
 
+import asyncio
 import subprocess
 from typing import List, Optional, Union
+
+from pyparsing import warnings
 
 try:
     from typing import Literal
@@ -43,9 +46,15 @@ class CommandTask(Task):
 
     command: Union[str, List[str]]
     shell: bool = False
+    text: bool = True
     cwd: Optional[str]
     kwds_popen: dict = {}
-    argform: Optional[Literal['-', '--', 'short', 'long']] = Field(description="Whether the arguments are turned as short or long form command line arguments")
+    argform: Optional[Literal['-', '--', 'short', 'long']] = Field(description="Whether the arguments are turned as short or long form command line arguments", default="--")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.get_execution() == "process":
+            warnings.warn(f"CommandTask {self.name} will create redundant process. Consider setting execution as 'async' or 'thread'")
 
     def get_kwargs_popen(self) -> dict:
         kwargs = {
@@ -65,10 +74,9 @@ class CommandTask(Task):
             "--": "--",
             "short": "-",
             "-": "-",
-            None: '--',
         }[value]
 
-    def execute(self, **parameters):
+    async def execute(self, **parameters):
         """Run the command."""
         command = self.command
 
@@ -81,22 +89,25 @@ class CommandTask(Task):
             else:
                 command += [param] + [val]
 
-        # https://stackoverflow.com/a/5469427/13696660
-        pipe = subprocess.Popen(command, **self.get_kwargs_popen())
-        try:
-            outs, errs = pipe.communicate(timeout=self.timeout)
-        except subprocess.TimeoutExpired:
-            # https://docs.python.org/3.3/library/subprocess.html#subprocess.Popen.communicate
-            pipe.kill()
-            outs, errs = pipe.communicate()
-            raise
+        kwds = self.get_kwargs_popen()
+        process = await asyncio.create_subprocess_exec(*command, **kwds)
+        await process.wait()
 
-        return_code = pipe.returncode
+        return_code = process.returncode
         if return_code != 0:
+            errs = await process.stderr.read()
             if hasattr(errs, "decode"):
                 errs = errs.decode("utf-8", errors="ignore")
             raise OSError(f"Failed running command ({return_code}): \n{errs}")
-        return outs
+        out = await process.stdout.read()
+        if self.text:
+            out = self._to_text(out)
+        return out
+
+    def _to_text(self, s:Union[bytes, str]) -> str:
+        if hasattr(s, "decode"):
+            s = s.decode("utf-8", errors="ignore")
+        return s
 
     def postfilter_params(self, params: Parameters):
         # Only allows the task specific parameters
