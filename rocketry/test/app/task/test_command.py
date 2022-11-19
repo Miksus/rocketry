@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from textwrap import dedent
+import time
 from pyparsing import sys
 import pytest
 
@@ -89,3 +90,27 @@ def test_command_process(tmpdir):
     app = Rocketry(config={'task_execution': 'main'})
     with pytest.raises(UserWarning):
         app.task(true, command=[sys.executable, "-V"], execution="process", name="do_things")
+
+@pytest.mark.parametrize("execution", ["async", "thread"])
+def test_timeout(tmpdir, execution):
+    set_logging_defaults()
+
+    py_file = tmpdir.join("myfile.py")
+    py_file.write(dedent("""
+        from pathlib import Path
+        import time
+        time.sleep(0.01)
+        (Path(__file__).parent / "finish.txt").write_text("")
+        """
+    ))
+
+    app = Rocketry(config={'task_execution': 'main'})
+    app.task(true, command=[sys.executable, str(py_file)], execution=execution, timeout=0.0001, name="do_things")
+
+    app.session.config.shut_cond = TaskStarted(task='do_things')
+    app.run()
+    time.sleep(.1)
+    logger = app.session['do_things'].logger
+
+    assert logger.filter_by(action="terminate").count() == 1
+    assert not (tmpdir / "finish.txt").exists()

@@ -1,5 +1,6 @@
 
 import asyncio
+import time
 import subprocess
 from typing import List, Optional, Union
 
@@ -14,7 +15,8 @@ from pydantic import Field, validator
 
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.core.task import Task
-
+from rocketry.args import TerminationFlag
+from rocketry.exc import TaskTerminationException
 
 class CommandTask(Task):
     """Task that executes a command from
@@ -78,7 +80,9 @@ class CommandTask(Task):
 
     async def execute(self, **parameters):
         """Run the command."""
+        execution = self.execution
         command = self.command
+        flag_terminate = parameters.pop("__flag_terminate", None)
 
         for param, val in parameters.items():
             if not param.startswith("-"):
@@ -91,7 +95,14 @@ class CommandTask(Task):
 
         kwds = self.get_kwargs_popen()
         process = await asyncio.create_subprocess_exec(*command, **kwds)
-        await process.wait()
+        if execution == "thread":
+            while process.returncode is None:
+                if flag_terminate.is_set():
+                    process.kill()
+                    raise TaskTerminationException()
+                time.sleep(0.1)
+        else:
+            await process.wait()
 
         return_code = process.returncode
         if return_code != 0:
@@ -103,6 +114,11 @@ class CommandTask(Task):
         if self.text:
             out = self._to_text(out)
         return out
+
+    def get_task_params(self):
+        task_params = super().get_task_params()
+        task_params.update({'__flag_terminate': TerminationFlag()})
+        return task_params
 
     def _to_text(self, s:Union[bytes, str]) -> str:
         if hasattr(s, "decode"):
