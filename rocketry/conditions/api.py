@@ -144,7 +144,7 @@ class RunningWrapper(BaseCondition):
             )
             period = None
             if more_than is not None or less_than is not None:
-                period = TimeSpanDelta(near=more_than, far=less_than)
+                period = TimeSpanDelta(near=more_than, far=less_than, reference=self.session._get_datetime_now)
             return TaskRunning(task=task, period=period)
         else:
             return RunningWrapper(task)
