@@ -56,8 +56,8 @@ def test_logs_not_used_true(session, cls, mock_datetime_now):
         execution="main",
         session=session
     )
-    for attr in ("last_run", "last_success", "last_fail", "last_inaction", "last_terminate"):
-        setattr(task, attr, to_datetime("2000-01-01 12:00:00"))
+    for attr in ("_last_run", "_last_success", "_last_fail", "_last_inaction", "_last_terminate"):
+        setattr(task, attr, to_datetime("2000-01-01 12:00:00").timestamp())
     if cls == TaskRunning:
         task.status = "run"
         run = TaskRun(start=1600000000, task=None)
