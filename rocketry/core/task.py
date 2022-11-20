@@ -1300,7 +1300,7 @@ class Task(RedBase, BaseModel):
         # Removing possibly unpicklable manually. There is a problem in Pydantic
         # and for some reason it does not use Session's pickling
         dict_state['parameters'] = Parameters()
-        dict_state['session'] = None
+        dict_state['session'] = dict_state['session']._copy_pickle()
 
         if not is_pickleable(state):
             if self._mark_running:

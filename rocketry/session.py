@@ -500,6 +500,12 @@ class Session(RedBase):
         state['scheduler'] = None
         return state
 
+    def _copy_pickle(self):
+        # Copy and remove typically unpicklable attrs.
+        # Used when creating a child process
+        unpicklable = {'shut_cond'}
+        return Session(config=self.config.copy(exclude=unpicklable))
+
     @property
     def env(self):
         "Shorthand for parameter 'env'"
