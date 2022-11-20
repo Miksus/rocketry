@@ -138,7 +138,7 @@ class RunningWrapper(BaseCondition):
     def __call__(self, task=None, more_than=None, less_than=None):
         if more_than is not None or less_than is not None or task is None:
             warnings.warn(
-                "running(more_than=..., less_than=...) and running() are derpecated. " 
+                "running(more_than=..., less_than=...) and running() are derpecated. "
                 "Please use running.more_than, running.less_than, running.between or just running instead.",
                 DeprecationWarning
             )
@@ -146,8 +146,7 @@ class RunningWrapper(BaseCondition):
             if more_than is not None or less_than is not None:
                 period = TimeSpanDelta(near=more_than, far=less_than, reference=self.session._get_datetime_now)
             return TaskRunning(task=task, period=period)
-        else:
-            return RunningWrapper(task)
+        return RunningWrapper(task)
 
     def more_than(self, delta):
         "Get condition the wrapper represents"

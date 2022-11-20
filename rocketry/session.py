@@ -9,7 +9,7 @@ from multiprocessing import cpu_count
 import time
 import warnings
 
-from itertools import chain, count
+from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
 from pydantic import BaseModel, validator
 from rocketry.pybox.time import to_timedelta
@@ -398,9 +398,10 @@ class Session(RedBase):
         task.session = self
 
     def remove_task(self, task: Union['Task', str]):
-        if isinstance(task, str):
+        from rocketry.core.task import Task
+        if not isinstance(task, Task):
             task = self[task]
-        self.session.tasks.remove(task)
+        self.tasks.remove(task)
 
     def task_exists(self, task: 'Task'):
         warnings.warn((
