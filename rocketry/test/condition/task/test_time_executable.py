@@ -202,7 +202,7 @@ def test_executable(tmpdir, mock_datetime_now, logs, time_after, get_condition, 
             )
 
             task.logger.handle(record)
-            setattr(task, f'last_{log_action}', to_datetime(log_time))
+            setattr(task, f'_last_{log_action}', log_created)
         mock_datetime_now(time_after)
 
         if outcome:
@@ -274,7 +274,7 @@ def test_periods(mock_datetime_now, logs, time_after, get_condition, outcome, se
         record.task_name = "the task"
 
         task.logger.handle(record)
-        setattr(task, f'last_{log_action}', to_datetime(log_time))
+        setattr(task, f'_last_{log_action}', log_created)
     mock_datetime_now(time_after)
 
     if outcome:

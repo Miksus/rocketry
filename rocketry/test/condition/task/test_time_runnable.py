@@ -103,7 +103,7 @@ def test_runnable(tmpdir, mock_datetime_now, logs, time_after, get_condition, ou
             )
 
             task.logger.handle(record)
-            setattr(task, f'last_{log_action}', to_datetime(log_time))
+            setattr(task, f'_last_{log_action}', to_datetime(log_time).timestamp())
         mock_datetime_now(time_after)
 
         if outcome:
