@@ -12,7 +12,6 @@ import warnings
 from itertools import chain, count
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
 from pydantic import BaseModel, validator
-import pytz
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
