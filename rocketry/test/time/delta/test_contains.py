@@ -52,7 +52,8 @@ def test_not_in_offset(dt, dt_ref, offset):
 
 
 def test_reference_now():
-    time = TimeDelta("10 seconds").use_reference(datetime.now())
-    assert datetime.now() in time
-    assert (datetime.now() - timedelta(0, 5, 0)) in time
-    assert (datetime.now() - timedelta(0, 11, 0)) not in time
+    now = datetime.now()
+    time = TimeDelta("10 seconds").use_reference()
+    assert now in time
+    assert (now - timedelta(0, 5, 0)) in time
+    assert (now - timedelta(0, 11, 0)) not in time
