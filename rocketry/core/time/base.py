@@ -208,6 +208,9 @@ class TimeDelta(TimePeriod):
         object.__setattr__(self, "future", abs(to_timedelta(future, **kws_future)))
         object.__setattr__(self, "reference", reference)
 
+    def set_reference(self, ref):
+        return TimeDelta(past=self.past, future=self.future, reference=ref)
+
     @abstractmethod
     def __contains__(self, dt):
         "Check whether the datetime is in "
@@ -217,7 +220,7 @@ class TimeDelta(TimePeriod):
         return start <= dt <= end
 
     def get_reference(self) -> datetime.datetime:
-        return self.reference if self.reference is not None else datetime.datetime.fromtimestamp(time.time())
+        return self.reference
 
     def rollback(self, dt):
         "Get previous interval (including currently ongoing)"

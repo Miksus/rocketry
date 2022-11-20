@@ -20,9 +20,12 @@ class TimeSpanDelta(TimeDelta):
         object.__setattr__(self, "far", abs(to_timedelta(far, **kwargs)) if far is not None else None)
         object.__setattr__(self, "reference", reference)
 
+    def set_reference(self, ref):
+        return TimeSpanDelta(near=self.near, far=self.far, reference=ref)
+
     def __contains__(self, dt):
-        "Check whether the datetime is in "
-        reference = self.reference() if not isinstance(self.reference, datetime.datetime) else self.reference
+        "Check whether the dt is period"
+        reference = self.get_reference()
         if reference >= dt:
             start = reference - self.far if self.far is not None else self.min
             end = reference - self.near

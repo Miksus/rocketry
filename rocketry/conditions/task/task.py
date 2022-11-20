@@ -174,7 +174,7 @@ class TaskRunning(BaseComparable):
             runs = [
                 run.start 
                 for run in task._run_stack
-                if run.is_alive() and start <= datetime.datetime.fromtimestamp(run.start) <= end
+                if run.is_alive() and start <= session._format_timestamp(run.start) <= end
             ]
             return runs
         else:

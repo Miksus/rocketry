@@ -16,11 +16,17 @@ def get_period_span(period:'TimePeriod', session=None) -> Tuple[datetime.datetim
         period = parse_time(period)
 
     if session is None:
-        dt = datetime.datetime.fromtimestamp(time.time())
+        now = datetime.datetime.fromtimestamp(time.time())
     else:
-        dt = session._get_datetime_now()
+        now = session._get_datetime_now()
 
-    interval = period.rollback(dt)
+    if hasattr(period, "set_reference"):
+        # Period requires reference date
+        # (usually timedelta related)
+        # and it is current datetime
+        period = period.set_reference(now)
+
+    interval = period.rollback(now)
     start = interval.left
     end = interval.right
     return start, end
