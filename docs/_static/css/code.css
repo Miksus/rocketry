@@ -1,0 +1,25 @@
+
+.highlight-py .k {
+    /*Keyword*/
+    color: #3f6ec6;
+}
+
+.highlight-py .kn {
+    /*Keyword (import)*/
+    color: #3f6ec6;
+}
+
+.highlight-py .nn {
+    /*Module*/
+    color: #a846b9;
+}
+
+.highlight-py .nd {
+    /*Decorator*/
+    color: #3f6ec6;
+}
+
+.highlight-py .nf {
+    /*Function name*/
+    color: #000000;
+}
