@@ -120,7 +120,7 @@ class TaskCond(BaseCondition):
     def get_state(self, session=Session()):
         last_success = self.task.last_success
         task_state = session._cond_states.get(self.task.name, False)
-        if last_success not in self.active_time:
+        if last_success is not None and last_success not in self.active_time:
             # The cooldown period is gone --> setting to default
             self.state = False
         else:
