@@ -75,7 +75,7 @@ class Session(BaseArgument):
         return task.session
 
     def __repr__(self):
-        return f'session'
+        return 'session'
 
 class Task(BaseArgument):
     "An argument that represents a task"

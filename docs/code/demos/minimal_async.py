@@ -10,7 +10,7 @@ async def do_things():
 async def main():
     "Launch Rocketry app (and possibly something else)"
     rocketry_task = asyncio.create_task(app.serve())
-    ... # Start possibly other async apps
+    # Start possibly other async apps
     await rocketry_task
 
 if __name__ == "__main__":

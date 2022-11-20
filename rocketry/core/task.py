@@ -59,10 +59,9 @@ class TaskRun:
     def is_alive(self) -> bool:
         if self.is_main:
             return True
-        elif self.is_async:
+        if self.is_async:
             return not self.task.done()
-        else:
-            return self.task.is_alive()
+        return self.task.is_alive()
 
     async def terminate(self):
         task = self.task
@@ -715,9 +714,9 @@ class Task(RedBase, BaseModel):
         process = multiprocessing.Process(
             target=self._run_as_process,
             kwargs=dict(
-                params=params, direct_params=direct_params, 
-                task_run=task_run, 
-                queue=log_queue, 
+                params=params, direct_params=direct_params,
+                task_run=task_run,
+                queue=log_queue,
                 config=session.config,
                 exec_hooks=self._get_hooks("task_execute")
             ),
@@ -935,8 +934,7 @@ class Task(RedBase, BaseModel):
     def get_run_id(self, run, params=None):
         if self.func_run_id is not None:
             return self.func_run_id(self, params)
-        else:
-            return self.session.config.func_run_id(self, params)
+        return self.session.config.func_run_id(self, params)
 
     def is_alive_as_main(self) -> bool:
         return any(run.is_main and run.is_alive() for run in self._run_stack)
@@ -960,11 +958,11 @@ class Task(RedBase, BaseModel):
         "Terminate task if can"
         try:
             is_end_cond = self.end_cond.observe(task=self, session=self.session)
-        except:
+        except Exception:
             if not self.session.config.silence_cond_check:
                 raise
             is_end_cond = True
-        
+
         if self.force_termination:
             await self._terminate_all(reason="forced termination")
         elif is_end_cond:
@@ -1142,7 +1140,7 @@ class Task(RedBase, BaseModel):
         now = datetime.datetime.fromtimestamp(time.time())
         if action == "run":
             extra = {
-                "action": "run", 
+                "action": "run",
                 "start": datetime.datetime.fromtimestamp(task_run.start) if task_run is not None else now
             }
             # self._last_run = now

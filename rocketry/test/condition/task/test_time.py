@@ -136,7 +136,7 @@ def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=N
             "2020-01-01 07:30",
             False,
             id="Is not running (but does in the future)", marks=pytest.mark.xfail(reason="Bug but not likely to encounter")),
-        
+
         pytest.param(
             lambda:TaskRunning(task="the task", period=TimeSpanDelta(far="2 hours")),
             [

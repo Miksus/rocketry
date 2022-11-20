@@ -302,14 +302,14 @@ class Scheduler(RedBase):
         Starting up includes setting up attributes and
         running tasks that have ``on_startup`` as ``True``."""
         #self.setup_listener()
-        self.logger.info(f"Starting up...", extra={"action": "setup"})
+        self.logger.info("Starting up...", extra={"action": "setup"})
         hooker = _Hooker(self.session.hooks.scheduler_startup)
         hooker.prerun(self)
 
         self.n_cycles = 0
         self.startup_time = datetime.datetime.fromtimestamp(time.time())
 
-        self.logger.debug(f"Beginning startup sequence...")
+        self.logger.debug("Beginning startup sequence...")
         for task in self.tasks:
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
@@ -320,7 +320,7 @@ class Scheduler(RedBase):
                     await self.run_task(task)
 
         hooker.postrun()
-        self.logger.info(f"Startup complete.")
+        self.logger.info("Startup complete.")
 
     def has_free_processors(self) -> bool:
         """Whether the Scheduler has free processors to
@@ -396,7 +396,7 @@ class Scheduler(RedBase):
         tasks to finish their termination.
         """
 
-        self.logger.debug(f"Beginning shutdown sequence...")
+        self.logger.debug("Beginning shutdown sequence...")
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
         hooker.prerun(self)
 
@@ -410,7 +410,7 @@ class Scheduler(RedBase):
                 finally:
                     # Tasks are shut down/waited for shut down regardless if running shutdown
                     # tasks failed
-                    self.logger.debug(f"Shutting down tasks...")
+                    self.logger.debug("Shutting down tasks...")
                     await self._shut_down_tasks(traceback, exception)
             finally:
                 # Processes/threads are wait to shut down regardless if there has been any
@@ -425,7 +425,7 @@ class Scheduler(RedBase):
             # Running hooks and finalize the shutdown
             hooker.postrun()
             self.is_alive = False
-            self.logger.info(f"Shutdown completed. Good bye.")
+            self.logger.info("Shutdown completed. Good bye.")
 
         if isinstance(exception, SchedulerRestart):
             # Clean up finished, restart is finally
@@ -438,7 +438,7 @@ class Scheduler(RedBase):
         process is started.
         """
         # https://stackoverflow.com/a/35874988
-        self.logger.debug(f"Restarting...", extra={"action": "restart"})
+        self.logger.debug("Restarting...", extra={"action": "restart"})
         python = sys.executable
 
         restarting = self.session.config.restarting
