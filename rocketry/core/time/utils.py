@@ -5,7 +5,7 @@ from typing import Tuple
 
 from .base import TimePeriod
 
-def get_period_span(period:'TimePeriod') -> Tuple[datetime.datetime, datetime.datetime]:
+def get_period_span(period:'TimePeriod', session=None) -> Tuple[datetime.datetime, datetime.datetime]:
 
     # To prevent circular import
     from rocketry.parse import parse_time
@@ -14,7 +14,11 @@ def get_period_span(period:'TimePeriod') -> Tuple[datetime.datetime, datetime.da
         return TimePeriod.min, TimePeriod.max
     if isinstance(period, str):
         period = parse_time(period)
-    dt = datetime.datetime.fromtimestamp(time.time())
+
+    if session is None:
+        dt = datetime.datetime.fromtimestamp(time.time())
+    else:
+        dt = session._get_datetime_now()
 
     interval = period.rollback(dt)
     start = interval.left

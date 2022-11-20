@@ -168,7 +168,7 @@ class TaskRunning(BaseComparable):
         task = session[self.task] if self.task is not None else task
 
         allow_optimization = not self.session.config.force_status_from_logs
-        start, end = get_period_span(self.period)
+        start, end = get_period_span(self.period, session=session)
         if allow_optimization:
             task = session[self.task] if self.task is not None else task
             runs = [
