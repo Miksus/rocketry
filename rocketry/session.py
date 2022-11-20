@@ -71,7 +71,7 @@ class Config(BaseModel):
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
-    timezone: pytz.timezone
+    timezone: Optional[datetime.tzinfo] = None
 
     @validator('task_execution', pre=True, always=True)
     def parse_task_execution(cls, value):
@@ -558,6 +558,12 @@ class Session(RedBase):
         the package.
         """
         return self._format_timestamp(time.time())
+
+    def get_time(self) -> float:
+        return time.time()
+
+    def _get_datetime_now(self):
+        return self._format_timestamp(self.get_time())
 
     def _format_timestamp(self, dt:float):
         return datetime.datetime.fromtimestamp(dt, tz=self.config.timezone)

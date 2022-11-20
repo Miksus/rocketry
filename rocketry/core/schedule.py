@@ -305,7 +305,7 @@ class Scheduler(RedBase):
         hooker.prerun(self)
 
         self.n_cycles = 0
-        self.startup_time = datetime.datetime.fromtimestamp(time.time())
+        self.startup_time = self.session._get_datetime_now()
 
         self.logger.debug(f"Beginning startup sequence...")
         for task in self.tasks:
