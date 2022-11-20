@@ -121,8 +121,8 @@ class TaskCond(BaseCondition):
         last_success = self.task.last_success
         task_state = session._cond_states.get(self.task.name, False)
         active_time = self.active_time
-        if hasattr(active_time, "set_reference"):
-            active_time = active_time.set_reference(session._get_datetime_now())
+        if hasattr(active_time, "use_reference"):
+            active_time = active_time.use_reference(session._get_datetime_now())
         if last_success is not None and last_success not in active_time:
             # The cooldown period is gone --> setting to default
             self.state = False

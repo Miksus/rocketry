@@ -20,11 +20,11 @@ def get_period_span(period:'TimePeriod', session=None) -> Tuple[datetime.datetim
     else:
         now = session._get_datetime_now()
 
-    if hasattr(period, "set_reference"):
+    if hasattr(period, "use_reference"):
         # Period requires reference date
         # (usually timedelta related)
         # and it is current datetime
-        period = period.set_reference(now)
+        period = period.use_reference(now)
 
     interval = period.rollback(now)
     start = interval.left

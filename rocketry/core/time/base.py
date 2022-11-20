@@ -208,7 +208,7 @@ class TimeDelta(TimePeriod):
         object.__setattr__(self, "future", abs(to_timedelta(future, **kws_future)))
         object.__setattr__(self, "reference", reference)
 
-    def set_reference(self, ref):
+    def use_reference(self, ref):
         return TimeDelta(past=self.past, future=self.future, reference=ref)
 
     @abstractmethod

@@ -20,7 +20,7 @@ class TimeSpanDelta(TimeDelta):
         object.__setattr__(self, "far", abs(to_timedelta(far, **kwargs)) if far is not None else None)
         object.__setattr__(self, "reference", reference)
 
-    def set_reference(self, ref):
+    def use_reference(self, ref):
         return TimeSpanDelta(near=self.near, far=self.far, reference=ref)
 
     def __contains__(self, dt):
