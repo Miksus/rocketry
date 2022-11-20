@@ -299,7 +299,7 @@ class TaskExecutable(BaseCondition):
             #   Because the period is used in the sub statements and TimeDelta is still accepted - Senior me
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (
@@ -352,7 +352,7 @@ class TaskRunnable(BaseCondition):
         isin_period = (
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (
