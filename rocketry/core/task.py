@@ -757,6 +757,8 @@ class Task(RedBase, BaseModel):
         logger.propagate = False
         logger.handlers = []
         logger.addHandler(handler)
+        # Wrap logger.createRecord for custom created time
+        self.session._wrap_log_record_creation(logger)
         try:
             self.logger_name = logger.name
         except:
@@ -1387,4 +1389,5 @@ class Task(RedBase, BaseModel):
         if 'exclude' not in kwargs:
             kwargs['exclude'] = set()
         kwargs['exclude'].update({'session'})
-        return super().json(**kwargs)
+        d = super().json(**kwargs)
+        return d

@@ -3,6 +3,7 @@ Utilities for getting information
 about the scehuler/task/parameters etc.
 """
 
+from copy import copy
 import datetime
 import logging
 from multiprocessing import cpu_count
@@ -71,6 +72,7 @@ class Config(BaseModel):
     param_materialize:Literal['pre', 'post'] = 'post'
 
     timezone: Optional[datetime.tzinfo] = None
+    time_func: Callable = None
 
     @validator('task_execution', pre=True, always=True)
     def parse_task_execution(cls, value):
@@ -228,7 +230,8 @@ class Session(RedBase):
 
         Will block and wait till the scheduler finishes
         if there is a shut condition."""
-        self._check_readable_logger()
+        self._set_configs()
+        self._wrap_log_record_creation()
         self.scheduler()
 
     async def serve(self):
@@ -236,7 +239,7 @@ class Session(RedBase):
 
         Will block and wait till the scheduler finishes
         if there is a shut condition."""
-        self._check_readable_logger()
+        self._set_configs()
         await self.scheduler.serve()
 
     def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
@@ -264,7 +267,7 @@ class Session(RedBase):
             itself. Just to run specific tasks when the system itself
             is not running.
         """
-        self._check_readable_logger()
+        self._set_configs()
         # To prevent circular import
         from rocketry.conditions.scheduler import SchedulerCycles
 
@@ -320,6 +323,10 @@ class Session(RedBase):
         if force:
             self.scheduler._flag_force_exit.set()
 
+    def _set_configs(self):
+        self._check_readable_logger()
+        self._wrap_log_record_creation()
+
     def _check_readable_logger(self):
         from rocketry.core.log import TaskAdapter
         task_logger_basename = self.config.task_logger_basename
@@ -342,6 +349,18 @@ class Session(RedBase):
                 f"Logger {task_logger_basename} has too low level ({level_name}). "
                 "Level is set to INFO to make sure the task logs get logged. ", UserWarning)
             task_logger.setLevel(logging.INFO)
+
+    def _wrap_log_record_creation(self, logger=None):
+        # Make 
+        from rocketry.core.log import TaskAdapter
+        if logger is None:
+            logger = logging.getLogger(self.config.task_logger_basename)
+        attr = '__rocketry_wrapped__'
+        is_wrapped = getattr(logger, attr, False)
+        wrap_logger = self.config.time_func is not None and not is_wrapped
+        if wrap_logger:
+            logger.makeRecord = TaskAdapter._modify_record(logger.makeRecord, session=self)
+            setattr(logger, attr, True)
 
     def get_tasks(self) -> list:
         """Get session tasks as list.
@@ -503,8 +522,13 @@ class Session(RedBase):
     def _copy_pickle(self):
         # Copy and remove typically unpicklable attrs.
         # Used when creating a child process
-        unpicklable = {'shut_cond'}
-        return Session(config=self.config.copy(exclude=unpicklable))
+        unpicklable_conf = {'shut_cond'}
+        unpicklable = {'tasks', '_cond_cache', 'session', '_cond_parsers'}
+        new_self = copy(self)
+        for attr in unpicklable:
+            setattr(new_self, attr, None)
+        new_self.config = self.config.copy(exclude=unpicklable_conf)
+        return new_self
 
     @property
     def env(self):
@@ -566,6 +590,9 @@ class Session(RedBase):
         return self._format_timestamp(time.time())
 
     def get_time(self) -> float:
+        if self.config.time_func is not None:
+            # Custom time measurement
+            return self.config.time_func()
         return time.time()
 
     def _get_datetime_now(self):

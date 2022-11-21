@@ -32,6 +32,17 @@ class TaskAdapter(logging.LoggerAdapter):
         if not ignore_warnings and self.is_readable_unset:
             warnings.warn(f"Logger '{logger.name}' for task '{self.task_name}' does not have ability to be read. Past history of the task cannot be utilized.")
 
+    @staticmethod
+    def _modify_record(method, session):
+        # Set custom created time to LogRecords
+        def wrapper(record, *args, **kwargs):
+            ct = session.get_time()
+            record = method(record, *args, **kwargs)
+            record.created = ct
+            record.msec = (ct - int(ct)) * 1000
+            return record
+        return wrapper
+
     def process(self, msg, kwargs):
         ""
         kwargs["extra"] = kwargs.get("extra", {})
