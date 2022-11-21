@@ -523,7 +523,7 @@ class Session(RedBase):
         # Copy and remove typically unpicklable attrs.
         # Used when creating a child process
         unpicklable_conf = {'shut_cond'}
-        unpicklable = {'tasks', '_cond_cache', 'session', '_cond_parsers'}
+        unpicklable = {'tasks', '_cond_cache', 'session', '_cond_parsers', 'parameters'}
         new_self = copy(self)
         for attr in unpicklable:
             setattr(new_self, attr, None)
