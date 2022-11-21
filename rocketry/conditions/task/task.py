@@ -360,6 +360,15 @@ class TaskRunnable(BaseCondition):
             and has_not_run.observe(task=task, session=session)
         )
 
+    def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
+        period = self.period
+        task = self.task
+        task_name = getattr(task, "name", str(task))
+        period = "" if period is None else f" {period}"
+        return f"task '{task_name}' runnable{period}"
+
 
 class DependFinish(DependMixin):
     """Condition for checking whether a given
