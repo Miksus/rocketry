@@ -37,15 +37,16 @@ class Timer:
         return (self.start + offset).timestamp()
 
 def test_time_of(session):
-    import pytz
+    utc_time = datetime.timezone(datetime.timedelta(hours=0))
+    timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
-    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=pytz.timezone("UTC")))
+    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
     session.get_time = time.get_time
 
     # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
     # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
-    session.config.timezone = pytz.timezone("Etc/GMT-12")
+    session.config.timezone = timezone
 
     # Time is 08:00 in UTC but 22:00 in GMT+10
     assert time_of_day.between("10:00", "10:05").observe(session=session)
@@ -54,19 +55,17 @@ def test_time_of(session):
     assert time_of_month.on("2nd").observe(session=session)
 
 def test_task(session):
-    import pytz
+    utc_time = datetime.timezone(datetime.timedelta(hours=0))
+    timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
-    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=pytz.timezone("UTC")))
+    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
     session.get_time = time.get_time
-
-    # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
-    # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
-    session.config.timezone = pytz.timezone("Etc/GMT-12")
+ 
+    session.config.timezone = timezone
 
     task = FuncTask(lambda: None, execution="async", session=session)
 
-    # Time is 08:00 in UTC but 22:00 in GMT+10
     assert daily.between("10:00", "10:05").observe(task=task, session=session)
     assert weekly.on("Tuesday").observe(task=task, session=session)
     assert monthly.on("2nd").observe(task=task, session=session)
@@ -82,15 +81,14 @@ def test_task(session):
     assert not monthly.on("2nd").observe(task=task, session=session)
 
 def test_task_attrs(session):
-    import pytz
+    utc_time = datetime.timezone(datetime.timedelta(hours=0))
+    timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
-    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=pytz.timezone("UTC")))
+    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
     session.get_time = time.get_time
 
-    # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
-    # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
-    session.config.timezone = pytz.timezone("Etc/GMT-12")
+    session.config.timezone = timezone
 
     task = FuncTask(lambda: None, execution="async", session=session)
 
@@ -100,8 +98,8 @@ def test_task_attrs(session):
     task.log_termination()
     task.log_inaction()
 
-    start = datetime.datetime(2024, 1, 1, 22, 0, tzinfo=pytz.timezone("UTC"))
-    end = datetime.datetime(2024, 1, 1, 22, 1, tzinfo=pytz.timezone("UTC"))
+    start = datetime.datetime(2024, 1, 1, 22, 0, tzinfo=utc_time)
+    end = datetime.datetime(2024, 1, 1, 22, 1, tzinfo=utc_time)
     assert start <= task.last_run <= end
     assert start <= task.last_fail <= end
     assert start <= task.last_success <= end
@@ -110,13 +108,14 @@ def test_task_attrs(session):
 
 @pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
 def test_task_run(session, execution):
-    import pytz
+    utc_time = datetime.timezone(datetime.timedelta(hours=0))
+    timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
-    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=pytz.timezone("UTC")))
+    time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
     # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
     # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
-    session.config.timezone = pytz.timezone("Etc/GMT-12")
+    session.config.timezone = timezone
 
     task = FuncTask(do_success, start_cond=true, execution=execution, session=session)
 
@@ -124,8 +123,8 @@ def test_task_run(session, execution):
     session.config.shut_cond = TaskStarted(task=task)
     session.start()
 
-    start = datetime.datetime(2024, 1, 1, 22, 0, tzinfo=pytz.timezone("UTC"))
-    end = datetime.datetime(2024, 1, 1, 22, 5, tzinfo=pytz.timezone("UTC"))
+    start = datetime.datetime(2024, 1, 1, 22, 0, tzinfo=utc_time)
+    end = datetime.datetime(2024, 1, 1, 22, 5, tzinfo=utc_time)
     assert start <= task.last_run <= end
     #assert start <= task.last_fail <= end
     assert start <= task.last_success <= end
