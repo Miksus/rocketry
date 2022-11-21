@@ -6,3 +6,6 @@ pytest-asyncio
 # Package requirements
 python-dateutil
 redbird>=0.5.0
+
+# Testing utils
+pytz

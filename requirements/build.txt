@@ -1,3 +1,6 @@
 # Testing
 pytest
 pytest-asyncio
+
+# Testing utils
+pytz
