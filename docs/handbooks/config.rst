@@ -140,3 +140,19 @@ Options
 
     Only applicable for some argument types and materialization type 
     specified in the argument itself overrides configuration setting.
+
+**timezone**: Timezone for scheduling.
+
+    Timezone to be used in evaluating time related condition and 
+    displaying datetime. Should be ``datetime.timezone``. 
+    One alternative is to use `pytz <https://pythonhosted.org/pytz/>`_.
+    
+    By default, use system default.
+
+**time_func**: Function for time measurement.
+
+    Function that returns current time in seconds since epoch similar to
+    ``time.time()``. Used throughout Rocketry including in condition 
+    evaluation and logging. Useful only for testing purposes.
+    
+    By default, use ``time.time``.
