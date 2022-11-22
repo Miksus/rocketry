@@ -72,13 +72,7 @@ class Config(BaseModel):
     @validator('task_execution', pre=True, always=True)
     def parse_task_execution(cls, value):
         if value is None:
-            warnings.warn(
-                "Default execution will be changed to 'async'. "
-                "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(execution='async')",
-                FutureWarning
-            )
-            return 'process'
+            return 'async'
         return value
 
     @validator('shut_cond', pre=True)
