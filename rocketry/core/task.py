@@ -207,7 +207,7 @@ class Task(RedBase, BaseModel):
     session: 'Session' = Field()
 
     # Class
-    permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
+    permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
@@ -311,6 +311,14 @@ class Task(RedBase, BaseModel):
             warnings.warn("Task's session not defined. Creating new.", UserWarning)
             kwargs['session'] = _create_session()
         kwargs['name'] = self._get_name(**kwargs)
+
+        if "permanent_task" in kwargs:
+            warnings.warn(
+                "Argument 'permanent_task' is deprecated. "
+                "Please use 'permanent'.",
+                DeprecationWarning
+            )
+            kwargs['permanent'] = kwargs.pop("permanent_task")
 
         super().__init__(**kwargs)
 
@@ -969,7 +977,7 @@ class Task(RedBase, BaseModel):
             await self._terminate_all(reason="end condition is true")
         else:
             now = time.time()
-            if self.permanent_task:
+            if self.permanent:
                 return
             timeout = self.timeout if self.timeout else self.session.config.timeout
             timeout_sec = timeout.total_seconds()
