@@ -21,9 +21,9 @@ def set_logging_defaults():
 def test_app_create(session, tmpdir):
     set_logging_defaults()
 
-    with pytest.warns(FutureWarning):
-        app = Rocketry()
-
+    app = Rocketry()
+    assert app.session.config.task_execution == "async"
+    
     # Test logging
     task_logger = logging.getLogger("rocketry.task")
 
@@ -35,9 +35,8 @@ def test_app_create(session, tmpdir):
     assert isinstance(app.session, Session)
 
     # Test setting SQL repo
-    with pytest.warns(FutureWarning):
-        with tmpdir.as_cwd():
-            app = Rocketry(logger_repo=CSVFileRepo(filename="myrepo.csv"))
+    with tmpdir.as_cwd():
+        app = Rocketry(logger_repo=CSVFileRepo(filename="myrepo.csv"))
     assert len(task_logger.handlers) == 2
     assert isinstance(task_logger.handlers[0], RepoHandler)
     assert isinstance(task_logger.handlers[0].repo, CSVFileRepo)
