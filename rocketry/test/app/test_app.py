@@ -49,8 +49,8 @@ def test_app_create(session, tmpdir):
 def test_app():
     set_logging_defaults()
 
-    app = Rocketry(execution="thread")
-    assert app.session.config.task_execution == "thread"
+    app = Rocketry(execution="thread", silence_task_prerun=True)
+    assert app.session.config.silence_task_prerun
 
 def test_app_tasks():
     set_logging_defaults()

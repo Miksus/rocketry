@@ -160,11 +160,11 @@ class Session(RedBase):
             value = Parameters(value)
         return value
 
-    def _get_config(self, value):
+    def _get_config(self, value, kwargs):
         if value is None:
-            return Config()
+            return Config(**kwargs)
         if isinstance(value, dict):
-            return Config(**value)
+            return Config(**value, **kwargs)
         if isinstance(value, Config):
             return value
         raise TypeError("Invalid config type")
@@ -183,9 +183,9 @@ class Session(RedBase):
             raise TypeError(f"Cannot determine task name from: {type(task)}")
         return task_name
 
-    def __init__(self, config=None, parameters=None, delete_existing_loggers=False):
+    def __init__(self, config=None, parameters=None, delete_existing_loggers=False, **kwargs):
         from rocketry.core import Scheduler
-        self.config = self._get_config(config)
+        self.config = self._get_config(config, kwargs)
         self.parameters = self._get_parameters(parameters)
         self.scheduler = Scheduler(self)
         self.tasks = set()
