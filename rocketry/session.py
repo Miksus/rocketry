@@ -44,7 +44,7 @@ class Config(BaseModel):
     # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
-    task_execution: Optional[str] = None
+    execution: Optional[str] = None
     task_pre_exist: str = 'raise'
     force_status_from_logs: bool = False # Force to check status from logs every time (slow but robust)
 
@@ -69,7 +69,7 @@ class Config(BaseModel):
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
-    @validator('task_execution', pre=True, always=True)
+    @validator('execution', pre=True, always=True)
     def parse_task_execution(cls, value):
         if value is None:
             return 'async'
@@ -90,6 +90,15 @@ class Config(BaseModel):
         if isinstance(value, (float, int)):
             return datetime.timedelta(seconds=value)
         return value
+
+    @property
+    def task_execution(self):
+        warnings.warn(
+            "config.task_execution is deprecated. "
+            "Please use config.execution instead.",
+            DeprecationWarning
+        )
+        return self.execution
 
 class Hooks(BaseModel):
     task_init: List[Callable] = []
