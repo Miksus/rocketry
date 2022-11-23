@@ -112,17 +112,14 @@ def test_construct_decorate_minimal(session):
     """This is an exception when FuncTask returns itself
     (__init__ cannot return anything else)"""
     # Going to tempdir to dump the log files there
-    orig_default_exec = session.config.task_execution
-    session.config.task_execution = 'main'
-    try:
-        with pytest.warns(UserWarning):
-            @FuncTask
-            def do_stuff():
-                pass
+    session.config.execution = 'main'
 
-        assert set() == session.tasks
-    finally:
-        session.config.task_execution = orig_default_exec
+    with pytest.warns(UserWarning):
+        @FuncTask
+        def do_stuff():
+            pass
+
+    assert set() == session.tasks
 
 def test_construct_decorate_default_name(session):
 

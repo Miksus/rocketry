@@ -19,7 +19,7 @@ def set_logging_defaults():
     task_logger.handlers = []
     task_logger.setLevel(logging.WARNING)
 
-def test_app_defaults():
+def test_app_defaults(tmpdir):
     set_logging_defaults()
 
     app = Rocketry()

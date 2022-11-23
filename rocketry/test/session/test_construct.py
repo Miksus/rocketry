@@ -62,11 +62,9 @@ def test_create():
         s = Session(parameters=Parameters({"x": 5}), config={'execution': 'async'})
         assert s.parameters == Parameters({"x": 5})
 
-    with pytest.warns(FutureWarning):
-        Session(config=None)
+    Session(config=None)
 
-    with pytest.warns(FutureWarning):
-        Session()
+    Session()
 
     with pytest.raises(TypeError):
         Session(config="invalid")
