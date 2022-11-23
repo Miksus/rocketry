@@ -10,7 +10,7 @@ import warnings
 
 from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -99,6 +99,17 @@ class Config(BaseModel):
             DeprecationWarning
         )
         return self.execution
+
+    @root_validator(pre=True)
+    def set_deprecated(cls, values):
+        if 'task_execution' in values:
+            warnings.warn(
+                "Option 'task_execution' is deprecated. "
+                "Please use 'execution' instead.",
+                DeprecationWarning
+            )
+            values['execution'] = values.pop('task_execution')
+        return values
 
 class Hooks(BaseModel):
     task_init: List[Callable] = []

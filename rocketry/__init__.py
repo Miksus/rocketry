@@ -14,7 +14,7 @@ from . import (
 )
 from .tasks import FuncTask
 _setup_defaults()
-session = Session(config={"task_execution": "process"})
+session = Session(config={"execution": "process"})
 session.set_as_default()
 
 

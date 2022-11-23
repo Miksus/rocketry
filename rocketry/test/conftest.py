@@ -77,7 +77,7 @@ def session():
         "silence_task_logging": False,
         "silence_cond_check": False,
         "cycle_sleep": 0.001,
-        "task_execution": "process",
+        "execution": "process",
     }, delete_existing_loggers=True)
     rocketry.session = session
     session.set_as_default()
