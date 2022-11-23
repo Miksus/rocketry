@@ -74,7 +74,7 @@ def test_add(session):
         lambda : None,
         name="task 1",
         execution="main",
-        session=Session(config=dict(task_execution="async")),
+        session=Session(),
     )
 
     assert session.tasks == set()
