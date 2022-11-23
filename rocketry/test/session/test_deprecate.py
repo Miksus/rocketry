@@ -18,7 +18,7 @@ def test_no_execution_method():
         warnings.simplefilter("error")
 
         # Test the following won't warn
-        Session(config=dict(task_execution="process"))
-        Session(config=dict(task_execution="thread"))
-        Session(config=dict(task_execution="main"))
-        Session(config=dict(task_execution="async"))
+        Session(config=dict(execution="process"))
+        Session(config=dict(execution="thread"))
+        Session(config=dict(execution="main"))
+        Session(config=dict(execution="async"))
