@@ -1212,7 +1212,7 @@ class Task(RedBase, BaseModel):
 
     def get_execution(self) -> str:
         if self.execution is None:
-            return self.session.config.task_execution
+            return self.session.config.execution
         return self.execution
 
     def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
