@@ -1,6 +1,6 @@
 from rocketry import Rocketry
 
-app = Rocketry(config={"task_execution": "async"})
+app = Rocketry(execution="async")
 
 @app.task('every 20 seconds')
 async def do_things():
