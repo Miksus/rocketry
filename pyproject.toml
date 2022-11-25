@@ -55,8 +55,6 @@ Changelog = 'https://rocketry.readthedocs.io/en/stable/versions.html'
 test = [
     "pytest",
     "pytest-asyncio",
-    "pytest-cov",
-    "python-dateutil",
 ]
 
 docs = [
