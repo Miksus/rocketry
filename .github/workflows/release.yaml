@@ -1,4 +1,5 @@
-name: Publish Python distribution (tagged versions to PyPI, commits to TestPyPI)
+name: Publish
+# (tagged versions to PyPI, commits to TestPyPI)
 
 on: push
 
