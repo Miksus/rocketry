@@ -1,6 +1,6 @@
 from .session import Session
 from .application import Rocketry, Grouper
-from . import _version
+from ._version import *
 from .core import Scheduler
 
 from ._setup import _setup_defaults
@@ -16,6 +16,3 @@ from .tasks import FuncTask
 _setup_defaults()
 session = Session(config={"task_execution": "process"})
 session.set_as_default()
-
-
-__version__ = _version.get_versions()['version']
