@@ -9,12 +9,46 @@ following are met:
 - Task's ``end_cond`` is true
 - Scheduler is immediately shutting down
 
+This section discusses these ways to terminate tasks.
+
 .. warning::
 
     Only ``async``, ``thread`` and ``process`` tasks can be terminated. 
     Read more about the execution methods: 
     `execution method handbook <handbook-execution>`.
 
+.. warning::
+
+    If you use threaded execution, you should periodically check
+    the termination flag status and raise termination exception
+    if it is set in order to correctly handle the termination:
+
+    .. code-block:: python
+
+        from rocketry.args import TerminationFlag
+        from rocketry.exc import TaskTerminationException
+
+        @app.task(execution="thread")
+        def do_thread(flag=TerminationFlag()):
+            while True:
+                ... # Do something
+                if flag.is_set():
+                    raise TaskTerminationException()
+
+.. warning::
+
+    If you use async execution, you should release the execution 
+    in order to make it possible for the scheduler to terminate it:
+
+    .. code-block:: python
+
+        import asyncio
+
+        @app.task(execution="async")
+        async def do_async():
+            ... # Do things
+            await asyncio.sleep(0)
+            ... # Do more
 Timeout
 -------
 
