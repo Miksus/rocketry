@@ -40,9 +40,9 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -r requirements/build.txt
         python -m pip install .
-        chdir requirements
         
     - name: Run test suite
+      working-directory: ./requirements
       run: |
         python -m pytest --pyargs rocketry -W error::UserWarning -W error::FutureWarning -W error::DeprecationWarning
     
