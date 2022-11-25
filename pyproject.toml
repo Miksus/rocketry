@@ -9,7 +9,7 @@ packages = ["rocketry"]
 name = "Rocketry"
 description = "Advanced scheduling framework"
 readme = "README.md"
-license = { file="LICENSE" }
+license = {file="LICENSE"}
 authors = [
     {name = "Mikael Koli", email = "koli.mikael@gmail.com"},
 ]
@@ -47,7 +47,6 @@ write_to = "rocketry/_version.py"
 [project.urls]
 Homepage = 'https://github.com/Miksus/rocketry'
 Documentation = 'https://rocketry.readthedocs.io'
-"Bug Tracker" = "https://github.com/Miksus/rocketry/issues"
 Funding = 'https://github.com/sponsors/Miksus'
 Source = 'https://github.com/Miksus/rocketry'
 Changelog = 'https://rocketry.readthedocs.io/en/stable/versions.html'
