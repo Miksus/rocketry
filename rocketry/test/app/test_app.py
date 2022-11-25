@@ -86,7 +86,7 @@ def test_app_settings():
     app = Rocketry(config=dict(execution="main", task_priority=10))
     assert app.session.config.execution == "main"
 
-def test_app_tasks():
+def test_task_creation():
     set_logging_defaults()
 
     app = Rocketry(execution="main")
@@ -98,18 +98,19 @@ def test_app_tasks():
 
     @app.task('daily')
     def do_func():
-
         return 'return value'
 
     app.task('daily', name="do_command", command="echo 'hello world'")
     app.task('daily', name="do_script", path=__file__)
+    app.task('daily', name="do_lambda", func=lambda : None)
 
     # Assert and test tasks
-    assert len(app.session.tasks) == 4
+    assert len(app.session.tasks) == 5
 
     assert isinstance(app.session['do_func'], FuncTask)
     assert isinstance(app.session['do_command'], CommandTask)
     assert isinstance(app.session['do_script'], FuncTask)
+    assert isinstance(app.session['do_lambda'], FuncTask)
 
     assert app.session['do_never'].start_cond == false
 
