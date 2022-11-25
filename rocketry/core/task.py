@@ -247,7 +247,7 @@ class Task(RedBase, BaseModel):
     last_crash: Optional[datetime.datetime]
 
     _run_stack: List[TaskRun] = PrivateAttr(default_factory=list)
-    _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _lock: Optional[Type] = PrivateAttr(default=None)
     _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
@@ -1348,6 +1348,8 @@ class Task(RedBase, BaseModel):
         # Lock is private in a sense that we want to hide it from
         # the model (if put to dict etc.) but public in a sense
         # that the user should be allowed to interact with it
+        if self._lock is None:
+            self._lock = self.session.config.cls_lock()
         return self._lock
 
     def json(self, **kwargs):

@@ -6,10 +6,11 @@ about the scehuler/task/parameters etc.
 import datetime
 import logging
 from multiprocessing import cpu_count
+import threading
 import warnings
 
 from itertools import chain
-from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
 from pydantic import BaseModel, root_validator, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
@@ -66,6 +67,7 @@ class Config(BaseModel):
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
+    cls_lock: Type = threading.Lock
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
