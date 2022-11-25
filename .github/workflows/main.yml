@@ -23,7 +23,7 @@ jobs:
     
     strategy:
       matrix:
-        python-version: [3.7.x, 3.8.x, 3.10.x]
+        python-version: [3.7.x, 3.8.x, 3.10.x, 3.11.x]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -39,7 +39,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements/build.txt
-        python -m pip install .
+        python -m pip install .[test]
         
     - name: Run test suite
       working-directory: ./requirements
