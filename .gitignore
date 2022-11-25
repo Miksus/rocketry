@@ -8,6 +8,7 @@ __pycache__/
 build/*
 dist/*
 *egg-info/*
+_version.py
 
 # Jupyter Notebook
 .ipynb_checkpoints
