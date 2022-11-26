@@ -156,6 +156,7 @@ Options
     evaluation and logging. Useful only for testing purposes.
     
     By default, use ``time.time``.
+
 **cls_lock**: Lock class for tasks.
 
     Lock class used for preventing modifying tasks or checking
