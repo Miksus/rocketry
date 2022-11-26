@@ -13,6 +13,7 @@ Version history
     - Update: ``rocketry.conds.running`` refactored to support multi-launch.
     - API: Added config option ``execution`` (deprecated ``task_execution``)
     - API: Added task argument ``permanent`` (deprecated ``permanent_task``)
+    - Meta: Changed build from setup.py to pyproject.toml
 
 - ``2.4.1``
 

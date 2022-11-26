@@ -8,16 +8,11 @@ __pycache__/
 build/*
 dist/*
 *egg-info/*
+_version.py
 
 # Jupyter Notebook
 .ipynb_checkpoints
 prototype*
-
-# Scrapy stuff:
-.scrapy
-
-draft/
-private/
 
 # Environments
 .env
@@ -36,15 +31,15 @@ venv.bak/
 # Testing
 .pytest_cache/
 
-# Packaging
-build/
-dist/
-
-# Prototyping files & manual testing
+# Private dumps
 proto/
+draft/
+private/
 
 # Data & logs
 *.csv
+*.dat
+*.db
 
 # Private configurations
 private.yaml
