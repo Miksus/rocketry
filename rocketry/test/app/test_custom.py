@@ -13,7 +13,7 @@ def set_logging_defaults():
 def test_init_args_in_cond(session, tmpdir):
     set_logging_defaults()
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     @app.cond()
     def file_exists(file):

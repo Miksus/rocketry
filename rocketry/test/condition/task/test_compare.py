@@ -43,7 +43,7 @@ def test_task_finish_compare(tmpdir, session):
         assert not bool(equals.observe(session=session))
         assert bool(greater.observe(session=session))
         assert not bool(less.observe(session=session))
-    
+
 @pytest.mark.parametrize("how", ["stack", "logs", "logs with run_id"])
 def test_running(tmpdir, session, how):
     if how == 'logs':

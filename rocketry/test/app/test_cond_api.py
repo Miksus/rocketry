@@ -19,7 +19,7 @@ def test_app_run():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.task(false)
@@ -48,7 +48,7 @@ def test_pipe():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.task(true)
@@ -69,7 +69,7 @@ def test_custom_cond():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.cond('is foo')
@@ -91,7 +91,7 @@ def test_custom_cond_parametrized():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.cond('is foo')

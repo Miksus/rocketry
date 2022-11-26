@@ -87,7 +87,7 @@ class Session(BaseArgument):
         raise TypeError("Missing session")
 
     def __repr__(self):
-        return f'session'
+        return 'session'
 
 class Task(BaseArgument):
     "An argument that represents a task"

@@ -11,3 +11,4 @@ how the tasks works and how to change their behaviour.
 
    termination
    execution
+   observer

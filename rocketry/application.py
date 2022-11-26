@@ -45,14 +45,9 @@ class _AppMixin:
 class Rocketry(_AppMixin):
     """Rocketry scheduling application"""
 
-    def __init__(self, session:Session=None, logger_repo:Optional[BaseRepo]=None, execution=None, **kwargs):
+    def __init__(self, session:Session=None, logger_repo:Optional[BaseRepo]=None, **kwargs):
 
-        config = {}
-        config.update(kwargs.pop('config', {}))
-        if execution is not None:
-            config['task_execution'] = execution
-
-        self.session = session if session is not None else Session(**kwargs, config=config)
+        self.session = session if session is not None else Session(**kwargs)
 
         logger = logging.getLogger(self.session.config.task_logger_basename)
         logger.setLevel(logging.INFO)
@@ -103,4 +98,4 @@ class Grouper(_AppMixin):
         self.execution = execution
 
         # task_execution here should not matter
-        self.session = Session(config={'task_execution': 'process'})
+        self.session = Session(execution="async")

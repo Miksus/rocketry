@@ -59,10 +59,9 @@ class TaskRun:
     def is_alive(self) -> bool:
         if self.is_main:
             return True
-        elif self.is_async:
+        if self.is_async:
             return not self.task.done()
-        else:
-            return self.task.is_alive()
+        return self.task.is_alive()
 
     async def terminate(self):
         task = self.task
@@ -208,7 +207,7 @@ class Task(RedBase, BaseModel):
     session: 'Session' = Field()
 
     # Class
-    permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
+    permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
@@ -248,7 +247,7 @@ class Task(RedBase, BaseModel):
     last_crash: Optional[datetime.datetime]
 
     _run_stack: List[TaskRun] = PrivateAttr(default_factory=list)
-    _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _lock: Optional[Type] = PrivateAttr(default=None)
     _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
@@ -312,6 +311,14 @@ class Task(RedBase, BaseModel):
             warnings.warn("Task's session not defined. Creating new.", UserWarning)
             kwargs['session'] = _create_session()
         kwargs['name'] = self._get_name(**kwargs)
+
+        if "permanent_task" in kwargs:
+            warnings.warn(
+                "Argument 'permanent_task' is deprecated. "
+                "Please use 'permanent'.",
+                DeprecationWarning
+            )
+            kwargs['permanent'] = kwargs.pop("permanent_task")
 
         super().__init__(**kwargs)
 
@@ -715,9 +722,9 @@ class Task(RedBase, BaseModel):
         process = multiprocessing.Process(
             target=self._run_as_process,
             kwargs=dict(
-                params=params, direct_params=direct_params, 
-                task_run=task_run, 
-                queue=log_queue, 
+                params=params, direct_params=direct_params,
+                task_run=task_run,
+                queue=log_queue,
                 config=session.config,
                 exec_hooks=self._get_hooks("task_execute")
             ),
@@ -935,8 +942,7 @@ class Task(RedBase, BaseModel):
     def get_run_id(self, run, params=None):
         if self.func_run_id is not None:
             return self.func_run_id(self, params)
-        else:
-            return self.session.config.func_run_id(self, params)
+        return self.session.config.func_run_id(self, params)
 
     def is_alive_as_main(self) -> bool:
         return any(run.is_main and run.is_alive() for run in self._run_stack)
@@ -960,18 +966,18 @@ class Task(RedBase, BaseModel):
         "Terminate task if can"
         try:
             is_end_cond = self.end_cond.observe(task=self, session=self.session)
-        except:
+        except Exception:
             if not self.session.config.silence_cond_check:
                 raise
             is_end_cond = True
-        
+
         if self.force_termination:
             await self._terminate_all(reason="forced termination")
         elif is_end_cond:
             await self._terminate_all(reason="end condition is true")
         else:
             now = time.time()
-            if self.permanent_task:
+            if self.permanent:
                 return
             timeout = self.timeout if self.timeout else self.session.config.timeout
             timeout_sec = timeout.total_seconds()
@@ -1142,7 +1148,7 @@ class Task(RedBase, BaseModel):
         now = datetime.datetime.fromtimestamp(time.time())
         if action == "run":
             extra = {
-                "action": "run", 
+                "action": "run",
                 "start": datetime.datetime.fromtimestamp(task_run.start) if task_run is not None else now
             }
             # self._last_run = now
@@ -1206,7 +1212,7 @@ class Task(RedBase, BaseModel):
 
     def get_execution(self) -> str:
         if self.execution is None:
-            return self.session.config.task_execution
+            return self.session.config.execution
         return self.execution
 
     def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
@@ -1342,6 +1348,8 @@ class Task(RedBase, BaseModel):
         # Lock is private in a sense that we want to hide it from
         # the model (if put to dict etc.) but public in a sense
         # that the user should be allowed to interact with it
+        if self._lock is None:
+            self._lock = self.session.config.cls_lock()
         return self._lock
 
     def json(self, **kwargs):

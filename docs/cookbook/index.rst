@@ -16,4 +16,5 @@ do more specific things.
    robust_applications
    controlling_runtime
    fastapi
+   django
    testing

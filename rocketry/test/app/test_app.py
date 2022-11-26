@@ -9,6 +9,7 @@ from rocketry import Rocketry
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.args import Return, Arg, FuncArg
 from rocketry import Session
+from rocketry.session import Config
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
 from rocketry.conds import false, true
@@ -18,11 +19,24 @@ def set_logging_defaults():
     task_logger.handlers = []
     task_logger.setLevel(logging.WARNING)
 
-def test_app_create(session, tmpdir):
+def test_app_defaults(tmpdir):
     set_logging_defaults()
 
-    with pytest.warns(FutureWarning):
-        app = Rocketry()
+    app = Rocketry()
+    assert app.session.config.execution == "async"
+
+    assert not app.session.config.silence_cond_check
+    assert not app.session.config.silence_task_logging
+    assert not app.session.config.silence_task_prerun
+
+    assert app.session.config.task_logger_basename == "rocketry.task"
+    assert app.session.config.scheduler_logger_basename == "rocketry.scheduler"
+    assert app.session.config.cycle_sleep == 0.1
+    assert not app.session.config.multilaunch
+    assert app.session.config.restarting == 'replace'
+    assert not app.session.config.force_status_from_logs
+    assert app.session.config.task_priority == 0
+    assert app.session.config.task_pre_exist == "raise"
 
     # Test logging
     task_logger = logging.getLogger("rocketry.task")
@@ -35,9 +49,8 @@ def test_app_create(session, tmpdir):
     assert isinstance(app.session, Session)
 
     # Test setting SQL repo
-    with pytest.warns(FutureWarning):
-        with tmpdir.as_cwd():
-            app = Rocketry(logger_repo=CSVFileRepo(filename="myrepo.csv"))
+    with tmpdir.as_cwd():
+        app = Rocketry(logger_repo=CSVFileRepo(filename="myrepo.csv"))
     assert len(task_logger.handlers) == 2
     assert isinstance(task_logger.handlers[0], RepoHandler)
     assert isinstance(task_logger.handlers[0].repo, CSVFileRepo)
@@ -45,18 +58,38 @@ def test_app_create(session, tmpdir):
     assert isinstance(app.session, Session)
 
     app = Rocketry(execution="thread")
-    assert app.session.config.task_execution == "thread"
+    assert app.session.config.execution == "thread"
 
-def test_app():
+def test_deprecated():
     set_logging_defaults()
 
-    app = Rocketry(execution="thread")
-    assert app.session.config.task_execution == "thread"
+    with pytest.warns(DeprecationWarning):
+        app = Rocketry(config={'task_execution': 'main'})
+    assert app.session.config.execution == "main"
 
-def test_app_tasks():
+    with pytest.warns(DeprecationWarning):
+        assert app.session.config.task_execution == "main"
+
+def test_app_settings():
+    app = Rocketry()
+    assert app.session.config.execution == "async"
+
+    # Test recommended
+    app = Rocketry(execution="main", task_priority=10)
+    assert app.session.config.execution == "main"
+
+    # Test with conf
+    app = Rocketry(config=Config(execution="main", task_priority=10))
+    assert app.session.config.execution == "main"
+
+    # Test with conf dict
+    app = Rocketry(config=dict(execution="main", task_priority=10))
+    assert app.session.config.execution == "main"
+
+def test_task_creation():
     set_logging_defaults()
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.task()
@@ -65,18 +98,19 @@ def test_app_tasks():
 
     @app.task('daily')
     def do_func():
-        ...
         return 'return value'
 
     app.task('daily', name="do_command", command="echo 'hello world'")
     app.task('daily', name="do_script", path=__file__)
+    app.task('daily', name="do_lambda", func=lambda : None)
 
     # Assert and test tasks
-    assert len(app.session.tasks) == 4
+    assert len(app.session.tasks) == 5
 
     assert isinstance(app.session['do_func'], FuncTask)
     assert isinstance(app.session['do_command'], CommandTask)
     assert isinstance(app.session['do_script'], FuncTask)
+    assert isinstance(app.session['do_lambda'], FuncTask)
 
     assert app.session['do_never'].start_cond == false
 
@@ -84,7 +118,7 @@ def test_nested_args():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     @app.param('arg_1')
     def my_arg_1():
@@ -104,7 +138,7 @@ def test_nested_args():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg=Arg('arg_3')):
-        ...
+
         assert arg == "arg 3"
 
     app.session.config.shut_cond = TaskStarted(task='do_daily')
@@ -116,7 +150,7 @@ def test_nested_args_from_func_arg():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     @app.param('arg_1')
     def my_arg_1():
@@ -134,7 +168,6 @@ def test_nested_args_from_func_arg():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg=FuncArg(my_func_3)):
-        ...
         assert arg == "arg 3"
 
     app.session.config.shut_cond = TaskStarted(task='do_daily')
@@ -146,7 +179,7 @@ def test_arg_ref():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     @app.param('arg_1')
     def my_arg_1():
@@ -159,7 +192,6 @@ def test_arg_ref():
     # Creating a task to test this
     @app.task(true)
     def do_daily(arg_1=Arg(my_arg_1), arg_2=Arg(my_arg_2)):
-        ...
         assert arg_1 == "arg 1"
         assert arg_2 == "arg 2"
 
@@ -171,7 +203,7 @@ def test_arg_ref():
 def test_app_async():
     set_logging_defaults()
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     # Creating some tasks
     @app.task()
@@ -180,7 +212,6 @@ def test_app_async():
 
     @app.task('daily')
     def do_func():
-        ...
         return 'return value'
 
     app.session.config.shut_cond = TaskStarted(task='do_func')
@@ -191,7 +222,7 @@ def test_app_run():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
     app.params(my_arg='session value')
 
     # Creating some params and conditions
@@ -207,7 +238,6 @@ def test_app_run():
     # Creating some tasks
     @app.task('daily & is foo')
     def do_daily():
-        ...
         return 'return value'
 
     @app.task("after task 'do_daily'")
@@ -250,11 +280,31 @@ def test_app_run():
 def test_task_name():
     set_logging_defaults()
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="main")
 
     @app.task()
     def do_func():
-        ...
         return 'return value'
 
     assert app.session[do_func].name == "do_func"
+
+def test_delete_task():
+    set_logging_defaults()
+
+    app = Rocketry(execution="main")
+
+    @app.task(name="task 1")
+    def task_1():
+        return 1
+
+    @app.task()
+    def task_2():
+        return 1
+
+    assert len(app.session.tasks) == 2
+
+    app.session.remove_task("task 1")
+    assert len(app.session.tasks) == 1
+
+    app.session.remove_task(task_2)
+    assert len(app.session.tasks) == 0

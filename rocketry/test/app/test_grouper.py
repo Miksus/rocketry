@@ -65,7 +65,7 @@ def test_start_cond(session):
 def test_execution(session):
     set_logging_defaults()
 
-    app = Rocketry(config=dict(task_execution="process"))
+    app = Rocketry(config=dict(execution="process"))
     group = Grouper(execution="main")
 
     @group.task(daily, execution="thread")
@@ -134,7 +134,7 @@ def test_func_param(session):
 def test_run(session):
     set_logging_defaults()
 
-    app = Rocketry(config={"task_execution": "main"})
+    app = Rocketry(config={"execution": "main"})
 
     @app.task(daily)
     def do_things():
@@ -158,7 +158,7 @@ def test_run(session):
 def test_run_cond_elsewhere(session):
     set_logging_defaults()
 
-    app = Rocketry(config={"task_execution": "main"})
+    app = Rocketry(config={"execution": "main"})
     group = Grouper()
 
     @group.cond()

@@ -158,7 +158,7 @@ def test_permanent_task(tmpdir, execution, session):
     with tmpdir.as_cwd():
 
         func_run_slow = get_slow_func(execution)
-        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="1 ms", permanent_task=True, execution=execution, session=session)
+        task = FuncTask(func_run_slow, name="slow task but passing", start_cond=AlwaysTrue(), timeout="1 ms", permanent=True, execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="slow task but passing") >= 3) | ~SchedulerStarted(period=TimeDelta("20 seconds"))
         session.config.timeout = 0.1
