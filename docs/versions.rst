@@ -10,6 +10,7 @@ Version history
         runs can be tracked in the logs using the field ``run_id``.
 
     - Update: ``rocketry.conds.running`` refactored to support multi-launch.
+    - Meta: Changed build from setup.py to pyproject.toml
 
 - ``2.4.1``
 
