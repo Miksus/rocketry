@@ -46,7 +46,7 @@ def test_decors():
     set_logging_defaults()
 
     # Creating app
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(config={'execution': 'main'})
 
     @argument()
     def myarg(task=Task()):
