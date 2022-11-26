@@ -81,6 +81,7 @@ html_static_path = ['_static']
 html_css_files = [
     #'css/types.css',
     #'css/colors.css',
+    "css/code.css",
 ]
 
 html_sidebars = {

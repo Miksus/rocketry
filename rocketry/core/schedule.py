@@ -361,7 +361,7 @@ class Scheduler(RedBase):
 
                     self.handle_logs()
                     for task in self.tasks:
-                        if task.permanent_task:
+                        if task.permanent:
                             # Would never "finish" anyways
                             await self.terminate_task(task, reason=f"Task '{task.name}' timeouted")
                         else:

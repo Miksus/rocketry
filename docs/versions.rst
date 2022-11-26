@@ -4,6 +4,7 @@ Version history
 
 - ``2.5.0``
 
+    - Update: Easier way to configure task
     - Add: Multi-launch system. Same task can now be run several times parallel.
 
         Run stacks were implemented to track the execution of each run. These
@@ -12,6 +13,9 @@ Version history
     - Update: ``rocketry.conds.running`` refactored to support multi-launch.
     - Add: New config option ``timezone``
     - Add: New config option ``time_func`` for testing scheduling
+    - API: Added config option ``execution`` (deprecated ``task_execution``)
+    - API: Added task argument ``permanent`` (deprecated ``permanent_task``)
+    - Meta: Changed build from setup.py to pyproject.toml
 
 - ``2.4.1``
 

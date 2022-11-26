@@ -156,3 +156,11 @@ Options
     evaluation and logging. Useful only for testing purposes.
     
     By default, use ``time.time``.
+**cls_lock**: Lock class for tasks.
+
+    Lock class used for preventing modifying tasks or checking
+    their status elsewhere at the same time. You may override
+    this with a custom lock if you need to run multiple instances
+    of the same application at the same time. The class should have 
+    context manager and methods ``acquire``, ``release`` and ``locked``. 
+    By default, ``threading.Lock``.

@@ -1,7 +1,7 @@
 import asyncio
 from rocketry import Rocketry
 
-app = Rocketry(config={'task_execution': 'async'})
+app = Rocketry(execution="async")
 
 @app.task()
 async def do_things():

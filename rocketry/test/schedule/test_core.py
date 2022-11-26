@@ -131,7 +131,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
-    session = Session(config={"debug": True, "silence_task_logging": False, "task_execution": "process"})
+    session = Session(config={"debug": True, "silence_task_logging": False, "execution": "process"})
     rocketry.session = session
     session.set_as_default()
 
@@ -419,7 +419,7 @@ def test_startup_shutdown(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_logging_repo(tmpdir, execution):
-    session = Session(config={'task_execution': 'async'})
+    session = Session(config={'execution': 'async'})
     session.set_as_default()
     session.config.max_process_count = 4
 

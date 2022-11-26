@@ -112,7 +112,7 @@ def test_json(session):
 
     assert j == dedent("""
     {
-        "permanent_task": false,
+        "permanent": false,
         "fmt_log_message": "Task '{task}' status: '{action}'",
         "daemon": null,
         "batches": [],
