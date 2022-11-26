@@ -64,7 +64,7 @@ docs = [
     "pydata-sphinx-theme",
     "sphinx_book_theme",
     "sphinx-copybutton",
-    "sphinx-material @ git+https://github.com/bashtage/sphinx-material.git",
+    "sphinx-material",
 ]
 
 [tool.coverage.run]
