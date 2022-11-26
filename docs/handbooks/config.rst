@@ -140,3 +140,12 @@ Options
 
     Only applicable for some argument types and materialization type 
     specified in the argument itself overrides configuration setting.
+
+**cls_lock**: Lock class for tasks.
+
+    Lock class used for preventing modifying tasks or checking
+    their status elsewhere at the same time. You may override
+    this with a custom lock if you need to run multiple instances
+    of the same application at the same time. The class should have 
+    context manager and methods ``acquire``, ``release`` and ``locked``. 
+    By default, ``threading.Lock``.

@@ -207,7 +207,7 @@ class Task(RedBase, BaseModel):
     session: 'Session' = Field()
 
     # Class
-    permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
+    permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
@@ -247,7 +247,7 @@ class Task(RedBase, BaseModel):
     last_crash: Optional[datetime.datetime]
 
     _run_stack: List[TaskRun] = PrivateAttr(default_factory=list)
-    _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _lock: Optional[Type] = PrivateAttr(default=None)
     _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
@@ -311,6 +311,14 @@ class Task(RedBase, BaseModel):
             warnings.warn("Task's session not defined. Creating new.", UserWarning)
             kwargs['session'] = _create_session()
         kwargs['name'] = self._get_name(**kwargs)
+
+        if "permanent_task" in kwargs:
+            warnings.warn(
+                "Argument 'permanent_task' is deprecated. "
+                "Please use 'permanent'.",
+                DeprecationWarning
+            )
+            kwargs['permanent'] = kwargs.pop("permanent_task")
 
         super().__init__(**kwargs)
 
@@ -969,7 +977,7 @@ class Task(RedBase, BaseModel):
             await self._terminate_all(reason="end condition is true")
         else:
             now = time.time()
-            if self.permanent_task:
+            if self.permanent:
                 return
             timeout = self.timeout if self.timeout else self.session.config.timeout
             timeout_sec = timeout.total_seconds()
@@ -1204,7 +1212,7 @@ class Task(RedBase, BaseModel):
 
     def get_execution(self) -> str:
         if self.execution is None:
-            return self.session.config.task_execution
+            return self.session.config.execution
         return self.execution
 
     def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
@@ -1340,6 +1348,8 @@ class Task(RedBase, BaseModel):
         # Lock is private in a sense that we want to hide it from
         # the model (if put to dict etc.) but public in a sense
         # that the user should be allowed to interact with it
+        if self._lock is None:
+            self._lock = self.session.config.cls_lock()
         return self._lock
 
     def json(self, **kwargs):

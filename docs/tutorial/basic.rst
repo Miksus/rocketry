@@ -104,7 +104,7 @@ if there is one that you prefer in your project:
 
 .. code-block:: python
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="async")
 
     @app.task("daily")
     def do_main():
