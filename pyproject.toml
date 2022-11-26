@@ -44,6 +44,7 @@ dependencies = [
 
 [tool.setuptools_scm]
 write_to = "rocketry/_version.py"
+local_scheme = "no-local-version"
 
 [project.urls]
 Homepage = 'https://github.com/Miksus/rocketry'
