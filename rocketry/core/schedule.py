@@ -309,6 +309,7 @@ class Scheduler(RedBase):
 
         self.logger.debug("Beginning startup sequence...")
         for task in self.tasks:
+            task.set_cached()
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set
