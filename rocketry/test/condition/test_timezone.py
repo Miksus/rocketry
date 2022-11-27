@@ -42,10 +42,8 @@ def test_time_of(session):
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
-    session.get_time = time.get_time
+    session.config.time_func = time.get_time
 
-    # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
-    # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
     session.config.timezone = timezone
 
     # Time is 08:00 in UTC but 22:00 in GMT+10
@@ -60,8 +58,7 @@ def test_task(session):
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
-    session.get_time = time.get_time
- 
+    session.config.time_func = time.get_time
     session.config.timezone = timezone
 
     task = FuncTask(lambda: None, execution="async", session=session)
@@ -86,8 +83,7 @@ def test_task_attrs(session):
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
 
-    session.get_time = time.get_time
-
+    session.config.time_func = time.get_time
     session.config.timezone = timezone
 
     task = FuncTask(lambda: None, execution="async", session=session)
@@ -112,9 +108,7 @@ def test_task_run(session, execution):
     timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
-
-    # NOTE: This is Unix thing but the timezones are inverted of what's often perceived
-    # Etc/GMT-12 is actually GMT+12 (ie. if UTC is 12:00, GMT+12 is 24:00) 
+ 
     session.config.timezone = timezone
 
     task = FuncTask(do_success, start_cond=true, execution=execution, session=session)
@@ -126,10 +120,7 @@ def test_task_run(session, execution):
     start = datetime.datetime(2024, 1, 1, 22, 0, tzinfo=utc_time)
     end = datetime.datetime(2024, 1, 1, 22, 5, tzinfo=utc_time)
     assert start <= task.last_run <= end
-    #assert start <= task.last_fail <= end
     assert start <= task.last_success <= end
-    #assert start <= task.last_terminate <= end
-    #assert start <= task.last_inaction <= end
 
     records = task.logger.filter_by().all()
     for rec in records:
