@@ -1,6 +1,6 @@
 import os
 import sys
-from build import logging
+import logging
 import pytest
 from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, SchedulerLogger, Config
 from rocketry.core.log.adapter import TaskAdapter
