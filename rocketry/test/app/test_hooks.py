@@ -82,6 +82,9 @@ def test_setup_cache():
     assert task.status is None
     assert task._last_run is None
     assert task._last_success is None
+    assert task._last_fail is None
+    assert task._last_inaction is None
+    assert task._last_crash is None
 
     app.session.config.shut_cond = true
     app.run()

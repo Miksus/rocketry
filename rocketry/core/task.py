@@ -326,7 +326,8 @@ class Task(RedBase, BaseModel):
         self.session._check_readable_logger()
 
         self.register()
-
+        self._init_cache()
+        
         # Hooks
         hooker.postrun()
 
@@ -904,6 +905,14 @@ class Task(RedBase, BaseModel):
             return # on_exists = 'ignore'
         name = self.name
         self.session.add_task(self)
+
+    def _init_cache(self):
+        self._last_run = None
+        self._last_success = None
+        self._last_fail = None
+        self._last_terminate = None
+        self._last_inaction = None
+        self._last_crash = None
 
     def set_cached(self):
         "Update cached statuses"
