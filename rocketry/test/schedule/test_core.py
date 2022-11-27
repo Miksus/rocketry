@@ -157,14 +157,15 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
 
     # Test relevant log items
     for record in history:
+        is_tasl_log = isinstance(record, TaskLogRecord)
         if not isinstance(record, dict):
             record = record.dict()
         assert record["task_name"] == "mytask"
         assert isinstance(record["created"], float)
-        assert isinstance(record["start"], datetime.datetime)
+        assert isinstance(record["start"], datetime.datetime if is_tasl_log else float)
         if record["action"] != "run":
-            assert isinstance(record["end"], datetime.datetime)
-            assert isinstance(record["runtime"], datetime.timedelta)
+            assert isinstance(record["end"], datetime.datetime if is_tasl_log else float)
+            assert isinstance(record["runtime"], datetime.timedelta if is_tasl_log else float)
 
         # Test traceback
         if record["action"] == "fail":

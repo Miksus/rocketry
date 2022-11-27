@@ -35,17 +35,22 @@ def to_timestamp(dt) -> float:
         dt = dt.to_pydatetime()
     return dt.timestamp()
 
-def to_datetime(s):
+def to_datetime(s, timezone=None):
     if isinstance(s, datetime.datetime):
-        return s
-    if isinstance(s, str):
-        return string_to_datetime(s)
-    if hasattr(s, "timestamp"):
+        dt = s
+    elif isinstance(s, str):
+        dt = string_to_datetime(s)
+    elif hasattr(s, "timestamp"):
         # Is datetime-like. Tests' monkeypatching
         # overrides datetime.datetime thus we cannot
         # always rely on type
-        return datetime.datetime.fromtimestamp(s.timestamp())
-    raise TypeError(f"Cannot convert to datetime: {type(s)}")
+        dt = datetime.datetime.fromtimestamp(s.timestamp())
+    else:
+        raise TypeError(f"Cannot convert to datetime: {type(s)}")
+
+    if timezone is not None:
+        dt = dt.astimezone(timezone)
+    return dt
 
 def to_timedelta(s, **kwargs):
     "Convert object to timedelta"

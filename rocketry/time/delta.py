@@ -1,6 +1,7 @@
 import time
 import datetime
 from dataclasses import dataclass, field
+from typing import Callable, Union
 
 from rocketry.core.time import TimeDelta
 from rocketry.pybox.time import to_timedelta, Interval
@@ -10,7 +11,7 @@ class TimeSpanDelta(TimeDelta):
 
     near: int
     far: int
-    reference: datetime.datetime = field(default=None)
+    reference: Union[datetime.datetime, Callable] = field(default=None)
 
     def __init__(self, near=None, far=None, reference=None, **kwargs):
 
@@ -19,9 +20,12 @@ class TimeSpanDelta(TimeDelta):
         object.__setattr__(self, "far", abs(to_timedelta(far, **kwargs)) if far is not None else None)
         object.__setattr__(self, "reference", reference)
 
+    def use_reference(self, ref):
+        return TimeSpanDelta(near=self.near, far=self.far, reference=ref)
+
     def __contains__(self, dt):
-        "Check whether the datetime is in "
-        reference = self.reference if self.reference is not None else datetime.datetime.fromtimestamp(time.time())
+        "Check whether the dt is period"
+        reference = self.get_reference()
         if reference >= dt:
             start = reference - self.far if self.far is not None else self.min
             end = reference - self.near

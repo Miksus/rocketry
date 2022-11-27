@@ -80,3 +80,52 @@ This scheduler runs 5 minutes before automatically ending itself:
         app.run()
 
 After this, you can test the task logs or other items.
+
+Setting Custom Time
+-------------------
+
+You can also test scheduling and task triggering by forcing 
+Rocketry to use custom time.
+
+For example, if you wish to fix scheduling to start at 
+12:00 on 12th of May 2014:
+
+.. code-block:: python
+
+    import datetime
+    import time
+
+    from rocketry import Rocketry
+    from rocketry.conds import daily
+
+    def fix_time(dt):
+        "Get new time measurement function"
+        start_time = time.time()
+        def get_time():
+            sec_since_start = time.time() - start_time
+            return dt.timestamp() + sec_since_start
+        return get_time
+
+    app = Rocketry(config={"time_func": fix_time(datetime.datetime(2014, 5, 31, 12, 00))})
+
+    @app.task(daily)
+    def do_things():
+        ...
+
+    if __name__ == "__main__":
+        app.run()
+
+.. note::
+
+    We used nested functions to reuse fixing the time. If it looks
+    confusing, you can also use a flat function with globals:
+
+    .. code-block:: python
+
+        START_TIME = time.time()
+        DATETIME = datetime.datetime(2014, 5, 31, 12, 00)
+        def get_time():
+            sec_since_start = time.time() - START_TIME
+            return DATETIME.timestamp() + sec_since_start
+
+        app = Rocketry(time_func=get_time)

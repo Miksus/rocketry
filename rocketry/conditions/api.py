@@ -145,23 +145,23 @@ class RunningWrapper(BaseCondition):
             )
             period = None
             if more_than is not None or less_than is not None:
-                period = TimeSpanDelta(near=more_than, far=less_than)
+                period = TimeSpanDelta(near=more_than, far=less_than, reference=self.session._get_datetime_now)
             return TaskRunning(task=task, period=period)
         return RunningWrapper(task)
 
     def more_than(self, delta):
         "Get condition the wrapper represents"
-        period = TimeSpanDelta(near=delta, far=None)
+        period = TimeSpanDelta(near=delta, far=None, reference=self.session._get_datetime_now)
         return TaskRunning(task=self.task, period=period)
 
     def less_than(self, delta):
         "Get condition the wrapper represents"
-        period = TimeSpanDelta(near=None, far=delta)
+        period = TimeSpanDelta(near=None, far=delta, reference=self.session._get_datetime_now)
         return TaskRunning(task=self.task, period=period)
 
     def between(self, more_than, less_than):
         "Get condition the wrapper represents"
-        period = TimeSpanDelta(near=more_than, far=less_than)
+        period = TimeSpanDelta(near=more_than, far=less_than, reference=self.session._get_datetime_now)
         return TaskRunning(task=self.task, period=period)
 
     def get_cond(self):

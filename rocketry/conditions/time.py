@@ -2,6 +2,7 @@ import datetime
 
 from rocketry.time import TimeDelta
 from rocketry.core.condition.base import BaseCondition
+from rocketry.args import Session
 
 class IsPeriod(BaseCondition):
     """Condition for checking whether current time
@@ -32,8 +33,9 @@ class IsPeriod(BaseCondition):
             raise AttributeError("TimeDelta does not have __contains__.")
         self.period = period
 
-    def get_state(self):
-        return datetime.datetime.now() in self.period
+    def get_state(self, session=Session()):
+        now = session._get_datetime_now()
+        return now in self.period
 
     def __str__(self):
         if hasattr(self, "_str"):

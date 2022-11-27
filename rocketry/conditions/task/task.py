@@ -168,13 +168,13 @@ class TaskRunning(BaseComparable):
         task = session[self.task] if self.task is not None else task
 
         allow_optimization = not self.session.config.force_status_from_logs
-        start, end = get_period_span(self.period)
+        start, end = get_period_span(self.period, session=session)
         if allow_optimization:
             task = session[self.task] if self.task is not None else task
             runs = [
                 run.start
                 for run in task._run_stack
-                if run.is_alive() and start <= datetime.datetime.fromtimestamp(run.start) <= end
+                if run.is_alive() and start <= session._format_timestamp(run.start) <= end
             ]
             return runs
 
@@ -299,7 +299,7 @@ class TaskExecutable(BaseCondition):
             #   Because the period is used in the sub statements and TimeDelta is still accepted - Senior me
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (
@@ -352,7 +352,7 @@ class TaskRunnable(BaseCondition):
         isin_period = (
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (

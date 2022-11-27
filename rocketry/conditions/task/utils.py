@@ -61,7 +61,7 @@ class TaskStatusMixin(BaseComparable):
 
     def get_measurement(self, task=Task(default=None), session=Session()):
         task = session[self.task] if self.task is not None else task
-        _start_, _end_ = get_period_span(self.period if self.period is not None else task.period)
+        _start_, _end_ = get_period_span(self.period if self.period is not None else task.period, session=session)
 
         allow_optimization = not self.session.config.force_status_from_logs
 

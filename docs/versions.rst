@@ -11,6 +11,8 @@ Version history
         runs can be tracked in the logs using the field ``run_id``.
 
     - Update: ``rocketry.conds.running`` refactored to support multi-launch.
+    - Add: New config option ``timezone``
+    - Add: New config option ``time_func`` for testing scheduling
     - API: Added config option ``execution`` (deprecated ``task_execution``)
     - API: Added task argument ``permanent`` (deprecated ``permanent_task``)
     - Meta: Changed build from setup.py to pyproject.toml

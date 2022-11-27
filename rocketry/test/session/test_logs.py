@@ -3,7 +3,7 @@ from itertools import chain
 import datetime
 import logging
 from typing import Optional
-from pydantic import root_validator
+from pydantic import root_validator, validator
 
 import pytest
 
@@ -38,6 +38,16 @@ class CustomRecord(MinimalRecord):
     end: Optional[datetime.datetime]
     runtime: Optional[datetime.timedelta]
     message: str
+
+    @validator("start", pre=True)
+    def parse_start(cls, value):
+        if value is not None:
+            return datetime.datetime.fromtimestamp(value)
+
+    @validator("end", pre=True)
+    def parse_end(cls, value):
+        if value is not None:
+            return datetime.datetime.fromtimestamp(value)
 
     @root_validator
     def validate_timestamp(cls, values):

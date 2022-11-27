@@ -137,13 +137,7 @@ def test_json(session):
         "multilaunch": null,
         "on_startup": false,
         "on_shutdown": false,
-        "func_run_id": null,
-        "last_run": "<RUN>",
-        "last_success": "<SUCCESS>",
-        "last_fail": null,
-        "last_terminate": null,
-        "last_inaction": null,
-        "last_crash": null
+        "func_run_id": null
     }
     """
     .replace("<RUN>", dt_run.strftime("%Y-%m-%dT%H:%M:%S"))
