@@ -1,7 +1,8 @@
 import os
 import sys
+from build import logging
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, Config
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, SchedulerLogger, Config
 from rocketry.core.log.adapter import TaskAdapter
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
@@ -147,6 +148,11 @@ def test_task_logger(session):
 
     p = Parameters(logger=TaskLogger())
     assert isinstance(p.materialize(session=session)['logger'], TaskAdapter)
+
+def test_scheduler_logger(session):
+    logger = SchedulerLogger().get_value(session=session)
+    assert logger.name == "rocketry.scheduler"
+    assert isinstance(logger, logging.Logger)
 
 # Magic
 # -----
