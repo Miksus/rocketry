@@ -4,6 +4,7 @@ import warnings
 from typing import TYPE_CHECKING, Iterable, Dict, Union
 
 from redbird import BaseRepo
+from redbird.logging import RepoHandler
 
 from rocketry.core.utils import is_main_subprocess
 
@@ -65,6 +66,18 @@ class TaskAdapter(logging.LoggerAdapter):
 
         """
         return self.filter_by(*args, **kwargs).all()
+
+    def set_repo(self, repo:BaseRepo):
+        "Delete existing repo and create new"
+        self._delete_repo()
+        self.logger.handlers.insert(0, RepoHandler(repo))
+
+    def _delete_repo(self):
+        self.logger.handlers = [
+            handler
+            for handler in self.logger.handlers
+            if not hasattr(handler, 'repo')
+        ]
 
     def _get_repo(self) -> BaseRepo:
         "Get repository where the log records are stored"

@@ -305,7 +305,7 @@ class Task(RedBase, BaseModel):
     def __init__(self, **kwargs):
 
         hooker = _Hooker(self.session.hooks.task_init)
-        hooker.prerun(self)
+        hooker.prerun(task=self)
 
         if kwargs.get("session") is None:
             warnings.warn("Task's session not defined. Creating new.", UserWarning)
@@ -586,7 +586,7 @@ class Task(RedBase, BaseModel):
         else:
             hooks = self.session.hooks.task_execute
         hooker = _Hooker(hooks)
-        hooker.prerun(self)
+        hooker.prerun(task=self)
 
         status = None
         output = None

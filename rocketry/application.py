@@ -85,6 +85,11 @@ class Rocketry(_AppMixin):
         logger = self._get_task_logger()
         logger.handlers.insert(0, RepoHandler(repo=repo))
 
+    def setup(self, func=None):
+        if func is not None:
+            return self.session.hook_startup()(func)
+        return self.session.hook_startup()
+
 class Grouper(_AppMixin):
 
     def __init__(self, prefix:str=None, start_cond=None, execution=None):

@@ -31,6 +31,13 @@ to change the default execution type.
 
 Read more from the :ref:`the config handbook <config-handbook>`.
 
+App Settings
+------------
+
+There are various ways to configure the application but the 
+recommended pattern is to use the setup hook. Read more from 
+the :ref:`the app settings cookbook <app-settings-cookbook>`.
+
 Using the Condition API
 -----------------------
 

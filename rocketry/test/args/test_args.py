@@ -1,7 +1,9 @@
 import os
 import sys
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag
+from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, Config
+from rocketry.core.log.adapter import TaskAdapter
+from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
 
 def test_simple():
@@ -77,6 +79,77 @@ def test_private(session):
     assert value.get_value(task=task) == "my secret"
     assert str(value) == "*****"
     assert repr(value) == "Private(*****)"
+
+# Component Args
+# --------------
+
+def test_session(session):
+    with pytest.raises(TypeError):
+        Session().get_value()
+    assert Session(default=None).get_value() is None
+    assert Session().get_value(session=session) is session
+
+    task_1 = FuncTask(
+        lambda : None,
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    assert Session().get_value(task=task_1) is session
+    assert Session().get_value(scheduler=session.scheduler) is session
+
+def test_config(session):
+    p = Parameters(config=Config())
+    assert p.materialize(session=session)['config'] is session.config
+
+def test_task(session):
+    task_1 = FuncTask(
+        lambda : None,
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    task_2 = FuncTask(
+        lambda : None,
+        name="task 2",
+        execution="main",
+        session=session
+    )
+    assert Task().get_value(task=task_1) is task_1
+    assert Task().get_value(task=task_1, session=session) is task_1
+    assert Task("task 1").get_value(session=session) is task_1
+    assert Task("task 1").get_value(session=session, task=task_2) is task_1
+
+    with pytest.raises(KeyError):
+        assert Task("task 3").get_value(session=session)
+    with pytest.raises(TypeError):
+        Task().get_value()
+    with pytest.raises(TypeError):
+        Task().get_value(task="not valid")
+
+    assert Task(default=None).get_value() is None
+
+    # Test materialization
+    assert Parameters(t=Task("task 1")).materialize(session=session)['t'] is task_1
+    assert Parameters(t=Task("task 1")).materialize(task=task_2)['t'] is task_1
+
+def test_task_logger(session):
+    task_1 = FuncTask(
+        lambda : None,
+        name="task 1",
+        execution="main",
+        session=session
+    )
+    logger = TaskLogger().get_value(task=task_1, session=session)
+    assert isinstance(logger, TaskAdapter)
+    assert logger.task_name == "task 1"
+    assert logger.name == "rocketry.task"
+
+    p = Parameters(logger=TaskLogger())
+    assert isinstance(p.materialize(session=session)['logger'], TaskAdapter)
+
+# Magic
+# -----
 
 @pytest.mark.parametrize("obj", [Arg('x'), SimpleArg('value'), Private('value'), FuncArg(lambda: None), Return('a_task'), TerminationFlag()])
 def test_no_errors(obj, session):
