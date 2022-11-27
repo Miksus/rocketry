@@ -326,10 +326,8 @@ class Task(RedBase, BaseModel):
         self.session._check_readable_logger()
 
         self.register()
-
-        # Update "last_run", "last_success", etc.
-        self.set_cached()
-
+        self._init_cache()
+        
         # Hooks
         hooker.postrun()
 
@@ -908,6 +906,14 @@ class Task(RedBase, BaseModel):
         name = self.name
         self.session.add_task(self)
 
+    def _init_cache(self):
+        self._last_run = None
+        self._last_success = None
+        self._last_fail = None
+        self._last_terminate = None
+        self._last_inaction = None
+        self._last_crash = None
+
     def set_cached(self):
         "Update cached statuses"
         # We get the logger here to not flood with warnings if missing repo
@@ -1248,7 +1254,7 @@ class Task(RedBase, BaseModel):
 
 
         if allow_cache: #  and getattr(self, cache_attr) is not None
-            value = getattr(self, cache_attr)
+            value = getattr(self, cache_attr, None)
         else:
             value = self._get_last_action_from_log(action, logger)
             setattr(self, cache_attr, value)

@@ -63,6 +63,22 @@ are in production or test:
             config.silence_task_logging = False
             config.silence_cond_check = False
 
+.. note::
+
+    The tasks' caches (ie. status and last run/success/fail) are set after the 
+    hooks have run. If your setup needs to run after the caches are set
+    and startup tasks have run, you can do it by:
+
+    .. code-block:: python
+
+        @app.setup()
+        def setup_app():
+            # Run before startup tasks and cache is set
+            ...
+            yield
+            # Run after startup tasks and cache is set
+            ...
+
 You can also modify tasks in the setup. For example,
 if you wish to have an environment to test only the
 scheduling (without running anything):

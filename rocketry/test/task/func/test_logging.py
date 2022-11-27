@@ -10,6 +10,7 @@ from redbird.logging import RepoHandler
 from rocketry.log.log_record import  MinimalRecord
 from rocketry.tasks import FuncTask
 from rocketry.testing.log import create_task_record
+from rocketry.conds import true
 
 def run_success():
     pass
@@ -55,6 +56,7 @@ def test_set_cached_in_init(session, optimized, last_status):
         name="mytask",
         session=session
     )
+    task.set_cached()
     for action, created in times.items():
         dt = datetime.datetime.fromtimestamp(created)
         last_action_value = getattr(task, f"last_{action}")
@@ -204,10 +206,11 @@ def test_without_handlers_status_warnings(session):
             session=session
         )
     # Removing the handlers that were added
-
+    session.config.shut_cond = true
+    with pytest.warns(UserWarning) as warns:
+        session.start()
     # Test warnings
     expected_warnings = [
-        'Logger rocketry.task cannot be read. Logging is set to memory. To supress this warning, please set a handler that can be read (redbird.logging.RepoHandler)',
         "Logger 'rocketry.task.test' for task 'task 1' does not have ability to be read. Past history of the task cannot be utilized.",
         "Task 'task 1' logger is not readable. Latest run unknown.",
         "Task 'task 1' logger is not readable. Latest success unknown.",
