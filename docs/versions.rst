@@ -14,6 +14,7 @@ Version history
     - Update: Task cache is no longer set at initiation but at session start
     - Add: New config option ``timezone``
     - Add: New config option ``time_func`` for testing scheduling
+    - Add: New arguments, ``TaskLogger`` and ``SchedulerLogger``
     - API: Added config option ``execution`` (deprecated ``task_execution``)
     - API: Added task argument ``permanent`` (deprecated ``permanent_task``)
     - Meta: Changed build from setup.py to pyproject.toml
