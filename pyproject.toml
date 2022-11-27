@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 packages = ["rocketry"]
 
 [project]
-name = "Rocketry"
+name = "rocketry"
 description = "Advanced scheduling framework"
 readme = "README.md"
 license = {file="LICENSE"}
