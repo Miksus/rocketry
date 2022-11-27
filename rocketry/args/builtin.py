@@ -126,6 +126,13 @@ class TaskLogger(BaseArgument):
         task_logger = logging.getLogger(logger_name)
         return TaskAdapter(task_logger, task=task)
 
+class SchedulerLogger(BaseArgument):
+    "Argument that represents the scheduler logger"
+
+    def get_value(self, session=Session(default=None), **kwargs) -> Any:
+        logger_name = session.config.scheduler_logger_basename if session is not None else 'rocketry.scheduler'
+        return logging.getLogger(logger_name)
+
 class Return(BaseArgument):
     """A return argument
 
