@@ -327,9 +327,6 @@ class Task(RedBase, BaseModel):
 
         self.register()
 
-        # Update "last_run", "last_success", etc.
-        self.set_cached()
-
         # Hooks
         hooker.postrun()
 
@@ -1248,7 +1245,7 @@ class Task(RedBase, BaseModel):
 
 
         if allow_cache: #  and getattr(self, cache_attr) is not None
-            value = getattr(self, cache_attr)
+            value = getattr(self, cache_attr, None)
         else:
             value = self._get_last_action_from_log(action, logger)
             setattr(self, cache_attr, value)
