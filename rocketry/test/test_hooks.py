@@ -5,10 +5,13 @@ import sys
 import pytest
 from rocketry.conditions.task.task import DependSuccess, TaskStarted
 from rocketry.core import Task, Scheduler
+from rocketry.session import Session
 
 from rocketry.tasks import FuncTask
 from rocketry.conditions import SchedulerCycles
 from rocketry.conds import true
+
+from rocketry.args import Task as TaskArg, Session as SessionArg
 
 def do_success(**kwargs):
     ...
@@ -20,13 +23,13 @@ def test_task_init(session):
     timeline = []
 
     @session.hook_task_init()
-    def myhook(task):
+    def myhook(task=TaskArg()):
         timeline.append("Function hook called")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
 
     @session.hook_task_init()
-    def mygenerhook(task):
+    def mygenerhook(task=TaskArg()):
         timeline.append("Generator hook called (pre)")
         assert isinstance(task, DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
@@ -56,38 +59,38 @@ def test_scheduler_startup(session):
     timeline = []
 
     @session.hook_startup()
-    def my_startup_hook(sched):
-        assert isinstance(sched, Scheduler)
+    def my_startup_hook(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (startup)")
 
     @session.hook_scheduler_cycle()
-    def my_cycle_hook(sched):
-        assert isinstance(sched, Scheduler)
+    def my_cycle_hook(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (cycle)")
 
     @session.hook_shutdown()
-    def my_shutdown_hook(sched):
-        assert isinstance(sched, Scheduler)
+    def my_shutdown_hook(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (shutdown)")
 
 
     @session.hook_startup()
-    def my_startup_hook_generator(sched):
-        assert isinstance(sched, Scheduler)
+    def my_startup_hook_generator(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (startup, generator first)")
         yield
         timeline.append("ran hook (startup, generator second)")
 
     @session.hook_scheduler_cycle()
-    def my_cycle_hook_generator(sched):
-        assert isinstance(sched, Scheduler)
+    def my_cycle_hook_generator(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (cycle, generator first)")
         yield
         timeline.append("ran hook (cycle, generator second)")
 
     @session.hook_shutdown()
-    def my_shutdown_hook_generator(sched):
-        assert isinstance(sched, Scheduler)
+    def my_shutdown_hook_generator(session=SessionArg()):
+        assert isinstance(session, Session)
         timeline.append("ran hook (shutdown, generator first)")
         yield
         timeline.append("ran hook (shutdown, generator second)")
@@ -130,12 +133,12 @@ def test_scheduler_startup(session):
     ]
 
 # Hooks
-def myhook_normal(task, file):
+def myhook_normal(file, task=TaskArg()):
     assert isinstance(task, Task)
     with open(file, "a", encoding="utf-8") as f:
         f.write("Function hook called\n")
 
-def myhook_gener(task, file):
+def myhook_gener(file, task=TaskArg()):
     assert isinstance(task, Task)
     with open(file, "a", encoding="utf-8") as f:
         f.write("Generator hook inited\n")

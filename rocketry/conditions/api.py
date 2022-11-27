@@ -6,6 +6,7 @@ from rocketry.conditions import (
     Retry,
     SchedulerStarted, SchedulerCycles,
 )
+from rocketry.conditions.func import FuncCond
 from rocketry.core import (
     BaseCondition
 )
@@ -298,3 +299,9 @@ def scheduler_cycles(more_than:int=None, less_than:int=None):
     if less_than is not None:
         kwds['__lt__'] = less_than
     return SchedulerCycles.from_magic(**kwds)
+
+# Custom
+# ------
+
+def condition():
+    return FuncCond(syntax=None, decor_return_func=False)

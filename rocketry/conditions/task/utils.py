@@ -33,7 +33,7 @@ class DependMixin(BaseCondition):
             raise ParserError
         return Any(*(cls(depend_task=dep_task, task=task) for dep_task in tasks))
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         actual_task = session[self.task] if self.task is not None else task
         depend_task = session[self.depend_task]
 
@@ -59,7 +59,7 @@ class TaskStatusMixin(BaseComparable):
         self.period = period
         super().__init__()
 
-    def get_measurement(self, task=Task(), session=Session()):
+    def get_measurement(self, task=Task(default=None), session=Session()):
         task = session[self.task] if self.task is not None else task
         _start_, _end_ = get_period_span(self.period if self.period is not None else task.period, session=session)
 

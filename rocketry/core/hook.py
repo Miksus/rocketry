@@ -10,9 +10,11 @@ class _Hooker:
         self.hooks = hooks
 
     def prerun(self, *args, **kwargs):
+        from rocketry.core import Parameters
         self._post_hooks = []
         for hook in self.hooks:
-            result = hook(*args, **kwargs)
+            kwds = Parameters._from_signature(hook).materialize(**kwargs)
+            result = hook(*args, **kwds)
             if inspect.isgeneratorfunction(hook):
                 gener = result
                 next(gener, None) # Executes first yield

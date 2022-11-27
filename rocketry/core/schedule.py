@@ -168,7 +168,7 @@ class Scheduler(RedBase):
 
         # Running hooks
         hooker = _Hooker(self.session.hooks.scheduler_cycle)
-        hooker.prerun(self)
+        hooker.prerun(scheduler=self)
 
         for task in tasks:
             with task.lock:
@@ -302,7 +302,7 @@ class Scheduler(RedBase):
         #self.setup_listener()
         self.logger.info("Starting up...", extra={"action": "setup"})
         hooker = _Hooker(self.session.hooks.scheduler_startup)
-        hooker.prerun(self)
+        hooker.prerun(scheduler=self)
 
         self.n_cycles = 0
         self.startup_time = self.session._get_datetime_now()
@@ -396,7 +396,7 @@ class Scheduler(RedBase):
 
         self.logger.debug("Beginning shutdown sequence...")
         hooker = _Hooker(self.session.hooks.scheduler_shutdown)
-        hooker.prerun(self)
+        hooker.prerun(scheduler=self)
 
         # First the shut down tasks are run
         # Then all tasks are waited to finish or terminated
