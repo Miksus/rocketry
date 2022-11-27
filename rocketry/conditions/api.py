@@ -72,6 +72,12 @@ class TimeCondWrapper(BaseCondition):
     def _get_cond(self, period):
         return self._cls_cond(period=period, **self._cond_kwargs)
 
+    def __str__(self):
+        try:
+            return BaseCondition.__str__(self)
+        except AttributeError:
+            return str(self.get_cond())
+
 class TimeActionWrapper(BaseCondition):
 
     def __init__(self, cls_cond, task=None):
