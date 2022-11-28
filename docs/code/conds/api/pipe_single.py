@@ -1,4 +1,5 @@
-from rocketry.conds import after_success, after_fail, after_finish
+from rocketry.conds import after_fail, after_finish, after_success
+
 
 @app.task()
 def do_things():

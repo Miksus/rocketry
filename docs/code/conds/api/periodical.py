@@ -1,4 +1,5 @@
-from rocketry.conds import minutely, hourly, daily, weekly, monthly
+from rocketry.conds import daily, hourly, minutely, monthly, weekly
+
 
 @app.task(minutely)
 def do_minutely():

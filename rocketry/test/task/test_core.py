@@ -2,15 +2,18 @@ import datetime
 import logging
 import pickle
 from textwrap import dedent
+
 import pytest
+
+from rocketry import Session as SessionClass
+from rocketry.args import Arg, Session, Task
 from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
 from rocketry.core.condition.base import AlwaysFalse
-from rocketry.args import Arg, Session, Task
 from rocketry.exc import TaskLoggingError
 from rocketry.log import MinimalRecord
-from rocketry import Session as SessionClass
 from rocketry.testing.log import create_task_record
+
 
 class DummyTask(BaseTask):
 

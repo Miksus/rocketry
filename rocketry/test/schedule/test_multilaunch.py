@@ -4,16 +4,15 @@ import json
 import time
 
 import pytest
-from rocketry.args import FuncArg
 
-from rocketry.tasks import FuncTask
-from rocketry.exc import TaskTerminationException
+from rocketry.args import FuncArg, TerminationFlag
 from rocketry.conditions import SchedulerCycles, TaskStarted
-from rocketry.args import TerminationFlag
+from rocketry.conds import true
+from rocketry.exc import TaskTerminationException
 from rocketry.log import RunRecord
+from rocketry.tasks import FuncTask
 from rocketry.tasks.run_id import increment, uuid
 
-from rocketry.conds import true
 
 def run_slow_fail():
     time.sleep(5)

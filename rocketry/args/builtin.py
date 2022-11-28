@@ -5,14 +5,16 @@ import sys
 import threading
 import warnings
 from typing import Any, Callable, Optional
-from rocketry.core.log.adapter import TaskAdapter
+
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from rocketry.core.task import Task as BaseTask
+from rocketry.core.log.adapter import TaskAdapter
 from rocketry.core.parameters import BaseArgument, Parameters
+from rocketry.core.task import Task as BaseTask
+
 
 class NotSet:
     def __repr__(self):
@@ -102,7 +104,7 @@ class Task(BaseArgument):
             is_task_cls = isinstance(task, BaseTask)
             if is_task_cls:
                 return task
-            elif self.default is not NOTSET:
+            if self.default is not NOTSET:
                 return self.default
             raise TypeError(f"Expected {BaseTask}, got {type(task)}")
         if session is None:

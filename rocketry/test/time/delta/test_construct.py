@@ -1,9 +1,10 @@
 
 import datetime
+
 import pytest
-from rocketry.time import (
-    TimeDelta, TimeOfDay
-)
+
+from rocketry.time import TimeDelta, TimeOfDay
+
 
 @pytest.mark.parametrize(
     "offset,expected",

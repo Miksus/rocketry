@@ -1,13 +1,9 @@
-from typing import List
 from collections import Counter
+from typing import List
 
-from .base import (
-    Key,
-    Any,
-    Equal, NotEqual, GreaterEqual, LessEqual,
-    true
-)
+from .base import Any, Equal, GreaterEqual, Key, LessEqual, NotEqual, true
 from .string import Regex
+
 
 class Parser:
     """Parse various formats to a generic query language

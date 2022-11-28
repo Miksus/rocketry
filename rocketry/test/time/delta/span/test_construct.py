@@ -1,9 +1,7 @@
 
 import datetime
 
-from rocketry.time import (
-    TimeSpanDelta
-)
+from rocketry.time import TimeSpanDelta
 
 
 def test_construct():

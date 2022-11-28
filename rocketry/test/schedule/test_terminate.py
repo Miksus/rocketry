@@ -1,17 +1,18 @@
 import asyncio
 import datetime
-import time
 import os
+import time
 
 import pytest
+
+from rocketry.args import Session
+from rocketry.conditions import AlwaysTrue, TaskFinished, TaskStarted
 from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conditions.task import TaskRunning
-
 from rocketry.core.time.base import TimeDelta
-from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
-from rocketry.conditions import TaskFinished, TaskStarted, AlwaysTrue
-from rocketry.args import Session
+from rocketry.tasks import FuncTask
+
 
 def run_slow():
     time.sleep(1)

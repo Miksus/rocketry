@@ -1,15 +1,11 @@
 
 import datetime
+
 import pytest
-from rocketry.time.interval import (
-    TimeOfMinute,
-    TimeOfDay,
-    TimeOfHour,
-    TimeOfMonth,
-    TimeOfSecond,
-    TimeOfWeek,
-    TimeOfYear
-)
+
+from rocketry.time.interval import (TimeOfDay, TimeOfHour, TimeOfMinute,
+                                    TimeOfMonth, TimeOfSecond, TimeOfWeek,
+                                    TimeOfYear)
 
 MS_IN_MILLISECOND = 1000
 MS_IN_SECOND = int(1e+6)

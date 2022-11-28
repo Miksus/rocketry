@@ -1,8 +1,7 @@
 
 
-from rocketry.conditions import (
-    IsEnv
-)
+from rocketry.conditions import IsEnv
+
 
 def test_env(session):
 

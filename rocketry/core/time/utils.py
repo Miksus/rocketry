@@ -1,9 +1,10 @@
 
-import time
 import datetime
+import time
 from typing import Tuple
 
 from .base import TimePeriod
+
 
 def get_period_span(period:'TimePeriod', session=None) -> Tuple[datetime.datetime, datetime.datetime]:
 

@@ -2,29 +2,23 @@ import datetime
 from time import time
 
 import pytest
+
 from rocketry.conditions.task.task import TaskStarted
-from rocketry.conds import (
-    true, false,
-    every,
-    daily, weekly, monthly,
-    time_of_day, time_of_week, time_of_month,
-    after_finish, after_success, after_fail,
-
-    after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
-
-    scheduler_running, scheduler_cycles,
-
-    succeeded, failed, finished, started,
-    running,
-
-    cron,
-    retry,
-    crontime,
-)
+from rocketry.conds import (after_all_fail, after_all_finish,
+                            after_all_success, after_any_fail,
+                            after_any_finish, after_any_success, after_fail,
+                            after_finish, after_success, cron, crontime, daily,
+                            every, failed, false, finished, monthly, retry,
+                            running, scheduler_cycles, scheduler_running,
+                            started, succeeded, time_of_day, time_of_month,
+                            time_of_week, true, weekly)
 from rocketry.tasks import FuncTask
 
-def do_success(): ...
-def do_failure(): raise RuntimeError("Oops")
+
+def do_success():
+    ...
+def do_failure():
+    raise RuntimeError("Oops")
 
 class Timer:
 
@@ -108,7 +102,7 @@ def test_task_run(session, execution):
     timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
- 
+
     session.config.timezone = timezone
 
     task = FuncTask(do_success, start_cond=true, execution=execution, session=session)

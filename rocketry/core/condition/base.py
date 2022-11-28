@@ -1,5 +1,5 @@
-from copy import copy
 from abc import abstractmethod
+from copy import copy
 from typing import Callable, Dict, Pattern, Union
 
 from rocketry._base import RedBase

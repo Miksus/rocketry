@@ -1,5 +1,6 @@
 from rocketry.args import Return
 
+
 @app.task("daily")
 def do_first():
 

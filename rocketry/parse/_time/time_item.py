@@ -1,7 +1,9 @@
 
 from typing import Pattern
+
 from rocketry.core.time.base import TimePeriod
 from rocketry.session import Session
+
 from ..utils import ParserError
 
 

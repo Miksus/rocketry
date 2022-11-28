@@ -3,6 +3,7 @@ import sys
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.testing.log import create_task_record
 
+
 def log_task_record(task, now, action, start_time=None):
     "Copy of the mechanism of creating an action log"
     if action == "fail":

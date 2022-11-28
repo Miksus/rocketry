@@ -2,8 +2,9 @@
 import re
 from typing import Union
 
-from rocketry.core.condition import BaseCondition
 from rocketry.args import Session
+from rocketry.core.condition import BaseCondition
+
 
 class IsEnv(BaseCondition):
     """Condition checks whether session parameter `env`

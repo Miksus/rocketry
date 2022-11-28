@@ -3,12 +3,9 @@ import logging
 from rocketry import Rocketry
 from rocketry.args.builtin import Return, Task
 from rocketry.conditions import TaskStarted
+from rocketry.conds import (after_fail, after_success, daily, false,
+                            time_of_hour, true)
 
-from rocketry.conds import (
-    false, true,
-    daily, time_of_hour,
-    after_fail, after_success
-)
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")

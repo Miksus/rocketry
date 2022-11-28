@@ -1,11 +1,10 @@
-from collections.abc import Mapping
-from typing import Callable, Type, Union, TYPE_CHECKING
-from functools import partial
 import inspect
+from collections.abc import Mapping
+from functools import partial
+from typing import TYPE_CHECKING, Callable, Type, Union
 
 from rocketry._base import RedBase
-from rocketry.core.utils import is_pickleable
-from rocketry.core.utils import filter_keyword_args
+from rocketry.core.utils import filter_keyword_args, is_pickleable
 
 from .arguments import BaseArgument
 

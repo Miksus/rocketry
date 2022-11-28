@@ -1,9 +1,11 @@
-from typing import Callable
 from dataclasses import dataclass
+from typing import Callable
 
 from rocketry.core.time.base import TimePeriod, always
 
-from .interval import TimeOfHour, TimeOfDay, TimeOfMinute, TimeOfWeek, TimeOfMonth, TimeOfYear
+from .interval import (TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth,
+                       TimeOfWeek, TimeOfYear)
+
 
 @dataclass(frozen=True)
 class Cron(TimePeriod):

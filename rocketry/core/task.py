@@ -1,20 +1,22 @@
 import asyncio
-from dataclasses import dataclass
-import inspect
-from pickle import PicklingError
-import sys
-import time
 import datetime
+import inspect
 import logging
-import platform
-from types import FunctionType, TracebackType
-import warnings
-from copy import copy
-from abc import abstractmethod
 import multiprocessing
+import platform
+import sys
 import threading
+import time
+import warnings
+from abc import abstractmethod
+from copy import copy
+from dataclasses import dataclass
+from pickle import PicklingError
 from queue import Empty
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional
+from types import FunctionType, TracebackType
+from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Dict, List,
+                    Optional, Tuple, Type, Union)
+
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
@@ -23,15 +25,18 @@ except ImportError: # pragma: no cover
 from pydantic import BaseModel, Field, PrivateAttr, validator
 
 from rocketry._base import RedBase
-from rocketry.core.condition import BaseCondition, AlwaysFalse, All
-from rocketry.core.time import TimePeriod
-from rocketry.core.parameters import Parameters
-from rocketry.core.log import TaskAdapter
-from rocketry.pybox.time import to_timedelta
-from rocketry.core.utils import is_pickleable, filter_keyword_args, is_main_subprocess
-from rocketry.exc import SchedulerRestart, SchedulerExit, TaskInactionException, TaskTerminationException, TaskLoggingError, TaskSetupError
+from rocketry.core.condition import All, AlwaysFalse, BaseCondition
 from rocketry.core.hook import _Hooker
+from rocketry.core.log import TaskAdapter
+from rocketry.core.parameters import Parameters
+from rocketry.core.time import TimePeriod
+from rocketry.core.utils import (filter_keyword_args, is_main_subprocess,
+                                 is_pickleable)
+from rocketry.exc import (SchedulerExit, SchedulerRestart,
+                          TaskInactionException, TaskLoggingError,
+                          TaskSetupError, TaskTerminationException)
 from rocketry.log import QueueHandler
+from rocketry.pybox.time import to_timedelta
 
 if TYPE_CHECKING:
     from rocketry import Session
@@ -327,7 +332,7 @@ class Task(RedBase, BaseModel):
 
         self.register()
         self._init_cache()
-        
+
         # Hooks
         hooker.postrun()
 
@@ -1154,10 +1159,10 @@ class Task(RedBase, BaseModel):
             raise KeyError(f"Invalid action: {action}")
 
         time_now = self.session.get_time()
-        
+
         if action == "run":
             extra = {
-                "action": "run", 
+                "action": "run",
                 "start": task_run.start if task_run is not None else time_now
             }
             # self._last_run = now
@@ -1347,8 +1352,9 @@ class Task(RedBase, BaseModel):
         Note that this should not be considered as absolute truth but
         as a best estimate.
         """
-        from rocketry.core.time import StaticInterval, All as AllTime
         from rocketry.conditions import TaskFinished, TaskSucceeded
+        from rocketry.core.time import All as AllTime
+        from rocketry.core.time import StaticInterval
 
         cond = self.start_cond
         session = self.session

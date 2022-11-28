@@ -1,5 +1,5 @@
-from typing import Any, TYPE_CHECKING
 from abc import abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from rocketry._base import RedBase
 

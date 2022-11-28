@@ -1,5 +1,6 @@
 from rocketry.args import Return
 
+
 @app.task("every 10 seconds")
 def do_things():
 

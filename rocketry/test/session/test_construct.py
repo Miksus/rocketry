@@ -6,9 +6,11 @@ import warnings
 import pytest
 
 from rocketry import Session
-from rocketry.session import Config
-from rocketry.core import Task, Scheduler, BaseCondition, BaseArgument, Parameters
 from rocketry.conds import true
+from rocketry.core import (BaseArgument, BaseCondition, Parameters, Scheduler,
+                           Task)
+from rocketry.session import Config
+
 
 def assert_default(session:Session):
     for cls in (Task, Scheduler, BaseCondition, BaseArgument, Parameters):

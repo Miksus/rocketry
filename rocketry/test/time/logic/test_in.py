@@ -2,9 +2,7 @@ import datetime
 
 import pytest
 
-from rocketry.core.time.base import (
-    All, Any
-)
+from rocketry.core.time.base import All, Any
 from rocketry.time.interval import TimeOfDay
 
 from_iso = datetime.datetime.fromisoformat

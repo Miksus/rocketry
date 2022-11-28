@@ -10,10 +10,11 @@ import time
 
 import pytest
 
-from rocketry.core import Scheduler
-from rocketry.tasks import FuncTask
-from rocketry.exc import TaskInactionException
 from rocketry.conditions import AlwaysFalse
+from rocketry.core import Scheduler
+from rocketry.exc import TaskInactionException
+from rocketry.tasks import FuncTask
+
 
 def run_failing():
     raise RuntimeError("Task failed")

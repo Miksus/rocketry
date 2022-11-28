@@ -1,5 +1,6 @@
 from rocketry.conds import every
 
+
 @app.task(every('10 seconds'))
 def do_constantly():
     ...

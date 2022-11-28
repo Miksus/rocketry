@@ -1,6 +1,8 @@
 from datetime import datetime
-from rocketry.time import StaticInterval, always, never
+
 from rocketry.pybox.time import Interval
+from rocketry.time import StaticInterval, always, never
+
 
 def test_static():
     t = StaticInterval("2022-08-01", "2022-08-10")

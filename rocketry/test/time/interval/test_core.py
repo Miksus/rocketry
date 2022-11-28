@@ -1,6 +1,8 @@
 
 import pytest
+
 from rocketry.core.time.anchor import AnchoredInterval
+
 
 # Test no unexpected errors in all
 @pytest.mark.parametrize("method", ["__str__", "__repr__"])

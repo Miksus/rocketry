@@ -1,10 +1,13 @@
-from datetime import datetime
-from typing import ClassVar, Dict, List, Tuple, Union
 from abc import abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from typing import ClassVar, Dict, List, Tuple, Union
 
-from rocketry.pybox.time import to_microseconds, timedelta_to_str, datetime_to_dict, to_timedelta
+from rocketry.pybox.time import (datetime_to_dict, timedelta_to_str,
+                                 to_microseconds, to_timedelta)
+
 from .base import Any, TimeInterval
+
 
 @dataclass(frozen=True, repr=False)
 class AnchoredInterval(TimeInterval):

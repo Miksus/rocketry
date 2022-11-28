@@ -11,6 +11,7 @@ from rocketry.core.time.base import TimeInterval
 from rocketry.pybox.time import datetime_to_dict, to_microseconds
 from rocketry.pybox.time.interval import Interval
 
+
 @dataclass(frozen=True, init=False)
 class TimeOfSecond(AnchoredInterval):
     """Time interval anchored to second cycle of a clock

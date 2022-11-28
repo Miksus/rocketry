@@ -2,18 +2,18 @@ import logging
 import time
 
 import pytest
-
-from redbird.repos import MemoryRepo
 from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo
 
-from rocketry.args import TerminationFlag, Session as SessionArg
-from rocketry.core import BaseCondition
+from rocketry.args import Session as SessionArg
+from rocketry.args import TerminationFlag
+from rocketry.conditions import (AlwaysTrue, SchedulerCycles, SchedulerStarted,
+                                 TaskStarted)
+from rocketry.core import BaseArgument, BaseCondition
+from rocketry.exc import TaskSetupError, TaskTerminationException
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.exc import TaskTerminationException
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysTrue
-from rocketry.core import BaseArgument
-from rocketry.exc import TaskSetupError
+
 
 class FailingArgument(BaseArgument):
 

@@ -1,28 +1,27 @@
 import asyncio
 import datetime
 import logging
-import time
+import multiprocessing
 import os
 import re
-import multiprocessing
+import time
 
 import pytest
-
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
-from rocketry.log.log_record import TaskLogRecord
 import rocketry
 from rocketry import Session
+from rocketry.args import Private, TerminationFlag
+from rocketry.conditions import (AlwaysFalse, AlwaysTrue, SchedulerCycles,
+                                 SchedulerStarted, TaskStarted)
+from rocketry.conds import false, true
 from rocketry.core import Parameters
-from rocketry.log.log_record import MinimalRecord
+from rocketry.exc import TaskInactionException, TaskTerminationException
+from rocketry.log.log_record import MinimalRecord, TaskLogRecord
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.exc import TaskInactionException, TaskTerminationException
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysFalse, AlwaysTrue
-from rocketry.args import Private, TerminationFlag
 
-from rocketry.conds import true, false
 
 def run_failing():
     raise RuntimeError("Task failed")

@@ -1,10 +1,7 @@
-from .base import (
-    #Query,
-    Key,
-    All, Any, Not,
-    Equal, NotEqual, Greater, GreaterEqual, Less, LessEqual
-)
+from .base import (All, Any, Equal, Greater, GreaterEqual, Key, Less,  # Query,
+                   LessEqual, Not, NotEqual)
 from .parse import Parser
 from .string import Regex
+
 parser = Parser()
 from_dict_string = parser.from_dict

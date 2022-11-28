@@ -1,8 +1,8 @@
 import pytest
 
-from rocketry.time import Any
-from rocketry.time import TimeOfDay, TimeOfHour, TimeOfWeek
+from rocketry.time import Any, TimeOfDay, TimeOfHour, TimeOfWeek
 from rocketry.time.interval import TimeOfMinute, TimeOfMonth, TimeOfYear
+
 
 def test_time_of_day_every_second():
     every_second_hour = TimeOfDay.create_range(step=2)

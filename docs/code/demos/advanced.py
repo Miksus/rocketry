@@ -1,5 +1,5 @@
 from rocketry import Rocketry
-from rocketry.args import Return, Arg
+from rocketry.args import Arg, Return
 
 app = Rocketry()
 

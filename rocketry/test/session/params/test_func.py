@@ -1,12 +1,13 @@
-from pathlib import Path
 import platform
+from pathlib import Path
 from textwrap import dedent
+
 import pytest
 
+from rocketry.args import Arg, FuncArg
+from rocketry.conditions import AlwaysTrue, TaskStarted
 from rocketry.core import Parameters
 from rocketry.tasks import FuncTask
-from rocketry.conditions import TaskStarted, AlwaysTrue
-from rocketry.args import FuncArg, Arg
 
 
 def get_x():

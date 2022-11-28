@@ -1,9 +1,11 @@
 import pytest
+
 from rocketry.args.builtin import SimpleArg
+from rocketry.conditions import AlwaysFalse, SchedulerCycles
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
-from rocketry.conditions import SchedulerCycles, AlwaysFalse
+
 
 def run_succeeding():
     pass

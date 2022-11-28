@@ -1,8 +1,9 @@
 import datetime
 
-from rocketry.time import TimeDelta
-from rocketry.core.condition.base import BaseCondition
 from rocketry.args import Session
+from rocketry.core.condition.base import BaseCondition
+from rocketry.time import TimeDelta
+
 
 class IsPeriod(BaseCondition):
     """Condition for checking whether current time

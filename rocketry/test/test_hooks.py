@@ -1,17 +1,18 @@
+import sys
 from functools import partial
 from textwrap import dedent
-import sys
 
 import pytest
-from rocketry.conditions.task.task import DependSuccess, TaskStarted
-from rocketry.core import Task, Scheduler
-from rocketry.session import Session
 
-from rocketry.tasks import FuncTask
+from rocketry.args import Session as SessionArg
+from rocketry.args import Task as TaskArg
 from rocketry.conditions import SchedulerCycles
+from rocketry.conditions.task.task import DependSuccess, TaskStarted
 from rocketry.conds import true
+from rocketry.core import Scheduler, Task
+from rocketry.session import Session
+from rocketry.tasks import FuncTask
 
-from rocketry.args import Task as TaskArg, Session as SessionArg
 
 def do_success(**kwargs):
     ...

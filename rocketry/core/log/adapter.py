@@ -1,7 +1,7 @@
 
 import logging
 import warnings
-from typing import TYPE_CHECKING, Iterable, Dict, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Union
 
 from redbird import BaseRepo
 from redbird.logging import RepoHandler

@@ -1,4 +1,4 @@
-from .func import FuncTask
+from . import maintain
 from .code import CodeTask
 from .command import CommandTask
-from . import maintain
+from .func import FuncTask

@@ -1,7 +1,9 @@
 import datetime
 
 import pytest
+
 from rocketry.testing.log import create_task_record
+
 
 def test_create_record(session):
     ts = int(datetime.datetime(2022, 1, 1).timestamp())

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def create_file(file, content):
     path = Path(file)
     path.parent.mkdir(exist_ok=True)

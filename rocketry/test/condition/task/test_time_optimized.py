@@ -1,21 +1,12 @@
 import pytest
 
-from rocketry.conditions import (
-    TaskStarted,
-
-    TaskFinished,
-    TaskFailed,
-    TaskSucceeded,
-
-    TaskRunning
-)
+from rocketry.conditions import (TaskFailed, TaskFinished, TaskRunning,
+                                 TaskStarted, TaskSucceeded)
 from rocketry.conditions.task import TaskInacted, TaskTerminated
 from rocketry.core.task import TaskRun
 from rocketry.pybox.time.convert import to_datetime, to_timestamp
-from rocketry.time import (
-    TimeOfDay
-)
 from rocketry.tasks import FuncTask
+from rocketry.time import TimeOfDay
 
 from .test_time import setup_task_state
 

@@ -1,8 +1,5 @@
-from rocketry.conds import (
-    every, hourly, daily,
-    after_success,
-    true, false
-)
+from rocketry.conds import after_success, daily, every, false, hourly, true
+
 
 @app.task(every('10 seconds'))
 def do_constantly():

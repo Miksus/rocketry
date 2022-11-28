@@ -1,18 +1,9 @@
 import pytest
 
-from rocketry.conditions import (
-    TaskFinished,
-    TaskFailed,
-    TaskSucceeded,
-
-    DependFinish,
-    DependFailure,
-    DependSuccess,
-    TaskStarted,
-    TaskTerminated,
-)
+from rocketry.conditions import (DependFailure, DependFinish, DependSuccess,
+                                 TaskFailed, TaskFinished, TaskStarted,
+                                 TaskSucceeded, TaskTerminated)
 from rocketry.tasks import FuncTask
-
 
 
 def run_task(fail=False):

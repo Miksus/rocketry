@@ -1,10 +1,11 @@
 import pytest
+
+from rocketry.conditions import FuncCond
 from rocketry.conditions.task.task import TaskStarted
+from rocketry.conds import true
 from rocketry.core.condition.base import BaseCondition
 from rocketry.tasks import FuncTask
 
-from rocketry.conditions import FuncCond
-from rocketry.conds import true
 
 def run_succeeding():
     pass

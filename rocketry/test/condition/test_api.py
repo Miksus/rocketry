@@ -1,33 +1,27 @@
 import pytest
+
+from rocketry.conditions import (DependFailure, DependFinish, DependSuccess,
+                                 IsPeriod, Retry, TaskExecutable, TaskRunnable)
 from rocketry.conditions.scheduler import SchedulerCycles, SchedulerStarted
-from rocketry.conditions.task.task import TaskFailed, TaskFinished, TaskRunning, TaskStarted, TaskSucceeded
-
-from rocketry.conds import (
-    true, false,
-    every,
-    secondly, minutely, hourly, daily, weekly, monthly,
-    time_of_second, time_of_minute, time_of_hour, time_of_day, time_of_week, time_of_month,
-    after_finish, after_success, after_fail,
-
-    after_all_success, after_any_success, after_all_fail, after_any_fail, after_all_finish, after_any_finish,
-
-    scheduler_running, scheduler_cycles,
-
-    succeeded, failed, finished, started,
-    running,
-
-    cron,
-    retry,
-    crontime,
-)
-
-from rocketry.conditions import TaskExecutable, IsPeriod, DependSuccess, DependFailure, DependFinish, TaskRunnable, Retry
-from rocketry.core.condition import AlwaysFalse, AlwaysTrue, Any, All
-from rocketry.time import TimeDelta
-from rocketry.time import Cron
-from rocketry.time.delta import TimeSpanDelta
+from rocketry.conditions.task.task import (TaskFailed, TaskFinished,
+                                           TaskRunning, TaskStarted,
+                                           TaskSucceeded)
+from rocketry.conds import (after_all_fail, after_all_finish,
+                            after_all_success, after_any_fail,
+                            after_any_finish, after_any_success, after_fail,
+                            after_finish, after_success, cron, crontime, daily,
+                            every, failed, false, finished, hourly, minutely,
+                            monthly, retry, running, scheduler_cycles,
+                            scheduler_running, secondly, started, succeeded,
+                            time_of_day, time_of_hour, time_of_minute,
+                            time_of_month, time_of_second, time_of_week, true,
+                            weekly)
+from rocketry.core.condition import All, AlwaysFalse, AlwaysTrue, Any
 from rocketry.tasks import FuncTask
-from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfSecond, TimeOfWeek
+from rocketry.time import Cron, TimeDelta
+from rocketry.time.delta import TimeSpanDelta
+from rocketry.time.interval import (TimeOfDay, TimeOfHour, TimeOfMinute,
+                                    TimeOfMonth, TimeOfSecond, TimeOfWeek)
 
 params_basic = [
     pytest.param(true, AlwaysTrue(), id="true"),

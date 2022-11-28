@@ -1,9 +1,9 @@
 from typing import Callable, Dict, Pattern, Union
+
 from rocketry.core.condition.base import BaseCondition
 from rocketry.session import Session
-from ..utils import ParserError, CondParser
 
-
+from ..utils import CondParser, ParserError
 
 CONDITION_PARSERS = []
 

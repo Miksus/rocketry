@@ -1,6 +1,8 @@
-from rocketry.core.time import Any, All
+from rocketry.core.time import All, Any
+
 from ..utils.string_parser import InstructionParser
 from .time_item import parse_time_item
+
 
 def _flatten(*args, types, with_attr):
     comps = []

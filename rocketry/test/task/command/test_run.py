@@ -1,18 +1,15 @@
 import logging
-from pathlib import Path
 import platform
 import sys
+from pathlib import Path
 
 import pytest
-
-from task_helpers import wait_till_task_finish
-
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
+from task_helpers import wait_till_task_finish
 
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import CommandTask
-
 
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])

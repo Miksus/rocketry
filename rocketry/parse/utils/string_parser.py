@@ -1,10 +1,9 @@
-from functools import partial
 import re
-
+from functools import partial
 from typing import Callable, Dict, List
 
-from rocketry.pybox.string.parse import ClosureParser
 from rocketry.pybox.container.visitor import Visitor
+from rocketry.pybox.string.parse import ClosureParser
 
 
 class InstructionParser:

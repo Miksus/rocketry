@@ -1,6 +1,7 @@
 import itertools
 import uuid as _uuid
 
+
 def increment(task, params=None) -> str:
     "Generate Run IDs that are increment numbers"
     ids = [run.run_id for run in task._run_stack]

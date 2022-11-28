@@ -1,3 +1,5 @@
 
-from .builtin import Arg, FuncArg, Return, Session, Config, Task, TaskLogger, SchedulerLogger, TerminationFlag, SimpleArg, EnvArg, CliArg, argument
+from .builtin import (Arg, CliArg, Config, EnvArg, FuncArg, Return,
+                      SchedulerLogger, Session, SimpleArg, Task, TaskLogger,
+                      TerminationFlag, argument)
 from .secret import Private

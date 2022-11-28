@@ -1,10 +1,8 @@
 
 import pytest
-from rocketry.pybox.time.convert import to_datetime
 
-from rocketry.time.interval import (
-    TimeOfWeek
-)
+from rocketry.pybox.time.convert import to_datetime
+from rocketry.time.interval import TimeOfWeek
 
 MS_IN_SECOND = 1e+6
 MS_IN_MINUTE = 1e+6 * 60

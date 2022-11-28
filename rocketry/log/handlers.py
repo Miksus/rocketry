@@ -1,7 +1,6 @@
-from logging.handlers import QueueHandler as _QueueHandler
-from logging import Formatter
-
 import copy
+from logging import Formatter
+from logging.handlers import QueueHandler as _QueueHandler
 
 # Copying the default formatter mechanism from logging
 _DEFAULT_FORMATTER = Formatter()

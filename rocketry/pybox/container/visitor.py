@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 
+
 class Visitor:
 
     """A visitor class to visit elements of nested containers

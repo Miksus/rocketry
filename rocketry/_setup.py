@@ -1,12 +1,11 @@
-from rocketry.core import BaseCondition, Task
-
-from rocketry.session import Session, Config
-from rocketry.parse import add_condition_parser
-from rocketry.conds import true, false
-from rocketry.tasks import CommandTask, FuncTask, CodeTask
-from rocketry.tasks.maintain import ShutDown, Restart
-
 from rocketry.conditions.meta import _FuncTaskCondWrapper
+from rocketry.conds import false, true
+from rocketry.core import BaseCondition, Task
+from rocketry.parse import add_condition_parser
+from rocketry.session import Config, Session
+from rocketry.tasks import CodeTask, CommandTask, FuncTask
+from rocketry.tasks.maintain import Restart, ShutDown
+
 
 def _setup_defaults():
     "Set up the task classes and conditions Rocketry provides out-of-the-box"

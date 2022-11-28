@@ -1,10 +1,5 @@
-from rocketry.time import (
-    TimeOfWeek,
-    TimeOfDay,
-    TimeOfHour,
-    TimeOfMinute,
-    TimeOfMonth
-)
+from rocketry.time import (TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth,
+                           TimeOfWeek)
 
 TIME_CLASSES = {
     "monthly": TimeOfMonth,

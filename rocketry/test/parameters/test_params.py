@@ -1,8 +1,9 @@
 
 import pytest
 
-from rocketry.core import Parameters
 from rocketry.args import Private
+from rocketry.core import Parameters
+
 
 @pytest.mark.parametrize(
     "a,b,union",

@@ -1,6 +1,7 @@
 
 from rocketry.core import Task
 
+
 class CodeTask(Task):
     """Task to run a piece of Python code
 

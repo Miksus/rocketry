@@ -1,6 +1,8 @@
 
 import pytest
+
 from rocketry.pybox import query
+
 
 def test_str_statement():
     qry = query.parser.from_dict({

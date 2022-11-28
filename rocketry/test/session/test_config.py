@@ -1,6 +1,7 @@
 from rocketry import Session
 from rocketry.tasks.run_id import uuid
 
+
 def test_defaults():
     s = Session(config={'execution': 'async'})
     config = s.config

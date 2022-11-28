@@ -1,7 +1,9 @@
 
 import re
 from typing import Pattern
+
 from .base import Expression, Key
+
 
 class Regex(Expression):
     """Regex expression

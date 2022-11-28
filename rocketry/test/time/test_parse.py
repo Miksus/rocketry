@@ -3,8 +3,10 @@ import datetime
 import pytest
 
 from rocketry.core.time.base import StaticInterval
-from rocketry.parse import parse_time, ParserError
-from rocketry.time import TimeOfDay, TimeOfHour, TimeOfMinute, TimeDelta, TimeOfWeek, TimeOfMonth, always, never
+from rocketry.parse import ParserError, parse_time
+from rocketry.time import (TimeDelta, TimeOfDay, TimeOfHour, TimeOfMinute,
+                           TimeOfMonth, TimeOfWeek, always, never)
+
 
 @pytest.mark.parametrize(
     "time_str,expected", [

@@ -1,4 +1,5 @@
-from rocketry.args import Arg, FuncArg, EnvArg, CliArg
+from rocketry.args import Arg, CliArg, EnvArg, FuncArg
+
 
 def get_value():
     return 'Hello World'

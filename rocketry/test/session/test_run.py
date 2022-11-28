@@ -1,6 +1,7 @@
 from rocketry.args import Task
 from rocketry.tasks import FuncTask
 
+
 def test_run(tmpdir, session):
     task1 = FuncTask(
         lambda : None,

@@ -1,11 +1,16 @@
+import logging
 import os
 import sys
-import logging
+
 import pytest
-from rocketry.args import Private, SimpleArg, FuncArg, Arg, EnvArg, CliArg, Return, TerminationFlag, Task, Session, TaskLogger, SchedulerLogger, Config
+
+from rocketry.args import (Arg, CliArg, Config, EnvArg, FuncArg, Private,
+                           Return, SchedulerLogger, Session, SimpleArg, Task,
+                           TaskLogger, TerminationFlag)
 from rocketry.core.log.adapter import TaskAdapter
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.tasks import FuncTask
+
 
 def test_simple():
     arg = SimpleArg("a value")

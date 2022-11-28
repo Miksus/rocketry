@@ -1,10 +1,9 @@
 import pytest
 
-from rocketry.conditions import (
-    Retry
-)
+from rocketry.conditions import Retry
 
 from .test_time import setup_task_state
+
 
 def test_construct():
     assert Retry().n == 1

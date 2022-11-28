@@ -1,9 +1,10 @@
 
 from datetime import datetime, timedelta
+
 import pytest
-from rocketry.time import (
-    TimeSpanDelta
-)
+
+from rocketry.time import TimeSpanDelta
+
 
 @pytest.mark.parametrize(
     "dt,dt_ref,near,far",

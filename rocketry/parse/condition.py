@@ -1,7 +1,9 @@
+from rocketry.conds import false, true
 from rocketry.core.condition.base import BaseCondition
-from rocketry.conds import true, false
+
 from ._condition import parse_condition_string
 from .utils import ParserPicker
+
 
 def _parse_condition_string(s:str, **kwargs) -> BaseCondition:
     cond = parse_condition_string(s, **kwargs)

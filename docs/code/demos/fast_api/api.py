@@ -1,7 +1,7 @@
 from typing import List, Literal, Optional
-from redbird.oper import in_, between
-from fastapi import APIRouter, FastAPI, Query
 
+from fastapi import APIRouter, FastAPI, Query
+from redbird.oper import between, in_
 from scheduler import app as app_rocketry
 
 app = FastAPI()

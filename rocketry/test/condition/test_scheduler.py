@@ -2,13 +2,9 @@ import datetime
 
 import pytest
 
-from rocketry.conditions import (
-    SchedulerStarted,
-    SchedulerCycles
-)
-from rocketry.time import (
-    TimeDelta,
-)
+from rocketry.conditions import SchedulerCycles, SchedulerStarted
+from rocketry.time import TimeDelta
+
 
 def test_scheduler_cycles(session):
 

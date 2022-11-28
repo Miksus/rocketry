@@ -1,19 +1,19 @@
 import asyncio
+import logging
 import multiprocessing
 import time
-import logging
 
-from redbird.repos import MemoryRepo
 from redbird.logging import RepoHandler
+from redbird.repos import MemoryRepo
 
 from rocketry.args.builtin import TerminationFlag
+from rocketry.conditions import AlwaysTrue, SchedulerStarted, TaskStarted
 from rocketry.conditions.scheduler import SchedulerCycles
-
+from rocketry.conds import true
 from rocketry.log import LogRecord
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.conds import true
-from rocketry.conditions import SchedulerStarted, TaskStarted, AlwaysTrue
+
 
 def run_succeeding():
     pass

@@ -1,21 +1,22 @@
 import asyncio
+import datetime
+import logging
 import multiprocessing
-from typing import TYPE_CHECKING, Optional
+import os
+import platform
+import subprocess
+import sys
 import threading
 import time
-import sys
-import os
-import subprocess
-import logging
-import datetime
-import platform
 from queue import Empty
+from typing import TYPE_CHECKING, Optional
 
 from rocketry._base import RedBase
-from rocketry.core.condition import BaseCondition, AlwaysFalse
-from rocketry.core.task import Task
-from rocketry.exc import SchedulerRestart, SchedulerExit, TaskLoggingError, TaskSetupError
+from rocketry.core.condition import AlwaysFalse, BaseCondition
 from rocketry.core.hook import _Hooker
+from rocketry.core.task import Task
+from rocketry.exc import (SchedulerExit, SchedulerRestart, TaskLoggingError,
+                          TaskSetupError)
 
 if TYPE_CHECKING:
     from rocketry import Session
@@ -315,7 +316,7 @@ class Scheduler(RedBase):
                 self.logger.exception(f"Failed setting cache for task '{task.name}'")
                 if not self.session.config.silence_task_logging:
                     raise
-            
+
             if task.on_startup:
                 if isinstance(task.start_cond, AlwaysFalse) and not task.disabled:
                     # Make sure the tasks run if start_cond not set

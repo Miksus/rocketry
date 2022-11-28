@@ -1,13 +1,14 @@
 import datetime
-from functools import reduce
+import itertools
 import time
 from abc import abstractmethod
-from typing import Callable, ClassVar, Dict, FrozenSet, List, Optional, Pattern, Union
-import itertools
 from dataclasses import dataclass, field
+from functools import reduce
+from typing import (Callable, ClassVar, Dict, FrozenSet, List, Optional,
+                    Pattern, Union)
 
 from rocketry._base import RedBase
-from rocketry.pybox.time import to_datetime, to_timedelta, Interval
+from rocketry.pybox.time import Interval, to_datetime, to_timedelta
 
 PARSERS: Dict[Union[str, Pattern], Union[Callable, 'TimePeriod']] = {}
 

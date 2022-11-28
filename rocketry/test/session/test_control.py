@@ -1,17 +1,18 @@
 
 import asyncio
 import time
+
 import pytest
 
-from rocketry.args import Session
 import rocketry
+from rocketry.args import Session
 from rocketry.args.builtin import TerminationFlag
-from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conditions import TaskStarted
-from rocketry.core.time.base import TimeDelta
-from rocketry.tasks import FuncTask
+from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.conds import true
+from rocketry.core.time.base import TimeDelta
 from rocketry.exc import TaskTerminationException
+from rocketry.tasks import FuncTask
 
 
 @pytest.mark.parametrize("execution", ["main", "thread"])

@@ -1,1 +1,2 @@
-from .base import AlwaysTrue, AlwaysFalse, All, Any, Not, BaseCondition, BaseComparable
+from .base import (All, AlwaysFalse, AlwaysTrue, Any, BaseComparable,
+                   BaseCondition, Not)

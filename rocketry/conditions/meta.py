@@ -3,10 +3,10 @@ import copy
 from typing import Callable, Optional, Pattern, Union
 
 from pydantic import Field
-from rocketry.args import Session
-from rocketry import Session as _Session
 
-from rocketry.core.condition import BaseCondition #, Task
+from rocketry import Session as _Session
+from rocketry.args import Session
+from rocketry.core.condition import BaseCondition  # , Task
 from rocketry.tasks.func import FuncTask
 
 

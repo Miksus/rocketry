@@ -1,14 +1,15 @@
 import logging
-import pytest
 
+import pytest
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
+from rocketry.conditions import AlwaysTrue, TaskStarted
 from rocketry.conditions.scheduler import SchedulerStarted
 from rocketry.core.time.base import TimeDelta
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import FuncTask
-from rocketry.conditions import TaskStarted, AlwaysTrue
+
 
 def run_failing():
     raise RuntimeError("Task failed")

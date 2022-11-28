@@ -1,6 +1,6 @@
 
 from rocketry.core.task import Task
-from rocketry.exc import SchedulerRestart, SchedulerExit
+from rocketry.exc import SchedulerExit, SchedulerRestart
 
 
 class Restart(Task):

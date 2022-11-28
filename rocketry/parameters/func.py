@@ -1,5 +1,7 @@
 from typing import Callable
+
 from rocketry.args import FuncArg
+
 
 class FuncParam:
     """A parameter from a function.

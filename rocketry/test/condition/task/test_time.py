@@ -2,20 +2,11 @@ from typing import List, Tuple
 
 import pytest
 
-from rocketry.conditions import (
-    TaskStarted,
-
-    TaskFinished,
-    TaskFailed,
-    TaskSucceeded,
-
-    TaskRunning
-)
-from rocketry.testing.log import create_task_record
-from rocketry.time import (
-    TimeOfDay, TimeSpanDelta
-)
+from rocketry.conditions import (TaskFailed, TaskFinished, TaskRunning,
+                                 TaskStarted, TaskSucceeded)
 from rocketry.tasks import FuncTask
+from rocketry.testing.log import create_task_record
+from rocketry.time import TimeOfDay, TimeSpanDelta
 
 
 def setup_task_state(mock_datetime_now, logs:List[Tuple[str, str]], time_after=None, task=None, session=None):

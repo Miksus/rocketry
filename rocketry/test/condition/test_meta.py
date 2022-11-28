@@ -2,9 +2,9 @@ import re
 
 import pytest
 
-from rocketry.conditions import TaskCond
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted
 from rocketry import Session
+from rocketry.conditions import (SchedulerCycles, SchedulerStarted, TaskCond,
+                                 TaskStarted)
 from rocketry.tasks import FuncTask
 
 N_PARSERS = len(Session._cls_cond_parsers)

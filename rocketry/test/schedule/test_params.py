@@ -1,17 +1,18 @@
 
 import threading
 from time import sleep
+
 import pytest
+
 import rocketry
-from rocketry.conditions import DependSuccess
+from rocketry.args import (Arg, FuncArg, Return, Session,  # , Param, Session
+                           Task, TerminationFlag)
+from rocketry.conditions import (AlwaysTrue, DependSuccess, SchedulerCycles,
+                                 SchedulerStarted, TaskStarted)
 from rocketry.exc import TaskTerminationException
-
-
 from rocketry.tasks import FuncTask
 from rocketry.time import TimeDelta
-from rocketry.conditions import SchedulerCycles, SchedulerStarted, TaskStarted, AlwaysTrue
 
-from rocketry.args import Arg, Return, Session, Task, FuncArg, TerminationFlag #, Param, Session
 
 # Example functions
 # -----------------

@@ -1,7 +1,8 @@
-from typing import Iterable, Iterator
 import datetime
+from typing import Iterable, Iterator
 
 from rocketry.pybox.time.convert import to_datetime
+
 
 class QueryBase:
 

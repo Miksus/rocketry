@@ -1,22 +1,22 @@
 
-from itertools import chain
 import datetime
 import logging
+from itertools import chain
 from typing import Optional
-from pydantic import root_validator, validator
 
 import pytest
-
-from redbird.oper import in_, between
+from pydantic import root_validator, validator
 from redbird.logging import RepoHandler
+from redbird.oper import between, in_
 from redbird.repos import MemoryRepo
+
 from rocketry.conditions import TaskFinished
 from rocketry.conditions.scheduler import SchedulerCycles
-
+from rocketry.exc import TaskLoggingError
 from rocketry.log.log_record import MinimalRecord
 from rocketry.pybox.time.convert import to_datetime
 from rocketry.tasks import FuncTask
-from rocketry.exc import TaskLoggingError
+
 
 def create_line_to_startup_file():
     with open("start.txt", "w", encoding="utf-8") as file:

@@ -1,4 +1,6 @@
-from rocketry.conds import after_all_success, after_any_success, after_any_finish, after_any_fail
+from rocketry.conds import (after_all_success, after_any_fail,
+                            after_any_finish, after_any_success)
+
 
 @app.task()
 def do_a():

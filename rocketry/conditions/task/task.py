@@ -1,18 +1,19 @@
-from typing import Optional
 import datetime
+from typing import Optional
 
-from redbird.oper import in_, greater_equal, between
+from redbird.oper import between, greater_equal, in_
 
-from rocketry.core.condition import BaseCondition, BaseComparable
+from rocketry.args import Session, Task
+from rocketry.core.condition import BaseComparable, BaseCondition
+from rocketry.core.time import TimeDelta
+from rocketry.core.time.utils import get_period_span
 from rocketry.log.utils import get_field_value
 from rocketry.pybox.time import to_timestamp
-from rocketry.time.construct import get_before, get_between, get_full_cycle, get_after, get_on
-from rocketry.args import Task, Session
-from rocketry.core.time.utils import get_period_span
-from rocketry.core.time import TimeDelta
-from .utils import DependMixin, TaskStatusMixin
+from rocketry.time.construct import (get_after, get_before, get_between,
+                                     get_full_cycle, get_on)
 
 from ..time import IsPeriod
+from .utils import DependMixin, TaskStatusMixin
 
 
 class TaskStarted(TaskStatusMixin):

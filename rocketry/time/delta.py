@@ -1,10 +1,11 @@
-import time
 import datetime
+import time
 from dataclasses import dataclass, field
 from typing import Callable, Union
 
 from rocketry.core.time import TimeDelta
-from rocketry.pybox.time import to_timedelta, Interval
+from rocketry.pybox.time import Interval, to_timedelta
+
 
 @dataclass(frozen=True, init=False)
 class TimeSpanDelta(TimeDelta):

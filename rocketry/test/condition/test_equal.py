@@ -1,11 +1,9 @@
 
 import pytest
 
-from rocketry.conditions import (
-    AlwaysTrue, AlwaysFalse,
-    All, Any, Not,
-    TaskFinished, TaskRunning,
-)
+from rocketry.conditions import (All, AlwaysFalse, AlwaysTrue, Any, Not,
+                                 TaskFinished, TaskRunning)
+
 
 @pytest.mark.parametrize(
     "get_cond",

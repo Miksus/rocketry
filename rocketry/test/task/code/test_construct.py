@@ -1,13 +1,14 @@
 import logging
 from textwrap import dedent
-import pytest
 
+import pytest
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 
+from rocketry.conditions import TaskStarted
 from rocketry.log.log_record import LogRecord
 from rocketry.tasks import CodeTask
-from rocketry.conditions import TaskStarted
+
 
 def test_construct(session):
     task = CodeTask(code=dedent("""

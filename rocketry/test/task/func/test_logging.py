@@ -1,16 +1,16 @@
 import datetime
 import logging
-from queue import Empty
 import multiprocessing
+from queue import Empty
 
 import pytest
-
 from redbird.logging import RepoHandler
 
-from rocketry.log.log_record import  MinimalRecord
+from rocketry.conds import true
+from rocketry.log.log_record import MinimalRecord
 from rocketry.tasks import FuncTask
 from rocketry.testing.log import create_task_record
-from rocketry.conds import true
+
 
 def run_success():
     pass

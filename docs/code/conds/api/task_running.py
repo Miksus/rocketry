@@ -1,5 +1,6 @@
 from rocketry.conds import running
 
+
 @app.task(end_cond=running.more_than("2 mins"))
 def do_things():
     ... # Terminates if runs over 2 minutes

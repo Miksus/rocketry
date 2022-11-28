@@ -1,21 +1,21 @@
 import re
 from functools import partial
 
-from rocketry.conditions.task import TaskFailed, TaskSucceeded, TaskFinished, TaskTerminated, TaskInacted, TaskStarted, TaskRunning, DependSuccess, DependFailure, DependFinish, get_on
-from rocketry.conditions.scheduler import SchedulerStarted, SchedulerCycles
+from rocketry.conditions.parameter import IsEnv, ParamExists
+from rocketry.conditions.scheduler import SchedulerCycles, SchedulerStarted
+from rocketry.conditions.task import (DependFailure, DependFinish,
+                                      DependSuccess, TaskFailed, TaskFinished,
+                                      TaskInacted, TaskRunning, TaskStarted,
+                                      TaskSucceeded, TaskTerminated, get_on)
 from rocketry.conditions.time import IsPeriod
-from rocketry.conditions.parameter import ParamExists, IsEnv
-
-from rocketry.time.construct import get_full_cycle, get_between, get_after, get_before
-from rocketry.time import TimeDelta
-
-from rocketry.session import Session
+from rocketry.conds import (cron, daily, every, hourly, minutely, monthly,
+                            secondly, weekly)
 from rocketry.core.condition import Not
+from rocketry.session import Session
+from rocketry.time import TimeDelta
+from rocketry.time.construct import (get_after, get_before, get_between,
+                                     get_full_cycle)
 
-from rocketry.conds import (
-    secondly, minutely, hourly, daily, weekly, monthly, every,
-    cron
-)
 
 def _from_period_task_has(cls, span_type=None, inverse=False, **kwargs):
 

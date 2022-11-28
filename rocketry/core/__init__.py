@@ -1,14 +1,7 @@
 
-from . import task
-
-from . import time
-from . import schedule
-from . import condition
-
-from .parameters import Parameters, BaseArgument
+from . import condition, schedule, task, time
+from .condition import BaseCondition
+from .parameters import BaseArgument, Parameters
 from .schedule import Scheduler
 from .task import Task
-
-
-from .condition import BaseCondition
 from .time import TimePeriod

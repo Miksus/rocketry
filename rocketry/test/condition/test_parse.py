@@ -2,40 +2,20 @@
 import itertools
 
 import pytest
-from rocketry.conditions.task.task import TaskRunnable
 
-from rocketry.parse.utils import ParserError
+from rocketry.conditions import (All, AlwaysFalse, AlwaysTrue, Any,
+                                 DependFailure, DependFinish, DependSuccess,
+                                 IsEnv, IsPeriod, Not, ParamExists,
+                                 TaskExecutable, TaskFailed, TaskInacted,
+                                 TaskRunning, TaskStarted, TaskSucceeded,
+                                 TaskTerminated)
 from rocketry.conditions.scheduler import SchedulerCycles, SchedulerStarted
+from rocketry.conditions.task.task import TaskRunnable
+from rocketry.conds import daily, hourly, minutely, monthly, secondly, weekly
 from rocketry.parse.condition import parse_condition
-from rocketry.conditions import ParamExists
-from rocketry.conditions import (
-    AlwaysTrue, AlwaysFalse,
-    All, Any, Not,
-
-    TaskRunning, TaskStarted,
-    TaskFailed, TaskSucceeded,
-    TaskInacted, TaskTerminated,
-    DependFailure, DependSuccess, DependFinish,
-    TaskExecutable,
-
-    IsPeriod,
-
-    IsEnv,
-)
-
-from rocketry.time import (
-    TimeDelta,
-
-    TimeOfMinute,
-    TimeOfHour,
-    TimeOfDay,
-    TimeOfWeek,
-    TimeOfMonth
-)
-
-from rocketry.conds import (
-    secondly, minutely, hourly, daily, weekly, monthly
-)
+from rocketry.parse.utils import ParserError
+from rocketry.time import (TimeDelta, TimeOfDay, TimeOfHour, TimeOfMinute,
+                           TimeOfMonth, TimeOfWeek)
 from rocketry.time.cron import Cron
 from rocketry.time.interval import TimeOfSecond
 

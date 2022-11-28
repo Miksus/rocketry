@@ -1,5 +1,6 @@
-from typing import Dict, List, Callable, Tuple
 import inspect
+from typing import Callable, Dict, List, Tuple
+
 
 class _Hooker:
     # No, this is not what you think.
@@ -29,7 +30,7 @@ class _Hooker:
 
 def clear_hooks():
     "Remove all hooks."
-    from rocketry.core import Task, Scheduler
+    from rocketry.core import Scheduler, Task
     Task.init_hooks = []
     Scheduler.startup_hooks = []
     Scheduler.cycle_hooks = []

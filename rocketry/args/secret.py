@@ -1,6 +1,7 @@
 
 from rocketry.core.parameters import BaseArgument
 
+
 class Private(BaseArgument):
     """Private argument not meant to be shown outside.
 

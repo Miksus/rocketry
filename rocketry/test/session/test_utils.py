@@ -3,6 +3,7 @@ from rocketry.core.condition.base import All, Any
 from rocketry.tasks import FuncTask
 from rocketry.utils.dependencies import Dependencies, Link, get_dependencies
 
+
 def test_dependency(session):
     ta = FuncTask(lambda: None, name="a", start_cond="daily", execution="main", session=session)
     tb = FuncTask(lambda: None, name="b", start_cond="after task 'a'", execution="main", session=session)

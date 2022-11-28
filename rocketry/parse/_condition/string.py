@@ -1,6 +1,8 @@
-from rocketry.conditions import Any, All, Not
+from rocketry.conditions import All, Any, Not
+
 from ..utils.string_parser import InstructionParser
 from .condition_item import parse_condition_item
+
 
 def _flatten(*args, types, with_attr):
     comps = []

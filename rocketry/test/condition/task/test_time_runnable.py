@@ -2,15 +2,12 @@ import datetime
 
 import pytest
 
-from rocketry.conditions import (
-    TaskRunnable,
-)
+from rocketry.conditions import TaskRunnable
 from rocketry.pybox.time.convert import to_datetime
-from rocketry.time import (
-    TimeOfDay
-)
 from rocketry.tasks import FuncTask
 from rocketry.testing.log import create_task_record
+from rocketry.time import TimeOfDay
+
 
 @pytest.mark.parametrize("from_logs", [pytest.param(True, id="from logs"), pytest.param(False, id="optimized")])
 @pytest.mark.parametrize(

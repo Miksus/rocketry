@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 from dateutil.parser import parse as parse_datetime
-
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
 

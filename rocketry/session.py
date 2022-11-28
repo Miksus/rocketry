@@ -3,20 +3,22 @@ Utilities for getting information
 about the scehuler/task/parameters etc.
 """
 
-from copy import copy
 import datetime
 import logging
-from multiprocessing import cpu_count
-import time
 import threading
+import time
 import warnings
-
+from copy import copy
 from itertools import chain
-from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
+from multiprocessing import cpu_count
+from typing import (TYPE_CHECKING, Callable, ClassVar, Dict, Iterable, List,
+                    Optional, Set, Tuple, Type, Union)
+
 from pydantic import BaseModel, root_validator, validator
-from rocketry.pybox.time import to_timedelta
-from rocketry.log.defaults import create_default_handler
+
 from rocketry._base import RedBase
+from rocketry.log.defaults import create_default_handler
+from rocketry.pybox.time import to_timedelta
 from rocketry.tasks.run_id import uuid
 
 try:
@@ -26,16 +28,10 @@ except ImportError: # pragma: no cover
 
 
 if TYPE_CHECKING:
+    from rocketry.core import (BaseArgument, BaseCondition, Parameters,
+                               Scheduler, Task, TimePeriod)
     from rocketry.core.log import TaskAdapter
     from rocketry.parse import StaticParser
-    from rocketry.core import (
-        Task,
-        Scheduler,
-        BaseCondition,
-        Parameters,
-        BaseArgument,
-        TimePeriod
-    )
 
 
 
@@ -84,8 +80,8 @@ class Config(BaseModel):
 
     @validator('shut_cond', pre=True)
     def parse_shut_cond(cls, value):
-        from rocketry.parse import parse_condition
         from rocketry.conditions import AlwaysFalse
+        from rocketry.parse import parse_condition
         if value is None:
             return AlwaysFalse()
         return parse_condition(value)
@@ -367,7 +363,7 @@ class Session(RedBase):
             task_logger.setLevel(logging.INFO)
 
     def _wrap_log_record_creation(self, logger=None):
-        # Make 
+        # Make
         from rocketry.core.log import TaskAdapter
         if logger is None:
             logger = logging.getLogger(self.config.task_logger_basename)
@@ -599,7 +595,7 @@ class Session(RedBase):
 
     def get_current_time(self) -> datetime.datetime:
         """Get measurement of time as datetime
-        
+
         This method is used internally thoroughout
         the package.
         """

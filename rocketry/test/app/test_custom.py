@@ -1,10 +1,10 @@
 import logging
 
 from rocketry import Rocketry
-from rocketry.args import Arg
+from rocketry.args import Arg, Task, argument
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.conds import condition, true
-from rocketry.args import argument, Task
+
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")

@@ -1,12 +1,10 @@
 
 import pytest
 
-from rocketry.conditions import (
-    ParamExists, IsPeriod,
-    Any, All, Not
-)
-from rocketry.conds import true, false
+from rocketry.conditions import All, Any, IsPeriod, Not, ParamExists
+from rocketry.conds import false, true
 from rocketry.time import TimeDelta, always
+
 
 def test_true():
     assert bool(true)

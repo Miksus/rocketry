@@ -1,12 +1,12 @@
 import logging
-import pytest
 
+import pytest
 from task_helpers import wait_till_task_finish
 
-from rocketry.tasks import FuncTask
+from rocketry.conditions import AlwaysFalse, AlwaysTrue
 from rocketry.core.task import Task
 from rocketry.exc import TaskInactionException, TaskLoggingError
-from rocketry.conditions import AlwaysFalse, AlwaysTrue
+from rocketry.tasks import FuncTask
 
 Task.use_instance_naming = True
 

@@ -1,5 +1,6 @@
 from rocketry.conds import crontime
 
+
 @app.task(crontime('* * * * *'))
 def do_minutely():
     ...

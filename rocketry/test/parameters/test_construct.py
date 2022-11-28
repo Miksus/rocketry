@@ -1,11 +1,11 @@
 
 import pytest
-import rocketry
-from rocketry.args import FuncArg
 
+import rocketry
+from rocketry.args import FuncArg, Private
 from rocketry.core import Parameters
-from rocketry.args import Private
 from rocketry.parameters import FuncParam
+
 
 @pytest.mark.parametrize(
     "get_param,mater,repr",

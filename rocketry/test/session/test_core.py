@@ -2,6 +2,7 @@
 import logging
 
 import pytest
+
 from rocketry import Session
 from rocketry.core import Parameters
 from rocketry.core.log.adapter import TaskAdapter

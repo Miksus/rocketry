@@ -1,6 +1,8 @@
 import logging
-from rocketry.pybox.time import to_datetime
+
 from rocketry.core import Task
+from rocketry.pybox.time import to_datetime
+
 
 def create_record(
     level,

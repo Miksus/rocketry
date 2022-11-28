@@ -1,5 +1,6 @@
 from rocketry.conds import crontime
 
+
 @app.task(crontime(minute="*/5"))
 def do_simple():
     "Run at every 5th minute"

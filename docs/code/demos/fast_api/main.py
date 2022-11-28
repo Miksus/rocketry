@@ -1,7 +1,6 @@
 import asyncio
 
 import uvicorn
-
 from api import app as app_fastapi
 from scheduler import app as app_rocketry
 

@@ -1,5 +1,6 @@
-from rocketry.time import TimeDelta
 from rocketry.conditions import SchedulerCycles, SchedulerStarted
+from rocketry.time import TimeDelta
+
 
 def test_scheduler_started(session):
 

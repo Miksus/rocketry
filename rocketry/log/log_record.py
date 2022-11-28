@@ -1,6 +1,8 @@
 import datetime
 from typing import Optional
+
 from pydantic import BaseModel, Field, validator
+
 
 class MinimalRecord(BaseModel):
     """A log record with minimal number of fields for Rocketry to work"""

@@ -1,15 +1,16 @@
 import logging
-from typing import List, Optional, Pattern, Union
 import warnings
+from typing import List, Optional, Pattern, Union
 
 from redbird import BaseRepo
 from redbird.logging import RepoHandler
 from redbird.repos import MemoryRepo
-from rocketry.log.log_record import LogRecord
 
-from rocketry.conditions import FuncCond
-from rocketry.parameters import FuncParam
 from rocketry import Session
+from rocketry.conditions import FuncCond
+from rocketry.log.log_record import LogRecord
+from rocketry.parameters import FuncParam
+
 
 class _AppMixin:
 

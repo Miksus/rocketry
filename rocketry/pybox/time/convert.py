@@ -1,5 +1,6 @@
 import datetime
 from typing import Union
+
 from dateutil.parser import parse
 
 ABBREVIATIONS = {

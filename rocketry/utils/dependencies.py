@@ -2,11 +2,11 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
-from rocketry.conditions import Any, All, DependFinish, DependSuccess
+from rocketry import Session
+from rocketry.conditions import All, Any, DependFinish, DependSuccess
 from rocketry.conditions.task import DependFailure
 from rocketry.core import Task
 
-from rocketry import Session
 
 class Link:
 

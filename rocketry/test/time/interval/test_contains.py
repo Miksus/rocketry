@@ -2,14 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from rocketry.time.interval import (
-    TimeOfSecond,
-    TimeOfMinute,
-    TimeOfHour,
-    TimeOfDay,
-    TimeOfWeek,
-    TimeOfMonth,
-)
+from rocketry.time.interval import (TimeOfDay, TimeOfHour, TimeOfMinute,
+                                    TimeOfMonth, TimeOfSecond, TimeOfWeek)
 
 # TimeOfSecond
 # ---------

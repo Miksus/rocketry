@@ -1,10 +1,8 @@
 import pytest
 
+from rocketry.conditions import AlwaysFalse, AlwaysTrue, Not
 from rocketry.parse import parse_condition
-from rocketry.conditions import (
-    AlwaysTrue, AlwaysFalse,
-    Not,
-)
+
 
 @pytest.mark.parametrize(
     "cond_str,expected",

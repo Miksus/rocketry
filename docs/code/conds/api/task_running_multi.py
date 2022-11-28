@@ -1,5 +1,6 @@
 from rocketry.conds import running
 
+
 @app.task(running <= 4, multilanch=True)
 def do_parallel_limited():
     ... # Allows 4 parallel runs

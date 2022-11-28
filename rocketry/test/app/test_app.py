@@ -1,18 +1,17 @@
 import asyncio
 import logging
+
 import pytest
-
 from redbird.logging import RepoHandler
-from redbird.repos import MemoryRepo, CSVFileRepo
+from redbird.repos import CSVFileRepo, MemoryRepo
 
-from rocketry import Rocketry
+from rocketry import Rocketry, Session
+from rocketry.args import Arg, FuncArg, Return
 from rocketry.conditions.task.task import TaskStarted
-from rocketry.args import Return, Arg, FuncArg
-from rocketry import Session
-from rocketry.session import Config
-from rocketry.tasks import CommandTask
-from rocketry.tasks import FuncTask
 from rocketry.conds import false, true
+from rocketry.session import Config
+from rocketry.tasks import CommandTask, FuncTask
+
 
 def set_logging_defaults():
     task_logger = logging.getLogger("rocketry.task")

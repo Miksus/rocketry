@@ -1,11 +1,12 @@
-from pathlib import Path
 import types
+from pathlib import Path
 
 import pytest
 
-from rocketry.tasks import FuncTask
 from rocketry.conditions import AlwaysTrue
 from rocketry.parse.utils import ParserError
+from rocketry.tasks import FuncTask
+
 
 def myfunc():
     ...

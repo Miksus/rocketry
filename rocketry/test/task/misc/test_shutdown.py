@@ -1,9 +1,10 @@
 import pytest
 
 from rocketry.conditions import AlwaysFalse
-from rocketry.tasks.maintain import ShutDown
-from rocketry.tasks import FuncTask
 from rocketry.exc import SchedulerExit
+from rocketry.tasks import FuncTask
+from rocketry.tasks.maintain import ShutDown
+
 
 def write_file(text):
     with open("test.txt", "a", encoding="utf-8") as f:

@@ -1,8 +1,10 @@
 
 import copy
 from typing import Callable, List, Optional, Pattern, Union
-from rocketry.core.parameters.parameters import Parameters
+
 from rocketry.core.condition import BaseCondition
+from rocketry.core.parameters.parameters import Parameters
+
 
 class FuncCond(BaseCondition):
     """Condition from a function.

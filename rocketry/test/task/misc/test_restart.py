@@ -1,10 +1,9 @@
 import pytest
 
-from rocketry.tasks.maintain import Restart
-from rocketry.tasks import FuncTask
-from rocketry.exc import SchedulerRestart
 from rocketry.conditions import TaskStarted
-
+from rocketry.exc import SchedulerRestart
+from rocketry.tasks import FuncTask
+from rocketry.tasks.maintain import Restart
 
 
 def write_file(text):

@@ -1,4 +1,5 @@
-from rocketry.conds import true, false
+from rocketry.conds import false, true
+
 
 @app.task(true)
 def do_constantly():
