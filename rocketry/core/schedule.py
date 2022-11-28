@@ -173,6 +173,7 @@ class Scheduler(RedBase):
         for task in tasks:
             with task.lock:
                 self.handle_logs()
+                task._clean_run_stack()
                 if task.on_startup or task.on_shutdown:
                     # Startup or shutdown tasks are not run in main sequence
                     pass

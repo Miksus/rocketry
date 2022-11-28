@@ -429,7 +429,6 @@ class Task(RedBase, BaseModel):
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
         #! TODO: Use property
-        self._clean_run_stack()
         return any(
             run.is_alive()
             for run in self._run_stack
@@ -992,7 +991,7 @@ class Task(RedBase, BaseModel):
             for run in self._run_stack:
                 start = run.start
                 run_duration = now - start
-                if run_duration > timeout_sec:
+                if run.is_alive() and run_duration > timeout_sec:
                     await self._terminate_run(run, reason="timeouted")
 
     def _clean_run_stack(self):

@@ -5,6 +5,7 @@ import time
 
 import pytest
 from rocketry.args import FuncArg
+from rocketry.conds import scheduler_cycles, false, true
 
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
@@ -13,7 +14,9 @@ from rocketry.args import TerminationFlag
 from rocketry.log import RunRecord
 from rocketry.tasks.run_id import increment, uuid
 
-from rocketry.conds import true
+
+def run_success_instant():
+    ...
 
 def run_slow_fail():
     time.sleep(5)
@@ -149,6 +152,41 @@ def test_multilaunch(execution, status, session):
             {"task_name": "task", "action": status},
             {"task_name": "task", "action": status},
         ]
+
+def test_multilaunch_terminate_after_success(session):
+    # Issue #144
+    session.config.func_run_id = increment
+    session.get_repo().model = RunRecord
+    session.config.max_process_count = 3
+
+    task = FuncTask(
+        run_success_instant,
+        name="task",
+        start_cond=true,
+        multilaunch=True,
+        execution="process", session=session,
+    )
+    session.config.shut_cond = TaskStarted(task=task)
+    session.start()
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": "1"},
+        {"task_name": "task", "action": "success", "run_id": "1"},
+    ]
+
+    task.start_cond = false
+    session.config.timeout = 0.0
+    session.config.shut_cond = scheduler_cycles(5)
+    session.start()
+
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": "1"},
+        {"task_name": "task", "action": "success", "run_id": "1"},
+    ]
+    assert task._run_stack == []
 
 def test_limited_processes(session):
 
