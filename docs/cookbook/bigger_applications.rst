@@ -53,8 +53,8 @@ you could put in each:
             # Set Task Groups
             # ---------------
 
-            app.include_group(morning.group)
-            app.include_group(evening.group)
+            app.include_grouper(morning.group)
+            app.include_grouper(evening.group)
 
             # Application Setup
             # -----------------
