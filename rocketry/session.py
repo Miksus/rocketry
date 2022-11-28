@@ -13,7 +13,7 @@ import warnings
 
 from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, root_validator, validator, Extra
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -37,7 +37,9 @@ if TYPE_CHECKING:
         TimePeriod
     )
 
-
+class NameSpace(BaseModel):
+    class Config:
+        extra = Extra.allow
 
 class Config(BaseModel):
     class Config:
@@ -70,6 +72,7 @@ class Config(BaseModel):
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
     cls_lock: Type = threading.Lock
+    cls_meta: Type = NameSpace
 
     param_materialize:Literal['pre', 'post'] = 'post'
 

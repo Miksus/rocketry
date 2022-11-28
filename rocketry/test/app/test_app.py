@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from typing import List
+from pydantic import BaseModel
 import pytest
 
 from redbird.logging import RepoHandler
@@ -9,7 +11,7 @@ from rocketry import Rocketry
 from rocketry.conditions.task.task import TaskStarted
 from rocketry.args import Return, Arg, FuncArg
 from rocketry import Session
-from rocketry.session import Config
+from rocketry.session import Config, NameSpace
 from rocketry.tasks import CommandTask
 from rocketry.tasks import FuncTask
 from rocketry.conds import false, true
@@ -287,6 +289,33 @@ def test_task_name():
         return 'return value'
 
     assert app.session[do_func].name == "do_func"
+
+def test_task_meta():
+    set_logging_defaults()
+
+    class Meta(BaseModel):
+        tags: List[str]
+        owner: str
+
+    app = Rocketry(execution="main")
+
+    @app.task(meta={"tags": ["example"]})
+    def do_a():
+        ...
+
+    meta = app.session[do_a].meta
+    assert meta == {"tags": ["example"]}
+    assert isinstance(meta, NameSpace)
+    
+    app = Rocketry(execution="main", cls_meta=Meta)
+
+    @app.task(meta={"tags": ["example"], "owner": "devs"})
+    def do_b():
+        ...
+
+    meta = app.session[do_b].meta
+    assert meta == Meta(tags=["example"], owner="devs")
+    assert isinstance(meta, Meta)
 
 def test_delete_task():
     set_logging_defaults()

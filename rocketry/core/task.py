@@ -220,6 +220,7 @@ class Task(RedBase, BaseModel):
     # Instance
     name: Optional[str] = Field(description="Name of the task. Must be unique")
     description: Optional[str] = Field(description="Description of the task for documentation")
+    meta: BaseModel = Field(description="Meta values not used by Rocketry")
     logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records")
     execution: Optional[Literal['main', 'async', 'thread', 'process']]
     priority: int = 0
@@ -296,6 +297,11 @@ class Task(RedBase, BaseModel):
         if value is not None:
             return to_timedelta(value)
         return value
+
+    @validator('meta', pre=True, always=True)
+    def parse_meta(cls, value, values):
+        cls = values['session'].config.cls_meta
+        return cls(**value)
 
     @property
     def logger(self):
