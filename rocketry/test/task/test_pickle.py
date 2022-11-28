@@ -5,7 +5,7 @@ import pytest
 
 from rocketry.tasks import FuncTask
 from rocketry.conditions import TaskFailed
-
+from rocketry.core import Parameters
 
 def func_on_main_level():
     pass
@@ -74,4 +74,6 @@ class TestFunc:
         task = FuncTask(func_on_main_level, execution="process", name="picklable", session=session)
         pick_task = pickle_dump_read(task)
 
-        assert pick_task.session is None
+        for attr, val in vars(pick_task.session).items():
+            if attr not in ('hooks', 'returns', 'config'):
+                assert val in (None, set(), {}, Parameters())

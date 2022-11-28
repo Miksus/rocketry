@@ -1,14 +1,17 @@
 
+import logging
 import os
 import sys
 import threading
 import warnings
 from typing import Any, Callable, Optional
+from rocketry.core.log.adapter import TaskAdapter
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
+from rocketry.core.task import Task as BaseTask
 from rocketry.core.parameters import BaseArgument, Parameters
 
 class NotSet:
@@ -69,27 +72,66 @@ class Arg(BaseArgument):
 class Session(BaseArgument):
     "An argument that represents the session"
 
-    def get_value(self, task=None, session=None, **kwargs) -> Any:
+    def __init__(self, default=NOTSET):
+        self.default = default
+
+    def get_value(self, task=None, session=None, scheduler=None, **kwargs) -> Any:
         if session is not None:
             return session
-        return task.session
+        if scheduler is not None:
+            return scheduler.session
+        if task is not None:
+            return task.session
+        if self.default is not NOTSET:
+            return self.default
+        raise TypeError("Missing session")
 
     def __repr__(self):
-        return f'session'
+        return 'session'
 
 class Task(BaseArgument):
     "An argument that represents a task"
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, default=NOTSET):
         self.name = name
+        self.default = default
 
-    def get_value(self, task=None, **kwargs) -> Any:
+    def get_value(self, task=None, session=Session(default=None), **kwargs) -> Any:
         if self.name is None:
-            return task
-        return task.session[self.name]
+            # Assuming "task" is actual task
+            is_task_cls = isinstance(task, BaseTask)
+            if is_task_cls:
+                return task
+            elif self.default is not NOTSET:
+                return self.default
+            raise TypeError(f"Expected {BaseTask}, got {type(task)}")
+        if session is None:
+            session = task.session
+        return session[self.name]
 
     def __repr__(self):
         return f'Task({repr(self.name) if self.name is not None else ""})'
+
+class Config(BaseArgument):
+    "Argument that represents the session config"
+
+    def get_value(self, session=Session(), **kwargs):
+        return session.config
+
+class TaskLogger(BaseArgument):
+    "Argument that represents the task logger (adapter)"
+
+    def get_value(self, session=Session(default=None), task=Task(default=None), **kwargs) -> Any:
+        logger_name = session.config.task_logger_basename if session is not None else 'rocketry.task'
+        task_logger = logging.getLogger(logger_name)
+        return TaskAdapter(task_logger, task=task)
+
+class SchedulerLogger(BaseArgument):
+    "Argument that represents the scheduler logger"
+
+    def get_value(self, session=Session(default=None), **kwargs) -> Any:
+        logger_name = session.config.scheduler_logger_basename if session is not None else 'rocketry.scheduler'
+        return logging.getLogger(logger_name)
 
 class Return(BaseArgument):
     """A return argument
@@ -269,3 +311,8 @@ class CliArg(BaseArgument):
                 raise KeyError("CLI argument not found")
             return self.default
         return args[i+1]
+
+def argument(**kwargs):
+    def wrapper(func):
+        return FuncArg(func, **kwargs)
+    return wrapper

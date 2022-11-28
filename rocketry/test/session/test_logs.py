@@ -3,7 +3,7 @@ from itertools import chain
 import datetime
 import logging
 from typing import Optional
-from pydantic import root_validator
+from pydantic import root_validator, validator
 
 import pytest
 
@@ -38,6 +38,16 @@ class CustomRecord(MinimalRecord):
     end: Optional[datetime.datetime]
     runtime: Optional[datetime.timedelta]
     message: str
+
+    @validator("start", pre=True)
+    def parse_start(cls, value):
+        if value is not None:
+            return datetime.datetime.fromtimestamp(value)
+
+    @validator("end", pre=True)
+    def parse_end(cls, value):
+        if value is not None:
+            return datetime.datetime.fromtimestamp(value)
 
     @root_validator
     def validate_timestamp(cls, values):
@@ -96,9 +106,45 @@ def test_failed_logging_finish(execution, status, on, session):
         session.start()
     assert task.status == "fail"
 
+    session.remove_task(task)
+
+    task = FuncTask({"success": do_success, "fail": do_fail}[status], name="b task", execution=execution, session=session)
+    task.run()
+
     session.config.silence_task_logging = True
     session.run(task)
 
+    assert task.status == "fail"
+
+@pytest.mark.parametrize("on", ["startup", "normal", "shutdown"])
+def test_failed_set_cache(on, session):
+    class MyHandler(logging.Handler):
+        def emit(self, record):
+            if record.action != "run":
+                raise RuntimeError("Oops")
+
+    if on == "normal":
+        session.config.shut_cond = TaskFinished(task="a task") >= 1
+    else:
+        session.config.shut_cond = SchedulerCycles() == 1
+
+    logger = logging.getLogger("rocketry.task")
+    logger.handlers.insert(0, MyHandler())
+    task = FuncTask(do_success, name="a task", session=session)
+    task.log_running()
+    if on == "startup":
+        task.on_startup = True
+    elif on == "shutdown":
+        task.on_shutdown = True
+    with pytest.raises(TaskLoggingError):
+        session.start()
+    assert task.status == "fail"
+
+    session.remove_task(task)
+    task = FuncTask(do_success, name="a task", session=session)
+    task.log_running()
+    session.config.silence_task_logging = True
+    session.start()
     assert task.status == "fail"
 
 @pytest.mark.parametrize(

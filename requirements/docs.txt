@@ -2,7 +2,6 @@ python-dateutil
 pydantic
 redbird>=0.5.0
 
-versioneer
 sphinx >= 1.7.5
 pydata-sphinx-theme
 sphinx_book_theme

@@ -164,62 +164,62 @@ class TaskRunning(BaseComparable):
         self.period = period
         super().__init__()
 
-    def get_measurement(self, task=Task(), session=Session()):
+    def get_measurement(self, task=Task(default=None), session=Session()):
         task = session[self.task] if self.task is not None else task
 
         allow_optimization = not self.session.config.force_status_from_logs
-        start, end = get_period_span(self.period)
+        start, end = get_period_span(self.period, session=session)
         if allow_optimization:
             task = session[self.task] if self.task is not None else task
             runs = [
-                run.start 
+                run.start
                 for run in task._run_stack
-                if run.is_alive() and start <= datetime.datetime.fromtimestamp(run.start) <= end
+                if run.is_alive() and start <= session._format_timestamp(run.start) <= end
             ]
             return runs
-        else:
-            records = task.logger.get_records(
-                created=between(to_timestamp(start), to_timestamp(end)),
-            )
-            records = sorted(records, key=lambda x: get_field_value(x, "created"))
-            runs = []
-            has_run_id = True
-            try:
-                finishes = [
-                    get_field_value(record, "run_id")
-                    for record in records
-                    if get_field_value(record, "run_id") and get_field_value(record, "action") != "run"
-                ]
-            except (KeyError, AttributeError):
-                # Logs have no run_id
-                finishes = [
-                    get_field_value(record, "created")
-                    for record in records
-                    if get_field_value(record, "action") != "run"
-                ]
-                has_run_id = False
 
-            for record in records:
-                action = get_field_value(record, "action")
-                is_run = action == "run"
-                if not is_run:
-                    continue
-                if has_run_id:
-                    run_id = get_field_value(record, "run_id")
-                    if run_id not in finishes:
-                        runs.append(run_id)
+        records = task.logger.get_records(
+            created=between(to_timestamp(start), to_timestamp(end)),
+        )
+        records = sorted(records, key=lambda x: get_field_value(x, "created"))
+        runs = []
+        has_run_id = True
+        try:
+            finishes = [
+                get_field_value(record, "run_id")
+                for record in records
+                if get_field_value(record, "run_id") and get_field_value(record, "action") != "run"
+            ]
+        except (KeyError, AttributeError):
+            # Logs have no run_id
+            finishes = [
+                get_field_value(record, "created")
+                for record in records
+                if get_field_value(record, "action") != "run"
+            ]
+            has_run_id = False
+
+        for record in records:
+            action = get_field_value(record, "action")
+            is_run = action == "run"
+            if not is_run:
+                continue
+            if has_run_id:
+                run_id = get_field_value(record, "run_id")
+                if run_id not in finishes:
+                    runs.append(run_id)
+            else:
+                # Less optimized, tries to guess which is the finish
+                created = get_field_value(record, "created")
+                for finish in finishes.copy():
+                    if finish >= created:
+                        # match
+                        finishes.remove(finish)
+                        break
                 else:
-                    # Less optimized, tries to guess which is the finish
-                    created = get_field_value(record, "created")
-                    for finish in finishes.copy():
-                        if finish >= created:
-                            # match
-                            finishes.remove(finish)
-                            break
-                    else:
-                        # No finishes
-                        runs.append(created)
-            return runs
+                    # No finishes
+                    runs.append(created)
+        return runs
 
     def __str__(self):
         if hasattr(self, "_str"):
@@ -282,7 +282,7 @@ class TaskExecutable(BaseCondition):
         # TODO: How to consider termination? Probably should be considered as failures without retries
         # NOTE: inaction is not considered at all
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         task = self.task if self.task is not None else task
         period = self.period
         retries = 0 if self.retries is None else self.retries
@@ -299,7 +299,7 @@ class TaskExecutable(BaseCondition):
             #   Because the period is used in the sub statements and TimeDelta is still accepted - Senior me
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (
@@ -343,7 +343,7 @@ class TaskRunnable(BaseCondition):
         self.task = task
         super().__init__()
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         task = self.task if self.task is not None else task
         period = self.period
 
@@ -352,13 +352,22 @@ class TaskRunnable(BaseCondition):
         isin_period = (
             True
             if isinstance(period, TimeDelta)
-            else IsPeriod(period=period).observe()
+            else IsPeriod(period=period).observe(session=session)
         )
 
         return (
             isin_period
             and has_not_run.observe(task=task, session=session)
         )
+
+    def __str__(self):
+        if hasattr(self, "_str"):
+            return self._str
+        period = self.period
+        task = self.task
+        task_name = getattr(task, "name", str(task))
+        period = "" if period is None else f" {period}"
+        return f"task '{task_name}' runnable{period}"
 
 
 class DependFinish(DependMixin):
@@ -451,7 +460,7 @@ class Retry(BaseCondition):
         self.n = int(n) if n is not None else -1
         super().__init__()
 
-    def get_state(self, task=Task(), session=Session()):
+    def get_state(self, task=Task(default=None), session=Session()):
         if self.n == 0:
             return False
         if task.get_status() != "fail":

@@ -92,8 +92,8 @@ def _set_scheduler_parsing():
     func = partial(_from_period_task_has, cls=cls)
     cond_parsers.update(
         {
-            re.compile(fr"scheduler has run over (?P<past>.+)"): partial(func, span_type='past', inverse=True),
-            re.compile(fr"scheduler started (?P<past>.+) ago"): partial(func, span_type='past'),
+            re.compile(r"scheduler has run over (?P<past>.+)"): partial(func, span_type='past', inverse=True),
+            re.compile(r"scheduler started (?P<past>.+) ago"): partial(func, span_type='past'),
 
             re.compile(r"scheduler has more than (?P<__gt__>[0-9]+) cycles"): SchedulerCycles.from_magic,
             re.compile(r"scheduler has less than (?P<__lt__>[0-9]+) cycles"): SchedulerCycles.from_magic,

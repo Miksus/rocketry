@@ -47,7 +47,7 @@ it:
 
 .. code-block:: python
 
-    app = Rocketry(config={'task_execution': 'main'})
+    app = Rocketry(execution="async")
 
     @app.task()
     def do_main():

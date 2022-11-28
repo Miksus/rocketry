@@ -201,6 +201,15 @@ def test_back_to_string(cond_str, expected):
     assert cond == cond_2
     #assert cond_str == cond_as_str
 
+# Cases with tasks children
+extended_cases_tasks =  cron + cases_task + cases_time
+@pytest.mark.parametrize(
+    "cond_str,task", extended_cases_tasks
+)
+def test_task_to_str(cond_str, task):
+    task_as_str = str(task)
+    assert len(task_as_str) > 0
+
 @pytest.mark.parametrize("cond_str,exc",
     [
         pytest.param("this is not valid", ParserError, id="Invalid condition"),

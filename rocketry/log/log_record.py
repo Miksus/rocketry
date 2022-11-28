@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 class MinimalRecord(BaseModel):
     """A log record with minimal number of fields for Rocketry to work"""
@@ -42,6 +42,24 @@ class TaskLogRecord(MinimalRecord):
 
     message: str
     exc_text: Optional[str]
+
+    @validator("start", pre=True)
+    def format_start(cls, value):
+        if value is not None:
+            value = datetime.datetime.fromtimestamp(value)
+        return value
+
+    @validator("end", pre=True)
+    def format_end(cls, value):
+        if value is not None:
+            value = datetime.datetime.fromtimestamp(value)
+        return value
+
+    @validator("runtime", pre=True)
+    def format_runtime(cls, value):
+        if value is not None:
+            value = datetime.timedelta(seconds=value)
+        return value
 
 class MinimalRunRecord(MinimalRecord):
     run_id: Optional[str]

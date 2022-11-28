@@ -126,7 +126,7 @@ params_running = [
     pytest.param(running("mytask").more_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="10 mins")), id="is running more than"),
     pytest.param(running("mytask").less_than("10 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(far="10 mins")), id="is running more than"),
     pytest.param(running("mytask").between("15 mins", "20 mins"), TaskRunning(task="mytask", period=TimeSpanDelta(near="15 mins", far="20 mins")), id="is running between"),
-    
+
     pytest.param(running("mytask") < 2, TaskRunning(task="mytask") < 2, id="is running less than twice"),
     pytest.param(running("mytask") > 2, TaskRunning(task="mytask") > 2, id="is running more than twice"),
     pytest.param(running("mytask") <= 2, TaskRunning(task="mytask") <= 2, id="is running less equal than twice"),

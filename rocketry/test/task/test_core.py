@@ -76,6 +76,7 @@ def test_pickle(session):
 
 def test_crash(session):
     task = DummyTask(name="mytest", session=session)
+    task.set_cached()
     task.log_running()
     assert task.status == "run"
     assert task.last_crash is None
@@ -83,6 +84,7 @@ def test_crash(session):
 
     # Recreating and now should log crash
     task = DummyTask(name="mytest", session=session)
+    task.set_cached()
     assert task.status == "crash"
     assert task.last_crash
 
@@ -105,6 +107,7 @@ def test_json(session):
         "task": Task(),
         "another_task": Task('another')
     }, session=session)
+    task.set_cached()
     j = task.json(indent=4)
 
     dt_run = datetime.datetime.fromtimestamp(1640988000)
@@ -112,7 +115,7 @@ def test_json(session):
 
     assert j == dedent("""
     {
-        "permanent_task": false,
+        "permanent": false,
         "fmt_log_message": "Task '{task}' status: '{action}'",
         "daemon": null,
         "batches": [],
@@ -137,13 +140,7 @@ def test_json(session):
         "multilaunch": null,
         "on_startup": false,
         "on_shutdown": false,
-        "func_run_id": null,
-        "last_run": "<RUN>",
-        "last_success": "<SUCCESS>",
-        "last_fail": null,
-        "last_terminate": null,
-        "last_inaction": null,
-        "last_crash": null
+        "func_run_id": null
     }
     """
     .replace("<RUN>", dt_run.strftime("%Y-%m-%dT%H:%M:%S"))

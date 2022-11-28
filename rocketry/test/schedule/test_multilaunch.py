@@ -5,6 +5,7 @@ import time
 
 import pytest
 from rocketry.args import FuncArg
+from rocketry.conds import scheduler_cycles, false, true
 
 from rocketry.tasks import FuncTask
 from rocketry.exc import TaskTerminationException
@@ -13,7 +14,9 @@ from rocketry.args import TerminationFlag
 from rocketry.log import RunRecord
 from rocketry.tasks.run_id import increment, uuid
 
-from rocketry.conds import true
+
+def run_success_instant():
+    ...
 
 def run_slow_fail():
     time.sleep(5)
@@ -26,8 +29,7 @@ def run_slow_threaded_fail(_thread_terminate_):
     time.sleep(0.2)
     if _thread_terminate_.is_set():
         raise TaskTerminationException
-    else:
-        raise
+    raise
 
 async def run_slow_async_fail():
     await asyncio.sleep(0.2)
@@ -62,7 +64,7 @@ def test_multilaunch_terminate(execution, how, session):
 
     func_run_slow = get_slow_func(execution)
     task = FuncTask(
-        func_run_slow, name="slow task", 
+        func_run_slow, name="slow task",
         start_cond=TaskStarted() <= 3,
         multilaunch=True if how == "task" else None,
         execution=execution, session=session
@@ -115,8 +117,8 @@ def test_multilaunch(execution, status, session):
     session.config.max_process_count = 3
 
     task = FuncTask(
-        run_success if status == "success" else run_fail, 
-        name="task", 
+        run_success if status == "success" else run_fail,
+        name="task",
         start_cond=TaskStarted() <= 5,
         multilaunch=True,
         execution=execution, session=session,
@@ -136,7 +138,7 @@ def test_multilaunch(execution, status, session):
             {"task_name": "task", "action": status, "run_id": "3"},
         ]
     else:
-        # In thread the runs can finish in different order 
+        # In thread the runs can finish in different order
         assert logs[:3] == [
             {"task_name": "task", "action": "run", "run_id": "1"},
             {"task_name": "task", "action": "run", "run_id": "2"},
@@ -150,6 +152,41 @@ def test_multilaunch(execution, status, session):
             {"task_name": "task", "action": status},
             {"task_name": "task", "action": status},
         ]
+
+def test_multilaunch_terminate_after_success(session):
+    # Issue #144
+    session.config.func_run_id = increment
+    session.get_repo().model = RunRecord
+    session.config.max_process_count = 3
+
+    task = FuncTask(
+        run_success_instant,
+        name="task",
+        start_cond=true,
+        multilaunch=True,
+        execution="process", session=session,
+    )
+    session.config.shut_cond = TaskStarted(task=task)
+    session.start()
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": "1"},
+        {"task_name": "task", "action": "success", "run_id": "1"},
+    ]
+
+    task.start_cond = false
+    session.config.timeout = 0.0
+    session.config.shut_cond = scheduler_cycles(5)
+    session.start()
+
+    logger = task.logger
+    logs = [{"task_name": rec.task_name, "action": rec.action, "run_id": rec.run_id} for rec in logger.filter_by()]
+    assert logs == [
+        {"task_name": "task", "action": "run", "run_id": "1"},
+        {"task_name": "task", "action": "success", "run_id": "1"},
+    ]
+    assert task._run_stack == []
 
 def test_limited_processes(session):
 
@@ -174,8 +211,8 @@ def test_limited_processes(session):
 
         assert task1.is_running
         assert task2.is_running
-        
-        
+
+
         assert task1.n_alive == 3
         assert task2.n_alive == 1
 
@@ -204,7 +241,7 @@ def test_set_run_id(where, func, session):
     if where == "session":
         session.config.func_run_id = func
     session.get_repo().model = RunRecord
-    
+
     async def run_task(report_date):
         assert isinstance(report_date, datetime.datetime)
         await asyncio.sleep(0.2)
@@ -213,11 +250,11 @@ def test_set_run_id(where, func, session):
     session.config.max_process_count = 3
 
     kwds = dict(
-        func=run_task, 
-        name="task", 
+        func=run_task,
+        name="task",
         start_cond=TaskStarted() <= 5,
         multilaunch=True,
-        execution="async", 
+        execution="async",
         session=session,
         parameters={"report_date": datetime.datetime(2022, 1, 3)},
     )
@@ -248,7 +285,7 @@ def test_set_run_id(where, func, session):
 
 def test_set_run_id_custom(session):
     session.get_repo().model = RunRecord
-    
+
     def generate_run_id(task, params):
         return json.dumps(dict(params), default=str)
 
@@ -260,11 +297,11 @@ def test_set_run_id_custom(session):
     session.config.max_process_count = 3
 
     task = FuncTask(
-        func=run_task, 
-        name="task", 
+        func=run_task,
+        name="task",
         start_cond=TaskStarted() <= 5,
         multilaunch=True,
-        execution="async", 
+        execution="async",
         session=session,
         parameters={"report_date": FuncArg(lambda: datetime.date(2022, 1, 3))},
         func_run_id=generate_run_id

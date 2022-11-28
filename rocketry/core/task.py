@@ -59,10 +59,9 @@ class TaskRun:
     def is_alive(self) -> bool:
         if self.is_main:
             return True
-        elif self.is_async:
+        if self.is_async:
             return not self.task.done()
-        else:
-            return self.task.is_alive()
+        return self.task.is_alive()
 
     async def terminate(self):
         task = self.task
@@ -208,7 +207,7 @@ class Task(RedBase, BaseModel):
     session: 'Session' = Field()
 
     # Class
-    permanent_task: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
+    permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
@@ -240,15 +239,15 @@ class Task(RedBase, BaseModel):
     on_shutdown: bool = False
     func_run_id: Callable = None
 
-    last_run: Optional[datetime.datetime]
-    last_success: Optional[datetime.datetime]
-    last_fail: Optional[datetime.datetime]
-    last_terminate: Optional[datetime.datetime]
-    last_inaction: Optional[datetime.datetime]
-    last_crash: Optional[datetime.datetime]
+    _last_run: Optional[float]
+    _last_success: Optional[float]
+    _last_fail: Optional[float]
+    _last_terminate: Optional[float]
+    _last_inaction: Optional[float]
+    _last_crash: Optional[float]
 
     _run_stack: List[TaskRun] = PrivateAttr(default_factory=list)
-    _lock: Optional[threading.Lock] = PrivateAttr(default_factory=threading.Lock)
+    _lock: Optional[Type] = PrivateAttr(default=None)
     _main_alive: bool = PrivateAttr(default=False)
 
     _mark_running = False
@@ -306,12 +305,20 @@ class Task(RedBase, BaseModel):
     def __init__(self, **kwargs):
 
         hooker = _Hooker(self.session.hooks.task_init)
-        hooker.prerun(self)
+        hooker.prerun(task=self)
 
         if kwargs.get("session") is None:
             warnings.warn("Task's session not defined. Creating new.", UserWarning)
             kwargs['session'] = _create_session()
         kwargs['name'] = self._get_name(**kwargs)
+
+        if "permanent_task" in kwargs:
+            warnings.warn(
+                "Argument 'permanent_task' is deprecated. "
+                "Please use 'permanent'.",
+                DeprecationWarning
+            )
+            kwargs['permanent'] = kwargs.pop("permanent_task")
 
         super().__init__(**kwargs)
 
@@ -319,10 +326,8 @@ class Task(RedBase, BaseModel):
         self.session._check_readable_logger()
 
         self.register()
-
-        # Update "last_run", "last_success", etc.
-        self.set_cached()
-
+        self._init_cache()
+        
         # Hooks
         hooker.postrun()
 
@@ -424,7 +429,6 @@ class Task(RedBase, BaseModel):
     def is_alive(self) -> bool:
         """Whether the task is alive: check if the task has a live process or thread."""
         #! TODO: Use property
-        self._clean_run_stack()
         return any(
             run.is_alive()
             for run in self._run_stack
@@ -472,7 +476,7 @@ class Task(RedBase, BaseModel):
         #   - Then the params are post filtered
         #   - Then params and direct_params are fed to the execute method
         execution = self.get_execution()
-        task_run = TaskRun(start=time.time(), task=None)
+        task_run = TaskRun(start=self.session.get_time(), task=None)
         try:
             self.force_run = False
             params = self.get_extra_params(params, execution=execution)
@@ -579,7 +583,7 @@ class Task(RedBase, BaseModel):
         else:
             hooks = self.session.hooks.task_execute
         hooker = _Hooker(hooks)
-        hooker.prerun(self)
+        hooker.prerun(task=self)
 
         status = None
         output = None
@@ -666,7 +670,7 @@ class Task(RedBase, BaseModel):
 
         self._run_stack.append(task_run)
 
-        self.last_run = datetime.datetime.fromtimestamp(time.time()) # Needed for termination
+        self._last_run = self.session.get_time() # Needed for termination
         thread.start()
         task_run.event_running.wait() # Wait until the task is confirmed to run
 
@@ -715,9 +719,9 @@ class Task(RedBase, BaseModel):
         process = multiprocessing.Process(
             target=self._run_as_process,
             kwargs=dict(
-                params=params, direct_params=direct_params, 
-                task_run=task_run, 
-                queue=log_queue, 
+                params=params, direct_params=direct_params,
+                task_run=task_run,
+                queue=log_queue,
                 config=session.config,
                 exec_hooks=self._get_hooks("task_execute")
             ),
@@ -758,6 +762,8 @@ class Task(RedBase, BaseModel):
         logger.propagate = False
         logger.handlers = []
         logger.addHandler(handler)
+        # Wrap logger.createRecord for custom created time
+        self.session._wrap_log_record_creation(logger)
         try:
             self.logger_name = logger.name
         except:
@@ -899,22 +905,30 @@ class Task(RedBase, BaseModel):
         name = self.name
         self.session.add_task(self)
 
+    def _init_cache(self):
+        self._last_run = None
+        self._last_success = None
+        self._last_fail = None
+        self._last_terminate = None
+        self._last_inaction = None
+        self._last_crash = None
+
     def set_cached(self):
         "Update cached statuses"
         # We get the logger here to not flood with warnings if missing repo
         logger = self.logger
 
-        self.last_run = self._get_last_action("run", from_logs=True, logger=logger)
-        self.last_success = self._get_last_action("success", from_logs=True, logger=logger)
-        self.last_fail = self._get_last_action("fail", from_logs=True, logger=logger)
-        self.last_terminate = self._get_last_action("terminate", from_logs=True, logger=logger)
-        self.last_inaction = self._get_last_action("inaction", from_logs=True, logger=logger)
-        self.last_crash = self._get_last_action("crash", from_logs=True, logger=logger)
+        self._last_run = self._get_last_action("run", from_logs=True, logger=logger)
+        self._last_success = self._get_last_action("success", from_logs=True, logger=logger)
+        self._last_fail = self._get_last_action("fail", from_logs=True, logger=logger)
+        self._last_terminate = self._get_last_action("terminate", from_logs=True, logger=logger)
+        self._last_inaction = self._get_last_action("inaction", from_logs=True, logger=logger)
+        self._last_crash = self._get_last_action("crash", from_logs=True, logger=logger)
 
         times = {
-            name: getattr(self, f"last_{name}")
+            name: getattr(self, f"_last_{name}")
             for name in ('run', 'success', 'fail', 'terminate', 'inaction', 'crash')
-            if getattr(self, f"last_{name}") is not None
+            if getattr(self, f"_last_{name}") is not None
         }
         if times:
             status = max(
@@ -935,8 +949,7 @@ class Task(RedBase, BaseModel):
     def get_run_id(self, run, params=None):
         if self.func_run_id is not None:
             return self.func_run_id(self, params)
-        else:
-            return self.session.config.func_run_id(self, params)
+        return self.session.config.func_run_id(self, params)
 
     def is_alive_as_main(self) -> bool:
         return any(run.is_main and run.is_alive() for run in self._run_stack)
@@ -960,25 +973,25 @@ class Task(RedBase, BaseModel):
         "Terminate task if can"
         try:
             is_end_cond = self.end_cond.observe(task=self, session=self.session)
-        except:
+        except Exception:
             if not self.session.config.silence_cond_check:
                 raise
             is_end_cond = True
-        
+
         if self.force_termination:
             await self._terminate_all(reason="forced termination")
         elif is_end_cond:
             await self._terminate_all(reason="end condition is true")
         else:
-            now = time.time()
-            if self.permanent_task:
+            now = self.session.get_time()
+            if self.permanent:
                 return
             timeout = self.timeout if self.timeout else self.session.config.timeout
             timeout_sec = timeout.total_seconds()
             for run in self._run_stack:
                 start = run.start
                 run_duration = now - start
-                if run_duration > timeout_sec:
+                if run.is_alive() and run_duration > timeout_sec:
                     await self._terminate_run(run, reason="timeouted")
 
     def _clean_run_stack(self):
@@ -1093,8 +1106,8 @@ class Task(RedBase, BaseModel):
         Also sets the status according to the record.
         """
         # Set last_run/last_success/last_fail etc.
-        cache_attr = f"last_{record.action}"
-        record_time = datetime.datetime.fromtimestamp(record.created)
+        cache_attr = f"_last_{record.action}"
+        record_time = record.created
 
         try:
             self.logger.handle(record)
@@ -1107,7 +1120,7 @@ class Task(RedBase, BaseModel):
             else:
                 # Logging is part of the task so even if the task
                 # function itself succeeded, the task failed
-                setattr(self, "last_fail", record_time)
+                setattr(self, "_last_fail", record_time)
                 self.status = "fail"
             raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
         else:
@@ -1139,17 +1152,18 @@ class Task(RedBase, BaseModel):
         if action not in self._actions:
             raise KeyError(f"Invalid action: {action}")
 
-        now = datetime.datetime.fromtimestamp(time.time())
+        time_now = self.session.get_time()
+        
         if action == "run":
             extra = {
                 "action": "run", 
-                "start": datetime.datetime.fromtimestamp(task_run.start) if task_run is not None else now
+                "start": task_run.start if task_run is not None else time_now
             }
             # self._last_run = now
         else:
-            start_time = self.get_last_run()
-            runtime = now - start_time if start_time is not None else None
-            extra = {"action": action, "start": start_time, "end": now, "runtime": runtime}
+            start_time = self._get_last_action("run")
+            runtime = time_now - start_time if start_time is not None else None
+            extra = {"action": action, "start": start_time, "end": time_now, "runtime": runtime}
 
         extra['run_id'] = task_run.run_id if task_run is not None else None
 
@@ -1160,7 +1174,7 @@ class Task(RedBase, BaseModel):
             # Else the return value is handled in Task itself (__call__ & _run_as_thread)
             extra["__return__"] = return_value
 
-        cache_attr = f"last_{action}"
+        cache_attr = f"_last_{action}"
 
         log_method = self.logger.exception if action == "fail" else self.logger.info
         try:
@@ -1170,47 +1184,65 @@ class Task(RedBase, BaseModel):
             )
         except Exception as exc:
             if action == "run":
-                setattr(self, cache_attr, now)
+                setattr(self, cache_attr, time_now)
                 self.status = action
             else:
-                setattr(self, "last_fail", now)
+                setattr(self, "_last_fail", time_now)
                 self.status = "fail"
             raise TaskLoggingError(f"Logging for task '{self.name}' failed.") from exc
         else:
-            setattr(self, cache_attr, now)
+            setattr(self, cache_attr, time_now)
             self.status = action
 
     def get_last_success(self) -> datetime.datetime:
         """Get the lastest timestamp when the task succeeded."""
-        return self._get_last_action("success")
+        time = self._get_last_action("success")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_last_fail(self) -> datetime.datetime:
         """Get the lastest timestamp when the task failed."""
-        return self._get_last_action("fail")
+        time = self._get_last_action("fail")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_last_run(self) -> datetime.datetime:
         """Get the lastest timestamp when the task ran."""
-        return self._get_last_action("run")
+        time = self._get_last_action("run")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_last_terminate(self) -> datetime.datetime:
         """Get the lastest timestamp when the task terminated."""
-        return self._get_last_action("terminate")
+        time = self._get_last_action("terminate")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_last_inaction(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
-        return self._get_last_action("inaction")
+        time = self._get_last_action("inaction")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_last_crash(self) -> datetime.datetime:
         """Get the lastest timestamp when the task inacted."""
-        return self._get_last_action("crash")
+        time = self._get_last_action("crash")
+        if time is not None:
+            time = self.session._format_timestamp(time)
+        return time
 
     def get_execution(self) -> str:
         if self.execution is None:
-            return self.session.config.task_execution
+            return self.session.config.execution
         return self.execution
 
-    def _get_last_action(self, action:str, from_logs=None, logger=None) -> datetime.datetime:
-        cache_attr = f"last_{action}"
+    def _get_last_action(self, action:str, from_logs=None, logger=None) -> float:
+        cache_attr = f"_last_{action}"
         if from_logs is not None:
             allow_cache = not from_logs
         else:
@@ -1221,11 +1253,9 @@ class Task(RedBase, BaseModel):
 
 
         if allow_cache: #  and getattr(self, cache_attr) is not None
-            value = getattr(self, cache_attr)
+            value = getattr(self, cache_attr, None)
         else:
             value = self._get_last_action_from_log(action, logger)
-            if isinstance(value, float):
-                value = datetime.datetime.fromtimestamp(value)
             setattr(self, cache_attr, value)
         return value
 
@@ -1283,7 +1313,7 @@ class Task(RedBase, BaseModel):
         # Removing possibly unpicklable manually. There is a problem in Pydantic
         # and for some reason it does not use Session's pickling
         dict_state['parameters'] = Parameters()
-        dict_state['session'] = None
+        dict_state['session'] = dict_state['session']._copy_pickle()
 
         if not is_pickleable(state):
             if self._mark_running:
@@ -1342,10 +1372,37 @@ class Task(RedBase, BaseModel):
         # Lock is private in a sense that we want to hide it from
         # the model (if put to dict etc.) but public in a sense
         # that the user should be allowed to interact with it
+        if self._lock is None:
+            self._lock = self.session.config.cls_lock()
         return self._lock
+
+    @property
+    def last_run(self):
+        return self.get_last_run()
+
+    @property
+    def last_success(self):
+        return self.get_last_success()
+
+    @property
+    def last_fail(self):
+        return self.get_last_fail()
+
+    @property
+    def last_terminate(self):
+        return self.get_last_terminate()
+
+    @property
+    def last_crash(self):
+        return self.get_last_crash()
+
+    @property
+    def last_inaction(self):
+        return self.get_last_inaction()
 
     def json(self, **kwargs):
         if 'exclude' not in kwargs:
             kwargs['exclude'] = set()
         kwargs['exclude'].update({'session'})
-        return super().json(**kwargs)
+        d = super().json(**kwargs)
+        return d

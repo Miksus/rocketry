@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["rocketry"]
+
+[project]
+name = "rocketry"
+description = "Advanced scheduling framework"
+readme = "README.md"
+license = {file="LICENSE"}
+authors = [
+    {name = "Mikael Koli", email = "koli.mikael@gmail.com"},
+]
+requires-python = ">=3.7"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+
+    "Topic :: System",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Office/Business :: Scheduling",
+
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+]
+dynamic = ["version"]
+dependencies = [
+    'python-dateutil', 
+    'redbird>=0.5.0', 
+    'pydantic'
+]
+
+[tool.setuptools_scm]
+write_to = "rocketry/_version.py"
+local_scheme = "no-local-version"
+
+[project.urls]
+Homepage = 'https://github.com/Miksus/rocketry'
+Documentation = 'https://rocketry.readthedocs.io'
+Funding = 'https://github.com/sponsors/Miksus'
+Source = 'https://github.com/Miksus/rocketry'
+Changelog = 'https://rocketry.readthedocs.io/en/stable/versions.html'
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+docs = [
+    "sphinx >= 1.7.5",
+    "pydata-sphinx-theme",
+    "sphinx_book_theme",
+    "sphinx-copybutton",
+    "sphinx-material",
+]
+
+[tool.coverage.run]
+source = ["rocketry"]
+branch = false
+omit = [
+    "test/*",
+    "_version.py"
+]
+data_file = "cov_data/.coverage"
+
+[tool.coverage.report]
+omit = [
+    "rocketry/test/*",
+    "rocketry/_version.py",
+    "rocketry/__main__.py"
+]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    "pragma: no cover",
+
+    # Don't complain about abstract methods, they aren't run:
+    '''@(abc\.)?abstractmethod''',
+
+    # Ignore type checking imports
+    "if TYPE_CHECKING",
+]
+ignore_errors = true
+
+[tool.coverage.html]
+directory = "htmlcov"

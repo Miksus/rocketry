@@ -3,14 +3,17 @@ Utilities for getting information
 about the scehuler/task/parameters etc.
 """
 
+from copy import copy
 import datetime
 import logging
 from multiprocessing import cpu_count
+import time
+import threading
 import warnings
 
-from itertools import chain, count
-from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Union
-from pydantic import BaseModel, validator
+from itertools import chain
+from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
+from pydantic import BaseModel, root_validator, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -44,7 +47,7 @@ class Config(BaseModel):
     # Fields
     use_instance_naming: bool = False
     task_priority: int = 0
-    task_execution: Optional[str] = None
+    execution: Optional[str] = None
     task_pre_exist: str = 'raise'
     force_status_from_logs: bool = False # Force to check status from logs every time (slow but robust)
 
@@ -66,19 +69,17 @@ class Config(BaseModel):
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
+    cls_lock: Type = threading.Lock
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
-    @validator('task_execution', pre=True, always=True)
+    timezone: Optional[datetime.tzinfo] = None
+    time_func: Callable = None
+
+    @validator('execution', pre=True, always=True)
     def parse_task_execution(cls, value):
         if value is None:
-            warnings.warn(
-                "Default execution will be changed to 'async'. "
-                "To suppress this warning, specify task_execution, "
-                "ie. Rocketry(execution='async')",
-                FutureWarning
-            )
-            return 'process'
+            return 'async'
         return value
 
     @validator('shut_cond', pre=True)
@@ -96,6 +97,26 @@ class Config(BaseModel):
         if isinstance(value, (float, int)):
             return datetime.timedelta(seconds=value)
         return value
+
+    @property
+    def task_execution(self):
+        warnings.warn(
+            "config.task_execution is deprecated. "
+            "Please use config.execution instead.",
+            DeprecationWarning
+        )
+        return self.execution
+
+    @root_validator(pre=True)
+    def set_deprecated(cls, values):
+        if 'task_execution' in values:
+            warnings.warn(
+                "Option 'task_execution' is deprecated. "
+                "Please use 'execution' instead.",
+                DeprecationWarning
+            )
+            values['execution'] = values.pop('task_execution')
+        return values
 
 class Hooks(BaseModel):
     task_init: List[Callable] = []
@@ -166,11 +187,11 @@ class Session(RedBase):
             value = Parameters(value)
         return value
 
-    def _get_config(self, value):
+    def _get_config(self, value, kwargs):
         if value is None:
-            return Config()
+            return Config(**kwargs)
         if isinstance(value, dict):
-            return Config(**value)
+            return Config(**value, **kwargs)
         if isinstance(value, Config):
             return value
         raise TypeError("Invalid config type")
@@ -189,9 +210,9 @@ class Session(RedBase):
             raise TypeError(f"Cannot determine task name from: {type(task)}")
         return task_name
 
-    def __init__(self, config=None, parameters=None, delete_existing_loggers=False):
+    def __init__(self, config=None, parameters=None, delete_existing_loggers=False, **kwargs):
         from rocketry.core import Scheduler
-        self.config = self._get_config(config)
+        self.config = self._get_config(config, kwargs)
         self.parameters = self._get_parameters(parameters)
         self.scheduler = Scheduler(self)
         self.tasks = set()
@@ -225,7 +246,8 @@ class Session(RedBase):
 
         Will block and wait till the scheduler finishes
         if there is a shut condition."""
-        self._check_readable_logger()
+        self._set_configs()
+        self._wrap_log_record_creation()
         self.scheduler()
 
     async def serve(self):
@@ -233,7 +255,7 @@ class Session(RedBase):
 
         Will block and wait till the scheduler finishes
         if there is a shut condition."""
-        self._check_readable_logger()
+        self._set_configs()
         await self.scheduler.serve()
 
     def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
@@ -261,7 +283,7 @@ class Session(RedBase):
             itself. Just to run specific tasks when the system itself
             is not running.
         """
-        self._check_readable_logger()
+        self._set_configs()
         # To prevent circular import
         from rocketry.conditions.scheduler import SchedulerCycles
 
@@ -317,6 +339,10 @@ class Session(RedBase):
         if force:
             self.scheduler._flag_force_exit.set()
 
+    def _set_configs(self):
+        self._check_readable_logger()
+        self._wrap_log_record_creation()
+
     def _check_readable_logger(self):
         from rocketry.core.log import TaskAdapter
         task_logger_basename = self.config.task_logger_basename
@@ -339,6 +365,18 @@ class Session(RedBase):
                 f"Logger {task_logger_basename} has too low level ({level_name}). "
                 "Level is set to INFO to make sure the task logs get logged. ", UserWarning)
             task_logger.setLevel(logging.INFO)
+
+    def _wrap_log_record_creation(self, logger=None):
+        # Make 
+        from rocketry.core.log import TaskAdapter
+        if logger is None:
+            logger = logging.getLogger(self.config.task_logger_basename)
+        attr = '__rocketry_wrapped__'
+        is_wrapped = getattr(logger, attr, False)
+        wrap_logger = self.config.time_func is not None and not is_wrapped
+        if wrap_logger:
+            logger.makeRecord = TaskAdapter._modify_record(logger.makeRecord, session=self)
+            setattr(logger, attr, True)
 
     def get_tasks(self) -> list:
         """Get session tasks as list.
@@ -497,6 +535,17 @@ class Session(RedBase):
         state['scheduler'] = None
         return state
 
+    def _copy_pickle(self):
+        # Copy and remove typically unpicklable attrs.
+        # Used when creating a child process
+        unpicklable_conf = {'shut_cond'}
+        unpicklable = {'tasks', '_cond_cache', 'session', '_cond_parsers', 'parameters'}
+        new_self = copy(self)
+        for attr in unpicklable:
+            setattr(new_self, attr, None)
+        new_self.config = self.config.copy(exclude=unpicklable_conf)
+        return new_self
+
     @property
     def env(self):
         "Shorthand for parameter 'env'"
@@ -547,3 +596,23 @@ class Session(RedBase):
             self.hooks.task_execute.append(func)
             return func
         return wrapper
+
+    def get_current_time(self) -> datetime.datetime:
+        """Get measurement of time as datetime
+        
+        This method is used internally thoroughout
+        the package.
+        """
+        return self._format_timestamp(time.time())
+
+    def get_time(self) -> float:
+        if self.config.time_func is not None:
+            # Custom time measurement
+            return self.config.time_func()
+        return time.time()
+
+    def _get_datetime_now(self):
+        return self._format_timestamp(self.get_time())
+
+    def _format_timestamp(self, dt:float):
+        return datetime.datetime.fromtimestamp(dt, tz=self.config.timezone)

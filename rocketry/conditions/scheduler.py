@@ -55,7 +55,7 @@ class SchedulerStarted(BaseCondition):
         super().__init__()
 
     def get_state(self, session=Session()) -> bool:
-        start, end = get_period_span(self.period)
+        start, end = get_period_span(self.period, session=session)
         dt = session.scheduler.startup_time
         return start <= dt <= end
 

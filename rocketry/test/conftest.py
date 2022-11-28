@@ -19,6 +19,15 @@ from rocketry.log.log_record import MinimalRecord
 # add helpers to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
 
+def pytest_addoption(parser):
+    parser.addoption(
+        '--no-build',
+        action='store_false',
+        dest="is_build",
+        default=True,
+        help='Expect the package is not built.'
+    )
+
 # Utils
 def get_node_id(request):
     components = request.node.nodeid.split("::")
@@ -77,7 +86,7 @@ def session():
         "silence_task_logging": False,
         "silence_cond_check": False,
         "cycle_sleep": 0.001,
-        "task_execution": "process",
+        "execution": "process",
     }, delete_existing_loggers=True)
     rocketry.session = session
     session.set_as_default()

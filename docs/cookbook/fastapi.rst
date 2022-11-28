@@ -14,7 +14,7 @@ First, we create a simple Rocketry app
 
     # Create Rocketry app
     from rocketry import Rocketry
-    app = Rocketry(config={"task_execution": "async"})
+    app = Rocketry(execution="async")
 
 
     # Create some tasks

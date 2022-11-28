@@ -393,13 +393,13 @@ def test_not(dt, start, end, cls, time_point):
 
 # Test conditions
 @_to_pyparams(true_cases)
-def test_true(dt, start, end, cls, time_point, mock_datetime_now):
+def test_true(dt, start, end, cls, time_point, mock_datetime_now, session):
     mock_datetime_now(dt)
     cond = IsPeriod(cls(start, end, time_point=time_point))
-    assert bool(cond)
+    assert cond.observe(session=session)
 
 @_to_pyparams(false_cases)
-def test_false(dt, start, end, cls, time_point, mock_datetime_now):
+def test_false(dt, start, end, cls, time_point, mock_datetime_now, session):
     mock_datetime_now(dt)
     cond = IsPeriod(cls(start, end, time_point=time_point))
-    assert not bool(cond)
+    assert not cond.observe(session=session)

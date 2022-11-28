@@ -32,7 +32,7 @@ you could put in each:
 
 .. glossary::
 
-    ``__init__.py``
+    ``app/__init__.py``
 
         Marks the directory as a package. You can leave 
         these empty.
@@ -50,12 +50,65 @@ you could put in each:
 
             app = Rocketry()
 
-            # Set the task groups
+            # Set Task Groups
+            # ---------------
+
             app.include_grouper(morning.group)
             app.include_grouper(evening.group)
 
+            # Application Setup
+            # -----------------
+
+            @app.setup()
+            def set_repo(logger=TaskLogger()):
+                repo = SQLRepo(engine=create_engine("sqlite:///app.db"), table="tasks", model=MinimalRecord, id_field="created")
+                logger.set_repo(repo)
+
+            @app.setup()
+            def set_config(config=Config(), env=EnvArg("ENV", default="dev")):
+                if env == "prod":
+                    config.silence_task_prerun = True
+                    config.silence_task_logging = True
+                    config.silence_cond_check = True
+                else:
+                    config.silence_task_prerun = False
+                    config.silence_task_logging = False
+                    config.silence_cond_check = False
+            
             if __name__ == "__main__":
                 app.run()
+
+        Read more from :ref:`the app settings cookbook <app-settings-cookbook>`.
+
+    ``app/conditions.py``
+
+        Put your custom conditions here.
+
+        For example:
+
+        .. code-block::
+
+            from rocketry.conds import condition
+
+            @condition()
+            def my_cond():
+                return True or False
+
+    ``app/arguments.py``
+
+        Put your custom parameters here. For example:
+
+        .. code-block::
+
+            from rocketry.args import argument
+
+            @argument()
+            def my_value():
+                return "Hello"
+
+        You can also nest these and pass an argument as 
+        to another argument with ``FuncArg`` similarly
+        we set in the task.
 
     ``app/tasks/...``
 
@@ -68,49 +121,20 @@ you could put in each:
         .. code-block::
 
             from rocketry import Grouper
-            from rocketry.args import FuncArg
 
             from app.conditions import my_cond
-            from app.parameters import get_value
+            from app.parameters import my_value
 
             group = Grouper()
 
             @group.task(my_cond)
-            def do_things(arg=FuncArg(get_value)):
+            def do_things(arg=my_value):
                 ...
 
-    ``app/conditions.py``
+.. note::
 
-        Put custom conditions here.
-
-        For example:
-
-        .. code-block::
-
-            from rocketry import Grouper
-
-            group = Grouper()
-
-            @group.cond()
-            def my_cond():
-                return True or False
-
-        We created a group to conveniently declare 
-        the function to be a condition. We don't 
-        need to include this group to the app.
-
-    ``app/arguments.py``
-
-        Put custom parameters here. For example:
-
-        .. code-block::
-
-            def get_value():
-                return "Hello"
-
-        You can also nest these and pass an argument as 
-        to another argument with ``FuncArg`` similarly
-        we set in the task.
+    There are various ways to set the tasks.
+    You can use other patterns as well.
 
 Running
 -------
@@ -120,6 +144,14 @@ Then you can run this as a Python module:
 .. code-block::
 
     python -m app.main
+
+Or alternatively create a script that imports and launches the app:
+
+.. code-block:: python
+
+    from app.main import app
+
+    app.run()
 
 .. note::
 
