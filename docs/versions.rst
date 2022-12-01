@@ -2,6 +2,10 @@
 Version history
 ===============
 
+- ``2.5.1``
+
+    - Fix: Pydantic validation bug in ``TaskLogRecord`` and ``TaskRunRecord``
+
 - ``2.5.0``
 
     - Update: Easier way to configure task
