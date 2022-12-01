@@ -367,7 +367,7 @@ class Session(RedBase):
             task_logger.setLevel(logging.INFO)
 
     def _wrap_log_record_creation(self, logger=None):
-        # Make 
+        # Make
         from rocketry.core.log import TaskAdapter
         if logger is None:
             logger = logging.getLogger(self.config.task_logger_basename)
@@ -599,7 +599,7 @@ class Session(RedBase):
 
     def get_current_time(self) -> datetime.datetime:
         """Get measurement of time as datetime
-        
+
         This method is used internally thoroughout
         the package.
         """

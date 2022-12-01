@@ -327,7 +327,7 @@ class Task(RedBase, BaseModel):
 
         self.register()
         self._init_cache()
-        
+
         # Hooks
         hooker.postrun()
 
@@ -1153,10 +1153,10 @@ class Task(RedBase, BaseModel):
             raise KeyError(f"Invalid action: {action}")
 
         time_now = self.session.get_time()
-        
+
         if action == "run":
             extra = {
-                "action": "run", 
+                "action": "run",
                 "start": task_run.start if task_run is not None else time_now
             }
             # self._last_run = now

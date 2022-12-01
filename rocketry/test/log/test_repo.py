@@ -32,7 +32,7 @@ def test_cache(session, tmpdir, model, get_repo):
     task.log_success()
 
     task.set_cached()
-    
+
     logs = repo.filter_by().all()
     logs = [{"action": r.action, "task_name": r.task_name} for r in logs]
     assert task.status == "success"

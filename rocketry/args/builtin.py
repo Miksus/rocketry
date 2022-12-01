@@ -102,7 +102,7 @@ class Task(BaseArgument):
             is_task_cls = isinstance(task, BaseTask)
             if is_task_cls:
                 return task
-            elif self.default is not NOTSET:
+            if self.default is not NOTSET:
                 return self.default
             raise TypeError(f"Expected {BaseTask}, got {type(task)}")
         if session is None:
