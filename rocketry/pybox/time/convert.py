@@ -40,6 +40,8 @@ def to_datetime(s, timezone=None):
         dt = s
     elif isinstance(s, str):
         dt = string_to_datetime(s)
+    elif isinstance(s, (int, float)):
+        dt = datetime.datetime.fromtimestamp(s)
     elif hasattr(s, "timestamp"):
         # Is datetime-like. Tests' monkeypatching
         # overrides datetime.datetime thus we cannot
