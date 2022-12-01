@@ -92,7 +92,7 @@ def test_success_bat_file(tmpdir, execution, session):
         assert not Path("test.txt").is_file()
 
         file = tmpdir.join("my_command.bat")
-        file.write('python -c "{code}"'.format(code="open('test.txt', 'w');"))
+        file.write("python -c \"open('test.txt', 'w');\"")
 
         task = CommandTask(
             command=["my_command.bat"],
@@ -118,7 +118,7 @@ def test_success_bash_file(tmpdir, session):
         assert not Path("test.txt").is_file()
 
         file = tmpdir.join("my_command.sh")
-        file.write('python3 -c "{code}"'.format(code="open('test.txt', 'w');"))
+        file.write("python3 -c \"open('test.txt', 'w');\"")
 
         task = CommandTask(
             command=["/bin/bash", "my_command.sh"],
