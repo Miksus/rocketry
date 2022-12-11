@@ -10,25 +10,23 @@ The configurations can be set by:
 
 .. code-block:: python
 
-    app = Rocketry(config={
-        'task_execution': 'process',
-        'task_pre_exist': 'raise',
-        'force_status_from_logs': True,
-
-        'silence_task_prerun': False,
-        'silence_task_logging': False,
-        'silence_cond_check': False,
-
-        'max_process_count': 5,
-        'restarting': 'replace',
-        'cycle_sleep': 0.1
+    app = Rocketry(
+        execution="async",
+        task_pre_exist="raise",
+        force_status_from_logs=False,
+        silence_task_prerun=False,
+        silence_task_logging=False,
+        silence_cond_check=False,
+        max_process_count=5,
+        restarting="replace",
+        cycle_sleep=0.1
     })
 
 This can be later accessed via:
 
 .. code-block::
 
-    >>> app.session.config.task_execution
+    >>> app.session.config.execution
     'process'
 
 .. note::
@@ -39,7 +37,7 @@ This can be later accessed via:
 Options
 -------
 
-**task_execution**: How tasks are run by default. 
+**execution**: How tasks are run by default. 
 
     Options: 
 
