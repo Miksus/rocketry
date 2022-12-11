@@ -82,6 +82,7 @@ html_css_files = [
     #'css/types.css',
     #'css/colors.css',
     "css/code.css",
+    "css/body.css"
 ]
 
 html_sidebars = {
