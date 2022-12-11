@@ -36,6 +36,7 @@ Here is a list of the most useful task attributes:
    :maxdepth: 2
    :caption: Contents:
 
+   naming
    termination
    execution
    observer
