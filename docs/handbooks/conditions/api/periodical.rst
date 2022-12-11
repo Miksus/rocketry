@@ -1,3 +1,5 @@
+.. _handbook-cond-periodical:
+
 Periodical Execution
 ====================
 

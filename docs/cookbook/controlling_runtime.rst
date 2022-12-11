@@ -1,3 +1,5 @@
+.. _cookbook-control-runtime:
+
 Controlling Runtime
 ===================
 

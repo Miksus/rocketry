@@ -1,6 +1,8 @@
 
-Pipelining
-==========
+.. _handbook-cond-pipeline:
+
+Task Pipelines
+==============
 
 There are also conditions related to if another task has 
 runned/succeeded/failed before the task we are setting the
