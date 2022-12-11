@@ -17,9 +17,9 @@ parentheses.
 
 There are three ways of creating conditions in Rocketry:
 
-- Condition syntax
-- Condition API
-- Condition classes
+- :ref:`Condition syntax <condition-syntax>`
+- :ref:`Condition API (recommended) <condition-api>`
+- :ref:`Condition classes <condition-classes>`
 
 All of the above generate condition instances that 
 can be used as:
@@ -42,6 +42,18 @@ The above returns ``True`` if your current time is between 10:00 (10 AM) and 14:
 Some conditions might rely on a task or the session 
 (passed as ``.observe(task=task, session=session)``).
 
+The built-in conditions can be put to the following categories:
+
+* Time-based conditions
+
+  * Floating time conditions (such as *every 10 seconds*)
+  * Fixed time conditions (such as *daily*, *weekly*)
+
+    * Task and time dependent (true if the current time is in the period and the task has not run on the period)
+    * Time dependent (true if the current time is in given period)
+
+* Task dependent (such as after a task succeeded)
+* Miscellaneous
 
 .. toctree::
    :maxdepth: 3
