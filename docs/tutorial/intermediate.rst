@@ -11,10 +11,34 @@ need to know.
 
 This tutorial includes:
 
+- Basics of session
 - Application setup
 - Arguments and parametrization
 - More about scheduling
 - Manipulating tasks
+
+Basics of Session
+-----------------
+
+After the application layer, the second highest level interface 
+to the scheduler is the session instance. This instance 
+stores the configuration options and the task themselves. It 
+also provides methods to interact with the system by:
+
+- Create and delete tasks
+- Shut down or restart the scheduler
+- Get the repository for task logs
+
+This instance is accessible via an attribute in the app instance:
+
+.. code-block:: python
+
+    >>> from rocketry import Rocketry
+    >>> app = Rocketry()
+    >>> app.session
+
+You can read more about how to use this from the 
+:ref:`cookbook, control runtime <cookbook-control-runtime>`.
 
 App Setup
 ---------
