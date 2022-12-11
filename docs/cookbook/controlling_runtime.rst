@@ -101,6 +101,11 @@ You can use the ``Task`` argument:
     def do_on_other(another_task=Task(do_on_self)):
         ...
 
+.. note::
+
+    Read more about task attributes from 
+    :ref:`handbook-task-attrs`.
+
 Or you can use the session:
 
 .. code-block:: python
