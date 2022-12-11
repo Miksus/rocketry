@@ -1,25 +1,30 @@
 
-.highlight-py .k {
+.highlight-python .k, .highlight-py .k {
     /*Keyword*/
     color: #3f6ec6;
 }
 
-.highlight-py .kn {
+.highlight-python .c1, .highlight-py .c1 {
+    /*Comment*/
+    color: #808080;
+}
+
+.highlight-python .kn, .highlight-py .kn {
     /*Keyword (import)*/
     color: #3f6ec6;
 }
 
-.highlight-py .nn {
+.highlight-python .nn, .highlight-py .nn {
     /*Module*/
     color: #a846b9;
 }
 
-.highlight-py .nd {
+.highlight-python .nd, .highlight-py .nd {
     /*Decorator*/
     color: #3f6ec6;
 }
 
-.highlight-py .nf {
+.highlight-python .nf, .highlight-py .nf {
     /*Function name*/
     color: #000000;
 }
