@@ -9,8 +9,8 @@ a given time is reached and the task has not yet run
 at that time, or given time has passed from the previous
 run. Time based scheduling can be divided into two categories:
 
-- Floating periods: Run when given time has passed from previous run
-- Fixed period: Run at given time of day, week etc.
+- Floating period: Run when a given time has passed from previous run
+- Fixed period: Run at a period linked to clock or calendar
 
 Floating Periods
 ----------------
@@ -24,7 +24,7 @@ can be done by:
 
 .. note::
 
-    The condition ``every`` is linked running the task
+    The condition ``every`` is linked running the task.
     
 
 Fixed Periods
@@ -40,9 +40,9 @@ agreed fixed time span. Such time spans are:
 
 Running a task every hour is different than running a task
 hourly in Rocketry. The difference is that the former runs
-every time after 60 minutes has passed but the latter every
-full hour. If time is now 07:15, the former will run at 
-08:15 but the latter will run at 08:00.
+when 60 minutes has passed from previous run but the latter 
+runs every full hour. If the current time is 07:45, the 
+former will run at 08:45 but the latter will run at 08:00.
 
 .. literalinclude:: /code/conds/api/periodical.py
     :language: py
@@ -93,3 +93,24 @@ and *starting Friday* means the week is set to start on Friday.
 There are also **time of ...** conditions check if the current time
 is within the given period.
 
+Task independent
+^^^^^^^^^^^^^^^^
+
+The previous examples were linked to a task: the condition is true
+if the current time is in the period and the task has not yet 
+run on that period. There are also purely time-based variants which
+simply checks if the current time is inside the period:
+
+.. literalinclude:: /code/conds/api/time_of.py
+    :language: py
+
+They are especially useful to further constrain the allowed starting
+time with the task dependent time-based conditions, for example:
+
+.. code-block:: python
+
+    from rocketry.conds import weekly, time_of_day
+
+    @app.task(weekly & time_of_day.between("12:00", "18:00"))
+    def do_weekly_in_afternoon():
+        ...
