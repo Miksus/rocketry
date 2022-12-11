@@ -20,7 +20,7 @@ Install the package from `PyPI <https://pypi.org/project/rocketry/>`_:
 Minimal Example
 ---------------
 
-Next, we make a quick and minimal application:
+Here is a minimal scheduling example:
 
 .. literalinclude:: /code/demos/minimal.py
     :language: py
