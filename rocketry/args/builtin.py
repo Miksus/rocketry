@@ -4,7 +4,7 @@ import os
 import sys
 import threading
 import warnings
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 from rocketry.core.log.adapter import TaskAdapter
 try:
     from typing import Literal
@@ -277,7 +277,7 @@ class TerminationFlag(BaseArgument):
 class EnvArg(BaseArgument):
     """Argument that has the value of an environment variable"""
 
-    def __init__(self, var, default=NOTSET):
+    def __init__(self, var, default:Union[NOTSET, str]=NOTSET):
         self.var = var
         self.default = default
 
