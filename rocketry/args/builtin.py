@@ -277,7 +277,7 @@ class TerminationFlag(BaseArgument):
 class EnvArg(BaseArgument):
     """Argument that has the value of an environment variable"""
 
-    def __init__(self, var, default:Union[NOTSET, str]=NOTSET):
+    def __init__(self, var, default:Union[NotSet, str]=NOTSET):
         self.var = var
         self.default = default
 
