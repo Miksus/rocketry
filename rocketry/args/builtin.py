@@ -44,7 +44,7 @@ class Arg(BaseArgument):
         Value of the argument.
 
     """
-    def __init__(self, key:Any, default=NOTSET):
+    def __init__(self, key:Any, default:Union[NotSet, str]=NOTSET):
         self.key = key
         self.default = default
 
@@ -72,7 +72,7 @@ class Arg(BaseArgument):
 class Session(BaseArgument):
     "An argument that represents the session"
 
-    def __init__(self, default=NOTSET):
+    def __init__(self, default:Union[NotSet, str]=NOTSET):
         self.default = default
 
     def get_value(self, task=None, session=None, scheduler=None, **kwargs) -> Any:
@@ -92,7 +92,7 @@ class Session(BaseArgument):
 class Task(BaseArgument):
     "An argument that represents a task"
 
-    def __init__(self, name=None, default=NOTSET):
+    def __init__(self, name=None, default:Union[NotSet, str]=NOTSET):
         self.name = name
         self.default = default
 
@@ -164,7 +164,7 @@ class Return(BaseArgument):
             ...
     """
 
-    def __init__(self, task_name, default=NOTSET):
+    def __init__(self, task_name, default:Union[NotSet, str]=NOTSET):
         self.task_name = task_name
         self.default = default
 
@@ -294,7 +294,7 @@ class CliArg(BaseArgument):
 
     cli_args = sys.argv
 
-    def __init__(self, param, default=NOTSET):
+    def __init__(self, param, default:Union[NotSet, str]=NOTSET):
         self.param = param
         self.default = default
 
