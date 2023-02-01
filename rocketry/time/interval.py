@@ -232,7 +232,7 @@ class TimeOfMonth(AnchoredInterval):
     #   rollforward/rollback/contains would need slight changes
 
     _scope: ClassVar[str] = "year"
-    _scope_max: ClassVar[int] = to_microseconds(day=31) # 31st end of day
+    _scope_max: ClassVar[int] = to_microseconds(day=31) + 1 # 31st end of day
     _unit_resolution: ClassVar[int] = to_microseconds(day=1)
     _unit_names: ClassVar[List[str]] = ["1st", "2nd", "3rd"] + [f"{i}th" for i in range(4, 32)]
      # NOTE: Floating
