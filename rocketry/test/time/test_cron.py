@@ -2,6 +2,9 @@ import datetime
 import pytest
 from rocketry.time import Cron
 from rocketry.time.interval import TimeOfDay, TimeOfHour, TimeOfMinute, TimeOfMonth, TimeOfWeek, TimeOfYear
+from rocketry import FuncTask
+from rocketry import conds
+from rocketry import session
 
 every_minute = TimeOfMinute()
 
@@ -209,3 +212,11 @@ def test_roll_conflict_day_of_month_first():
     interv = period.rollback(datetime.datetime(2022, 12, 7, 10, 0, 0))
     assert interv.left == datetime.datetime.fromisoformat("2022-10-29 22:15:00")
     assert interv.right == datetime.datetime.fromisoformat("2022-10-29 22:16:00")
+
+def test_cron_is_runnable_doesnt_raise():
+    def noop(*_):
+        pass
+
+    task = session.create_task(execution="process", start_cond=conds.cron("50 13 31 12 *"), func=noop)
+    # there should be no exception
+    task.is_runnable()
