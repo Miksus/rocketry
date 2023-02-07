@@ -19,7 +19,7 @@ Example usage:
 Here is a summary of the methods:
 
 =========== =============  =====================  ========================
-Execution   Parallerized?  Can be terminated?      Can modify the session?
+Execution   Parallelized?  Can be terminated?      Can modify the session?
 =========== =============  =====================  ========================
 ``process`` Yes            Yes                    No
 ``thread``  Partially      Yes if task supports   Yes
