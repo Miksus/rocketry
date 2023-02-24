@@ -32,10 +32,11 @@ When evaluating a condition, the system uses method ``observe`` to get
 the state of the condition. You can test the status of a condition by:
 
 .. code-block:: python
-
+    >>> from rocketry import Rocketry
+    >>> app = Rocketry()
     >>> from rocketry.conds import time_of_day
     >>> condition = time_of_day.between("10:00", "14:00")
-    >>> condition.observe()
+    >>> condition.observe(session=app.session)
     True
 
 The above returns ``True`` if your current time is between 10:00 (10 AM) and 14:00 (2 PM).
