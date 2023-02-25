@@ -258,7 +258,7 @@ class Session(RedBase):
         self._set_configs()
         await self.scheduler.serve()
 
-    def run(self, *task_names:Tuple[str], execution=None, obey_cond=False):
+    def run(self, *task_names:str, execution=None, obey_cond=False):
         """Run specific task(s) manually.
 
         This method starts up the scheduler but only the given
@@ -268,7 +268,7 @@ class Session(RedBase):
 
         Parameters
         ----------
-        *task_names : tuple of str
+        *task_names : variable length str args
             Names of the tasks to run.
         execution : str
             Execution method for all of the tasks.
@@ -367,7 +367,7 @@ class Session(RedBase):
             task_logger.setLevel(logging.INFO)
 
     def _wrap_log_record_creation(self, logger=None):
-        # Make 
+        # Make
         from rocketry.core.log import TaskAdapter
         if logger is None:
             logger = logging.getLogger(self.config.task_logger_basename)
@@ -599,7 +599,7 @@ class Session(RedBase):
 
     def get_current_time(self) -> datetime.datetime:
         """Get measurement of time as datetime
-        
+
         This method is used internally thoroughout
         the package.
         """
