@@ -32,6 +32,7 @@ When evaluating a condition, the system uses method ``observe`` to get
 the state of the condition. You can test the status of a condition by:
 
 .. code-block:: python
+    
     >>> from rocketry import Rocketry
     >>> app = Rocketry()
     >>> from rocketry.conds import time_of_day
