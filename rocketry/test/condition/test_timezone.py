@@ -23,8 +23,10 @@ from rocketry.conds import (
 )
 from rocketry.tasks import FuncTask
 
-def do_success(): ...
-def do_failure(): raise RuntimeError("Oops")
+def do_success():
+    ...
+def do_failure():
+    raise RuntimeError("Oops")
 
 class Timer:
 
@@ -108,7 +110,7 @@ def test_task_run(session, execution):
     timezone = datetime.timezone(datetime.timedelta(hours=12))
     # year 2024 starts on Monday
     time = Timer(datetime.datetime(2024, 1, 1, 22, 00, tzinfo=utc_time))
- 
+
     session.config.timezone = timezone
 
     task = FuncTask(do_success, start_cond=true, execution=execution, session=session)

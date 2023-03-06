@@ -55,5 +55,5 @@ def test_reference_now():
     now = datetime.now()
     time = TimeDelta("10 seconds").use_reference(now)
     assert now in time
-    assert (now - timedelta(0, 5, 0)) in time
-    assert (now - timedelta(0, 11, 0)) not in time
+    assert now - timedelta(0, 5, 0) in time
+    assert now - timedelta(0, 11, 0) not in time
