@@ -14,6 +14,7 @@ do more specific things.
    conditions
    bigger_applications
    robust_applications
+   task_pipelining
    controlling_runtime
    fastapi
    django

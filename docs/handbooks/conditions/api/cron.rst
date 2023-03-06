@@ -1,5 +1,5 @@
 
-.. _cron:
+.. _handbook-cond-cron:
 
 Cron Scheduling
 ===============

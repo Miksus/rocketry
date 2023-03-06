@@ -1,3 +1,5 @@
+.. _cookbook-control-runtime:
+
 Controlling Runtime
 ===================
 
@@ -98,6 +100,11 @@ You can use the ``Task`` argument:
     @app.task()
     def do_on_other(another_task=Task(do_on_self)):
         ...
+
+.. note::
+
+    Read more about task attributes from 
+    :ref:`handbook-task-attrs`.
 
 Or you can use the session:
 

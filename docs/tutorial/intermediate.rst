@@ -9,195 +9,167 @@ that you might not come across in very
 simple applications but you eventually
 need to know.
 
-Running as Async
-----------------
+This tutorial includes:
 
-By default, ``app.run`` starts a new event loop. 
-If you wish to integrate other async apps, such 
-as FastAPI, you can also call ``app.serve`` method
-which is an async method to start the scheduler:
+- Basics of session
+- Application setup
+- Arguments and parametrization
+- More about scheduling
+- Manipulating tasks
 
-.. literalinclude:: /code/demos/minimal_async.py
-    :language: py
+Basics of Session
+-----------------
 
-Session Configurations
-----------------------
+After the application layer, the second highest level interface 
+to the scheduler is the session instance. This instance 
+stores the configuration options and the task themselves. It 
+also provides methods to interact with the system by:
 
-There are several options to tune the scheduling session.
-You might want to change some of the default configurations
-depending on your project. You might want to silence more 
-errors on production than by default and you might want 
-to change the default execution type.
+- Create and delete tasks
+- Shut down or restart the scheduler
+- Get the repository for task logs
 
-Read more from the :ref:`the config handbook <config-handbook>`.
-
-App Settings
-------------
-
-There are various ways to configure the application but the 
-recommended pattern is to use the setup hook. Read more from 
-the :ref:`the app settings cookbook <app-settings-cookbook>`.
-
-Using the Condition API
------------------------
-
-Previously we have used only the string syntax for scheduling.
-For simple use cases that is sufficient but if your project 
-grows the strings may become a burden. The code analyzers cannot
-identify possible typos or other problems in them and there is a 
-limitation in reuse. To fix these, there is a condition API that
-provides functions and instances that are quite similar than the
-components in the string syntax.
-
-Here are some examples of how the condition API looks like:
-
-.. literalinclude:: /code/conds/api/simple.py
-    :language: py
-
-Read more about the condition API in :ref:`the handbook <condition-api>`.
-From now on, we swith to the condition API but you are free to use the 
-string syntax. Most things work very similarly in both.
-
-Condition Logic
-----------------
-
-Previously we have introduced some ways to schedule tasks.
-Sometimes the existing options are not enough and you need
-to compose a scheduling logic from multiple conditions. 
-For such purpose, there are logical operations:
-
-- ``&``: *AND* operator 
-- ``|``: *OR* operator 
-- ``~``: *NOT* operator
-
-Using these are pretty simple:
-
-.. literalinclude:: /code/conds/api/logic.py
-    :language: py
-
-We used conditions ``true`` and ``false`` but you 
-may replace these with other conditions (ie. ``daily``) 
-from previous examples. Also note how we can use parentheses
-
-.. note::
-
-    The operations are the same with string syntax. 
-    This is valid condition syntax: 
-    
-    ``"(true & false) | (false & ~true)"``
-
-
-Pipelining
-----------
-
-Rocketry supports two types of task pipelining:
-
-- Run a task after another has succeeded, failed or both
-- Put the return or output value of a task as an input argument to another
-
-Run Task After Another
-^^^^^^^^^^^^^^^^^^^^^^
-
-There is are conditions that can be used for this purpose:
-
-.. literalinclude:: /code/conds/api/pipe_single.py
-    :language: py
-
-Set Output as an Input
-^^^^^^^^^^^^^^^^^^^^^^
-
-To pipeline the output-input, there is an *argument*
-for the problem. We go through arguments and parametrization
-with more detail soon but here is an example to pipeline
-the task returns:
-
-.. literalinclude:: /code/params/return.py
-    :language: py
-
-Of course, the second task is not quaranteed to run after 
-the first. You can combine the both to achieve proper
-pipelining:
-
-.. literalinclude:: /code/conds/api/pipe_with_return.py
-    :language: py
-
-
-Parameterizing
---------------
-
-Parameters are key-value pairs passed to the tasks.
-The value of the pair is called *argument*. The 
-argument can be derived from the return of another 
-task, from the return value of a function or 
-a component of the scheduling framework.
-
-There are also two scopes of parameters: session level
-and task level. Most of the time you are using session 
-level parameters.
-
-Here is an illustration of using a session level parameter:
+This instance is accessible via an attribute in the app instance:
 
 .. code-block:: python
 
-    from rocketry.args import Arg
+    >>> from rocketry import Rocketry
+    >>> app = Rocketry()
+    >>> app.session
 
-    # Setting parameters to the session
-    app.params(
-        my_arg='Hello world'
-    )
+You can read more about how to use this from the 
+:ref:`cookbook, control runtime <cookbook-control-runtime>`.
 
-    @app.task()
-    def do_things(item = Arg('my_arg')):
-        ...
+App Setup
+---------
 
-We set a session level parameter (``my_arg``)
-and we used that in the task ``do_things``.
-When the task is run, function argument ``item``
-will get the value of ``my_arg`` from session
-level arguments which is ``"Hello world"``.
-This argument can be reused in multiple tasks
-as it was set on session level. 
+Rocketry application has several configuration options
+which you can change to alter the behaviour of the scheduling. 
+There is also the task logger to be configured so that there 
+is persistence in the logs.
 
-Setting an argument to task level only looks like 
-this:
+The configuration options can be passed with the app initiation:
+
+.. code-block:: python
+
+    from rocketry import Rocketry
+
+    app = Rocketry(execution="async")
+
+You can read more about the different options from 
+:ref:`config-handbook`. 
+
+Furthermore, you can also use the ``app.setup`` hook to set the 
+configuration options:
+
+.. code-block:: python
+
+    from rocketry import Rocketry
+
+    app = Rocketry()
+
+    @app.setup()
+    def setup_app():
+        app.session.config.execution = "async"
+
+In the above we created a setup hook function called ``setup_app``.
+This function is called in the startup stage of the scheduler
+just before any task is run. 
+
+It is recommended to set up your application using a setup hook to
+keep all the configuration logic in the same place. You can also 
+setup the task logger in the hook:
+
+.. code-block:: python
+
+    from rocketry import Rocketry
+    from rocketry.args import TaskLogger
+    from rocketry.log import MinimalRecord
+
+    from redbird.repos import CSVFileRepo
+
+    app = Rocketry()
+
+    @app.setup()
+    def setup_app(task_logger=TaskLogger()):
+        repo = CSVFileRepo(filename="logs.csv", model=MinimalRecord)
+        task_logger.set_repo(repo)
+
+Above, we used Rocketry's argument system: the value of ``task_logger``
+is set dynamically when the hook is called. The value of this argument 
+will be Rocketry's logging adapter which has some additional methods to
+basic logger such as ``set_repo`` to set the data store for the log records.
+
+We will go to the arguments a bit later but here is an advanced demonstration
+of how you can use the setup hook:
+
+.. code-block:: python
+
+    from rocketry import Rocketry
+    from rocketry.args import Config, TaskLogger, EnvArg
+    from rocketry.log import MinimalRecord
+
+    from redbird.repos import CSVFileRepo, MemoryRepo
+
+    app = Rocketry()
+
+    @app.setup()
+    def setup_app(env=EnvArg("ENV", default="test"), task_logger=TaskLogger(), config=Config()):
+
+        # Common configurations
+        config.execution = "async"
+
+        # Env dependent configurations
+        if env == "prod":
+            repo = CSVFileRepo(filename="logs.csv", model=MinimalRecord)
+            task_logger.set_repo(repo)
+            config.silence_cond_check = True
+        else:
+            # test or dev env
+            repo = MemoryRepo(model=MinimalRecord)
+            task_logger.set_repo(repo)
+            config.silence_cond_check = False
+
+The above uses different configurations depending on whether the 
+environment variable *ENV* has value *prod* or something else. It 
+also uses different data stores for the logs depending on the environment.
+
+You can read more about setting up application from 
+:ref:`the app settings cookbook <app-settings-cookbook>`.
+
+Arguments
+---------
+
+Rocketry has a dynamic argument system in which 
+arguments for tasks, custom conditions etc. can be 
+passed indirectly. We used such arguments in the 
+previous example in the application setup.
+
+There are various places where you can use the 
+dynamic argumets:
+
+- Tasks parameters
+- Hooks (such as ``@app.setup()``)
+- Custom conditions
+- Custom arguments
+
+Here is a simple example of using such an argument:
 
 .. code-block:: python
 
     from rocketry.args import SimpleArg
 
     @app.task()
-    def do_things(item = SimpleArg('Hello world')):
+    def do_things(myarg=SimpleArg('Hello world')):
         ...
 
-``SimpleArg`` is just a placeholder argument that 
-is simply the value that was passed (which is 
-``'Hello world'``). In the example above the argument
-is not reusable in other tasks.
+When this task runs the value of ``myarg`` will be
+``"Hello world"`` (and not the instance of ``SimpleArg``).
+``SimpleArg`` does nothing interesting but the key take away 
+is that the value is dynamic and determined by Rocketry when 
+the task is stated.
 
-Next we will cover some basic argument types that 
-have more functionalities.
-
-Function Argments
-^^^^^^^^^^^^^^^^^
-
-Function arguments are arguments which values are 
-derived from the return value of a function. To 
-set a session level function argument:
-
-.. code-block:: python
-
-    from rocketry.args import Arg
-
-    @app.param('my_arg')
-    def get_item():
-        return 'hello world'
-
-    @app.task()
-    def do_things(item = Arg('my_arg')):
-        ...
-
-
-To set task-level-only function argument:
+More useful example would be to use ``FuncArg``:
 
 .. code-block:: python
 
@@ -207,64 +179,132 @@ To set task-level-only function argument:
         return 'hello world'
 
     @app.task()
-    def do_things(item = FuncArg(get_item)):
+    def do_things(myarg=FuncArg(get_item)):
         ...
 
+In the above example the ``myarg`` will get the return value of
+the function ``get_item``. This function is run just before the 
+task ``do_things`` is started.
 
-Meta Argments
-^^^^^^^^^^^^^
+.. note::
 
-Meta arguments are arguments that contain 
-a component of the scheduling system.
-These are useful when you need to manipulate
-the session in a task (ie. shut down the 
-scheduler or add/delete tasks) or manipulate
-some tasks (ie. force running or change 
-attributes).
+    You can also pass the arguments in the ``app.task(...)``:
 
-An example of the session argument:
+    .. code-block:: python
+
+        @app.task(parameters={"myarg": FuncArg(get_item)})
+        def do_things(myarg):
+            ...
+
+There are various different types of arguments you can use.
+You can also create your own arguments if needed.
+
+There are also session level parameters which can also 
+be used as input arguments for tasks or other components:
 
 .. code-block:: python
 
-    from rocketry.args import Session
+    from rocketry.args import Arg
+
+    # Setting parameters to the session
+    app.params(session_arg='Hello world')
 
     @app.task()
-    def manipulate_session(session = Session()):
+    def do_things(myarg=Arg('session_arg')):
         ...
 
-An example of the task argument:
+The value of ``myarg`` will also be ``"Hello world"``
+which is stored in the session parameters. 
+This is useful if you have a global argument that 
+is used throughout the system. Furthermore, 
+even the session level parameters can be arguments
+themselves:
 
 .. code-block:: python
 
-    from rocketry.args import Task
+    from rocketry.args import Arg, FuncArg
+
+    def get_item():
+        return "Hello world"
+    
+    app.params(session_arg=FuncArg(get_item))
 
     @app.task()
-    def manipulate_task(this_task=Task(), another_task=Task('do_things')):
+    def do_things(myarg=Arg('session_arg')):
         ...
 
-This is more advanced and we will get to the usage of these later.
-
-Custom Conditions
------------------
-
-Creating custom conditions is easy and you can combine your conditions
-with other conditions using simple logic. Simply call the condition wrapper
-in the app:
+You can also create your own argument which uses another argument:
 
 .. code-block:: python
 
-    from rocketry.conds import daily
+    from rocketry.args import Task, argument
 
-    @app.cond()
-    def things_ready():
+    @argument()
+    def last_success(task=Task()):
+        return task.last_success
+
+    @app.task()
+    def do_things(success_time=last_success):
         ...
-        return True or False
 
-    @app.task(daily & things_ready)
+In the above example the value of the argument ``task`` in the function
+``last_success`` will be the instance of the task that this Rocketry argument 
+was set as an input argument to. In this case it would be the task ``do_things``.
+
+Conditions
+----------
+
+In the previous tutorial we went through some basics
+of scheduling. In this section we introduce the 
+abstraction layers of conditions and how to create custom conditions.
+You can read more about conditions from :ref:`condition handbook <condition-handbook>`.
+
+There are three abstraction layers in the condition mechanics:
+
+- :ref:`Condition syntax <condition-syntax>`
+- :ref:`Condition API <condition-api>` (recommended)
+- :ref:`Condition classes <condition-classes>`
+
+It is recommended to use the condition API. Condition syntax
+is useful for quick and simple scheduling but typos are not 
+catched by code checkers and it has less reusability.
+On the other hand, condition classes are the lowest level implementation and 
+often not as intuitive to use.
+
+Condition syntax works quite the same as the condition API
+and it also supports logical operators:
+
+.. code-block:: python
+
+    @app.task("weekly on Monday & time of day after 10:00")
     def do_things():
         ...
 
-You can also pass arguments to the conditions:
+You can read more from :ref:`the condition syntax handbook <condition-syntax>`.
+But as mentioned, you should prefer condition API if practical.
+
+Moreover, condition API enables you to rename and reuse conditions:
+
+.. code-block:: python
+
+    from rocketry.conds import daily, time_of_week
+
+    business_daily = daily.between("08:00", "17:00") & time_of_week.between("Mon", "Fri")
+
+    @app.task(business_daily)
+    def do_a():
+        ...
+
+    @app.task(business_daily)
+    def do_b():
+        ...
+
+Custom Conditions
+^^^^^^^^^^^^^^^^^
+
+At some point you might realize the built-in conditions
+are lacking a condition for your use case. You can also
+create custom conditions when needed:
 
 .. code-block:: python
 
@@ -272,148 +312,113 @@ You can also pass arguments to the conditions:
     from rocketry.conds import daily
 
     @app.cond()
-    def file_exists(file):
-        return Path(file).is_file()
+    def file_exists():
+        return Path("myfile.csv").exists()
 
-    @app.task(daily & file_exists("myfile.csv"))
+    @app.task(daily & file_exists)
+    def do_things():
+        ...
+
+Sometimes you might want to reuse your condition
+and set arguments to it. That can be done by:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from rocketry.conds import daily
+
+    @app.cond()
+    def path_exists(file):
+        return Path(file).exists()
+
+    @app.task(daily & path_exists("myfile.csv"))
+    def do_things():
+        ...
+
+You can also use Rocketry's arguments in the 
+condition as well:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from rocketry.conds import daily
+    from rocketry.args import FuncArg
+
+    def get_report_date():
+        return "Hello world"
+
+    @app.cond()
+    def file_exists(file, report_date=FuncArg(get_report_date)):
+        file = file.format(report_date=report_date)
+        return Path(file).exists()
+
+    @app.task(daily & file_exists("myfile_{report_date}.csv"))
     def do_things():
         ...
 
 .. note::
 
-    You can pass the arguments as positional (ie. ``file_exists("myfile.csv")``)
-    or as keyword arguments (ie. ``file_exists(file="myfile.csv")``).
+    The custom conditions don't need the application.
+    If you put your conditions to other module than where the
+    application is, you can use ``condition`` decorator:
+    
+    .. code-block:: python
 
-You can also use Rocketry's arguments:
+        from pathlib import Path
+        from rocketry.conds import condition
 
-.. code-block:: python
+        @condition()
+        def path_exists(file):
+            return Path(file).exists()
 
-    from rocketry.args import Task
-    from rocketry.conds import daily
+Manipulating Tasks
+------------------
 
-    @app.cond()
-    def is_right_task(this_task=Task()):
-        return this_task.name.startswith("do_")
+Most of Rocketry's components are accessible also
+during the scheduler is running. This includes tasks,
+configurations and logging. Accessing tasks is especially
+useful if your tasks are stored in a database and you
+need to sync them, your users should be able to interact 
+with the scheduler (ie. manually run tasks) or you need 
+to create conditions that depend on other tasks.
 
-    @app.task(daily & is_right_task)
-    def do_things():
-        ...
-
-.. warning::
-
-    The conditions should be relatively simple and light.
-    If your condition takes long time to inspect, it might
-    slow down the scheduler. You can fix this by caching
-    the value or by creating a task that runs parallel checking
-    the value for the task.
-
-Task Logging
-------------
-
-Rocketry uses `Red Bird's <https://red-bird.readthedocs.io/>`_
-`logging handler <https://red-bird.readthedocs.io/en/latest/logging_handler.html>`_
-for implementing a logger that can be read programmatically.
-Red Bird is a repository pattern library that abstracts 
-database access from application code. This is helpful 
-to create a unified interface to read the logs regardless
-if they are stored to a CSV file, SQL database or to 
-a plain Python list in memory.
-
-Log to Repository
-^^^^^^^^^^^^^^^^^
-
-By default, the logs are put to a Python list and they are gone
-if the scheduler is restarted. In many cases this is undesired
-as the scheduler does not know which task had already run,
-succeeded or failed in case of restart. Therefore you might want
-to store the log records to a disk by changing the default log 
-repository. 
-
-The simplest way to configure the location of the logs is to
-pass the new repo as ``logger_repo``:
+For example, consider the following task:
 
 .. code-block:: python
 
-    from rocketry import Rocketry
-    from rocketry.log import MinimalRecord
-    from redbird.repos import CSVFileRepo
-
-    repo = CSVFileRepo(filename="tasks.csv", model=MinimalRecord)
-    app = Rocketry(logger_repo=repo)
-
-In the example above, we changed the log records to go to a CSV file
-called *tasks.csv*. We also specified a log record format that contains
-the bare minimum. Read more about logging :ref:`in the logging handbook <handbook-logging>`.
-
-Add Another Log Handlers
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-As the logger is simply extension of `the logging library <https://docs.python.org/3/library/logging.html>`_,
-you can also add other logging handlers as well: 
-
-.. code-block:: python
-
-    import logging
     from rocketry import Rocketry
 
     app = Rocketry()
 
-    # Create a handler
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
+    @app.task()
+    def do_things():
+        ...
 
-    # Add the handler
-    task_logger = logging.getLogger('rocketry.task')
-    task_logger.addHandler(handler)
-
-.. warning::
-
-    Make sure the logger ``rocketry.task`` has at least 
-    one ``redbird.logging.RepoHandler`` in handlers or 
-    the system cannot read the log information.
-
-Task Naming
------------
-
-Each task should have a unique name within
-the session. If a name is not given to a task,
-the name is derived from the arguments of the
-task.
-
-For function tasks if the name is not specified,
-the name is set as the name of the function:
+You can access this task by:
 
 .. code-block:: python
 
-    >>> @app.task()
-    >>> def do_things():
-    >>>     ...
-
-    >>> app.session[do_things].name
-    'do_things'
-
-.. warning::
-
-    As the name must be unique, an error is raised if you try
-    to create multiple tasks from the same function or from 
-    multiple functions with same names without specifying name.
-
-You can pass the name yourself as well:
-
-.. literalinclude:: /code/naming.py
-    :language: py
+    >>> task = app.session[do_things]
 
 .. note::
 
-    If you use the decotator (``@app.task()``) to define function
-    task, the decorator returns the function itself due to pickling
-    issues on some platforms. However, the task can be fetched from
-    session using just the function: ``session[do_things]``.
-    There is a special attribute (``__rocketry__``) in 
-    the task function for enabling this.
+    Alternatively, you can access the 
+    task using the task's name.
+    Read more about the naming from the
+    :ref:`task handbook <handbook-task-naming>`.
 
-.. note::
+There are several interesting attributes
+and methods you can use. You can 
+read more about the task attributes 
+from :ref:`task handbook <handbook-task-attrs>`.
 
-    Task names are used in many conditions and in logging.
-    They are essential in order to find out when a task 
-    started, failed or succeeded. 
+Perhaps the most useful method tasks have is 
+``run``. This allows you to force a task to
+be run:
+
+.. code-block:: python
+
+    >>> task.run()
+
+You can read more about manipulating the 
+runtime from :ref:`cookbook, control runtime <cookbook-control-runtime>`.

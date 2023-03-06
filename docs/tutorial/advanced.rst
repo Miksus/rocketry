@@ -3,7 +3,20 @@
 Advanced Tutorial
 =================
 
-This is an advanced level tutorial.
+This is an advanced level tutorial. In this tutorial
+we introduce some concepts that are useful for more
+advanced use cases.
+
+Running as Async
+----------------
+
+By default, ``app.run`` starts a new event loop. 
+If you wish to integrate other async apps, such 
+as FastAPI, you can also call ``app.serve`` method
+which is an async method to start the scheduler:
+
+.. literalinclude:: /code/demos/minimal_async.py
+    :language: py
 
 Task Types
 ----------
@@ -13,7 +26,6 @@ There are other task types as well to cover most common use cases:
 
 - ``FuncTask``: Executes a Python function
 - ``CommandTask``: Executes a shell command
-- ``CodeTask``: Executes raw code as string. Potentially dangerous.
 
 Here are the ways to initialize tasks:
 
@@ -31,8 +43,6 @@ Here are the ways to initialize tasks:
     app.task('daily', func_name="main", path="path/to/example.py")
 
     app.task('daily', command='echo "Hello world"')
-
-    app.task('daily', code='print("Hello world")')
 
 
 Metatasks

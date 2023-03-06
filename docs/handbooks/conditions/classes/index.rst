@@ -1,3 +1,4 @@
+.. _condition-classes:
 
 Condition Classes
 =================

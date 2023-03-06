@@ -25,7 +25,7 @@ applications. It is simple, clean and extensive.
 **Core functionalities:**
 
 - Powerful scheduling
-- A lot of built-in scheduling options (including :ref:`cron <cron>`)
+- A lot of built-in scheduling options (including :ref:`cron <handbook-cond-cron>`)
 - Concurrency (async, threading, multiprocessing)
 - Parametrization
 - Task pipelining
