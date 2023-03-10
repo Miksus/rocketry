@@ -158,7 +158,7 @@ called ``scheduled_tasks.py`` with the tasks referent to that app:
         app.task('every 10 seconds', func=run_do_things_with_user_app_x)
 
 And than, in the same module where the file ``wsgi.py`` is located, add a file called
-``init_scheduled_tasks.py`` (or anywhere you like, just make sure to import the file
+``init_scheduled_tasks.py`` (or anywhere you would like, just make sure to import the file
 correctly), which will import the register functions of each file of tasks and
 initialize rocketry in another process:
 
@@ -180,7 +180,7 @@ initialize rocketry in another process:
         p.start()
 
 After that, go to the ``wsgi.py`` file, import the ``init_scheduled_tasks`` function
-and call it after "``application = get_wsgi_application()``":
+and call it after ``application = get_wsgi_application()``:
 
 .. code-block:: python
 
