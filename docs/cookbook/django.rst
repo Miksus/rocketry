@@ -134,6 +134,68 @@ if that's something you would want. Let's add this view in our ``views.py`` file
                 status=HTTP_200_OK,
             )
 
+Actiavate Rocketry At Server Start
+----------------------------------
+
+Another way to integrate rocketry with django is to create a file in each app
+called ``scheduled_tasks.py`` with the tasks referent to that app:
+
+.. code-block:: python
+
+    from asgiref.sync import sync_to_async
+    from django.contrib.auth.models import User
+
+
+    def do_things_with_user():
+        print(f'X {User.objects.first()}!')
+
+
+    async def run_do_things_with_user_app_x():
+        await sync_to_async(do_things_with_user)()
+
+
+    def register_scheduled_tasks_app_x(app):
+        app.task('every 10 seconds', func=run_do_things_with_user_app_x)
+
+And than, in the same module where the file ``wsgi.py`` is located, add a file called
+``init_scheduled_tasks.py`` (or anywhere you like, just make sure to import the file
+correctly), which will import the register functions of each file of tasks and
+initialize rocketry in another process:
+
+.. code-block:: python
+
+    from multiprocessing import Process
+    from rocketry import Rocketry
+    from x.scheduled_tasks import register_scheduled_tasks_app_x
+    from y.scheduled_tasks import register_scheduled_tasks_app_y
+
+
+    def init_scheduled_tasks():
+        app = Rocketry(execution="async")
+
+        register_scheduled_tasks_app_x(app)
+        register_scheduled_tasks_app_y(app)
+
+        p = Process(target=app.run)
+        p.start()
+
+After that, go to the ``wsgi.py`` file, import the ``init_scheduled_tasks`` function
+and call it after "``application = get_wsgi_application()``":
+
+.. code-block:: python
+
+    from django.core.wsgi import get_wsgi_application
+
+    ...
+
+    application = get_wsgi_application()
+
+    from .init_scheduled_tasks import init_scheduled_tasks
+    init_scheduled_tasks()
+
+Notice that if you are using gunicorn with multiple workers, each worker will create one
+instance of rocketry which will be running all the tasks. This is a undesired behavior
+and needs to be taken care off if you wish to use this kind of integration with django
 
 .. note ::
     You will only need to use ``sync_to_async`` if you use the asynchronous ORM. The usage is well documented in
