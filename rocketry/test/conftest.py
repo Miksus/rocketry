@@ -89,7 +89,7 @@ def session():
         "execution": "process",
     }, delete_existing_loggers=True)
     rocketry.session = session
-    session.set_as_default()
+    # session.set_as_default()
 
     task_logger = logging.getLogger(session.config.task_logger_basename)
     task_logger.handlers = [
