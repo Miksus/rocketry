@@ -2,8 +2,7 @@ import pytest
 import rocketry
 
 def test_build(request):
-    expect_build = request.config.getoption('is_build')
-    if not expect_build:
-        assert rocketry.version == '0.0.0.UNKNOWN'
-    else:
-        assert rocketry.version != '0.0.0.UNKNOWN'
+    verify_build = request.config.getoption('check_build')
+    if not verify_build:
+        pytest.skip(reason="Pass '--check-build' to verify the package is built")
+    assert rocketry.version != '0.0.0.UNKNOWN'

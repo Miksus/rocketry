@@ -43,4 +43,4 @@ jobs:
     - name: Run test suite
       working-directory: ./requirements
       run: |
-        python -m pytest --pyargs rocketry -W error::UserWarning -W error::FutureWarning -W error::DeprecationWarning
+        python -m pytest --check-build --pyargs rocketry -W error::UserWarning -W error::FutureWarning -W error::DeprecationWarning

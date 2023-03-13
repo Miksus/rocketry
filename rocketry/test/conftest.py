@@ -21,11 +21,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
 
 def pytest_addoption(parser):
     parser.addoption(
-        '--no-build',
-        action='store_false',
-        dest="is_build",
-        default=True,
-        help='Expect the package is not built.'
+        '--check-build',
+        action='store_true',
+        dest="check_build",
+        default=False,
+        help='Check the package is built correctly.'
     )
 
 # Utils
