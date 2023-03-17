@@ -194,8 +194,9 @@ and call it after ``application = get_wsgi_application()``:
     init_scheduled_tasks()
 
 Notice that if you are using gunicorn with multiple workers, each worker will create one
-instance of rocketry which will be running all the tasks. This is a undesired behavior
-and needs to be taken care off if you wish to use this kind of integration with django
+process of rocketry which will be running all the tasks. This is aimed primarily towards
+development where you need to restart the server all the time and the server is single
+threaded.
 
 .. note ::
     You will only need to use ``sync_to_async`` if you use the asynchronous ORM. The usage is well documented in
