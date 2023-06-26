@@ -1,7 +1,8 @@
 
 import pytest
+from typing_extensions import Annotated
 import rocketry
-from rocketry.args import FuncArg
+from rocketry.args import FuncArg, SimpleArg
 
 from rocketry.core import Parameters
 from rocketry.args import Private
@@ -76,3 +77,19 @@ def test_func_param_named(session:rocketry.Session):
     assert isinstance(session.parameters._params['a_param'], FuncArg)
     assert session.parameters['a_param'] == 5
     assert session.parameters._params['a_param'].func is my_param
+
+
+def test_annotated():
+    arg = SimpleArg(1)
+
+    def func(arg: Annotated[int, arg]):
+        ...
+    
+    params = Parameters._from_signature(func).materialize()
+    assert params["arg"] == 1
+
+    def func2(arg: Annotated[int, arg, str]):
+        ...
+    
+    with pytest.raises(AssertionError):
+        Parameters._from_signature(func2)

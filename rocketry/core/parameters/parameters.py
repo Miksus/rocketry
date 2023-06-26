@@ -3,6 +3,8 @@ from typing import Callable, Type, Union, TYPE_CHECKING
 from functools import partial
 import inspect
 
+from typing_extensions import Annotated, get_args, get_origin
+
 from rocketry._base import RedBase
 from rocketry.core.utils import is_pickleable
 from rocketry.core.utils import filter_keyword_args
@@ -55,7 +57,17 @@ class Parameters(RedBase, Mapping): # Mapping so that mytask(**Parameters(...)) 
         func_params = inspect.signature(__func).parameters
         params = cls()
         for name, param in func_params.items():
-            default = param.default
+            if get_origin(param.annotation) is Annotated:
+                annotated_args = get_args(param.annotation)
+                arguments = annotated_args[1:]
+                assert (
+                    len(arguments) == 1
+                ), f"Cannot specify multiple `Annotated` Custom arguments for `{name}`!"
+
+                default = arguments[0]
+            else:
+                default = param.default
+
             if isinstance(default, BaseArgument):
                 params[name] = default
         return params
