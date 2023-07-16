@@ -62,7 +62,7 @@ class Config(BaseModel):
 
     multilaunch: bool = False
     func_run_id: Callable = uuid
-    max_process_count = cpu_count()
+    max_process_count:int = cpu_count()
     tasks_as_daemon: bool = True
     restarting: str = 'replace'
     instant_shutdown: bool = False

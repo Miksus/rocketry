@@ -20,7 +20,7 @@ try:
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic import BaseModel, Field, PrivateAttr, validator, ConfigDict
 
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse, All
@@ -192,17 +192,18 @@ class Task(RedBase, BaseModel):
     ...         return ...
 
     """
-    class Config:
-        arbitrary_types_allowed= True
-        underscore_attrs_are_private = True
-        validate_assignment = True
-        json_encoders = {
-            Parameters: lambda v: v.to_json(),
-            'BaseCondition': lambda v: str(v),
-            FunctionType: lambda v: v.__name__,
-            'Session': lambda v: id(v),
-        }
-
+    model_config = ConfigDict(
+        arbitrary_types_allowed= True,
+        validate_assignment = True,
+        extra='allow',      
+    )
+    # Removed JSON encoders but keeping not for future reference as need to find way of re-implementing
+        # json_encoders = {
+        #     Parameters: lambda v: v.to_json(),
+        #     'BaseCondition': lambda v: str(v),
+        #     FunctionType: lambda v: v.__name__,
+        #     'Session': lambda v: id(v),
+        # }  
 
     session: 'Session' = Field()
 
@@ -211,23 +212,23 @@ class Task(RedBase, BaseModel):
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
-    daemon: Optional[bool]
+    daemon: Optional[bool] = False
     batches: List[Parameters] = Field(
         default_factory=list,
         description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
     )
 
     # Instance
-    name: Optional[str] = Field(description="Name of the task. Must be unique")
-    description: Optional[str] = Field(description="Description of the task for documentation")
-    logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records")
-    execution: Optional[Literal['main', 'async', 'thread', 'process']]
+    name: Optional[str] = Field(description="Name of the task. Must be unique", default=None)
+    description: Optional[str] = Field(description="Description of the task for documentation", default=None)
+    logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records", default="rocketry.task")
+    execution: Optional[Literal['main', 'async', 'thread', 'process']] = None
     priority: int = 0
     disabled: bool = False
     force_run: bool = False
     force_termination: bool = False
-    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task")
-    timeout: Optional[datetime.timedelta]
+    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task", default=None)
+    timeout: Optional[datetime.timedelta] = None
 
     parameters: Parameters = Parameters()
 

@@ -2,7 +2,7 @@ import sys
 import inspect
 import importlib
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, ClassVar
 import warnings
 
 from pydantic import Field, PrivateAttr, validator
@@ -130,14 +130,14 @@ class FuncTask(Task):
     """
     func: Optional[Callable] = Field(description="Executed function")
 
-    path: Optional[Path] = Field(description="Path to the script that is executed")
+    path: Optional[Path] = Field(description="Path to the script that is executed", default = None)
     func_name: Optional[str] = Field(default="main", description="Name of the function in given path. Pass path as well")
     cache: bool = False
 
     sys_paths: List[Path] = []
 
     _is_delayed: bool = PrivateAttr(default=False)
-    _delayed_kwargs: dict = {}
+    _delayed_kwargs: ClassVar[dict] = {}
     _name_template: str = '{module_name}:{func_name}'
     @property
     def delayed(self):
@@ -173,7 +173,7 @@ class FuncTask(Task):
             # We initiate the class lazily by creating
             # almost empty shell class that is populated
             # in next __call__ (which should occur immediately)
-            self._delayed_kwargs = kwargs
+            FuncTask._delayed_kwargs = kwargs
             return
         if only_func_set:
             # Most likely called as:
@@ -184,6 +184,7 @@ class FuncTask(Task):
             # the execution to else than process
             # as it's obvious it would not work.
             kwargs["execution"] = "thread"
+        
         super().__init__(func=func, **kwargs)
         self._set_descr(is_delayed=func is None)
 
@@ -192,7 +193,7 @@ class FuncTask(Task):
             func = args[0]
             super().__init__(func=func, **self._delayed_kwargs)
             self._set_descr(is_delayed=False)
-            self._delayed_kwargs = {}
+            FuncTask._delayed_kwargs = {}
 
             # Note that we must return the function or
             # we are in deep shit with multiprocessing

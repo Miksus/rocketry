@@ -1,6 +1,6 @@
 
 import copy
-from typing import Callable, Optional, Pattern, Union
+from typing import Callable, ClassVar, Optional, Pattern, Union
 
 from pydantic import Field
 from rocketry.args import Session
@@ -13,7 +13,7 @@ from rocketry.tasks.func import FuncTask
 class _FuncTaskCondWrapper(FuncTask):
 
     # For some reason, the order of cls attrs broke here so we need to reorder then:
-    session: _Session
+    session: ClassVar[_Session]
     name: Optional[str] = Field(description="Name of the task. Must be unique")
 
     def _handle_return(self, value):
