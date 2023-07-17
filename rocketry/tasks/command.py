@@ -7,7 +7,7 @@ try:
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from rocketry.core.parameters.parameters import Parameters
 from rocketry.core.task import Task
@@ -58,7 +58,7 @@ class CommandTask(Task):
         kwargs.update(self.kwds_popen)
         return kwargs
 
-    @validator('argform')
+    @field_validator('argform')
     def parse_argform(cls, value):
         return {
             "long": "--",

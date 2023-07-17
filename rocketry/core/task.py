@@ -15,12 +15,14 @@ import multiprocessing
 import threading
 from queue import Empty
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional
+from typing_extensions import Annotated
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from pydantic import BaseModel, Field, PrivateAttr, validator, ConfigDict
+from pydantic import BaseModel, Field, PrivateAttr, ConfigDict, field_validator
+from pydantic.functional_validators import BeforeValidator, AfterValidator
 
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse, All
@@ -195,6 +197,7 @@ class Task(RedBase, BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed= True,
         validate_assignment = True,
+        validate_default=True,
         extra='allow',      
     )
     # Removed JSON encoders but keeping not for future reference as need to find way of re-implementing
@@ -238,7 +241,7 @@ class Task(RedBase, BaseModel):
     multilaunch: Optional[bool] = None
     on_startup: bool = False
     on_shutdown: bool = False
-    func_run_id: Callable = None
+    func_run_id: Union[Callable, None] = None
 
     _last_run: Optional[float]
     _last_success: Optional[float]
@@ -253,29 +256,29 @@ class Task(RedBase, BaseModel):
 
     _mark_running = False
 
-    @validator('start_cond', pre=True)
+    @field_validator('start_cond', mode="before")
     def parse_start_cond(cls, value, values):
         from rocketry.parse.condition import parse_condition
-        session = values['session']
+        session = values.data['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
         return copy(value)
 
-    @validator('end_cond', pre=True)
+    @field_validator('end_cond', mode="before")
     def parse_end_cond(cls, value, values):
         from rocketry.parse.condition import parse_condition
-        session = values['session']
+        session = values.data['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
         return copy(value)
 
-    @validator('logger_name', pre=True, always=True)
+    @field_validator('logger_name', mode="before")
     def parse_logger_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
 
         if isinstance(value, str):
             logger_name = value
@@ -288,7 +291,7 @@ class Task(RedBase, BaseModel):
                 raise ValueError(f"Logger name must start with '{basename}' as session finds loggers with names")
         return logger_name
 
-    @validator('timeout', pre=True, always=True)
+    @field_validator('timeout', mode="before")
     def parse_timeout(cls, value, values):
         if value == "never":
             return datetime.timedelta.max
@@ -340,9 +343,9 @@ class Task(RedBase, BaseModel):
             return self.get_default_name(**kwargs)
         return name
 
-    @validator('name', pre=True)
+    @field_validator('name', mode="before")
     def parse_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
         on_exists = session.config.task_pre_exist
         name_exists = value in session
         if name_exists:
@@ -360,9 +363,9 @@ class Task(RedBase, BaseModel):
                 return name
         return value
 
-    @validator('name', pre=False)
+    @field_validator('name', mode="after")
     def validate_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
         on_exists = session.config.task_pre_exist
         name_exists = value in session
 
@@ -372,17 +375,17 @@ class Task(RedBase, BaseModel):
             raise ValueError(f"Task name '{value}' already exists. Please pick another")
         return value
 
-    @validator('parameters', pre=True)
+    @field_validator('parameters', mode="before")
     def parse_parameters(cls, value):
         if isinstance(value, Parameters):
             return value
         return Parameters(value)
 
-    @validator('force_run', pre=False)
+    @field_validator('force_run', mode="after")
     def parse_force_run(cls, value, values):
         if value:
             warnings.warn("Attribute 'force_run' is deprecated. Please use method set_running() instead", DeprecationWarning)
-            values['batches'].append(Parameters())
+            values.data['batches'].append(Parameters())
         return value
 
     def __hash__(self):

@@ -40,7 +40,11 @@ if TYPE_CHECKING:
 
 
 class Config(BaseModel):
-    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        validate_assignment=True, 
+        arbitrary_types_allowed=True,
+        validate_default=True
+        )
 
     # Fields
     use_instance_naming: bool = False
@@ -67,16 +71,15 @@ class Config(BaseModel):
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
-    cls_lock: Type = threading.Lock
+    cls_lock: threading.Lock = threading.Lock
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
     timezone: Optional[datetime.tzinfo] = None
-    time_func: Callable = None
+    time_func: Union[Callable, None] = None
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator('execution', pre=True, always=True)
+
+    @field_validator('execution', mode="before")
     def parse_task_execution(cls, value):
         if value is None:
             return 'async'
@@ -91,9 +94,8 @@ class Config(BaseModel):
             return AlwaysFalse()
         return parse_condition(value)
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator('timeout', pre=True, always=True)
+
+    @field_validator('timeout', mode="before")
     def parse_timeout(cls, value):
         if isinstance(value, str):
             return to_timedelta(value)

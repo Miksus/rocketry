@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, ClassVar
 import warnings
 
-from pydantic import Field, PrivateAttr, validator
+from pydantic import Field, PrivateAttr, field_validator
 
 from rocketry.core.task import Task
 from rocketry.core.parameters import Parameters
@@ -143,20 +143,17 @@ class FuncTask(Task):
     def delayed(self):
         return self._is_delayed
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator('path')
+
+    @field_validator('path')
     def validate_path(cls, value: Path, values):
-        name = values['name']
+        name = values.data['name']
         if value is not None and not value.is_file():
             warnings.warn(f"Path {value} does not exists. Task '{name}' may fail.")
         return value
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("func")
+    @field_validator("func")
     def validate_func(cls, value, values):
-        execution = values.get('execution')
+        execution = values.data.get('execution')
         func = value
 
         if execution == "process" and getattr(func, "__name__", None) == "<lambda>":
