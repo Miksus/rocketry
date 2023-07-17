@@ -13,7 +13,7 @@ import warnings
 
 from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
-from pydantic import BaseModel, root_validator, validator
+from pydantic import field_validator, model_validator, ConfigDict, BaseModel, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -40,9 +40,7 @@ if TYPE_CHECKING:
 
 
 class Config(BaseModel):
-    class Config:
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
     # Fields
     use_instance_naming: bool = False
@@ -76,13 +74,16 @@ class Config(BaseModel):
     timezone: Optional[datetime.tzinfo] = None
     time_func: Callable = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator('execution', pre=True, always=True)
     def parse_task_execution(cls, value):
         if value is None:
             return 'async'
         return value
 
-    @validator('shut_cond', pre=True)
+    @field_validator('shut_cond', mode="before")
+    @classmethod
     def parse_shut_cond(cls, value):
         from rocketry.parse import parse_condition
         from rocketry.conditions import AlwaysFalse
@@ -90,6 +91,8 @@ class Config(BaseModel):
             return AlwaysFalse()
         return parse_condition(value)
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator('timeout', pre=True, always=True)
     def parse_timeout(cls, value):
         if isinstance(value, str):
@@ -107,7 +110,8 @@ class Config(BaseModel):
         )
         return self.execution
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def set_deprecated(cls, values):
         if 'task_execution' in values:
             warnings.warn(
@@ -168,8 +172,7 @@ class Session(RedBase):
 
     """
     config: Config
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     tasks: Set['Task']
     hooks: Hooks

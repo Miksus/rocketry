@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 from rocketry.conditions import Any, All, DependFinish, DependSuccess
 from rocketry.conditions.task import DependFailure
@@ -43,8 +43,7 @@ class Link:
         return f'Link({self.parent.name!r}, {self.child.name!r}, relation={getattr(self.relation, "__name__", None)}, type={getattr(self.type, "__name__", None)})'
 
 class Dependencies(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     session: Session
 

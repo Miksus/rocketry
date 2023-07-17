@@ -3,7 +3,7 @@ from itertools import chain
 import datetime
 import logging
 from typing import Optional
-from pydantic import root_validator, validator
+from pydantic import field_validator, root_validator, model_validator
 
 import pytest
 
@@ -33,23 +33,25 @@ def do_fail():
     raise RuntimeError("Oops")
 
 class CustomRecord(MinimalRecord):
-    timestamp: Optional[datetime.datetime]
-    start: Optional[datetime.datetime]
-    end: Optional[datetime.datetime]
-    runtime: Optional[datetime.timedelta]
+    timestamp: Optional[datetime.datetime] = None
+    start: Optional[datetime.datetime] = None
+    end: Optional[datetime.datetime] = None
+    runtime: Optional[datetime.timedelta] = None
     message: str
 
-    @validator("start", pre=True)
+    @field_validator("start", mode="before")
+    @classmethod
     def parse_start(cls, value):
         if value is not None:
             return datetime.datetime.fromtimestamp(value)
 
-    @validator("end", pre=True)
+    @field_validator("end", mode="before")
+    @classmethod
     def parse_end(cls, value):
         if value is not None:
             return datetime.datetime.fromtimestamp(value)
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_timestamp(cls, values):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values

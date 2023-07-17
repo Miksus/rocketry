@@ -2,6 +2,7 @@ import datetime
 import logging
 import pickle
 from textwrap import dedent
+from typing import ClassVar
 import pytest
 from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
@@ -14,6 +15,7 @@ from rocketry.testing.log import create_task_record
 
 class DummyTask(BaseTask):
 
+    session: ClassVar
     def execute(self, *args, **kwargs):
         return
 

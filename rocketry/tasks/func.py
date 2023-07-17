@@ -143,6 +143,8 @@ class FuncTask(Task):
     def delayed(self):
         return self._is_delayed
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator('path')
     def validate_path(cls, value: Path, values):
         name = values['name']
@@ -150,6 +152,8 @@ class FuncTask(Task):
             warnings.warn(f"Path {value} does not exists. Task '{name}' may fail.")
         return value
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("func")
     def validate_func(cls, value, values):
         execution = values.get('execution')
