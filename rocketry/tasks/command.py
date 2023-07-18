@@ -43,9 +43,9 @@ class CommandTask(Task):
 
     command: Union[str, List[str]]
     shell: bool = False
-    cwd: Optional[str]
+    cwd: Optional[str] = None
     kwds_popen: dict = {}
-    argform: Optional[Literal['-', '--', 'short', 'long']] = Field(description="Whether the arguments are turned as short or long form command line arguments")
+    argform: Optional[Literal['-', '--', 'short', 'long']] = Field(description="Whether the arguments are turned as short or long form command line arguments", default=None)
 
     def get_kwargs_popen(self) -> dict:
         kwargs = {

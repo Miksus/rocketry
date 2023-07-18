@@ -22,7 +22,6 @@ except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
 from pydantic import BaseModel, Field, PrivateAttr, ConfigDict, field_validator
-from pydantic.functional_validators import BeforeValidator, AfterValidator
 
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse, All
