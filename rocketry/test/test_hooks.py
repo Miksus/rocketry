@@ -1,5 +1,6 @@
 from functools import partial
 from textwrap import dedent
+from typing import ClassVar
 import sys
 
 import pytest
@@ -38,6 +39,8 @@ def test_task_init(session):
         timeline.append("Generator hook called (post)")
 
     class DummyTask(Task):
+
+        session: ClassVar
 
         def execute(self, *args, **kwargs):
             return

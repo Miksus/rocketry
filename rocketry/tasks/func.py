@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, ClassVar
 import warnings
 
-from pydantic import Field, PrivateAttr, field_validator
+from pydantic import Field, PrivateAttr, field_validator, field_serializer
 
 from rocketry.core.task import Task
 from rocketry.core.parameters import Parameters
@@ -162,6 +162,11 @@ class FuncTask(Task):
                 "The function must be pickleable if task's execution is 'process'. "
             )
         return value
+    
+    @field_serializer("func", when_used="json")
+    def ser_func(self, func):
+        return func.__name__
+
 
     def __init__(self, func=None, **kwargs):
         only_func_set = func is not None and not kwargs

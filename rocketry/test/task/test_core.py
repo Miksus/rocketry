@@ -3,9 +3,11 @@ import logging
 import pickle
 from textwrap import dedent
 from typing import ClassVar
+from pydantic import SkipValidation
 import pytest
 from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
+# from rocketry.tasks import FuncTask as BaseTask
 from rocketry.core.condition.base import AlwaysFalse
 from rocketry.args import Arg, Session, Task
 from rocketry.exc import TaskLoggingError

@@ -21,7 +21,7 @@ try:
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from pydantic import BaseModel, Field, PrivateAttr, ConfigDict, field_validator
+from pydantic import BaseModel, Field, PrivateAttr, ConfigDict, field_validator, field_serializer
 
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse, All
@@ -199,13 +199,6 @@ class Task(RedBase, BaseModel):
         validate_default=True,
         extra='allow',      
     )
-    # Removed JSON encoders but keeping not for future reference as need to find way of re-implementing
-        # json_encoders = {
-        #     Parameters: lambda v: v.to_json(),
-        #     'BaseCondition': lambda v: str(v),
-        #     FunctionType: lambda v: v.__name__,
-        #     'Session': lambda v: id(v),
-        # }  
 
     session: 'Session' = Field()
 
@@ -299,6 +292,22 @@ class Task(RedBase, BaseModel):
         if value is not None:
             return to_timedelta(value)
         return value
+    
+    @field_serializer("parameters", when_used="json")
+    def ser_parameters(self, parameters):
+        return parameters.to_json()
+
+    @field_serializer("start_cond", when_used="json")
+    def ser_start_cond(self, start_cond):
+        return str(start_cond)
+    
+    @field_serializer("end_cond", when_used="json")
+    def ser_end_cond(self, end_cond):
+        return str(end_cond)
+
+    @field_serializer("session", when_used="json", check_fields=False)
+    def ser_session(self, session):
+        return id(session)
 
     @property
     def logger(self):
@@ -1297,8 +1306,8 @@ class Task(RedBase, BaseModel):
         #state['__dict__'] = state['__dict__'].copy()
 
         # remove unpicklable
-        state['__private_attribute_values__'] = state['__private_attribute_values__'].copy()
-        priv_attrs = state['__private_attribute_values__']
+        state['__pydantic_private__'] = state['__pydantic_private__'].copy()
+        priv_attrs = state['__pydantic_private__']
         priv_attrs['_lock'] = None
         priv_attrs['_process'] = None
         priv_attrs['_thread'] = None
