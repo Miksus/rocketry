@@ -95,7 +95,7 @@ class TaskRun:
     def is_thread(self) -> bool:
         return isinstance(self.task, threading.Thread)
 
-class Task(RedBase, BaseModel):
+class Task(BaseModel, RedBase):
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that
@@ -200,7 +200,7 @@ class Task(RedBase, BaseModel):
         extra='allow',      
     )
 
-    session: 'Session' = Field()
+    session: 'Session' = Field(validate_default=False, default=None)
 
     # Class
     permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)

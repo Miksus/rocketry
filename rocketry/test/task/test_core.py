@@ -2,12 +2,11 @@ import datetime
 import logging
 import pickle
 from textwrap import dedent
-from typing import ClassVar
-from pydantic import SkipValidation
+from typing import ClassVar, Generic, Any
+from pydantic import Field, BaseModel
 import pytest
 from rocketry.args.builtin import Return
 from rocketry.core import Task as BaseTask
-# from rocketry.tasks import FuncTask as BaseTask
 from rocketry.core.condition.base import AlwaysFalse
 from rocketry.args import Arg, Session, Task
 from rocketry.exc import TaskLoggingError
@@ -18,10 +17,15 @@ from rocketry.testing.log import create_task_record
 class DummyTask(BaseTask):
 
     session: ClassVar
+
     def execute(self, *args, **kwargs):
         return
+    
+    def get_default_name(self, **kwargs):
+        pass
 
 def test_defaults(session):
+
     task = DummyTask(name="mytest", session=session)
     assert task.name == "mytest"
     assert isinstance(task.start_cond, AlwaysFalse)
@@ -35,7 +39,7 @@ def test_defaults_no_session(session):
     assert task.session.tasks == {task}
 
 def test_set_timeout(session):
-    task = DummyTask(timeout="1 hour 20 min", session=session, name="1")
+    task = DummyTask(session=session, timeout="1 hour 20 min", name="1")
     assert task.timeout == datetime.timedelta(hours=1, minutes=20)
 
     task = DummyTask(timeout=datetime.timedelta(hours=1, minutes=20), session=session, name="2")

@@ -410,14 +410,14 @@ class Session(RedBase):
         # To avoid circular imports
         from rocketry.tasks import CommandTask, FuncTask
 
-        kwargs['session'] = self
+        # kwargs['session'] = self
 
         if command is not None:
             return CommandTask(command=command, **kwargs)
         if path is not None:
             # Non-wrapped FuncTask
             return FuncTask(path=path, **kwargs)
-        return FuncTask(name_include_module=False, _name_template='{func_name}', **kwargs)
+        return FuncTask(name_include_module=False, _name_template='{func_name}', session=self, **kwargs)
 
     def add_task(self, task: 'Task'):
         "Add the task to the session"
