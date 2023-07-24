@@ -196,7 +196,6 @@ class Task(BaseModel, RedBase):
     model_config = ConfigDict(
         arbitrary_types_allowed= True,
         validate_assignment = True,
-        validate_default=True,
         extra='allow',      
     )
 
@@ -207,7 +206,7 @@ class Task(BaseModel, RedBase):
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
-    daemon: Optional[bool] = False
+    daemon: Optional[bool] = None
     batches: List[Parameters] = Field(
         default_factory=list,
         description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"

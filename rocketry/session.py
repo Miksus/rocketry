@@ -71,7 +71,7 @@ class Config(BaseModel):
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
-    cls_lock: threading.Lock = threading.Lock
+    cls_lock: Callable = threading.Lock
 
     param_materialize:Literal['pre', 'post'] = 'post'
 

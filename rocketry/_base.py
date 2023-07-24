@@ -5,7 +5,7 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from rocketry import Session
 
-class RedBase():
+class RedBase:
     """Baseclass for all Rocketry classes"""
     
     # Commented this out for now as it was causing issues with the new pydantic implementation

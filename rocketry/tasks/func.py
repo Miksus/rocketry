@@ -2,7 +2,7 @@ import sys
 import inspect
 import importlib
 from pathlib import Path
-from typing import Callable, List, Optional, ClassVar
+from typing import Callable, List, Optional
 import warnings
 
 from pydantic import Field, PrivateAttr, field_validator, field_serializer
@@ -137,7 +137,7 @@ class FuncTask(Task):
     sys_paths: List[Path] = []
 
     _is_delayed: bool = PrivateAttr(default=False)
-    _delayed_kwargs: ClassVar[dict] = {}
+    _delayed_kwargs: dict = {}
     _name_template: str = '{module_name}:{func_name}'
     @property
     def delayed(self):
