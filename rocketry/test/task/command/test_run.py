@@ -72,7 +72,7 @@ def test_fail_command(tmpdir, execution, session):
 
         wait_till_task_finish(task)
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert "fail" == task.status
 
         err = records[1]["exc_text"].strip().replace('\r', '')

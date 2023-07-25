@@ -69,7 +69,7 @@ def test_param_failure(tmpdir, execution, session, fail_in):
     session.start()
     assert task.status == "fail"
 
-    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    records = list(map(lambda d: d.model_dump(exclude={'created'}), task.logger.get_records()))
     assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 @pytest.mark.parametrize(
@@ -93,7 +93,7 @@ def test_session_param_failure(tmpdir, execution, session, fail_in):
     session.start()
     assert task.status == "fail"
 
-    records = list(map(lambda d: d.dict(exclude={'created'}), task.logger.get_records()))
+    records = list(map(lambda d: d.model_dump(exclude={'created'}), task.logger.get_records()))
     assert [{"task_name": "a task", "action": "run"}, {"task_name": "a task", "action": "fail"}] == records
 
 

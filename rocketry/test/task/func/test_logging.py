@@ -275,7 +275,7 @@ def test_action_start(tmpdir, method, session):
     task.log_running()
     getattr(task, method)()
 
-    records = list(map(lambda e: e.dict(), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(), session.get_task_log()))
     assert len(records) == 2
 
     # First should not have "end"

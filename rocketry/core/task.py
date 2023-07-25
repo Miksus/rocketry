@@ -199,7 +199,7 @@ class Task(BaseModel, RedBase):
         extra='allow',      
     )
 
-    session: 'Session' = Field(validate_default=False, default=None)
+    session: 'Session' = Field(default=None)
 
     # Class
     permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)

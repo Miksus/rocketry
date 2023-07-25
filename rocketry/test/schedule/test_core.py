@@ -159,7 +159,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     for record in history:
         is_tasl_log = isinstance(record, TaskLogRecord)
         if not isinstance(record, dict):
-            record = record.dict()
+            record = record.model_dump()
         assert record["task_name"] == "mytask"
         assert isinstance(record["created"], float)
         assert isinstance(record["start"], datetime.datetime if is_tasl_log else float)

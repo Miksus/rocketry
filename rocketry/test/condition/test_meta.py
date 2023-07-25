@@ -30,7 +30,7 @@ def test_taskcond_true(session, execution):
     session.config.shut_cond = (TaskStarted(task="a task") >= 2) | ~SchedulerStarted(period="past 5 seconds")
     session.start()
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     history_task = [
         rec
         for rec in records
@@ -73,7 +73,7 @@ def test_taskcond_false(session, execution):
     session.config.shut_cond = SchedulerCycles() >= 3
     session.start()
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     history_task = [
         rec
         for rec in records

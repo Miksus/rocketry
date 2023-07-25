@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Callable, List, Optional
 import warnings
 
-from pydantic import Field, PrivateAttr, field_validator, field_serializer, BaseModel
+from pydantic import Field, PrivateAttr, field_validator, field_serializer
+from pydantic.main import _object_setattr
 
 from rocketry.core.task import Task
 from rocketry.core.parameters import Parameters
@@ -171,7 +172,6 @@ class FuncTask(Task):
     def __init__(self, func=None, **kwargs):
         only_func_set = func is not None and not kwargs
         no_func_set = func is None and kwargs.get('path') is None
-        from pydantic.main import _object_setattr
         _object_setattr(self, "__pydantic_extra__", {})
         _object_setattr(self, "__pydantic_private__", None)
         if no_func_set:

@@ -100,7 +100,7 @@ def test_crash(session):
     assert [
         {'action': 'run', 'task_name': 'mytest'},
         {'action': 'crash', 'task_name': 'mytest'}
-    ] == [log.dict(exclude={'created'}) for log in logs]
+    ] == [log.model_dump(exclude={'created'}) for log in logs]
 
 def test_json(session):
     session.parameters['x'] = 5

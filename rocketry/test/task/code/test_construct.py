@@ -80,6 +80,6 @@ def test_run_fail(session, execution):
 
     assert task.status == 'fail'
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     record_fail = [r for r in records if r['action'] == 'fail'][0]
     assert 'File "<string>", line 5, in <module>\n  File "<string>", line 3, in main\nRuntimeError: Failed' in record_fail['exc_text']
