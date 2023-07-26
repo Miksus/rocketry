@@ -548,7 +548,11 @@ class Session(RedBase):
         new_self = copy(self)
         for attr in unpicklable:
             setattr(new_self, attr, None)
-        new_self.config = self.config.copy(exclude=unpicklable_conf)
+        # Lines of code suggested to replace exclude use in copy function
+        # copy replaced by model_copy which doesn't allow for exclude
+        data = self.config.model_dump(exclude=unpicklable_conf, round_trip=True)
+        copied = self.config.model_validate(data)
+        new_self.config = copied
         return new_self
 
     @property

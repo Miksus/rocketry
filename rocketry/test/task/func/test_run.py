@@ -297,7 +297,7 @@ def test_parametrization_kwargs(session):
 
     task()
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": "success"},

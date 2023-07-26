@@ -3,7 +3,7 @@ from itertools import chain
 import datetime
 import logging
 from typing import Optional
-from pydantic import field_validator, root_validator, model_validator
+from pydantic import field_validator, model_validator
 
 import pytest
 
@@ -51,7 +51,7 @@ class CustomRecord(MinimalRecord):
         if value is not None:
             return datetime.datetime.fromtimestamp(value)
 
-    @root_validator(skip_on_failure=True)
+    @model_validator(mode="before")
     def validate_timestamp(cls, values):
         values['timestamp'] = datetime.datetime.fromtimestamp(values['created'])
         return values
@@ -260,7 +260,7 @@ def test_get_logs_params(tmpdir, mock_pydatetime, mock_time, query, expected, se
 
         logs = list(logs)
         assert len(expected) == len(logs)
-        logs = list(map(lambda e: e.dict(), logs))
+        logs = list(map(lambda e: e.model_dump(), logs))
         for e, a in zip(expected, logs):
             #assert e.keys() <= a.keys()
             # Check all expected items in actual (actual can contain extra)

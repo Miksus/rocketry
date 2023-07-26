@@ -150,7 +150,7 @@ def test_handle(session):
 
     records = session.get_task_log()
     records = [
-        record.dict(exclude={"created"})
+        record.model_dump(exclude={"created"})
         for record in records
     ]
     assert [
