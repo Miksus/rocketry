@@ -13,7 +13,7 @@ from rocketry.tasks.func import FuncTask
 class _FuncTaskCondWrapper(FuncTask):
 
     # For some reason, the order of cls attrs broke here so we need to reorder then:
-    session: ClassVar[_Session]
+    session: _Session
     name: Optional[str] = Field(description="Name of the task. Must be unique")
 
     def _handle_return(self, value):

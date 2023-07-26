@@ -15,6 +15,7 @@ def is_foo(status):
         return True
     return False
 
+
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_taskcond_true(session, execution):
     assert session._cond_cache == {}

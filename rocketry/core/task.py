@@ -199,7 +199,8 @@ class Task(BaseModel, RedBase):
         extra='allow',      
     )
 
-    session: 'Session' = Field(default=None)
+    session: 'Session' = Field(default=None, validate_default=False)
+    
 
     # Class
     permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
@@ -1415,5 +1416,5 @@ class Task(BaseModel, RedBase):
         if 'exclude' not in kwargs:
             kwargs['exclude'] = set()
         kwargs['exclude'].update({'session'})
-        d = super().json(**kwargs)
+        d = super().model_dump_json(**kwargs)
         return d

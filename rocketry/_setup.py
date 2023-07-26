@@ -3,7 +3,7 @@ from rocketry.core import BaseCondition, Task
 from rocketry.session import Session, Config
 from rocketry.parse import add_condition_parser
 from rocketry.conds import true, false
-from rocketry.tasks import CommandTask, FuncTask, CodeTask
+from rocketry.tasks import CommandTask, FuncTask, CodeTask, _DummyTask
 from rocketry.tasks.maintain import ShutDown, Restart
 
 from rocketry.conditions.meta import _FuncTaskCondWrapper
@@ -23,7 +23,7 @@ def _setup_defaults():
     cls_tasks = (
         Task,
         FuncTask, CommandTask, CodeTask,
-        ShutDown, Restart,
+        ShutDown, Restart, _DummyTask,
 
         _FuncTaskCondWrapper
     )
