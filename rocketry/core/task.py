@@ -743,7 +743,6 @@ class Task(BaseModel, RedBase):
 
         self._run_stack.append(task_run)
         self._mark_running = True # needed in pickling
-
         process.start()
         self._mark_running = False
 
@@ -763,7 +762,6 @@ class Task(BaseModel, RedBase):
         # in the actual multiprocessing's process. We only add QueueHandler to the
         # logger (with multiprocessing.Queue as queue) so that all the logging
         # records end up in the main process to be logged properly.
-
         basename = self.logger_name
         # handler = logging.handlers.QueueHandler(queue)
         handler = QueueHandler(queue)
