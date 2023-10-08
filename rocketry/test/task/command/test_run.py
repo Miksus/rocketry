@@ -77,8 +77,10 @@ def test_fail_command(tmpdir, execution, session):
 
         err = records[1]["exc_text"].strip().replace('\r', '')
         if sys.version_info >= (3, 8):
-            expected = "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
-            assert err.endswith(expected)
+            # Somethings the file path in before 'python' changing endswith to two in statements instead
+            assert "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage:" in err and "python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information." in err
+            # expected = "OSError: Failed running command (2): \nunknown option --not_an_arg\nusage: python [option] ... [-c cmd | -m mod | file | -] [arg] ...\nTry `python -h' for more information."
+            # assert err.endswith(expected)
         else:
             assert err.endswith("Try `python -h' for more information.")
             assert "OSError: Failed running command (2)" in err

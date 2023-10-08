@@ -536,7 +536,7 @@ class Session(RedBase):
         state["_cond_cache"] = None
         state["_cond_parsers"] = None
         state["session"] = None
-        #state["parameters"] = None
+        # state["parameters"] = None
         state['scheduler'] = None
         state['returns'] = None
         return state
