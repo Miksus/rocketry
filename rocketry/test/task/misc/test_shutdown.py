@@ -33,6 +33,6 @@ def test_scheduler_shutdown(tmpdir, session):
             cont = f.read()
         assert "StartedShut" == cont
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), task.logger.get_records()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), task.logger.get_records()))
         assert 1 == len([record for record in records if record["action"] == "run"])
         assert 1 == len([record for record in records if record["action"] == "success"])

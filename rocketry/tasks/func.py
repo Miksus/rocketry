@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Callable, List, Optional
 import warnings
 
-from pydantic import Field, PrivateAttr, validator
+from pydantic import Field, PrivateAttr, field_validator, field_serializer
+from pydantic.main import _object_setattr
 
 from rocketry.core.task import Task
 from rocketry.core.parameters import Parameters
@@ -128,9 +129,9 @@ class FuncTask(Task):
         def my_task_func():
             ...
     """
-    func: Optional[Callable] = Field(description="Executed function")
+    func: Optional[Callable] = Field(description="Executed function", default=None)
 
-    path: Optional[Path] = Field(description="Path to the script that is executed")
+    path: Optional[Path] = Field(description="Path to the script that is executed", default = None)
     func_name: Optional[str] = Field(default="main", description="Name of the function in given path. Pass path as well")
     cache: bool = False
 
@@ -143,16 +144,17 @@ class FuncTask(Task):
     def delayed(self):
         return self._is_delayed
 
-    @validator('path')
+
+    @field_validator('path')
     def validate_path(cls, value: Path, values):
-        name = values['name']
+        name = values.data['name']
         if value is not None and not value.is_file():
             warnings.warn(f"Path {value} does not exists. Task '{name}' may fail.")
         return value
 
-    @validator("func")
+    @field_validator("func")
     def validate_func(cls, value, values):
-        execution = values.get('execution')
+        execution = values.data.get('execution')
         func = value
 
         if execution == "process" and getattr(func, "__name__", None) == "<lambda>":
@@ -161,10 +163,17 @@ class FuncTask(Task):
                 "The function must be pickleable if task's execution is 'process'. "
             )
         return value
+    
+    @field_serializer("func", when_used="json")
+    def ser_func(self, func):
+        return func.__name__
+
 
     def __init__(self, func=None, **kwargs):
         only_func_set = func is not None and not kwargs
         no_func_set = func is None and kwargs.get('path') is None
+        _object_setattr(self, "__pydantic_extra__", {})
+        _object_setattr(self, "__pydantic_private__", None)
         if no_func_set:
             # FuncTask was probably called like:
             # @FuncTask(...)
@@ -184,6 +193,7 @@ class FuncTask(Task):
             # the execution to else than process
             # as it's obvious it would not work.
             kwargs["execution"] = "thread"
+        
         super().__init__(func=func, **kwargs)
         self._set_descr(is_delayed=func is None)
 

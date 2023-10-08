@@ -1,6 +1,6 @@
 
 import copy
-from typing import Callable, Optional, Pattern, Union
+from typing import Callable, ClassVar, Optional, Pattern, Union
 
 from pydantic import Field
 from rocketry.args import Session

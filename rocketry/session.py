@@ -13,7 +13,7 @@ import warnings
 
 from itertools import chain
 from typing import TYPE_CHECKING, Callable, ClassVar, Iterable, Dict, List, Optional, Set, Tuple, Type, Union
-from pydantic import BaseModel, root_validator, validator
+from pydantic import field_validator, model_validator, ConfigDict, BaseModel, validator
 from rocketry.pybox.time import to_timedelta
 from rocketry.log.defaults import create_default_handler
 from rocketry._base import RedBase
@@ -40,9 +40,11 @@ if TYPE_CHECKING:
 
 
 class Config(BaseModel):
-    class Config:
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        validate_assignment=True, 
+        arbitrary_types_allowed=True,
+        validate_default=True
+        )
 
     # Fields
     use_instance_naming: bool = False
@@ -62,27 +64,29 @@ class Config(BaseModel):
 
     multilaunch: bool = False
     func_run_id: Callable = uuid
-    max_process_count = cpu_count()
+    max_process_count:int = cpu_count()
     tasks_as_daemon: bool = True
     restarting: str = 'replace'
     instant_shutdown: bool = False
 
     timeout: datetime.timedelta = datetime.timedelta(minutes=30)
     shut_cond: Optional['BaseCondition'] = None
-    cls_lock: Type = threading.Lock
+    cls_lock: Callable = threading.Lock
 
     param_materialize:Literal['pre', 'post'] = 'post'
 
     timezone: Optional[datetime.tzinfo] = None
-    time_func: Callable = None
+    time_func: Union[Callable, None] = None
 
-    @validator('execution', pre=True, always=True)
+
+    @field_validator('execution', mode="before")
     def parse_task_execution(cls, value):
         if value is None:
             return 'async'
         return value
 
-    @validator('shut_cond', pre=True)
+    @field_validator('shut_cond', mode="before")
+    @classmethod
     def parse_shut_cond(cls, value):
         from rocketry.parse import parse_condition
         from rocketry.conditions import AlwaysFalse
@@ -90,7 +94,8 @@ class Config(BaseModel):
             return AlwaysFalse()
         return parse_condition(value)
 
-    @validator('timeout', pre=True, always=True)
+
+    @field_validator('timeout', mode="before")
     def parse_timeout(cls, value):
         if isinstance(value, str):
             return to_timedelta(value)
@@ -107,7 +112,8 @@ class Config(BaseModel):
         )
         return self.execution
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def set_deprecated(cls, values):
         if 'task_execution' in values:
             warnings.warn(
@@ -168,8 +174,7 @@ class Session(RedBase):
 
     """
     config: Config
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     tasks: Set['Task']
     hooks: Hooks
@@ -531,8 +536,9 @@ class Session(RedBase):
         state["_cond_cache"] = None
         state["_cond_parsers"] = None
         state["session"] = None
-        #state["parameters"] = None
+        # state["parameters"] = None
         state['scheduler'] = None
+        state['returns'] = None
         return state
 
     def _copy_pickle(self):
@@ -543,7 +549,10 @@ class Session(RedBase):
         new_self = copy(self)
         for attr in unpicklable:
             setattr(new_self, attr, None)
-        new_self.config = self.config.copy(exclude=unpicklable_conf)
+        
+        data = self.config.model_dump(exclude=unpicklable_conf, round_trip=True)
+        copied = self.config.model_validate(data)
+        new_self.config = copied
         return new_self
 
     @property

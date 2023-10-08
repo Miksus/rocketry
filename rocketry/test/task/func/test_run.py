@@ -73,7 +73,7 @@ def test_run(task_func, expected_outcome, exc_cls, execution, session):
 
     assert task.status == expected_outcome
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": expected_outcome},
@@ -119,7 +119,7 @@ def test_run_async(task_func, expected_outcome, execution, session):
 
     assert task.status == expected_outcome
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": expected_outcome},
@@ -261,7 +261,7 @@ def test_parametrization_runtime(session):
 
     task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": "success"},
@@ -279,7 +279,7 @@ def test_parametrization_local(session):
 
     task()
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": "success"},
@@ -297,7 +297,7 @@ def test_parametrization_kwargs(session):
 
     task()
 
-    records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+    records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
     assert [
         {"task_name": "a task", "action": "run"},
         {"task_name": "a task", "action": "success"},

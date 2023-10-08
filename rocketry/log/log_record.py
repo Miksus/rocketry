@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import field_validator, BaseModel, Field
 
 from rocketry.pybox.time import to_datetime, to_timedelta
 
@@ -38,36 +38,39 @@ class LogRecord(MinimalRecord):
 
 class TaskLogRecord(MinimalRecord):
 
-    start: Optional[datetime.datetime]
-    end: Optional[datetime.datetime]
-    runtime: Optional[datetime.timedelta]
+    start: Optional[datetime.datetime] = None
+    end: Optional[datetime.datetime] = None
+    runtime: Optional[datetime.timedelta] = None
 
     message: str
-    exc_text: Optional[str]
+    exc_text: Optional[str] = None
 
-    @validator("start", pre=True)
+    @field_validator("start", mode="before")
+    @classmethod
     def format_start(cls, value):
         if value is not None:
             value = to_datetime(value)
         return value
 
-    @validator("end", pre=True)
+    @field_validator("end", mode="before")
+    @classmethod
     def format_end(cls, value):
         if value is not None:
             value = to_datetime(value)
         return value
 
-    @validator("runtime", pre=True)
+    @field_validator("runtime", mode="before")
+    @classmethod
     def format_runtime(cls, value):
         if value is not None:
             value = to_timedelta(value)
         return value
 
 class MinimalRunRecord(MinimalRecord):
-    run_id: Optional[str]
+    run_id: Optional[str] = None
 
 class RunRecord(LogRecord):
-    run_id: Optional[str]
+    run_id: Optional[str] = None
 
 class TaskRunRecord(TaskLogRecord):
-    run_id: Optional[str]
+    run_id: Optional[str] = None

@@ -85,6 +85,7 @@ def test_scheduler_shut_cond(session):
 @pytest.mark.parametrize("execution", ["main", "async", "thread", "process"])
 @pytest.mark.parametrize("func", [pytest.param(create_line_to_file, id="sync"), pytest.param(create_line_to_file_async, id="async")])
 def test_task_execution(tmpdir, execution, func, session):
+
     with tmpdir.as_cwd():
         # To be confident the scheduler won't lie to us
         # we test the task execution with a job that has
@@ -92,7 +93,6 @@ def test_task_execution(tmpdir, execution, func, session):
         FuncTask(func, name="add line to file", start_cond=AlwaysTrue(), execution=execution, session=session)
 
         session.config.shut_cond = (TaskStarted(task="add line to file") >= 3) | ~SchedulerStarted(period=TimeDelta("5 second"))
-
         session.start()
         # Sometimes in CI the task may end up to be started only twice thus we tolerate slightly
         with open("work.txt", "r", encoding="utf-8") as file:
@@ -131,6 +131,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     """
 
     # Set session (and logging)
+    print("test_task_log")
     session = Session(config={"debug": True, "silence_task_logging": False, "execution": "process"})
     rocketry.session = session
     session.set_as_default()
@@ -159,7 +160,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
     for record in history:
         is_tasl_log = isinstance(record, TaskLogRecord)
         if not isinstance(record, dict):
-            record = record.dict()
+            record = record.model_dump()
         assert record["task_name"] == "mytask"
         assert isinstance(record["created"], float)
         assert isinstance(record["start"], datetime.datetime if is_tasl_log else float)
@@ -188,6 +189,7 @@ def test_task_log(tmpdir, execution, task_func, run_count, fail_count, success_c
 @pytest.mark.parametrize("func_type", ["sync", "async"])
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_status(session, execution, func_type, mode):
+    print("test_task_status")
     session.config.force_status_from_logs = mode == "use logs"
 
     task_success = FuncTask(
@@ -272,6 +274,7 @@ def test_task_status(session, execution, func_type, mode):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_task_disabled(tmpdir, execution, session):
+    print("test_task_disabled")
     with tmpdir.as_cwd():
 
         task = FuncTask(
@@ -293,6 +296,7 @@ def test_task_disabled(tmpdir, execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_priority(execution, session):
+    print("test_task_priority")
     session.config.max_process_count = 4
     task_1 = FuncTask(run_succeeding, name="1", priority=100, start_cond=AlwaysTrue(), execution=execution, session=session)
     task_3 = FuncTask(run_failing, name="3", priority=10, start_cond=AlwaysTrue(), execution=execution, session=session)
@@ -315,6 +319,7 @@ def test_priority(execution, session):
 
 @pytest.mark.parametrize("execution", ["main", "thread", "process"])
 def test_pass_params_as_global(execution, session):
+    print("test_pass_params_as_global")
     # thread-Parameters has been observed to fail rarely
 
     task = FuncTask(run_with_param, name="parametrized", start_cond=AlwaysTrue(), execution=execution, session=session)

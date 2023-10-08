@@ -47,7 +47,7 @@ def test_run(tmpdir, script_files, script_path, expected_outcome, exc_cls, execu
 
         assert task.status == expected_outcome
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": expected_outcome},
@@ -72,7 +72,7 @@ def test_run_specified_func(tmpdir, session):
         )
         task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -102,7 +102,7 @@ def test_import_relative(tmpdir, session):
         )
         task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -136,7 +136,7 @@ def test_import_package(tmpdir, session):
         )
         task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -166,7 +166,7 @@ def test_import_relative_with_params(tmpdir, session):
         )
         task(params={"val_5":5})
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -199,7 +199,7 @@ def test_additional_sys_paths(tmpdir, session):
         )
         task(params={"val_5":5})
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -219,7 +219,7 @@ def test_parametrization_runtime(tmpdir, script_files, session):
 
         task(params={"integer": 1, "string": "X", "optional_float": 1.1, "extra_parameter": "Should not be passed"})
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -239,7 +239,7 @@ def test_parametrization_local(tmpdir, script_files, session):
 
         task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},
@@ -259,7 +259,7 @@ def test_parametrization_kwargs(tmpdir, script_files, session):
 
         task()
 
-        records = list(map(lambda e: e.dict(exclude={'created'}), session.get_task_log()))
+        records = list(map(lambda e: e.model_dump(exclude={'created'}), session.get_task_log()))
         assert [
             {"task_name": "a task", "action": "run"},
             {"task_name": "a task", "action": "success"},

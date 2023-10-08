@@ -1,5 +1,6 @@
 from functools import partial
 from textwrap import dedent
+from typing import ClassVar
 import sys
 
 import pytest
@@ -7,7 +8,7 @@ from rocketry.conditions.task.task import DependSuccess, TaskStarted
 from rocketry.core import Task, Scheduler
 from rocketry.session import Session
 
-from rocketry.tasks import FuncTask
+from rocketry.tasks import FuncTask, _DummyTask
 from rocketry.conditions import SchedulerCycles
 from rocketry.conds import true
 
@@ -25,28 +26,24 @@ def test_task_init(session):
     @session.hook_task_init()
     def myhook(task=TaskArg()):
         timeline.append("Function hook called")
-        assert isinstance(task, DummyTask)
+        assert isinstance(task, _DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
 
     @session.hook_task_init()
     def mygenerhook(task=TaskArg()):
         timeline.append("Generator hook called (pre)")
-        assert isinstance(task, DummyTask)
+        assert isinstance(task, _DummyTask)
         assert not hasattr(task, "name") # Should not yet have created this attr
         yield
         assert hasattr(task, "session") # Should now have it
         timeline.append("Generator hook called (post)")
 
-    class DummyTask(Task):
-
-        def execute(self, *args, **kwargs):
-            return
 
 
     assert session.hooks.task_init == [myhook, mygenerhook] # The func is in different namespace thus different
 
     timeline.append("Main")
-    mytask = DummyTask(name="dummy", session=session)
+    mytask = _DummyTask(name="dummy", session=session)
     assert timeline == [
         "Main",
         "Function hook called",

@@ -15,12 +15,13 @@ import multiprocessing
 import threading
 from queue import Empty
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, List, Dict, Type, Union, Tuple, Optional
+from typing_extensions import Annotated
 try:
     from typing import Literal
 except ImportError: # pragma: no cover
     from typing_extensions import Literal
 
-from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic import BaseModel, Field, PrivateAttr, ConfigDict, field_validator, field_serializer
 
 from rocketry._base import RedBase
 from rocketry.core.condition import BaseCondition, AlwaysFalse, All
@@ -94,7 +95,7 @@ class TaskRun:
     def is_thread(self) -> bool:
         return isinstance(self.task, threading.Thread)
 
-class Task(RedBase, BaseModel):
+class Task(BaseModel, RedBase):
     """Base class for Tasks.
 
     A task can be a function, command or other procedure that
@@ -192,42 +193,37 @@ class Task(RedBase, BaseModel):
     ...         return ...
 
     """
-    class Config:
-        arbitrary_types_allowed= True
-        underscore_attrs_are_private = True
-        validate_assignment = True
-        json_encoders = {
-            Parameters: lambda v: v.to_json(),
-            'BaseCondition': lambda v: str(v),
-            FunctionType: lambda v: v.__name__,
-            'Session': lambda v: id(v),
-        }
+    model_config = ConfigDict(
+        arbitrary_types_allowed= True,
+        validate_assignment = True,
+        extra='allow',      
+    )
 
-
-    session: 'Session' = Field()
+    session: 'Session' = Field(default=None, validate_default=False)
+    
 
     # Class
     permanent: bool = False # Whether the task is not meant to finish (Ie. RestAPI)
     _actions: ClassVar[Tuple] = ("run", "fail", "success", "inaction", "terminate", None, "crash")
     fmt_log_message: str = r"Task '{task}' status: '{action}'"
 
-    daemon: Optional[bool]
+    daemon: Optional[bool] = None
     batches: List[Parameters] = Field(
         default_factory=list,
         description="Run batches (parameters). If not empty, run is triggered regardless of starting condition"
     )
 
     # Instance
-    name: Optional[str] = Field(description="Name of the task. Must be unique")
-    description: Optional[str] = Field(description="Description of the task for documentation")
-    logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records")
-    execution: Optional[Literal['main', 'async', 'thread', 'process']]
+    name: Optional[str] = Field(description="Name of the task. Must be unique", default=None)
+    description: Optional[str] = Field(description="Description of the task for documentation", default=None)
+    logger_name: Optional[str] = Field(description="Logger name to be used in logging the task records", default="rocketry.task")
+    execution: Optional[Literal['main', 'async', 'thread', 'process']] = None
     priority: int = 0
     disabled: bool = False
     force_run: bool = False
     force_termination: bool = False
-    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task")
-    timeout: Optional[datetime.timedelta]
+    status: Optional[Literal['run', 'fail', 'success', 'terminate', 'inaction', 'crash']] = Field(description="Latest status of the task", default=None)
+    timeout: Optional[datetime.timedelta] = None
 
     parameters: Parameters = Parameters()
 
@@ -237,7 +233,7 @@ class Task(RedBase, BaseModel):
     multilaunch: Optional[bool] = None
     on_startup: bool = False
     on_shutdown: bool = False
-    func_run_id: Callable = None
+    func_run_id: Union[Callable, None] = None
 
     _last_run: Optional[float]
     _last_success: Optional[float]
@@ -252,29 +248,29 @@ class Task(RedBase, BaseModel):
 
     _mark_running = False
 
-    @validator('start_cond', pre=True)
+    @field_validator('start_cond', mode="before")
     def parse_start_cond(cls, value, values):
         from rocketry.parse.condition import parse_condition
-        session = values['session']
+        session = values.data['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
         return copy(value)
 
-    @validator('end_cond', pre=True)
+    @field_validator('end_cond', mode="before")
     def parse_end_cond(cls, value, values):
         from rocketry.parse.condition import parse_condition
-        session = values['session']
+        session = values.data['session']
         if isinstance(value, str):
             value = parse_condition(value, session=session)
         elif value is None:
             value = AlwaysFalse()
         return copy(value)
 
-    @validator('logger_name', pre=True, always=True)
+    @field_validator('logger_name', mode="before")
     def parse_logger_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
 
         if isinstance(value, str):
             logger_name = value
@@ -287,7 +283,7 @@ class Task(RedBase, BaseModel):
                 raise ValueError(f"Logger name must start with '{basename}' as session finds loggers with names")
         return logger_name
 
-    @validator('timeout', pre=True, always=True)
+    @field_validator('timeout', mode="before")
     def parse_timeout(cls, value, values):
         if value == "never":
             return datetime.timedelta.max
@@ -296,6 +292,22 @@ class Task(RedBase, BaseModel):
         if value is not None:
             return to_timedelta(value)
         return value
+    
+    @field_serializer("parameters", when_used="json")
+    def ser_parameters(self, parameters):
+        return parameters.to_json()
+
+    @field_serializer("start_cond", when_used="json")
+    def ser_start_cond(self, start_cond):
+        return str(start_cond)
+    
+    @field_serializer("end_cond", when_used="json")
+    def ser_end_cond(self, end_cond):
+        return str(end_cond)
+
+    @field_serializer("session", when_used="json", check_fields=False)
+    def ser_session(self, session):
+        return id(session)
 
     @property
     def logger(self):
@@ -339,9 +351,9 @@ class Task(RedBase, BaseModel):
             return self.get_default_name(**kwargs)
         return name
 
-    @validator('name', pre=True)
+    @field_validator('name', mode="before")
     def parse_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
         on_exists = session.config.task_pre_exist
         name_exists = value in session
         if name_exists:
@@ -359,9 +371,9 @@ class Task(RedBase, BaseModel):
                 return name
         return value
 
-    @validator('name', pre=False)
+    @field_validator('name', mode="after")
     def validate_name(cls, value, values):
-        session = values['session']
+        session = values.data['session']
         on_exists = session.config.task_pre_exist
         name_exists = value in session
 
@@ -371,17 +383,17 @@ class Task(RedBase, BaseModel):
             raise ValueError(f"Task name '{value}' already exists. Please pick another")
         return value
 
-    @validator('parameters', pre=True)
+    @field_validator('parameters', mode="before")
     def parse_parameters(cls, value):
         if isinstance(value, Parameters):
             return value
         return Parameters(value)
 
-    @validator('force_run', pre=False)
+    @field_validator('force_run', mode="after")
     def parse_force_run(cls, value, values):
         if value:
             warnings.warn("Attribute 'force_run' is deprecated. Please use method set_running() instead", DeprecationWarning)
-            values['batches'].append(Parameters())
+            values.data['batches'].append(Parameters())
         return value
 
     def __hash__(self):
@@ -731,7 +743,6 @@ class Task(RedBase, BaseModel):
 
         self._run_stack.append(task_run)
         self._mark_running = True # needed in pickling
-
         process.start()
         self._mark_running = False
 
@@ -751,7 +762,6 @@ class Task(RedBase, BaseModel):
         # in the actual multiprocessing's process. We only add QueueHandler to the
         # logger (with multiprocessing.Queue as queue) so that all the logging
         # records end up in the main process to be logged properly.
-
         basename = self.logger_name
         # handler = logging.handlers.QueueHandler(queue)
         handler = QueueHandler(queue)
@@ -1294,8 +1304,8 @@ class Task(RedBase, BaseModel):
         #state['__dict__'] = state['__dict__'].copy()
 
         # remove unpicklable
-        state['__private_attribute_values__'] = state['__private_attribute_values__'].copy()
-        priv_attrs = state['__private_attribute_values__']
+        state['__pydantic_private__'] = state['__pydantic_private__'].copy()
+        priv_attrs = state['__pydantic_private__']
         priv_attrs['_lock'] = None
         priv_attrs['_process'] = None
         priv_attrs['_thread'] = None
@@ -1404,5 +1414,5 @@ class Task(RedBase, BaseModel):
         if 'exclude' not in kwargs:
             kwargs['exclude'] = set()
         kwargs['exclude'].update({'session'})
-        d = super().json(**kwargs)
+        d = super().model_dump_json(**kwargs)
         return d
