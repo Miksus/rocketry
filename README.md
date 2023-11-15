@@ -102,7 +102,7 @@ Here are some more examples of what it can do.
 
 ```python
 from rocketry.conds import every
-from rocketry.conds import hourly, daily, weekly, 
+from rocketry.conds import hourly, daily, weekly
 from rocketry.conds import time_of_day
 from rocketry.conds import cron
 
